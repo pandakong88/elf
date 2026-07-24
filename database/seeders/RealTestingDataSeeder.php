@@ -18,6 +18,8 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 
+use Illuminate\Support\Facades\Schema;
+
 class RealTestingDataSeeder extends Seeder
 {
     /**
@@ -27,8 +29,8 @@ class RealTestingDataSeeder extends Seeder
     {
         $this->command?->info("🧹 Menghapus data santri, kamar, asrama, & kelas lama...");
 
-        // 1. Clean existing dummy data related to santri, rooms, classes
-        DB::statement('SET FOREIGN_KEY_CHECKS=0;');
+        // 1. Clean existing dummy data related to santri, rooms, classes (SQLite & MySQL compatible)
+        Schema::disableForeignKeyConstraints();
         SantriGuardian::query()->truncate();
         Guardian::query()->truncate();
         RoomAssignment::query()->truncate();
@@ -48,7 +50,7 @@ class RealTestingDataSeeder extends Seeder
             })
             ->delete();
 
-        DB::statement('SET FOREIGN_KEY_CHECKS=1;');
+        Schema::enableForeignKeyConstraints();
 
         $this->command?->info("✅ Clearing data lama selesai.");
 
