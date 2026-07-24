@@ -384,6 +384,68 @@ class BillingManager extends Component
         }
     }
 
+    public function generateCalendarYearFromConfig(BillingService $billingService): void
+    {
+        $this->validate([
+            'genConfigId' => 'required',
+            'genYear' => 'required|integer|min:2020|max:2030',
+        ]);
+
+        $config = BillingConfiguration::findOrFail($this->genConfigId);
+        $totalGenerated = 0;
+        $totalSkipped = 0;
+
+        if ($config->interval === 'monthly') {
+            // Generate 12 months starting from January of genYear to December of genYear
+            for ($m = 1; $m <= 12; $m++) {
+                $res = $billingService->generateBillsFromConfig($config->id, $m, $this->genYear, auth()->id() ?: User::first()?->id);
+                $totalGenerated += $res['generated'];
+                $totalSkipped += $res['skipped'];
+            }
+
+            session()->flash('message', "Tagihan 1 Tahun Kalender (Jan-Des {$this->genYear}) untuk iuran '{$config->label}' berhasil diterbitkan: {$totalGenerated} tagihan baru, {$totalSkipped} tagihan dilewati.");
+        } else {
+            $this->generateFullAcademicYearFromConfig($billingService);
+        }
+    }
+
+    public function generateCustom12MonthsFromConfig(BillingService $billingService): void
+    {
+        $this->validate([
+            'genConfigId' => 'required',
+            'genMonth' => 'required|integer|min:1|max:12',
+            'genYear' => 'required|integer|min:2020|max:2030',
+        ]);
+
+        $config = BillingConfiguration::findOrFail($this->genConfigId);
+        $totalGenerated = 0;
+        $totalSkipped = 0;
+
+        if ($config->interval === 'monthly') {
+            $currM = $this->genMonth;
+            $currY = $this->genYear;
+
+            for ($i = 0; $i < 12; $i++) {
+                $res = $billingService->generateBillsFromConfig($config->id, $currM, $currY, auth()->id() ?: User::first()?->id);
+                $totalGenerated += $res['generated'];
+                $totalSkipped += $res['skipped'];
+
+                $currM++;
+                if ($currM > 12) {
+                    $currM = 1;
+                    $currY++;
+                }
+            }
+
+            $endM = ($this->genMonth == 1) ? 12 : ($this->genMonth - 1);
+            $endY = ($this->genMonth == 1) ? $this->genYear : ($this->genYear + 1);
+
+            session()->flash('message', "Tagihan 12 Bulan ({$this->genMonth}/{$this->genYear} s/d {$endM}/{$endY}) untuk iuran '{$config->label}' berhasil diterbitkan: {$totalGenerated} tagihan baru, {$totalSkipped} tagihan dilewati.");
+        } else {
+            $this->generateFullAcademicYearFromConfig($billingService);
+        }
+    }
+
     public function deleteBatchGeneration(string $configId, int $month, int $year): void
     {
         $config = BillingConfiguration::findOrFail($configId);

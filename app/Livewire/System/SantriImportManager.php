@@ -7,6 +7,7 @@ use Livewire\WithFileUploads;
 use App\Livewire\Concerns\SendsToast;
 use App\Modules\Core\Models\Person;
 use App\Modules\Core\Models\PersonRole;
+use App\Modules\Core\Models\Organization;
 use App\Modules\Kepengasuhan\Models\SantriProfile;
 use App\Modules\Kepengasuhan\Models\Dormitory;
 use App\Modules\Kepengasuhan\Models\Room;
@@ -21,18 +22,45 @@ class SantriImportManager extends Component
 {
     use WithFileUploads, SendsToast;
 
+    // Active Tab Navigation
+    public string $activeTab = 'santri'; // 'santri', 'asrama', 'kelas'
+
+    // Excel Upload File
     public $excelFile;
+
+    // Santri Setup Modal & State
     public bool $showImportModal = false;
     public array $tempValidSantri = [];
     public array $tempInvalidSantri = [];
+
+    // Asrama Setup Modal & State
+    public bool $showAsramaImportModal = false;
+    public array $tempValidAsrama = [];
+    public array $tempInvalidAsrama = [];
+
+    // Kelas Setup Modal & State
+    public bool $showKelasImportModal = false;
+    public array $tempValidKelas = [];
+    public array $tempInvalidKelas = [];
 
     public function mount(): void
     {
         $user = auth()->user();
         if (! $user || (! $user->hasRole('super-admin') && ! $user->hasRole('manajemen'))) {
-            abort(403, 'Anda tidak memiliki wewenang untuk mengakses Halaman Setup Data Santri.');
+            abort(403, 'Anda tidak memiliki wewenang untuk mengakses Halaman Setup Data Master.');
         }
     }
+
+    public function setTab(string $tab): void
+    {
+        if (in_array($tab, ['santri', 'asrama', 'kelas'])) {
+            $this->activeTab = $tab;
+        }
+    }
+
+    // =========================================================================
+    // 1. SETUP SANTRI & WALI (EXCEL IMPORT)
+    // =========================================================================
 
     public function openImportModal(): void
     {
@@ -134,7 +162,7 @@ class SantriImportManager extends Component
                     } else {
                         $dormKey = strtolower($dormName);
                         if (!isset($dormitories[$dormKey])) {
-                            $errors[] = "Komplek Asrama \"{$dormName}\" tidak ditemukan di sistem.";
+                            $errors[] = "Komplek Asrama \"{$dormName}\" tidak ditemukan di sistem. Harap setup di Tab Setup Asrama terlebih dahulu.";
                         } else {
                             $matchedDorm = $dormitories[$dormKey];
                             if ($gender && $matchedDorm->gender !== $gender) {
@@ -155,7 +183,7 @@ class SantriImportManager extends Component
                     if (isset($kelasList[$kelasKey])) {
                         $matchedKelas = $kelasList[$kelasKey];
                     } else {
-                        $errors[] = "Kelas Madrasah \"{$kelasName}\" tidak ditemukan di sistem.";
+                        $errors[] = "Kelas Madrasah \"{$kelasName}\" tidak ditemukan di sistem. Harap setup di Tab Setup Kelas terlebih dahulu.";
                     }
                 }
 
@@ -222,7 +250,6 @@ class SantriImportManager extends Component
 
             DB::transaction(function () use (&$savedCount, $currentYear) {
                 foreach ($this->tempValidSantri as $vs) {
-                    // 1. Create or Update Person
                     $person = Person::create([
                         'id'          => Str::uuid()->toString(),
                         'nik'         => $vs['nik'] ?: null,
@@ -234,13 +261,11 @@ class SantriImportManager extends Component
                         'address'     => $vs['address'],
                     ]);
 
-                    // Auto-generate NIS if empty
                     $nisNumber = $vs['nis'];
                     if (empty($nisNumber)) {
                         $nisNumber = $currentYear . sprintf('%04d', rand(1000, 9999));
                     }
 
-                    // 2. Create SantriProfile
                     SantriProfile::create([
                         'id'              => Str::uuid()->toString(),
                         'person_id'       => $person->id,
@@ -250,9 +275,8 @@ class SantriImportManager extends Component
                         'additional_info' => ['nis' => $nisNumber],
                     ]);
 
-                    // 3. Create PersonRole (Santri)
-                    $rootOrg = \App\Modules\Core\Models\Organization::where('slug', 'ponpes-al-fithroh')->first()
-                        ?? \App\Modules\Core\Models\Organization::first();
+                    $rootOrg = Organization::where('slug', 'ponpes-al-fithroh')->first()
+                        ?? Organization::first();
 
                     PersonRole::create([
                         'id'              => Str::uuid()->toString(),
@@ -265,7 +289,6 @@ class SantriImportManager extends Component
                         'is_active'       => true,
                     ]);
 
-                    // 4. If Mukim, assign to Room
                     if ($vs['presence_status'] === 'mukim' && $vs['dorm_id'] && $vs['room_name']) {
                         $room = Room::firstOrCreate(
                             [
@@ -288,14 +311,14 @@ class SantriImportManager extends Component
                         ]);
                     }
 
-                    // 5. If Kelas specified, enroll in MadrasahKelas
                     if ($vs['kelas_id']) {
                         MadrasahEnrollment::create([
-                            'id'         => Str::uuid()->toString(),
-                            'person_id'  => $person->id,
-                            'kelas_id'   => $vs['kelas_id'],
-                            'year'       => $currentYear,
-                            'is_active'  => true,
+                            'id'            => Str::uuid()->toString(),
+                            'person_id'     => $person->id,
+                            'kelas_id'      => $vs['kelas_id'],
+                            'academic_year' => $currentYear . '/' . ($currentYear + 1),
+                            'is_active'     => true,
+                            'created_by'    => auth()->id(),
                         ]);
                     }
 
@@ -315,22 +338,354 @@ class SantriImportManager extends Component
         }
     }
 
+    // =========================================================================
+    // 2. SETUP ASRAMA & KAMAR (EXCEL IMPORT)
+    // =========================================================================
+
+    public function openAsramaImportModal(): void
+    {
+        $this->reset(['excelFile', 'tempValidAsrama', 'tempInvalidAsrama']);
+        $this->showAsramaImportModal = true;
+    }
+
+    public function closeAsramaImportModal(): void
+    {
+        $this->reset(['excelFile', 'tempValidAsrama', 'tempInvalidAsrama']);
+        $this->showAsramaImportModal = false;
+    }
+
+    public function processAsramaImport(): void
+    {
+        $this->validate([
+            'excelFile' => 'required|mimes:xlsx,xls|max:10240',
+        ], [
+            'excelFile.required' => 'File Excel wajib dipilih.',
+            'excelFile.mimes' => 'Format file harus berupa Excel (.xlsx atau .xls).',
+            'excelFile.max' => 'Ukuran file maksimal 10 MB.',
+        ]);
+
+        try {
+            $path = $this->excelFile->getRealPath();
+            $spreadsheet = IOFactory::load($path);
+            $worksheet = $spreadsheet->getActiveSheet();
+            $rows = $worksheet->toArray();
+
+            if (count($rows) <= 1) {
+                $this->toastError('File Excel kosong atau tidak memiliki baris data.');
+                return;
+            }
+
+            array_shift($rows);
+
+            $valid = [];
+            $invalid = [];
+
+            foreach ($rows as $index => $row) {
+                $rowNum = $index + 2;
+
+                $dormName  = trim((string)($row[0] ?? ''));
+                $genderRaw = strtoupper(trim((string)($row[1] ?? '')));
+                $roomName  = trim((string)($row[2] ?? ''));
+                $capacity  = (int)trim((string)($row[3] ?? 10));
+
+                if (empty($dormName) && empty($roomName)) {
+                    continue;
+                }
+
+                $errors = [];
+
+                if (empty($dormName)) {
+                    $errors[] = 'Nama Komplek Asrama wajib diisi.';
+                }
+
+                $gender = null;
+                if (in_array($genderRaw, ['L', 'LAKI-LAKI', 'LAKI LAKI', 'PUTRA', 'MALE'])) {
+                    $gender = 'L';
+                } elseif (in_array($genderRaw, ['P', 'PEREMPUAN', 'PUTRI', 'FEMALE'])) {
+                    $gender = 'P';
+                } else {
+                    $errors[] = 'Gender Komplek harus L (Putra) atau P (Putri).';
+                }
+
+                if (empty($roomName)) {
+                    $errors[] = 'Nama Kamar wajib diisi.';
+                }
+
+                if ($capacity <= 0) {
+                    $capacity = 10;
+                }
+
+                if (!empty($errors)) {
+                    $invalid[] = [
+                        'row' => $rowNum,
+                        'name' => "{$dormName} - {$roomName}",
+                        'reasons' => $errors,
+                    ];
+                } else {
+                    $valid[] = [
+                        'row' => $rowNum,
+                        'dorm_name' => $dormName,
+                        'gender' => $gender,
+                        'room_name' => $roomName,
+                        'capacity' => $capacity,
+                    ];
+                }
+            }
+
+            $this->tempValidAsrama = $valid;
+            $this->tempInvalidAsrama = $invalid;
+
+            if (empty($valid) && empty($invalid)) {
+                $this->toastError('Tidak ditemukan data asrama yang dapat diproses dari file Excel.');
+            }
+
+        } catch (\Exception $e) {
+            $this->toastError('Gagal membaca file Excel Asrama: ' . $e->getMessage());
+        }
+    }
+
+    public function confirmAndSaveAsramaImport(): void
+    {
+        if (empty($this->tempValidAsrama)) {
+            $this->toastError('Tidak ada data valid asrama yang bisa disimpan.');
+            return;
+        }
+
+        try {
+            $createdCount = 0;
+            $rootOrg = Organization::where('slug', 'ponpes-al-fithroh')->first() ?? Organization::first();
+
+            DB::transaction(function () use (&$createdCount, $rootOrg) {
+                foreach ($this->tempValidAsrama as $va) {
+                    // Find or create Dormitory
+                    $dorm = Dormitory::firstOrCreate(
+                        ['name' => $va['dorm_name']],
+                        [
+                            'id'              => Str::uuid()->toString(),
+                            'gender'          => $va['gender'],
+                            'is_active'       => true,
+                            'organization_id' => $rootOrg->id,
+                        ]
+                    );
+
+                    // Update gender if specified differently
+                    if ($dorm->gender !== $va['gender']) {
+                        $dorm->update(['gender' => $va['gender']]);
+                    }
+
+                    // Find or create Room
+                    Room::firstOrCreate(
+                        [
+                            'dormitory_id' => $dorm->id,
+                            'name'         => $va['room_name'],
+                        ],
+                        [
+                            'id'          => Str::uuid()->toString(),
+                            'capacity'    => $va['capacity'],
+                            'is_active'   => true,
+                            'description' => 'Diimpor dari Setup Excel Massal Asrama',
+                        ]
+                    );
+
+                    $createdCount++;
+                }
+            });
+
+            activity('asrama')
+                ->causedBy(auth()->user())
+                ->log("Telah mengimpor massal {$createdCount} kamar/komplek asrama baru.");
+
+            $this->toastSuccess("Berhasil mengimpor & menyiapkan {$createdCount} unit komplek/kamar asrama!");
+            $this->closeAsramaImportModal();
+
+        } catch (\Exception $e) {
+            $this->toastError('Gagal menyimpan data asrama: ' . $e->getMessage());
+        }
+    }
+
+    // =========================================================================
+    // 3. SETUP KELAS MADRASAH (EXCEL IMPORT)
+    // =========================================================================
+
+    public function openKelasImportModal(): void
+    {
+        $this->reset(['excelFile', 'tempValidKelas', 'tempInvalidKelas']);
+        $this->showKelasImportModal = true;
+    }
+
+    public function closeKelasImportModal(): void
+    {
+        $this->reset(['excelFile', 'tempValidKelas', 'tempInvalidKelas']);
+        $this->showKelasImportModal = false;
+    }
+
+    public function processKelasImport(): void
+    {
+        $this->validate([
+            'excelFile' => 'required|mimes:xlsx,xls|max:10240',
+        ], [
+            'excelFile.required' => 'File Excel wajib dipilih.',
+            'excelFile.mimes' => 'Format file harus berupa Excel (.xlsx atau .xls).',
+            'excelFile.max' => 'Ukuran file maksimal 10 MB.',
+        ]);
+
+        try {
+            $path = $this->excelFile->getRealPath();
+            $spreadsheet = IOFactory::load($path);
+            $worksheet = $spreadsheet->getActiveSheet();
+            $rows = $worksheet->toArray();
+
+            if (count($rows) <= 1) {
+                $this->toastError('File Excel kosong atau tidak memiliki baris data.');
+                return;
+            }
+
+            array_shift($rows);
+
+            $valid = [];
+            $invalid = [];
+
+            foreach ($rows as $index => $row) {
+                $rowNum = $index + 2;
+
+                $kelasName = trim((string)($row[0] ?? ''));
+                $level     = trim((string)($row[1] ?? 'Ula'));
+                $genderRaw = strtoupper(trim((string)($row[2] ?? 'Campur')));
+                $capacity  = (int)trim((string)($row[3] ?? 40));
+
+                if (empty($kelasName)) {
+                    continue;
+                }
+
+                $errors = [];
+
+                if (empty($kelasName)) {
+                    $errors[] = 'Nama Kelas Madrasah wajib diisi.';
+                }
+
+                // Gender validation
+                $gender = 'Campur';
+                if (in_array($genderRaw, ['L', 'LAKI-LAKI', 'PUTRA'])) {
+                    $gender = 'L';
+                } elseif (in_array($genderRaw, ['P', 'PEREMPUAN', 'PUTRI'])) {
+                    $gender = 'P';
+                }
+
+                if ($capacity <= 0) {
+                    $capacity = 40;
+                }
+
+                if (!empty($errors)) {
+                    $invalid[] = [
+                        'row' => $rowNum,
+                        'name' => $kelasName,
+                        'reasons' => $errors,
+                    ];
+                } else {
+                    $valid[] = [
+                        'row' => $rowNum,
+                        'name' => $kelasName,
+                        'level' => $level ?: 'Ula',
+                        'gender' => $gender,
+                        'capacity' => $capacity,
+                    ];
+                }
+            }
+
+            $this->tempValidKelas = $valid;
+            $this->tempInvalidKelas = $invalid;
+
+            if (empty($valid) && empty($invalid)) {
+                $this->toastError('Tidak ditemukan data kelas yang dapat diproses dari file Excel.');
+            }
+
+        } catch (\Exception $e) {
+            $this->toastError('Gagal membaca file Excel Kelas: ' . $e->getMessage());
+        }
+    }
+
+    public function confirmAndSaveKelasImport(): void
+    {
+        if (empty($this->tempValidKelas)) {
+            $this->toastError('Tidak ada data valid kelas yang bisa disimpan.');
+            return;
+        }
+
+        try {
+            $createdCount = 0;
+
+            DB::transaction(function () use (&$createdCount) {
+                $currentYear = (int)now()->format('Y');
+                $academicYear = $currentYear . '/' . ($currentYear + 1);
+
+                foreach ($this->tempValidKelas as $vk) {
+                    $jenjang = strtolower($vk['level'] ?? 'ula');
+                    if (!in_array($jenjang, ['ula', 'wustho', 'ulya'])) {
+                        $jenjang = 'ula';
+                    }
+
+                    MadrasahKelas::firstOrCreate(
+                        ['name' => $vk['name']],
+                        [
+                            'id'            => Str::uuid()->toString(),
+                            'jenjang'       => $jenjang,
+                            'academic_year' => $academicYear,
+                            'is_active'     => true,
+                            'created_by'    => auth()->id(),
+                        ]
+                    );
+
+                    $createdCount++;
+                }
+            });
+
+            activity('madrasah')
+                ->causedBy(auth()->user())
+                ->log("Telah mengimpor massal {$createdCount} kelas madrasah baru.");
+
+            $this->toastSuccess("Berhasil mengimpor & menyiapkan {$createdCount} kelas madrasah!");
+            $this->closeKelasImportModal();
+
+        } catch (\Exception $e) {
+            $this->toastError('Gagal menyimpan data kelas: ' . $e->getMessage());
+        }
+    }
+
     public function render()
     {
+        // Stats
         $santriCount = Person::whereHas('activeRoles', fn($q) => $q->where('role_type', 'santri'))->count();
         $mukimCount  = PersonRole::where('role_type', 'santri')->where('presence_status', 'mukim')->where('is_active', true)->count();
         $lajuCount   = PersonRole::where('role_type', 'santri')->where('presence_status', 'laju')->where('is_active', true)->count();
+        $dormCount   = Dormitory::where('is_active', true)->count();
+        $roomCount   = Room::where('is_active', true)->count();
+        $kelasCount  = MadrasahKelas::where('is_active', true)->count();
 
+        // Lists
         $recentSantri = Person::whereHas('activeRoles', fn($q) => $q->where('role_type', 'santri'))
             ->with(['activeRoles', 'santriProfile'])
             ->orderBy('created_at', 'desc')
             ->paginate(15);
 
+        $recentDormitories = Dormitory::withCount('rooms')
+            ->where('is_active', true)
+            ->orderBy('name')
+            ->get();
+
+        $recentKelas = MadrasahKelas::where('is_active', true)
+            ->orderBy('name')
+            ->get();
+
         return view('livewire.system.santri-import-manager', [
-            'santriCount'  => $santriCount,
-            'mukimCount'   => $mukimCount,
-            'lajuCount'    => $lajuCount,
-            'recentSantri' => $recentSantri,
+            'santriCount'       => $santriCount,
+            'mukimCount'        => $mukimCount,
+            'lajuCount'         => $lajuCount,
+            'dormCount'         => $dormCount,
+            'roomCount'         => $roomCount,
+            'kelasCount'        => $kelasCount,
+            'recentSantri'      => $recentSantri,
+            'recentDormitories' => $recentDormitories,
+            'recentKelas'       => $recentKelas,
         ])->layout('layouts.app');
     }
 }

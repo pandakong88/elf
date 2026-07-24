@@ -1046,8 +1046,8 @@ class PusatKendaliAsramaKelas extends Component
         $kelasList = MadrasahKelas::query()
             ->with('waliKelas')
             ->withCount('enrollments')
-            ->when($this->genderFilter === 'L', fn($q) => $q->where('name', 'like', '%Putra%'))
-            ->when($this->genderFilter === 'P', fn($q) => $q->where('name', 'like', '%Putri%'))
+            ->when($this->genderFilter === 'L', fn($q) => $q->where(fn($sq) => $sq->where('name', 'like', '%(Pa)%')->orWhere('name', 'like', '%Pa%')->orWhere('name', 'like', '%Putra%')->orWhere('name', 'like', '%(L)%')->orWhereHas('enrollments.person', fn($pq) => $pq->where('gender', 'L'))))
+            ->when($this->genderFilter === 'P', fn($q) => $q->where(fn($sq) => $sq->where('name', 'like', '%(Pi)%')->orWhere('name', 'like', '%Pi%')->orWhere('name', 'like', '%Putri%')->orWhere('name', 'like', '%(P)%')->orWhereHas('enrollments.person', fn($pq) => $pq->where('gender', 'P'))))
             ->when($this->search, fn($q) => $q->where('name', 'like', '%' . $this->search . '%'))
             ->orderBy('jenjang')
             ->orderBy('name')
@@ -1060,7 +1060,7 @@ class PusatKendaliAsramaKelas extends Component
                 ->when($this->genderFilter, fn($q) => $q->where('gender', $this->genderFilter))
                 ->when($this->dormitoryFilter, fn($q) => $q->where('id', $this->dormitoryFilter))
                 ->with(['rooms' => function ($rq) {
-                    $rq->active()->with(['currentAssignments' => function ($caq) {
+                    $rq->active()->orderByRaw('LENGTH(name) ASC, name ASC')->with(['currentAssignments' => function ($caq) {
                         $caq->with(['person.santriProfile', 'person.activeRoles', 'person.madrasahEnrollments.kelas']);
                     }]);
                 }])
@@ -1071,8 +1071,8 @@ class PusatKendaliAsramaKelas extends Component
         $baganKelasData = collect();
         if ($this->activeTab === 'bagan-kelas') {
             $baganKelasData = MadrasahKelas::where('is_active', true)
-                ->when($this->genderFilter === 'L', fn($q) => $q->where('name', 'like', '%Putra%'))
-                ->when($this->genderFilter === 'P', fn($q) => $q->where('name', 'like', '%Putri%'))
+                ->when($this->genderFilter === 'L', fn($q) => $q->where(fn($sq) => $sq->where('name', 'like', '%(Pa)%')->orWhere('name', 'like', '%Pa%')->orWhere('name', 'like', '%Putra%')->orWhere('name', 'like', '%(L)%')->orWhereHas('enrollments.person', fn($pq) => $pq->where('gender', 'L'))))
+                ->when($this->genderFilter === 'P', fn($q) => $q->where(fn($sq) => $sq->where('name', 'like', '%(Pi)%')->orWhere('name', 'like', '%Pi%')->orWhere('name', 'like', '%Putri%')->orWhere('name', 'like', '%(P)%')->orWhereHas('enrollments.person', fn($pq) => $pq->where('gender', 'P'))))
                 ->when($this->kelasFilter, fn($q) => $q->where('id', $this->kelasFilter))
                 ->with(['waliKelas', 'enrollments' => function ($eq) {
                     $eq->where('is_active', true)->with(['person.santriProfile', 'person.activeRoles', 'person.roomAssignments.room.dormitory']);
@@ -1095,8 +1095,8 @@ class PusatKendaliAsramaKelas extends Component
             ->get();
 
         $kelasOptions = MadrasahKelas::where('is_active', true)
-            ->when($registrationGender === 'L', fn($q) => $q->where('name', 'like', '%Putra%'))
-            ->when($registrationGender === 'P', fn($q) => $q->where('name', 'like', '%Putri%'))
+            ->when($registrationGender === 'L', fn($q) => $q->where(fn($sq) => $sq->where('name', 'like', '%(Pa)%')->orWhere('name', 'like', '%Pa%')->orWhere('name', 'like', '%Putra%')->orWhere('name', 'like', '%(L)%')->orWhereHas('enrollments.person', fn($pq) => $pq->where('gender', 'L'))))
+            ->when($registrationGender === 'P', fn($q) => $q->where(fn($sq) => $sq->where('name', 'like', '%(Pi)%')->orWhere('name', 'like', '%Pi%')->orWhere('name', 'like', '%Putri%')->orWhere('name', 'like', '%(P)%')->orWhereHas('enrollments.person', fn($pq) => $pq->where('gender', 'P'))))
             ->orderBy('jenjang')
             ->orderBy('name')
             ->get();

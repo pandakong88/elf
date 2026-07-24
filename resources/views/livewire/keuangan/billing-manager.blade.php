@@ -281,30 +281,44 @@
                             </div>
                         </div>
 
-                        <div class="flex flex-wrap items-center justify-end gap-3 pt-2">
+                        <div class="flex flex-col sm:flex-row flex-wrap items-center justify-between gap-3 pt-2">
                             @php
                                 $selectedConfig = $genConfigId ? $activeConfigs->firstWhere('id', $genConfigId) : null;
                             @endphp
 
                             @if($selectedConfig)
                                 @if($selectedConfig->interval === 'monthly')
-                                    <button wire:click="generateFullAcademicYearFromConfig" 
-                                            wire:confirm="Apakah Anda yakin ingin men-generate tagihan untuk 1 tahun ajaran penuh (12 bulan) sekaligus mulai dari Juli tahun {{ $genYear }}?"
-                                            class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition-all shadow-md flex items-center gap-2">
-                                        <span>📅 Terbitkan 1 Tahun Ajaran (12 Bulan)</span>
-                                    </button>
+                                    <div class="w-full grid grid-cols-1 sm:grid-cols-3 gap-2 bg-slate-50 dark:bg-slate-950/60 p-2.5 rounded-2xl border border-slate-200/60 dark:border-slate-800">
+                                        <button type="button" wire:click="generateFullAcademicYearFromConfig" 
+                                                wire:confirm="Apakah Anda yakin ingin men-generate tagihan 1 Tahun Ajaran (12 Bulan) mulai dari Juli {{ $genYear }} s/d Juni {{ $genYear + 1 }}?"
+                                                class="px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-[10px] font-extrabold transition-all shadow-xs flex items-center justify-center gap-1.5 text-center">
+                                            <span>🎓 1 Thn Ajaran (Juli-Juni)</span>
+                                        </button>
+                                        <button type="button" wire:click="generateCalendarYearFromConfig" 
+                                                wire:confirm="Apakah Anda yakin ingin men-generate tagihan 1 Tahun Kalender (12 Bulan) dari Januari {{ $genYear }} s/d Desember {{ $genYear }}?"
+                                                class="px-3 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-[10px] font-extrabold transition-all shadow-xs flex items-center justify-center gap-1.5 text-center">
+                                            <span>📆 1 Thn Kalender (Jan-Des)</span>
+                                        </button>
+                                        <button type="button" wire:click="generateCustom12MonthsFromConfig" 
+                                                wire:confirm="Apakah Anda yakin ingin men-generate tagihan 12 bulan berurutan mulai dari Bulan {{ $genMonth }}/{{ $genYear }}?"
+                                                class="px-3 py-2 bg-sky-600 hover:bg-sky-700 text-white rounded-xl text-[10px] font-extrabold transition-all shadow-xs flex items-center justify-center gap-1.5 text-center">
+                                            <span>🔄 12 Bln (Mulai Bln {{ $genMonth }})</span>
+                                        </button>
+                                    </div>
                                 @elseif($selectedConfig->interval === 'semester')
-                                    <button wire:click="generateFullAcademicYearFromConfig" 
-                                            wire:confirm="Apakah Anda yakin ingin men-generate tagihan me2 semester sekaligus di tahun {{ $genYear }}?"
+                                    <button type="button" wire:click="generateFullAcademicYearFromConfig" 
+                                            wire:confirm="Apakah Anda yakin ingin men-generate tagihan 2 semester sekaligus di tahun {{ $genYear }}?"
                                             class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition-all shadow-md flex items-center gap-2">
-                                        <span>📅 Terbitkan 2 Semester sekaligus</span>
+                                        <span>📅 Terbitkan 2 Semester Sekaligus</span>
                                     </button>
                                 @endif
                             @endif
 
-                            <button wire:click="generateDynamicBills" class="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-all shadow-md flex items-center gap-2">
-                                <span>Mulai Terbitkan Periode Terpilih</span>
-                            </button>
+                            <div class="w-full flex justify-end">
+                                <button type="button" wire:click="generateDynamicBills" class="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-all shadow-md flex items-center gap-2">
+                                    <span>⚡ Terbitkan Periode Terpilih Ini</span>
+                                </button>
+                            </div>
                         </div>
                     </div>
 

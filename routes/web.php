@@ -26,6 +26,8 @@ Route::middleware('auth')->group(function () {
     Route::get('/setup/santri', \App\Livewire\System\SantriImportManager::class)->name('setup.santri');
     Route::get('/system/users/download-template', [\App\Http\Controllers\SystemController::class, 'downloadUserImportTemplate'])->name('system.users.download-template');
     Route::get('/system/santri/download-template', [\App\Http\Controllers\SystemController::class, 'downloadSantriImportTemplate'])->name('system.santri.download-template');
+    Route::get('/system/asrama/download-template', [\App\Http\Controllers\SystemController::class, 'downloadAsramaImportTemplate'])->name('system.asrama.download-template');
+    Route::get('/system/kelas/download-template', [\App\Http\Controllers\SystemController::class, 'downloadKelasImportTemplate'])->name('system.kelas.download-template');
     
     // Livewire Kepengasuhan Pages
     Route::get('/kepengasuhan/asrama-kelas', \App\Livewire\Kepengasuhan\PusatKendaliAsramaKelas::class)->name('kepengasuhan.asrama-kelas');
@@ -34,7 +36,6 @@ Route::middleware('auth')->group(function () {
     Route::get('/kepengasuhan/perizinan',   \App\Livewire\Kepengasuhan\PerizinanList::class)->name('kepengasuhan.perizinan');
     Route::get('/kepengasuhan/violations',  \App\Livewire\Kepengasuhan\ViolationList::class)->name('kepengasuhan.violations');
     Route::get('/kepengasuhan/activities',  \App\Livewire\Kepengasuhan\ActivityAttendanceSheet::class)->name('kepengasuhan.activities');
-    Route::get('/kepengasuhan/sensus',      \App\Livewire\Kepengasuhan\CensusManager::class)->name('kepengasuhan.sensus'); // Sensus v2 (legacy)
     Route::get('/kepengasuhan/wali-saudara', \App\Livewire\Kepengasuhan\GuardianSiblingManager::class)->name('kepengasuhan.wali-saudara');
 
     // Livewire Madrasah Pages
@@ -58,8 +59,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/keuangan/majek', \App\Livewire\Keuangan\MajekManager::class)->name('keuangan.majek');
     Route::get('/keuangan/tarif-pendaftaran', \App\Livewire\Keuangan\RegistrationTariffManager::class)->name('keuangan.tarif-pendaftaran');
 
-    // Madrasah Pages
-    Route::get('/madrasah/kelas', \App\Livewire\Madrasah\KelasManager::class)->name('madrasah.kelas');
+
 
     // Printable Checklists (No Auth Layout)
     Route::get('/print/checklist-komplek', [\App\Http\Controllers\KeuanganPrintController::class, 'checklistKomplek'])->name('print.checklist-komplek');

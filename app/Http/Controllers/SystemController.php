@@ -26,4 +26,22 @@ class SystemController extends Controller
 
         return Excel::download(new SantriImportTemplateExport(), 'Template_Setup_Santri_dan_Wali.xlsx');
     }
+
+    public function downloadAsramaImportTemplate(): BinaryFileResponse
+    {
+        if (!auth()->check()) {
+            abort(403, 'Anda harus login untuk mengunduh template.');
+        }
+
+        return Excel::download(new \App\Exports\AsramaImportTemplateExport(), 'Template_Setup_Asrama_dan_Kamar.xlsx');
+    }
+
+    public function downloadKelasImportTemplate(): BinaryFileResponse
+    {
+        if (!auth()->check()) {
+            abort(403, 'Anda harus login untuk mengunduh template.');
+        }
+
+        return Excel::download(new \App\Exports\KelasImportTemplateExport(), 'Template_Setup_Kelas_Madrasah.xlsx');
+    }
 }

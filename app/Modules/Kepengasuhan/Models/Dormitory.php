@@ -36,7 +36,8 @@ class Dormitory extends Model
 
     public function rooms(): HasMany
     {
-        return $this->hasMany(Room::class, 'dormitory_id');
+        return $this->hasMany(Room::class, 'dormitory_id')
+            ->orderByRaw('LENGTH(name) ASC, name ASC');
     }
 
     public function scopeActive($query)

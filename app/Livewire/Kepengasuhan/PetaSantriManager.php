@@ -372,9 +372,9 @@ class PetaSantriManager extends Component
                     }]);
 
                 if ($this->genderFilter === 'L') {
-                    $kelasQuery->where('name', 'like', '%Putra%');
+                    $kelasQuery->where(fn($sq) => $sq->where('name', 'like', '%(Pa)%')->orWhere('name', 'like', '%Pa%')->orWhere('name', 'like', '%Putra%')->orWhere('name', 'like', '%(L)%')->orWhereHas('enrollments.person', fn($pq) => $pq->where('gender', 'L')));
                 } elseif ($this->genderFilter === 'P') {
-                    $kelasQuery->where('name', 'like', '%Putri%');
+                    $kelasQuery->where(fn($sq) => $sq->where('name', 'like', '%(Pi)%')->orWhere('name', 'like', '%Pi%')->orWhere('name', 'like', '%Putri%')->orWhere('name', 'like', '%(P)%')->orWhereHas('enrollments.person', fn($pq) => $pq->where('gender', 'P')));
                 }
 
                 if ($this->kelasFilter) {
@@ -395,8 +395,8 @@ class PetaSantriManager extends Component
             ->get();
 
         $kelasOptions = MadrasahKelas::where('is_active', true)
-            ->when($this->genderFilter === 'L', fn($q) => $q->where('name', 'like', '%Putra%'))
-            ->when($this->genderFilter === 'P', fn($q) => $q->where('name', 'like', '%Putri%'))
+            ->when($this->genderFilter === 'L', fn($q) => $q->where(fn($sq) => $sq->where('name', 'like', '%(Pa)%')->orWhere('name', 'like', '%Pa%')->orWhere('name', 'like', '%Putra%')->orWhere('name', 'like', '%(L)%')->orWhereHas('enrollments.person', fn($pq) => $pq->where('gender', 'L'))))
+            ->when($this->genderFilter === 'P', fn($q) => $q->where(fn($sq) => $sq->where('name', 'like', '%(Pi)%')->orWhere('name', 'like', '%Pi%')->orWhere('name', 'like', '%Putri%')->orWhere('name', 'like', '%(P)%')->orWhereHas('enrollments.person', fn($pq) => $pq->where('gender', 'P'))))
             ->orderBy('jenjang')
             ->orderBy('name')
             ->get();
