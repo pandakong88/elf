@@ -1,0 +1,1178 @@
+<?php
+
+namespace App\Livewire\Keuangan;
+
+use Carbon\Carbon;
+use Livewire\Component;
+use Livewire\WithPagination;
+use Livewire\Attributes\Computed;
+use App\Modules\Keuangan\Models\MajekPeriod;
+use App\Modules\Keuangan\Models\MajekRegistration;
+use App\Modules\Keuangan\Models\Bill;
+use App\Modules\Keuangan\Models\BillPayment;
+use App\Modules\Core\Models\Person;
+use App\Modules\Kepengasuhan\Models\Dormitory;
+use App\Traits\HasGenderScope;
+use Illuminate\Support\Facades\DB;
+
+class MajekManager extends Component
+{
+    use WithPagination, HasGenderScope;
+
+    // ─── Navigation ──────────────────────────────────────────────────────────
+    public int    $month;
+    public int    $year;
+
+    // ─── Period Setup Modal ───────────────────────────────────────────────────
+    public bool   $showPeriodModal   = false;
+    public int    $periodActiveDays  = 30;
+    public float  $periodTarifPerHari = 3333.33;
+    public float  $periodTarifPerHariPutri = 3000.00;
+    public string $periodNotes       = '';
+
+    // ─── Add Participant Modal (Shared Tab) ──────────────────────────────────
+    public bool   $showAddModal      = false;
+    public string $addTab            = 'komplek'; // 'komplek' | 'pencarian'
+
+    // ─── Tab Komplek (Bulk) ───────────────────────────────────────────────────
+    public string $selectedDormitoryId = '';
+    public array  $dormitoryStudents  = [];      // Array of student details
+    public array  $bulkSelections     = [];      // [person_id => bool]
+    public array  $bulkSessions       = [];      // [person_id => '2x'|'pagi'|'sore']
+    public array  $bulkDays           = [];      // [person_id => int]
+    public array  $bulkNotes          = [];      // [person_id => string]
+
+    // ─── Tab Pencarian (Single) ───────────────────────────────────────────────
+    public string $searchQuery       = '';
+    public array  $searchResults     = [];
+    public string $selectedPersonId  = '';
+    public string $selectedPersonName = '';
+    public string $selectedSesi      = '2x';     // '2x' | 'pagi' | 'sore'
+    public int    $selectedPersonDays = 30;
+    public string $selectedPersonNotes = '';
+
+    // ─── Edit Participant Modal ───────────────────────────────────────────────
+    public bool   $showEditModal     = false;
+    public ?string $editRegId        = null;
+    public string $editPersonName    = '';
+    public string $editSesi          = '2x';
+    public int    $editDays          = 30;
+    public string $editNotes         = '';
+
+    // ─── Delete Participant Confirmation Modal ─────────────────────────────────
+    public bool   $showDeleteModal   = false;
+    public ?string $deleteRegId      = null;
+    public string $deletePersonName  = '';
+
+    // ─── Payment Checklist ────────────────────────────────────────────────────
+    public array  $paymentChecks     = [];      // [registration_id => bool]
+    public array  $paymentAmounts    = [];      // [registration_id => float|string]
+    public string $payMethod         = 'cash';
+    public bool   $showConfirmModal  = false;
+    public bool   $confirmCheck      = false;
+
+    // ─── Totals (updated reactively) ─────────────────────────────────────────
+    public float  $totalChecked      = 0.0;
+    public int    $countChecked      = 0;
+
+    // ─── Flash ───────────────────────────────────────────────────────────────
+    public string $flashSuccess      = '';
+    public string $flashError        = '';
+
+    // ─── Main Participant Table Filter & Search ────────────────────────────────
+    public string $searchParticipant = '';
+    public array  $filterDormitoryIds = [];
+    public string $filterStatus = 'all'; // 'all' | 'paid' | 'unpaid' | 'partial'
+
+    public function updatingSearchParticipant(): void { $this->resetPage(); }
+    public function updatingFilterDormitoryIds(): void { $this->resetPage(); }
+    public function updatingFilterStatus(): void { $this->resetPage(); }
+
+    protected $queryString = [
+        'searchParticipant' => ['except' => ''],
+        'filterDormitoryIds' => ['except' => []],
+        'filterStatus' => ['except' => 'all'],
+    ];
+
+    // =========================================================================
+    // Lifecycle
+    // =========================================================================
+
+    public function mount(): void
+    {
+        $user = auth()->user();
+        if ($user && ! ($user->hasRole('super-admin') || $user->hasRole('manajemen') || $user->hasRole('pengasuh') || $user->hasRole('bendahara-pondok') || $user->hasRole('bendahara-putra') || $user->hasRole('bendahara-putri'))) {
+            abort(403, 'Anda tidak memiliki akses ke modul Majek (Katering Asrama Pondok).');
+        }
+
+        $this->month = (int) now()->format('m');
+        $this->year  = (int) now()->format('Y');
+
+        $this->recalculateAllUnpaidRegistrations();
+    }
+
+    // =========================================================================
+    // Computed Properties
+    // =========================================================================
+
+    #[Computed]
+    public function activePeriod(): ?MajekPeriod
+    {
+        return MajekPeriod::where('month', $this->month)
+                          ->where('year',  $this->year)
+                          ->first();
+    }
+
+    #[Computed]
+    public function registrations()
+    {
+        $query = MajekRegistration::with([
+                'person',
+                'person.roomAssignments' => fn($q) => $q->active()->with('room.dormitory'),
+            ])
+            ->where('month', $this->month)
+            ->where('year',  $this->year)
+            ->whereHas('person', fn($q) => $q->when($this->genderScope(), fn($sq, $g) => $sq->where('gender', $g)));
+
+        // Filter: Search Participant
+        if (!empty($this->searchParticipant)) {
+            $query->whereHas('person', function ($q) {
+                $q->where('name', 'like', '%' . $this->searchParticipant . '%')
+                  ->orWhere('nik', 'like', '%' . $this->searchParticipant . '%')
+                  ->orWhereHas('santriProfile', function ($sp) {
+                      $sp->where('additional_info->nis', 'like', '%' . $this->searchParticipant . '%')
+                         ->orWhere('additional_info->nisn', 'like', '%' . $this->searchParticipant . '%');
+                  });
+            });
+        }
+
+        // Filter: Dormitories (Multi-select)
+        if (!empty($this->filterDormitoryIds)) {
+            $query->whereHas('person.roomAssignments', function ($q) {
+                $q->active()->whereHas('room', function ($r) {
+                    $r->whereIn('dormitory_id', $this->filterDormitoryIds);
+                });
+            });
+        }
+
+        // Filter: Status (Lunas, Belum, Sebagian)
+        if ($this->filterStatus !== 'all') {
+            if ($this->filterStatus === 'paid') {
+                $query->whereHas('bills')
+                      ->whereDoesntHave('bills', fn($b) => $b->where('status', '!=', 'paid'));
+            } elseif ($this->filterStatus === 'unpaid') {
+                $query->where(fn($q) => 
+                    $q->whereDoesntHave('bills')
+                      ->orWhere(fn($sq) => $sq->whereHas('bills')->whereDoesntHave('bills', fn($b) => $b->where('status', '!=', 'unpaid')))
+                );
+            } elseif ($this->filterStatus === 'partial') {
+                $query->whereHas('bills')
+                      ->where(function($q) {
+                          $q->whereHas('bills', fn($b) => $b->where('status', 'partial'))
+                            ->orWhere(function($sq) {
+                                $sq->whereHas('bills', fn($b) => $b->where('status', 'paid'))
+                                  ->whereHas('bills', fn($b) => $b->where('status', 'unpaid'));
+                            });
+                      });
+            }
+        }
+
+        // Order by person's name using join
+        return $query->select('majek_registrations.*')
+            ->join('persons', 'majek_registrations.person_id', '=', 'persons.id')
+            ->orderBy('persons.name', 'asc')
+            ->paginate(15);
+    }
+
+    #[Computed]
+    public function overallStats(): array
+    {
+        $total = MajekRegistration::where('month', $this->month)
+                                  ->where('year',  $this->year)
+                                  ->whereHas('person', fn($q) => $q->when($this->genderScope(), fn($sq, $g) => $sq->where('gender', $g)))
+                                  ->count();
+
+        $paid = MajekRegistration::where('month', $this->month)
+                                 ->where('year',  $this->year)
+                                 ->whereHas('person', fn($q) => $q->when($this->genderScope(), fn($sq, $g) => $sq->where('gender', $g)))
+                                 ->whereHas('bills')
+                                 ->whereDoesntHave('bills', fn($b) => $b->where('status', '!=', 'paid'))
+                                 ->count();
+
+        $partial = MajekRegistration::where('month', $this->month)
+                                    ->where('year',  $this->year)
+                                    ->whereHas('person', fn($q) => $q->when($this->genderScope(), fn($sq, $g) => $sq->where('gender', $g)))
+                                    ->whereHas('bills', fn($b) => $b->where('amount_paid', '>', 0))
+                                    ->whereHas('bills', fn($b) => $b->where('status', '!=', 'paid'))
+                                    ->count();
+
+        return [
+            'total'   => $total,
+            'paid'    => $paid,
+            'partial' => $partial,
+            'unpaid'  => max(0, $total - $paid - $partial),
+        ];
+    }
+
+    #[Computed]
+    public function paidDetails(): array
+    {
+        $regIds = $this->registrations->pluck('id');
+        $result = [];
+        foreach ($regIds as $id) {
+            $bills = Bill::where('reference_id', $id)->get();
+            if ($bills->isEmpty()) {
+                $reg = MajekRegistration::find($id);
+                $total = $reg ? ((float)$reg->amount_pagi + (float)$reg->amount_sore) : 0;
+                $result[$id] = [
+                    'status'    => 'unpaid',
+                    'paid'      => 0.0,
+                    'remaining' => $total,
+                ];
+                continue;
+            }
+
+            $totalAmount = $bills->sum('amount');
+            $totalPaid   = $bills->sum('amount_paid');
+            $remaining   = max(0, $totalAmount - $totalPaid);
+
+            if ($totalPaid >= $totalAmount && $totalAmount > 0) {
+                $status = 'paid';
+            } elseif ($totalPaid > 0) {
+                $status = 'partial';
+            } else {
+                $status = 'unpaid';
+            }
+
+            $result[$id] = [
+                'status'    => $status,
+                'paid'      => (float)$totalPaid,
+                'remaining' => (float)$remaining,
+            ];
+        }
+        return $result;
+    }
+
+    #[Computed]
+    public function paidStatuses(): array
+    {
+        $details = $this->paidDetails;
+        $statuses = [];
+        foreach ($details as $id => $item) {
+            $statuses[$id] = $item['status'];
+        }
+        return $statuses;
+    }
+
+    #[Computed]
+    public function monthLabel(): string
+    {
+        return Carbon::createFromDate($this->year, $this->month, 1)->translatedFormat('F Y');
+    }
+
+    #[Computed]
+    public function tarif2x(): float
+    {
+        return $this->activePeriod ? $this->activePeriod->tarif2x : 0;
+    }
+
+    #[Computed]
+    public function tarif1x(): float
+    {
+        return $this->activePeriod ? $this->activePeriod->tarif1x : 0;
+    }
+
+    #[Computed]
+    public function tarif2xPutri(): float
+    {
+        return $this->activePeriod ? $this->activePeriod->tarif2x_putri : 0;
+    }
+
+    #[Computed]
+    public function tarif1xPutri(): float
+    {
+        return $this->activePeriod ? $this->activePeriod->tarif1x_putri : 0;
+    }
+
+    #[Computed]
+    public function dormitories()
+    {
+        return Dormitory::active()
+            ->when($this->genderScope(), fn($q, $g) => $q->where('gender', $g))
+            ->orderBy('name')
+            ->get();
+    }
+
+    #[Computed]
+    public function previewData(): array
+    {
+        $checkedIds = array_keys(array_filter($this->paymentChecks));
+        if (empty($checkedIds)) {
+            return [];
+        }
+
+        $regs = MajekRegistration::with('person')->whereIn('id', $checkedIds)->get();
+
+        $data = [];
+        foreach ($regs as $reg) {
+            $sesiLabel = match(true) {
+                $reg->session_pagi && $reg->session_sore => '2x (Pagi + Sore)',
+                $reg->session_pagi                       => '1x Pagi',
+                $reg->session_sore                       => '1x Sore',
+                default                                  => '—',
+            };
+
+            $remaining = $this->getRemainingUnpaidAmount($reg->id);
+            $payAmt = isset($this->paymentAmounts[$reg->id]) && $this->paymentAmounts[$reg->id] !== ''
+                ? (float)$this->paymentAmounts[$reg->id]
+                : $remaining;
+
+            $data[] = [
+                'id'        => $reg->id,
+                'name'      => $reg->person->name,
+                'sesi'      => $sesiLabel,
+                'total'     => (float)$reg->amount_pagi + (float)$reg->amount_sore,
+                'remaining' => $remaining,
+                'pay_amt'   => $payAmt,
+            ];
+        }
+        return $data;
+    }
+
+    #[Computed]
+    public function selectedStudentsList(): array
+    {
+        $checkedIds = array_keys(array_filter($this->bulkSelections));
+        if (empty($checkedIds)) {
+            return [];
+        }
+
+        return Person::whereIn('id', $checkedIds)
+            ->orderBy('name')
+            ->get(['id', 'name'])
+            ->map(fn($p) => [
+                'id'   => $p->id,
+                'name' => $p->name,
+            ])
+            ->toArray();
+    }
+
+    // =========================================================================
+    // Navigation
+    // =========================================================================
+
+    public function incrementMonth(): void
+    {
+        if ($this->month === 12) { $this->month = 1; $this->year++; }
+        else $this->month++;
+        $this->resetPaymentState();
+        unset($this->activePeriod, $this->registrations, $this->paidStatuses, $this->paidDetails);
+        $this->recalculateAllUnpaidRegistrations();
+    }
+
+    public function decrementMonth(): void
+    {
+        if ($this->month === 1) { $this->month = 12; $this->year--; }
+        else $this->month--;
+        $this->resetPaymentState();
+        unset($this->activePeriod, $this->registrations, $this->paidStatuses, $this->paidDetails);
+        $this->recalculateAllUnpaidRegistrations();
+    }
+
+    // =========================================================================
+    // Period Setup Modal
+    // =========================================================================
+
+    public function openPeriodModal(): void
+    {
+        $period = $this->activePeriod;
+        $this->periodActiveDays        = $period ? $period->active_days               : 30;
+        $this->periodTarifPerHari      = $period ? (float) $period->tarif_per_hari    : 3333.33;
+        $this->periodTarifPerHariPutri = $period ? (float) ($period->tarif_per_hari_putri ?? 3000.00) : 3000.00;
+        $this->periodNotes             = $period ? ($period->notes ?? '')              : '';
+        $this->showPeriodModal         = true;
+    }
+
+    public function closePeriodModal(): void
+    {
+        $this->showPeriodModal = false;
+    }
+
+    public function savePeriod(): void
+    {
+        $this->validate([
+            'periodActiveDays'        => 'required|integer|min:1|max:31',
+            'periodTarifPerHari'      => 'required|numeric|min:1',
+            'periodTarifPerHariPutri' => 'required|numeric|min:1',
+        ], [
+            'periodActiveDays.required'        => 'Hari aktif wajib diisi.',
+            'periodActiveDays.min'             => 'Hari aktif minimal 1.',
+            'periodActiveDays.max'             => 'Hari aktif maksimal 31.',
+            'periodTarifPerHari.required'      => 'Tarif per hari Putra wajib diisi.',
+            'periodTarifPerHari.min'           => 'Tarif Putra harus lebih dari 0.',
+            'periodTarifPerHariPutri.required' => 'Tarif per hari Putri wajib diisi.',
+            'periodTarifPerHariPutri.min'      => 'Tarif Putri harus lebih dari 0.',
+        ]);
+
+        MajekPeriod::updateOrCreate(
+            ['month' => $this->month, 'year' => $this->year],
+            [
+                'active_days'          => $this->periodActiveDays,
+                'tarif_per_hari'       => $this->periodTarifPerHari,
+                'tarif_per_hari_putri' => $this->periodTarifPerHariPutri,
+                'notes'                => $this->periodNotes ?: null,
+                'created_by'           => auth()->id(),
+            ]
+        );
+
+        $this->recalculateAllUnpaidRegistrations();
+
+        unset($this->activePeriod, $this->tarif2x, $this->tarif1x, $this->tarif2xPutri, $this->tarif1xPutri);
+        $this->showPeriodModal = false;
+        $this->flashSuccess    = 'Konfigurasi periode berhasil disimpan.';
+    }
+
+    public function recalculateAllUnpaidRegistrations(): void
+    {
+        $period = $this->activePeriod;
+        if (!$period) return;
+
+        $allRegs = MajekRegistration::where('month', $this->month)
+                                    ->where('year',  $this->year)
+                                    ->with('person')
+                                    ->get();
+
+        foreach ($allRegs as $reg) {
+            $hasPaid = Bill::where('reference_id', $reg->id)->where('status', 'paid')->exists();
+            if (!$hasPaid) {
+                $this->recalculateRegistrationAmount($reg);
+            }
+        }
+    }
+
+    private function recalculateRegistrationAmount(MajekRegistration $reg): void
+    {
+        $period = $this->activePeriod;
+        if (!$period) return;
+
+        if (!$reg->relationLoaded('person')) {
+            $reg->load('person');
+        }
+
+        // Use custom active_days if set, otherwise use period default
+        $days = $reg->active_days ?? $period->active_days;
+        $dailyRate = $period->getTarifPerHariForGender($reg->person?->gender);
+
+        $t1x = $dailyRate * $days;
+        $reg->amount_pagi = $reg->session_pagi ? $t1x : 0;
+        $reg->amount_sore = $reg->session_sore ? $t1x : 0;
+        $reg->save();
+
+        // Also sync unpaid bills if present
+        $pagiBill = Bill::where('reference_id', $reg->id)->where('bill_type', 'majek_pagi')->first();
+        if ($pagiBill && $pagiBill->status !== 'paid') {
+            $pagiBill->amount = $t1x;
+            $pagiBill->save();
+            $pagiBill->recalculateStatus();
+        }
+
+        $soreBill = Bill::where('reference_id', $reg->id)->where('bill_type', 'majek_sore')->first();
+        if ($soreBill && $soreBill->status !== 'paid') {
+            $soreBill->amount = $t1x;
+            $soreBill->save();
+            $soreBill->recalculateStatus();
+        }
+    }
+
+    // =========================================================================
+    // Add Participant Modal (Tabs & Bulk Logic)
+    // =========================================================================
+
+    public function openAddModal(): void
+    {
+        if (!$this->activePeriod) {
+            $this->flashError = 'Buat konfigurasi periode terlebih dahulu sebelum mendaftarkan peserta.';
+            return;
+        }
+        $this->addTab            = 'komplek';
+        $this->selectedDormitoryId = '';
+        $this->dormitoryStudents  = [];
+        $this->bulkSelections     = [];
+        $this->bulkSessions       = [];
+        $this->bulkDays           = [];
+        $this->bulkNotes          = [];
+        $this->searchQuery       = '';
+        $this->searchResults     = [];
+        $this->selectedPersonId  = '';
+        $this->selectedPersonName = '';
+        $this->selectedSesi      = '2x';
+        $this->selectedPersonDays = $this->activePeriod->active_days;
+        $this->selectedPersonNotes = '';
+        $this->showAddModal      = true;
+    }
+
+    public function closeAddModal(): void
+    {
+        $this->showAddModal = false;
+    }
+
+    public function updatedSelectedDormitoryId(): void
+    {
+        $this->loadDormitoryStudents();
+    }
+
+    public function loadDormitoryStudents(): void
+    {
+        if (!$this->selectedDormitoryId) {
+            $this->dormitoryStudents = [];
+            return;
+        }
+
+        $registrationsMap = MajekRegistration::where('month', $this->month)
+                                             ->where('year',  $this->year)
+                                             ->get()
+                                             ->keyBy('person_id');
+
+        $students = Person::active()
+            ->whereHas('roomAssignments', function ($q) {
+                $q->active()->whereHas('room', function ($r) {
+                    $r->where('dormitory_id', $this->selectedDormitoryId);
+                });
+            })
+            ->when($this->genderScope(), fn($q, $g) => $q->where('gender', $g))
+            ->orderBy('name')
+            ->get();
+
+        $this->dormitoryStudents = [];
+        $defaultDays = $this->activePeriod ? $this->activePeriod->active_days : 30;
+
+        foreach ($students as $student) {
+            $reg = $registrationsMap->get($student->id);
+            $isReg = !is_null($reg);
+
+            $sesi = '2x';
+            if ($isReg) {
+                if ($reg->session_pagi && $reg->session_sore) {
+                    $sesi = '2x';
+                } elseif ($reg->session_pagi) {
+                    $sesi = 'pagi';
+                } else {
+                    $sesi = 'sore';
+                }
+            }
+
+            $this->dormitoryStudents[] = [
+                'id'            => $student->id,
+                'name'          => $student->name,
+                'is_registered' => $isReg,
+                'session'       => $sesi,
+                'days'          => $isReg ? $reg->active_days : $defaultDays,
+                'notes'         => $isReg ? ($reg->notes ?? '') : '',
+            ];
+            
+            // Only initialize defaults if not already selected, preventing wiping selections when shifting complexes
+            if (!$isReg && !isset($this->bulkSelections[$student->id])) {
+                $this->bulkSelections[$student->id] = false;
+                $this->bulkSessions[$student->id]   = '2x';
+                $this->bulkDays[$student->id]       = $defaultDays;
+                $this->bulkNotes[$student->id]      = '';
+            }
+        }
+    }
+
+    public function uncheckStudent(string $studentId): void
+    {
+        $this->bulkSelections[$studentId] = false;
+    }
+
+    public function addPesertaBulk(): void
+    {
+        $period = $this->activePeriod;
+        if (!$period) return;
+
+        $addedCount = 0;
+
+        $registeredIds = MajekRegistration::where('month', $this->month)
+                                          ->where('year',  $this->year)
+                                          ->pluck('person_id')
+                                          ->toArray();
+
+        $selectedPersonIds = array_keys(array_filter($this->bulkSelections));
+        $personsGenderMap = Person::whereIn('id', $selectedPersonIds)->pluck('gender', 'id')->toArray();
+
+        DB::transaction(function () use (&$addedCount, $period, $registeredIds, $personsGenderMap) {
+            foreach ($this->bulkSelections as $personId => $selected) {
+                if (!$selected) continue;
+                if (in_array($personId, $registeredIds)) continue; // skip already registered
+
+                $gender = $personsGenderMap[$personId] ?? 'L';
+                $dailyRate = $period->getTarifPerHariForGender($gender);
+
+                $sesi = $this->bulkSessions[$personId] ?? '2x';
+                $days = (int) ($this->bulkDays[$personId] ?? $period->active_days);
+                $notes = $this->bulkNotes[$personId] ?? '';
+
+                $t1x = $dailyRate * $days;
+
+                $reg = MajekRegistration::create([
+                    'person_id'    => $personId,
+                    'month'        => $this->month,
+                    'year'         => $this->year,
+                    'session_pagi' => in_array($sesi, ['pagi', '2x']),
+                    'session_sore' => in_array($sesi, ['sore', '2x']),
+                    'active_days'  => $days,
+                    'amount_pagi'  => in_array($sesi, ['pagi', '2x']) ? $t1x : 0,
+                    'amount_sore'  => in_array($sesi, ['sore', '2x']) ? $t1x : 0,
+                    'registered_by' => auth()->id(),
+                    'notes'        => $notes ?: null,
+                ]);
+
+                $this->createUnpaidBills($reg);
+
+                $addedCount++;
+            }
+        });
+
+        unset($this->registrations, $this->paidStatuses);
+        $this->showAddModal = false;
+        $this->selectedDormitoryId = '';
+        $this->dormitoryStudents = [];
+        $this->bulkSelections = [];
+        
+        if ($addedCount > 0) {
+            $this->flashSuccess = "$addedCount peserta berhasil didaftarkan.";
+        } else {
+            $this->flashError = "Tidak ada peserta terpilih untuk didaftarkan.";
+        }
+    }
+
+    public function switchTab(string $tab): void
+    {
+        $this->addTab = $tab;
+
+        if ($tab === 'pencarian') {
+            // Reset bulk complexes state
+            $this->selectedDormitoryId = '';
+            $this->dormitoryStudents   = [];
+            $this->bulkSelections      = [];
+            $this->bulkSessions        = [];
+            $this->bulkDays            = [];
+            $this->bulkNotes           = [];
+        } else {
+            // Reset single search state
+            $this->searchQuery         = '';
+            $this->searchResults       = [];
+            $this->selectedPersonId    = '';
+            $this->selectedPersonName  = '';
+            $this->selectedPersonNotes = '';
+            $this->selectedSesi        = '2x';
+            if ($this->activePeriod) {
+                $this->selectedPersonDays = $this->activePeriod->active_days;
+            }
+        }
+        $this->flashError = '';
+        $this->flashSuccess = '';
+    }
+
+    public function resetFilters(): void
+    {
+        $this->searchParticipant  = '';
+        $this->filterDormitoryIds = [];
+        $this->filterStatus       = 'all';
+        $this->resetPage();
+    }
+
+    // =========================================================================
+    // Single Participant Logic
+    // =========================================================================
+
+    public function updatedSearchQuery(): void
+    {
+        $this->flashError = '';
+        if (strlen(trim($this->searchQuery)) < 2) {
+            $this->searchResults = [];
+            return;
+        }
+
+        $registeredIds = MajekRegistration::where('month', $this->month)
+                                          ->where('year',  $this->year)
+                                          ->pluck('person_id')
+                                          ->toArray();
+
+        $results = Person::active()
+            ->whereHas('activeRoles', function ($q) {
+                $q->where('role_type', 'santri');
+            })
+            ->where('name', 'LIKE', '%' . trim($this->searchQuery) . '%')
+            ->when($this->genderScope(), fn($q, $g) => $q->where('gender', $g))
+            ->with(['roomAssignments' => fn($q) => $q->active()->with('room.dormitory')])
+            ->orderBy('name')
+            ->limit(8)
+            ->get();
+
+        $this->searchResults = $results->map(fn($p) => [
+            'id'            => $p->id,
+            'name'          => $p->name,
+            'dormitory'     => $p->roomAssignments->first()?->room?->dormitory?->name ?? '—',
+            'is_registered' => in_array($p->id, $registeredIds),
+        ])->toArray();
+    }
+
+    public function selectPerson(string $personId, string $personName): void
+    {
+        $this->selectedPersonId   = $personId;
+        $this->selectedPersonName = $personName;
+        $this->searchQuery        = $personName;
+        $this->searchResults      = [];
+        $this->selectedPersonDays = $this->activePeriod ? $this->activePeriod->active_days : 30;
+    }
+
+    public function addPeserta(): void
+    {
+        if (!$this->selectedPersonId) {
+            $this->flashError = 'Pilih santri terlebih dahulu dari hasil pencarian.';
+            return;
+        }
+
+        $period = $this->activePeriod;
+        if (!$period) return;
+
+        // Check if already registered
+        $exists = MajekRegistration::where('person_id', $this->selectedPersonId)
+                                   ->where('month', $this->month)
+                                   ->where('year',  $this->year)
+                                   ->exists();
+        if ($exists) {
+            $this->flashError = 'Santri ini sudah terdaftar untuk periode ini.';
+            return;
+        }
+
+        $days = (int)$this->selectedPersonDays;
+        if ($days < 1 || $days > 31) {
+            $this->flashError = 'Hari aktif khusus tidak valid (1-31).';
+            return;
+        }
+
+        $person = Person::find($this->selectedPersonId);
+        $dailyRate = $period->getTarifPerHariForGender($person?->gender);
+        $t1x = $dailyRate * $days;
+
+        DB::transaction(function () use ($days, $t1x) {
+            $reg = MajekRegistration::create([
+                'person_id'    => $this->selectedPersonId,
+                'month'        => $this->month,
+                'year'         => $this->year,
+                'session_pagi' => in_array($this->selectedSesi, ['pagi', '2x']),
+                'session_sore' => in_array($this->selectedSesi, ['sore', '2x']),
+                'active_days'  => $days,
+                'amount_pagi'  => in_array($this->selectedSesi, ['pagi', '2x']) ? $t1x : 0,
+                'amount_sore'  => in_array($this->selectedSesi, ['sore', '2x']) ? $t1x : 0,
+                'registered_by' => auth()->id(),
+                'notes'        => $this->selectedPersonNotes ?: null,
+            ]);
+
+            $this->createUnpaidBills($reg);
+        });
+
+        unset($this->registrations, $this->paidStatuses);
+        $this->showAddModal       = false;
+        $this->selectedPersonId   = '';
+        $this->selectedPersonName = '';
+        $this->searchQuery        = '';
+        $this->selectedPersonNotes = '';
+        $this->flashSuccess       = 'Peserta berhasil didaftarkan.';
+    }
+
+    // =========================================================================
+    // Edit Participant Modal
+    // =========================================================================
+
+    public function openEditModal(string $regId): void
+    {
+        $hasPaid = Bill::where('reference_id', $regId)
+                       ->where('status', 'paid')
+                       ->exists();
+
+        if ($hasPaid) {
+            $this->flashError = 'Pembayaran untuk peserta ini sudah lunas, tidak dapat diubah.';
+            return;
+        }
+
+        $reg = MajekRegistration::with('person')->find($regId);
+        if (!$reg) return;
+
+        $this->editRegId      = $regId;
+        $this->editPersonName = $reg->person->name;
+        
+        if ($reg->session_pagi && $reg->session_sore) {
+            $this->editSesi = '2x';
+        } elseif ($reg->session_pagi) {
+            $this->editSesi = 'pagi';
+        } else {
+            $this->editSesi = 'sore';
+        }
+
+        $this->editDays       = $reg->active_days ?? ($this->activePeriod ? $this->activePeriod->active_days : 30);
+        $this->editNotes      = $reg->notes ?? '';
+        $this->showEditModal  = true;
+    }
+
+    public function closeEditModal(): void
+    {
+        $this->showEditModal = false;
+    }
+
+    public function saveEdit(): void
+    {
+        $reg = MajekRegistration::with('person')->find($this->editRegId);
+        if (!$reg) return;
+
+        $period = $this->activePeriod;
+        if (!$period) return;
+
+        $dailyRate = $period->getTarifPerHariForGender($reg->person?->gender);
+        $t1x = $dailyRate * $this->editDays;
+
+        DB::transaction(function () use ($reg, $t1x) {
+            $reg->session_pagi = in_array($this->editSesi, ['pagi', '2x']);
+            $reg->session_sore = in_array($this->editSesi, ['sore', '2x']);
+            $reg->active_days  = $this->editDays;
+            $reg->amount_pagi  = in_array($this->editSesi, ['pagi', '2x']) ? $t1x : 0;
+            $reg->amount_sore  = in_array($this->editSesi, ['sore', '2x']) ? $t1x : 0;
+            $reg->notes        = $this->editNotes ?: null;
+            $reg->save();
+
+            // Pagi Bill
+            $pagiBill = Bill::where('reference_id', $reg->id)->where('bill_type', 'majek_pagi')->first();
+            if ($reg->session_pagi) {
+                if ($pagiBill) {
+                    if ($pagiBill->status !== 'paid') {
+                        $pagiBill->amount = $t1x;
+                        $pagiBill->save();
+                        $pagiBill->recalculateStatus();
+                    }
+                } else {
+                    Bill::create([
+                        'person_id'       => $reg->person_id,
+                        'bill_type'       => 'majek_pagi',
+                        'reference_id'    => $reg->id,
+                        'period_month'    => $reg->month,
+                        'period_year'     => $reg->year,
+                        'title'           => 'Katering Pagi ' . $this->monthLabel,
+                        'amount'          => $t1x,
+                        'amount_paid'     => 0,
+                        'status'          => 'unpaid',
+                        'managed_by_role' => 'bendahara-pusat',
+                        'created_by'      => auth()->id(),
+                    ]);
+                }
+            } else {
+                if ($pagiBill && $pagiBill->status !== 'paid') {
+                    $pagiBill->delete();
+                }
+            }
+
+            // Sore Bill
+            $soreBill = Bill::where('reference_id', $reg->id)->where('bill_type', 'majek_sore')->first();
+            if ($reg->session_sore) {
+                if ($soreBill) {
+                    if ($soreBill->status !== 'paid') {
+                        $soreBill->amount = $t1x;
+                        $soreBill->save();
+                        $soreBill->recalculateStatus();
+                    }
+                } else {
+                    Bill::create([
+                        'person_id'       => $reg->person_id,
+                        'bill_type'       => 'majek_sore',
+                        'reference_id'    => $reg->id,
+                        'period_month'    => $reg->month,
+                        'period_year'     => $reg->year,
+                        'title'           => 'Katering Sore ' . $this->monthLabel,
+                        'amount'          => $t1x,
+                        'amount_paid'     => 0,
+                        'status'          => 'unpaid',
+                        'managed_by_role' => 'bendahara-pusat',
+                        'created_by'      => auth()->id(),
+                    ]);
+                }
+            } else {
+                if ($soreBill && $soreBill->status !== 'paid') {
+                    $soreBill->delete();
+                }
+            }
+        });
+
+        unset($this->registrations, $this->paidStatuses);
+        $this->showEditModal = false;
+        $this->flashSuccess  = 'Detail peserta berhasil diperbarui.';
+    }
+
+    // =========================================================================
+    // Payment Checklist & Installment Logic
+    // =========================================================================
+
+    public function updatedPaymentChecks(): void
+    {
+        $this->initializePaymentAmounts();
+        $this->recalculateTotals();
+    }
+
+    public function updatedPaymentAmounts(): void
+    {
+        $this->recalculateTotals();
+    }
+
+    private function initializePaymentAmounts(): void
+    {
+        foreach ($this->paymentChecks as $regId => $checked) {
+            if ($checked) {
+                if (!isset($this->paymentAmounts[$regId]) || $this->paymentAmounts[$regId] === '' || $this->paymentAmounts[$regId] === null) {
+                    $this->paymentAmounts[$regId] = $this->getRemainingUnpaidAmount($regId);
+                }
+            } else {
+                unset($this->paymentAmounts[$regId]);
+            }
+        }
+    }
+
+    public function getRemainingUnpaidAmount(string $regId): float
+    {
+        $bills = Bill::where('reference_id', $regId)->where('status', '!=', 'paid')->get();
+        if ($bills->isNotEmpty()) {
+            return (float) $bills->sum(fn($b) => max(0, $b->amount - $b->amount_paid));
+        }
+
+        $reg = MajekRegistration::find($regId);
+        if (!$reg) return 0.0;
+        return (float)$reg->amount_pagi + (float)$reg->amount_sore;
+    }
+
+    private function recalculateTotals(): void
+    {
+        $checkedIds = array_keys(array_filter($this->paymentChecks));
+        if (empty($checkedIds)) {
+            $this->totalChecked = 0.0;
+            $this->countChecked = 0;
+            return;
+        }
+
+        $total = 0.0;
+        foreach ($checkedIds as $regId) {
+            $remaining = $this->getRemainingUnpaidAmount($regId);
+            $amt = isset($this->paymentAmounts[$regId]) && $this->paymentAmounts[$regId] !== ''
+                ? (float)$this->paymentAmounts[$regId]
+                : $remaining;
+            $total += max(0, $amt);
+        }
+        $this->totalChecked = $total;
+        $this->countChecked = count($checkedIds);
+    }
+
+    public function confirmSetoran(): void
+    {
+        if ($this->countChecked === 0) return;
+        $this->initializePaymentAmounts();
+        $this->recalculateTotals();
+        $this->confirmCheck     = false;
+        $this->showConfirmModal = true;
+    }
+
+    public function cancelConfirm(): void
+    {
+        $this->showConfirmModal = false;
+        $this->confirmCheck     = false;
+    }
+
+    public function prosesSetoran(): void
+    {
+        if (!$this->confirmCheck) return;
+
+        // Validation for overpayments
+        foreach ($this->paymentChecks as $regId => $checked) {
+            if (!$checked) continue;
+
+            $reg = MajekRegistration::with('person')->find($regId);
+            if (!$reg) continue;
+
+            $remaining = $this->getRemainingUnpaidAmount($reg->id);
+            $payAmount = isset($this->paymentAmounts[$regId]) && $this->paymentAmounts[$regId] !== ''
+                ? (float)$this->paymentAmounts[$regId]
+                : $remaining;
+
+            if ($payAmount > $remaining + 0.01) {
+                $this->flashError = 'Nominal setoran untuk ' . $reg->person->name . ' (Rp ' . number_format($payAmount, 0, ',', '.') . ') melebihi sisa tagihan (Maksimal Rp ' . number_format($remaining, 0, ',', '.') . ').';
+                return;
+            }
+        }
+
+        DB::transaction(function () {
+            foreach ($this->paymentChecks as $regId => $checked) {
+                if (!$checked) continue;
+
+                $reg = MajekRegistration::find($regId);
+                if (!$reg) continue;
+
+                $remaining = $this->getRemainingUnpaidAmount($reg->id);
+                $payAmount = isset($this->paymentAmounts[$regId]) && $this->paymentAmounts[$regId] !== ''
+                    ? (float)$this->paymentAmounts[$regId]
+                    : $remaining;
+
+                $payAmount = min($payAmount, $remaining);
+
+                if ($payAmount <= 0) continue;
+
+                $this->applyCustomPayment($reg, $payAmount);
+            }
+        });
+
+        $this->resetPaymentState();
+        unset($this->paidStatuses, $this->paidDetails);
+        $this->flashSuccess = 'Setoran Majek berhasil disimpan.';
+    }
+
+    private function applyCustomPayment(MajekRegistration $reg, float $payAmount): void
+    {
+        $bills = Bill::where('reference_id', $reg->id)->orderBy('bill_type', 'asc')->get();
+        if ($bills->isEmpty()) {
+            $this->createUnpaidBills($reg);
+            $bills = Bill::where('reference_id', $reg->id)->orderBy('bill_type', 'asc')->get();
+        }
+
+        $remainingToPay = $payAmount;
+
+        foreach ($bills as $bill) {
+            if ($remainingToPay <= 0) break;
+            if ($bill->status === 'paid') continue;
+
+            $billRemaining = (float)($bill->amount - $bill->amount_paid);
+            if ($billRemaining <= 0) continue;
+
+            $allocate = min($remainingToPay, $billRemaining);
+
+            BillPayment::create([
+                'bill_id'        => $bill->id,
+                'amount_paid'    => $allocate,
+                'payment_date'   => now()->toDateString(),
+                'payment_method' => $this->payMethod,
+                'logged_by'      => auth()->id(),
+                'notes'          => 'Setoran Majek ' . $this->monthLabel . ($allocate < $billRemaining ? ' (Cicilan)' : ''),
+            ]);
+
+            $bill->recalculateStatus();
+            $remainingToPay -= $allocate;
+        }
+    }
+
+    private function createUnpaidBills(MajekRegistration $reg): void
+    {
+        $period = $this->activePeriod;
+        if (!$period) return;
+
+        if (!$reg->relationLoaded('person')) {
+            $reg->load('person');
+        }
+
+        $dailyRate = $period->getTarifPerHariForGender($reg->person?->gender);
+        $t1x = $dailyRate * $reg->active_days;
+
+        if ($reg->session_pagi) {
+            Bill::create([
+                'person_id'       => $reg->person_id,
+                'bill_type'       => 'majek_pagi',
+                'reference_id'    => $reg->id,
+                'period_month'    => $reg->month,
+                'period_year'     => $reg->year,
+                'title'           => 'Katering Pagi ' . $this->monthLabel,
+                'amount'          => $t1x,
+                'amount_paid'     => 0,
+                'status'          => 'unpaid',
+                'managed_by_role' => 'bendahara-pusat',
+                'created_by'      => auth()->id(),
+            ]);
+        }
+
+        if ($reg->session_sore) {
+            Bill::create([
+                'person_id'       => $reg->person_id,
+                'bill_type'       => 'majek_sore',
+                'reference_id'    => $reg->id,
+                'period_month'    => $reg->month,
+                'period_year'     => $reg->year,
+                'title'           => 'Katering Sore ' . $this->monthLabel,
+                'amount'          => $t1x,
+                'amount_paid'     => 0,
+                'status'          => 'unpaid',
+                'managed_by_role' => 'bendahara-pusat',
+                'created_by'      => auth()->id(),
+            ]);
+        }
+    }
+
+    public function confirmRemovePeserta(string $regId, string $personName): void
+    {
+        $this->deleteRegId      = $regId;
+        $this->deletePersonName = $personName;
+        $this->showDeleteModal  = true;
+    }
+
+    public function closeDeleteModal(): void
+    {
+        $this->showDeleteModal  = false;
+        $this->deleteRegId      = null;
+        $this->deletePersonName = '';
+    }
+
+    public function removePeserta(): void
+    {
+        if (!$this->deleteRegId) return;
+
+        $regId = $this->deleteRegId;
+
+        $hasPaid = Bill::where('reference_id', $regId)
+                       ->where('status', 'paid')
+                       ->exists();
+
+        if ($hasPaid) {
+            $this->flashError = 'Peserta tidak bisa dihapus karena tagihan katering sudah dibayar/lunas.';
+            $this->closeDeleteModal();
+            return;
+        }
+
+        DB::transaction(function () use ($regId) {
+            // Delete associated unpaid bills
+            Bill::where('reference_id', $regId)->delete();
+
+            // Delete registration record
+            MajekRegistration::where('id', $regId)->delete();
+        });
+
+        unset($this->registrations, $this->paidStatuses);
+        $this->resetPaymentState();
+        $this->closeDeleteModal();
+        $this->flashSuccess = 'Peserta berhasil dihapus dari katering.';
+    }
+
+    // =========================================================================
+    // Helpers
+    // =========================================================================
+
+    public function resetPaymentState(): void
+    {
+        $this->paymentChecks    = [];
+        $this->paymentAmounts   = [];
+        $this->totalChecked     = 0.0;
+        $this->countChecked     = 0;
+        $this->showConfirmModal = false;
+        $this->confirmCheck     = false;
+    }
+
+    // =========================================================================
+    // Render
+    // =========================================================================
+
+    public function render()
+    {
+        return view('livewire.keuangan.majek-manager');
+    }
+}
