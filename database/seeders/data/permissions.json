@@ -1,0 +1,338 @@
+[
+    {
+        "id": 1,
+        "name": "view-any-person",
+        "guard_name": "web",
+        "created_at": "2026-07-17 17:53:27",
+        "updated_at": "2026-07-17 17:53:27"
+    },
+    {
+        "id": 2,
+        "name": "view-person",
+        "guard_name": "web",
+        "created_at": "2026-07-17 17:53:27",
+        "updated_at": "2026-07-17 17:53:27"
+    },
+    {
+        "id": 3,
+        "name": "create-person",
+        "guard_name": "web",
+        "created_at": "2026-07-17 17:53:27",
+        "updated_at": "2026-07-17 17:53:27"
+    },
+    {
+        "id": 4,
+        "name": "update-person",
+        "guard_name": "web",
+        "created_at": "2026-07-17 17:53:27",
+        "updated_at": "2026-07-17 17:53:27"
+    },
+    {
+        "id": 5,
+        "name": "delete-person",
+        "guard_name": "web",
+        "created_at": "2026-07-17 17:53:27",
+        "updated_at": "2026-07-17 17:53:27"
+    },
+    {
+        "id": 6,
+        "name": "view-any-santri",
+        "guard_name": "web",
+        "created_at": "2026-07-17 17:53:27",
+        "updated_at": "2026-07-17 17:53:27"
+    },
+    {
+        "id": 7,
+        "name": "manage-asrama",
+        "guard_name": "web",
+        "created_at": "2026-07-17 17:53:27",
+        "updated_at": "2026-07-17 17:53:27"
+    },
+    {
+        "id": 8,
+        "name": "manage-kamar",
+        "guard_name": "web",
+        "created_at": "2026-07-17 17:53:27",
+        "updated_at": "2026-07-17 17:53:27"
+    },
+    {
+        "id": 9,
+        "name": "view-perizinan",
+        "guard_name": "web",
+        "created_at": "2026-07-17 17:53:27",
+        "updated_at": "2026-07-17 17:53:27"
+    },
+    {
+        "id": 10,
+        "name": "create-perizinan",
+        "guard_name": "web",
+        "created_at": "2026-07-17 17:53:27",
+        "updated_at": "2026-07-17 17:53:27"
+    },
+    {
+        "id": 11,
+        "name": "approve-perizinan",
+        "guard_name": "web",
+        "created_at": "2026-07-17 17:53:27",
+        "updated_at": "2026-07-17 17:53:27"
+    },
+    {
+        "id": 12,
+        "name": "view-pelanggaran",
+        "guard_name": "web",
+        "created_at": "2026-07-17 17:53:27",
+        "updated_at": "2026-07-17 17:53:27"
+    },
+    {
+        "id": 13,
+        "name": "create-pelanggaran",
+        "guard_name": "web",
+        "created_at": "2026-07-17 17:53:27",
+        "updated_at": "2026-07-17 17:53:27"
+    },
+    {
+        "id": 14,
+        "name": "manage-kegiatan",
+        "guard_name": "web",
+        "created_at": "2026-07-17 17:53:27",
+        "updated_at": "2026-07-17 17:53:27"
+    },
+    {
+        "id": 15,
+        "name": "manage-sensus",
+        "guard_name": "web",
+        "created_at": "2026-07-17 17:53:27",
+        "updated_at": "2026-07-17 17:53:27"
+    },
+    {
+        "id": 16,
+        "name": "manage-sensus-v3",
+        "guard_name": "web",
+        "created_at": "2026-07-17 17:53:27",
+        "updated_at": "2026-07-17 17:53:27"
+    },
+    {
+        "id": 17,
+        "name": "manage-census-template",
+        "guard_name": "web",
+        "created_at": "2026-07-17 17:53:28",
+        "updated_at": "2026-07-17 17:53:28"
+    },
+    {
+        "id": 18,
+        "name": "input-census-v3",
+        "guard_name": "web",
+        "created_at": "2026-07-17 17:53:28",
+        "updated_at": "2026-07-17 17:53:28"
+    },
+    {
+        "id": 19,
+        "name": "approve-census-v3",
+        "guard_name": "web",
+        "created_at": "2026-07-17 17:53:28",
+        "updated_at": "2026-07-17 17:53:28"
+    },
+    {
+        "id": 20,
+        "name": "change-enrollment-status",
+        "guard_name": "web",
+        "created_at": "2026-07-17 17:53:28",
+        "updated_at": "2026-07-17 17:53:28"
+    },
+    {
+        "id": 21,
+        "name": "change-presence-status",
+        "guard_name": "web",
+        "created_at": "2026-07-17 17:53:28",
+        "updated_at": "2026-07-17 17:53:28"
+    },
+    {
+        "id": 22,
+        "name": "view-any-kelas",
+        "guard_name": "web",
+        "created_at": "2026-07-17 17:53:28",
+        "updated_at": "2026-07-17 17:53:28"
+    },
+    {
+        "id": 23,
+        "name": "manage-kelas",
+        "guard_name": "web",
+        "created_at": "2026-07-17 17:53:28",
+        "updated_at": "2026-07-17 17:53:28"
+    },
+    {
+        "id": 24,
+        "name": "input-absensi",
+        "guard_name": "web",
+        "created_at": "2026-07-17 17:53:28",
+        "updated_at": "2026-07-17 17:53:28"
+    },
+    {
+        "id": 25,
+        "name": "input-nilai",
+        "guard_name": "web",
+        "created_at": "2026-07-17 17:53:28",
+        "updated_at": "2026-07-17 17:53:28"
+    },
+    {
+        "id": 26,
+        "name": "view-raport",
+        "guard_name": "web",
+        "created_at": "2026-07-17 17:53:28",
+        "updated_at": "2026-07-17 17:53:28"
+    },
+    {
+        "id": 27,
+        "name": "manage-raport",
+        "guard_name": "web",
+        "created_at": "2026-07-17 17:53:28",
+        "updated_at": "2026-07-17 17:53:28"
+    },
+    {
+        "id": 28,
+        "name": "view-tagihan",
+        "guard_name": "web",
+        "created_at": "2026-07-17 17:53:28",
+        "updated_at": "2026-07-17 17:53:28"
+    },
+    {
+        "id": 29,
+        "name": "create-tagihan",
+        "guard_name": "web",
+        "created_at": "2026-07-17 17:53:28",
+        "updated_at": "2026-07-17 17:53:28"
+    },
+    {
+        "id": 30,
+        "name": "record-pembayaran",
+        "guard_name": "web",
+        "created_at": "2026-07-17 17:53:28",
+        "updated_at": "2026-07-17 17:53:28"
+    },
+    {
+        "id": 31,
+        "name": "view-laporan-keuangan",
+        "guard_name": "web",
+        "created_at": "2026-07-17 17:53:28",
+        "updated_at": "2026-07-17 17:53:28"
+    },
+    {
+        "id": 32,
+        "name": "manage-adjustment",
+        "guard_name": "web",
+        "created_at": "2026-07-17 17:53:28",
+        "updated_at": "2026-07-17 17:53:28"
+    },
+    {
+        "id": 33,
+        "name": "view-produk",
+        "guard_name": "web",
+        "created_at": "2026-07-17 17:53:28",
+        "updated_at": "2026-07-17 17:53:28"
+    },
+    {
+        "id": 34,
+        "name": "manage-produk",
+        "guard_name": "web",
+        "created_at": "2026-07-17 17:53:28",
+        "updated_at": "2026-07-17 17:53:28"
+    },
+    {
+        "id": 35,
+        "name": "manage-stok",
+        "guard_name": "web",
+        "created_at": "2026-07-17 17:53:28",
+        "updated_at": "2026-07-17 17:53:28"
+    },
+    {
+        "id": 36,
+        "name": "view-penjualan",
+        "guard_name": "web",
+        "created_at": "2026-07-17 17:53:28",
+        "updated_at": "2026-07-17 17:53:28"
+    },
+    {
+        "id": 37,
+        "name": "create-penjualan",
+        "guard_name": "web",
+        "created_at": "2026-07-17 17:53:28",
+        "updated_at": "2026-07-17 17:53:28"
+    },
+    {
+        "id": 38,
+        "name": "manage-supplier",
+        "guard_name": "web",
+        "created_at": "2026-07-17 17:53:28",
+        "updated_at": "2026-07-17 17:53:28"
+    },
+    {
+        "id": 39,
+        "name": "initiate-workflow",
+        "guard_name": "web",
+        "created_at": "2026-07-17 17:53:28",
+        "updated_at": "2026-07-17 17:53:28"
+    },
+    {
+        "id": 40,
+        "name": "approve-workflow",
+        "guard_name": "web",
+        "created_at": "2026-07-17 17:53:28",
+        "updated_at": "2026-07-17 17:53:28"
+    },
+    {
+        "id": 41,
+        "name": "reject-workflow",
+        "guard_name": "web",
+        "created_at": "2026-07-17 17:53:28",
+        "updated_at": "2026-07-17 17:53:28"
+    },
+    {
+        "id": 42,
+        "name": "manage-master-data",
+        "guard_name": "web",
+        "created_at": "2026-07-17 17:53:28",
+        "updated_at": "2026-07-17 17:53:28"
+    },
+    {
+        "id": 43,
+        "name": "manage-users",
+        "guard_name": "web",
+        "created_at": "2026-07-17 17:53:28",
+        "updated_at": "2026-07-17 17:53:28"
+    },
+    {
+        "id": 44,
+        "name": "manage-roles",
+        "guard_name": "web",
+        "created_at": "2026-07-17 17:53:28",
+        "updated_at": "2026-07-17 17:53:28"
+    },
+    {
+        "id": 45,
+        "name": "view-audit-log",
+        "guard_name": "web",
+        "created_at": "2026-07-17 17:53:28",
+        "updated_at": "2026-07-17 17:53:28"
+    },
+    {
+        "id": 46,
+        "name": "void-pembayaran",
+        "guard_name": "web",
+        "created_at": "2026-07-21 23:55:46",
+        "updated_at": "2026-07-21 23:55:46"
+    },
+    {
+        "id": 47,
+        "name": "manage-billing-config",
+        "guard_name": "web",
+        "created_at": "2026-07-21 23:55:46",
+        "updated_at": "2026-07-21 23:55:46"
+    },
+    {
+        "id": 48,
+        "name": "manage-setoran-kolektif",
+        "guard_name": "web",
+        "created_at": "2026-07-21 23:55:46",
+        "updated_at": "2026-07-21 23:55:46"
+    }
+]

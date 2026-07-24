@@ -1,0 +1,35 @@
+[
+    {
+        "id": "8158bac2-f807-4b07-9941-e1ee234acf5c",
+        "organization_id": "a86238e7-a57a-4907-89da-690e9e5a1f28",
+        "activity_type_id": "7149a8dd-a72f-4292-b086-356619363071",
+        "name": "Kerja Bakti Kebersihan Komplek",
+        "date": "2026-07-13",
+        "description": "Kegiatan gotong royong membersihkan area asrama, komplek ibadah, dan lingkungan sekitar pondok pesantren oleh seluruh santri Al-Fithroh.",
+        "visibility": "umum",
+        "created_at": "2026-07-17 17:54:03",
+        "updated_at": "2026-07-17 17:54:03"
+    },
+    {
+        "id": "b831dfd3-40ec-4900-a43b-05246ced7470",
+        "organization_id": "a86238e7-a57a-4907-89da-690e9e5a1f28",
+        "activity_type_id": "fbc2b2de-4df0-4044-8513-88c6c1532bdc",
+        "name": "Kajian Rutin Shahih Bukhari",
+        "date": "2026-07-16",
+        "description": "Kajian rutin Kitab Shahih Bukhari bersama KH. Ahmad Mamsyad diikuti oleh seluruh santri mukim putra dan putri bertempat di Aula Utama Madrasah.",
+        "visibility": "umum",
+        "created_at": "2026-07-17 17:54:02",
+        "updated_at": "2026-07-17 17:54:02"
+    },
+    {
+        "id": "c873a173-fd11-475c-9f6c-96e5187f5fee",
+        "organization_id": "a86238e7-a57a-4907-89da-690e9e5a1f28",
+        "activity_type_id": "69cf068f-b7f7-4ab1-a16f-350c9b031b2f",
+        "name": "Khitobah & Latihan Pidato Santri",
+        "date": "2026-07-07",
+        "description": "Pelatihan ceramah\/pidato tiga bahasa (Arab, Inggris, Indonesia) guna membentuk mental dakwah santri Al-Fithroh sejak dini dalam menyebarkan syiar Islam.",
+        "visibility": "umum",
+        "created_at": "2026-07-17 17:54:03",
+        "updated_at": "2026-07-17 17:54:03"
+    }
+]

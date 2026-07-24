@@ -1,0 +1,54 @@
+[
+    {
+        "id": "019f8979-73b1-7201-a8d1-6fcb92a2e77c",
+        "person_id": "4f1cbc1d-d8e1-4353-b405-51898df2d23e",
+        "role_id": "c342a45e-2202-446c-a600-e6729e9bb77e",
+        "changed_field": "presence_status",
+        "old_value": "mukim",
+        "new_value": "laju",
+        "changed_by": "397de6c8-926e-41ec-aecf-ed71e4396f7a",
+        "notes": "Perubahan status via Pusat Kendali",
+        "changed_at": "2026-07-22 10:57:45",
+        "created_at": "2026-07-22 10:57:45",
+        "updated_at": "2026-07-22 10:57:45"
+    },
+    {
+        "id": "019f89fc-628c-73bf-9fdb-b084cc8abb33",
+        "person_id": "4dea1bc2-6856-48c7-888d-c22693006575",
+        "role_id": "03b8b5de-f3df-44bb-881d-38c8ea9de463",
+        "changed_field": "presence_status",
+        "old_value": "mukim",
+        "new_value": "laju",
+        "changed_by": "397de6c8-926e-41ec-aecf-ed71e4396f7a",
+        "notes": "Perubahan status via Pusat Kendali",
+        "changed_at": "2026-07-22 13:20:46",
+        "created_at": "2026-07-22 13:20:46",
+        "updated_at": "2026-07-22 13:20:46"
+    },
+    {
+        "id": "019f89fc-91dc-7214-8254-51d98781a4d8",
+        "person_id": "fa983d90-8aa2-4030-b64c-6b6e5ca101fb",
+        "role_id": "64b4dd1d-9b3d-40ad-8fd8-2a4b7b23ac39",
+        "changed_field": "enrollment_status",
+        "old_value": "aktif",
+        "new_value": "keluar_resmi",
+        "changed_by": "397de6c8-926e-41ec-aecf-ed71e4396f7a",
+        "notes": "Perubahan status via Pusat Kendali",
+        "changed_at": "2026-07-22 13:20:58",
+        "created_at": "2026-07-22 13:20:58",
+        "updated_at": "2026-07-22 13:20:58"
+    },
+    {
+        "id": "019f89fc-beeb-7370-ae7c-cad3037460da",
+        "person_id": "420a5159-5030-4c0a-b5bb-8778e4bccdca",
+        "role_id": "1215421f-3ae1-469a-a928-dfc3a443e8b3",
+        "changed_field": "enrollment_status",
+        "old_value": "aktif",
+        "new_value": "dikeluarkan",
+        "changed_by": "397de6c8-926e-41ec-aecf-ed71e4396f7a",
+        "notes": "Perubahan status via Pusat Kendali",
+        "changed_at": "2026-07-22 13:21:10",
+        "created_at": "2026-07-22 13:21:10",
+        "updated_at": "2026-07-22 13:21:10"
+    }
+]

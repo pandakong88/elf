@@ -1,0 +1,46 @@
+[
+    {
+        "id": "22121bdd-b8e1-4919-b5ea-f336f81e3857",
+        "template_id": "d1409ace-ae50-4928-b7a4-f0184aab54a7",
+        "step_order": 2,
+        "name": "Restu Pengasuh",
+        "approver_position_id": "22f9a0ee-f6df-4a71-89cf-cd25f2295ef8",
+        "action_type": "approve",
+        "sla_hours": 48,
+        "created_at": "2026-07-17 17:54:02",
+        "updated_at": "2026-07-17 17:54:02"
+    },
+    {
+        "id": "6cb7460d-b07e-4e2c-9568-17818776379e",
+        "template_id": "8fc207ac-8426-4924-bb61-9f98f8828cf3",
+        "step_order": 1,
+        "name": "Persetujuan Musyrifah",
+        "approver_position_id": "311b8d6b-e611-4d62-9bbc-c9fa22a40fc0",
+        "action_type": "approve",
+        "sla_hours": 24,
+        "created_at": "2026-07-17 17:54:02",
+        "updated_at": "2026-07-17 17:54:02"
+    },
+    {
+        "id": "71f2db69-2263-4ecf-8826-ab3021ee513f",
+        "template_id": "8fc207ac-8426-4924-bb61-9f98f8828cf3",
+        "step_order": 2,
+        "name": "Restu Pengasuh",
+        "approver_position_id": "22f9a0ee-f6df-4a71-89cf-cd25f2295ef8",
+        "action_type": "approve",
+        "sla_hours": 48,
+        "created_at": "2026-07-17 17:54:02",
+        "updated_at": "2026-07-17 17:54:02"
+    },
+    {
+        "id": "c24f816b-93e1-4cb8-a342-d1d23cbd7ea0",
+        "template_id": "d1409ace-ae50-4928-b7a4-f0184aab54a7",
+        "step_order": 1,
+        "name": "Persetujuan Musyrif",
+        "approver_position_id": "9b1a7b32-01b5-4abd-8df3-590909622746",
+        "action_type": "approve",
+        "sla_hours": 24,
+        "created_at": "2026-07-17 17:54:02",
+        "updated_at": "2026-07-17 17:54:02"
+    }
+]

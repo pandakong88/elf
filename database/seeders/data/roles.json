@@ -1,0 +1,93 @@
+[
+    {
+        "id": 1,
+        "name": "super-admin",
+        "guard_name": "web",
+        "created_at": "2026-07-17 17:53:28",
+        "updated_at": "2026-07-17 17:53:28"
+    },
+    {
+        "id": 2,
+        "name": "pengasuh",
+        "guard_name": "web",
+        "created_at": "2026-07-17 17:53:28",
+        "updated_at": "2026-07-17 17:53:28"
+    },
+    {
+        "id": 3,
+        "name": "manajemen",
+        "guard_name": "web",
+        "created_at": "2026-07-17 17:53:28",
+        "updated_at": "2026-07-17 17:53:28"
+    },
+    {
+        "id": 4,
+        "name": "musyrif",
+        "guard_name": "web",
+        "created_at": "2026-07-17 17:53:28",
+        "updated_at": "2026-07-17 17:53:28"
+    },
+    {
+        "id": 5,
+        "name": "ketua-madrasah",
+        "guard_name": "web",
+        "created_at": "2026-07-17 17:53:28",
+        "updated_at": "2026-07-17 17:53:28"
+    },
+    {
+        "id": 6,
+        "name": "guru",
+        "guard_name": "web",
+        "created_at": "2026-07-17 17:53:28",
+        "updated_at": "2026-07-17 17:53:28"
+    },
+    {
+        "id": 7,
+        "name": "bendahara-pondok",
+        "guard_name": "web",
+        "created_at": "2026-07-17 17:53:28",
+        "updated_at": "2026-07-17 17:53:28"
+    },
+    {
+        "id": 8,
+        "name": "bendahara-unit",
+        "guard_name": "web",
+        "created_at": "2026-07-17 17:53:28",
+        "updated_at": "2026-07-17 17:53:28"
+    },
+    {
+        "id": 9,
+        "name": "pengurus-koperasi",
+        "guard_name": "web",
+        "created_at": "2026-07-17 17:53:28",
+        "updated_at": "2026-07-17 17:53:28"
+    },
+    {
+        "id": 10,
+        "name": "wali-santri",
+        "guard_name": "web",
+        "created_at": "2026-07-17 17:53:28",
+        "updated_at": "2026-07-17 17:53:28"
+    },
+    {
+        "id": 11,
+        "name": "admin-data",
+        "guard_name": "web",
+        "created_at": "2026-07-17 17:53:28",
+        "updated_at": "2026-07-17 17:53:28"
+    },
+    {
+        "id": 12,
+        "name": "bendahara-putra",
+        "guard_name": "web",
+        "created_at": "2026-07-17 18:58:03",
+        "updated_at": "2026-07-17 18:58:03"
+    },
+    {
+        "id": 13,
+        "name": "bendahara-putri",
+        "guard_name": "web",
+        "created_at": "2026-07-17 18:58:03",
+        "updated_at": "2026-07-17 18:58:03"
+    }
+]

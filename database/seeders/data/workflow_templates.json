@@ -1,0 +1,22 @@
+[
+    {
+        "id": "8fc207ac-8426-4924-bb61-9f98f8828cf3",
+        "organization_id": "7d75ada5-e3bc-40c7-bea5-7114be63752e",
+        "name": "Workflow Perizinan Putri",
+        "entity_type": "perizinan",
+        "description": "Alur persetujuan izin keluar\/pulang santri putri",
+        "is_active": 1,
+        "created_at": "2026-07-17 17:54:02",
+        "updated_at": "2026-07-17 17:54:02"
+    },
+    {
+        "id": "d1409ace-ae50-4928-b7a4-f0184aab54a7",
+        "organization_id": "87d14da1-7026-4e5e-98e4-fbd8bc494633",
+        "name": "Workflow Perizinan Putra",
+        "entity_type": "perizinan",
+        "description": "Alur persetujuan izin keluar\/pulang santri putra",
+        "is_active": 1,
+        "created_at": "2026-07-17 17:54:02",
+        "updated_at": "2026-07-17 17:54:02"
+    }
+]

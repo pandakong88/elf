@@ -1,0 +1,86 @@
+[
+    {
+        "id": "34b99bb4-79f1-4564-9446-2522821ef340",
+        "parent_id": "87d14da1-7026-4e5e-98e4-fbd8bc494633",
+        "name": "Program Tahfidz Putra",
+        "slug": "tahfidz-putra",
+        "type": "tahfidz",
+        "description": "Program hafalan Al-Quran santri putra",
+        "is_active": 1,
+        "created_at": "2026-07-17 17:53:27",
+        "updated_at": "2026-07-17 17:53:27",
+        "deleted_at": null
+    },
+    {
+        "id": "7d75ada5-e3bc-40c7-bea5-7114be63752e",
+        "parent_id": "a86238e7-a57a-4907-89da-690e9e5a1f28",
+        "name": "Kepengurusan Putri",
+        "slug": "kepengasuhan-putri",
+        "type": "unit",
+        "description": "Unit kepengurusan santri putri",
+        "is_active": 1,
+        "created_at": "2026-07-17 17:53:27",
+        "updated_at": "2026-07-17 17:53:27",
+        "deleted_at": null
+    },
+    {
+        "id": "836b4765-8fc1-4782-87e0-7b4dd432f8e7",
+        "parent_id": "a86238e7-a57a-4907-89da-690e9e5a1f28",
+        "name": "Madrasah Diniyah",
+        "slug": "madrasah-diniyah",
+        "type": "madrasah",
+        "description": "Lembaga pendidikan diniyah pondok pesantren",
+        "is_active": 1,
+        "created_at": "2026-07-17 17:53:27",
+        "updated_at": "2026-07-17 17:53:27",
+        "deleted_at": null
+    },
+    {
+        "id": "87d14da1-7026-4e5e-98e4-fbd8bc494633",
+        "parent_id": "a86238e7-a57a-4907-89da-690e9e5a1f28",
+        "name": "Kepengurusan Putra",
+        "slug": "kepengasuhan-putra",
+        "type": "unit",
+        "description": "Unit kepengurusan santri putra",
+        "is_active": 1,
+        "created_at": "2026-07-17 17:53:27",
+        "updated_at": "2026-07-17 17:53:27",
+        "deleted_at": null
+    },
+    {
+        "id": "a86238e7-a57a-4907-89da-690e9e5a1f28",
+        "parent_id": null,
+        "name": "Pondok Pesantren Al-Fithroh",
+        "slug": "ponpes-al-fithroh",
+        "type": "pondok",
+        "description": "Lembaga induk Pondok Pesantren Al-Fithroh",
+        "is_active": 1,
+        "created_at": "2026-07-17 17:53:27",
+        "updated_at": "2026-07-17 17:53:27",
+        "deleted_at": null
+    },
+    {
+        "id": "accf8c6b-e5f2-4e84-8dde-a3777952b0c8",
+        "parent_id": "7d75ada5-e3bc-40c7-bea5-7114be63752e",
+        "name": "Program Tahfidz Putri",
+        "slug": "tahfidz-putri",
+        "type": "tahfidz",
+        "description": "Program hafalan Al-Quran santri putri",
+        "is_active": 1,
+        "created_at": "2026-07-17 17:53:27",
+        "updated_at": "2026-07-17 17:53:27",
+        "deleted_at": null
+    },
+    {
+        "id": "f057ff20-5e51-4ff3-baaa-8c30035a19bb",
+        "parent_id": "a86238e7-a57a-4907-89da-690e9e5a1f28",
+        "name": "Koperasi Al-Fithroh",
+        "slug": "koperasi-al-fithroh",
+        "type": "koperasi",
+        "description": "Koperasi pesantren untuk kebutuhan santri dan pegawai",
+        "is_active": 1,
+        "created_at": "2026-07-17 17:53:27",
+        "updated_at": "2026-07-17 17:53:27",
+        "deleted_at": null
+    }
+]

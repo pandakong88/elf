@@ -1,0 +1,147 @@
+[
+    {
+        "table": "roles",
+        "count": 13,
+        "file": "roles.json"
+    },
+    {
+        "table": "permissions",
+        "count": 48,
+        "file": "permissions.json"
+    },
+    {
+        "table": "model_has_roles",
+        "count": 83,
+        "file": "model_has_roles.json"
+    },
+    {
+        "table": "role_has_permissions",
+        "count": 181,
+        "file": "role_has_permissions.json"
+    },
+    {
+        "table": "organizations",
+        "count": 7,
+        "file": "organizations.json"
+    },
+    {
+        "table": "positions",
+        "count": 17,
+        "file": "positions.json"
+    },
+    {
+        "table": "persons",
+        "count": 144,
+        "file": "persons.json"
+    },
+    {
+        "table": "person_roles",
+        "count": 144,
+        "file": "person_roles.json"
+    },
+    {
+        "table": "users",
+        "count": 79,
+        "file": "users.json"
+    },
+    {
+        "table": "dormitories",
+        "count": 3,
+        "file": "dormitories.json"
+    },
+    {
+        "table": "rooms",
+        "count": 15,
+        "file": "rooms.json"
+    },
+    {
+        "table": "room_assignments",
+        "count": 68,
+        "file": "room_assignments.json"
+    },
+    {
+        "table": "madrasah_kelas",
+        "count": 14,
+        "file": "madrasah_kelas.json"
+    },
+    {
+        "table": "madrasah_enrollments",
+        "count": 68,
+        "file": "madrasah_enrollments.json"
+    },
+    {
+        "table": "santri_profiles",
+        "count": 68,
+        "file": "santri_profiles.json"
+    },
+    {
+        "table": "santri_status_logs",
+        "count": 4,
+        "file": "santri_status_logs.json"
+    },
+    {
+        "table": "master_data",
+        "count": 20,
+        "file": "master_data.json"
+    },
+    {
+        "table": "census_templates",
+        "count": 4,
+        "file": "census_templates.json"
+    },
+    {
+        "table": "census_template_fields",
+        "count": 15,
+        "file": "census_template_fields.json"
+    },
+    {
+        "table": "census_campaign_dormitories",
+        "count": 8,
+        "file": "census_campaign_dormitories.json"
+    },
+    {
+        "table": "activities",
+        "count": 3,
+        "file": "activities.json"
+    },
+    {
+        "table": "landing_page_contents",
+        "count": 31,
+        "file": "landing_page_contents.json"
+    },
+    {
+        "table": "billing_configurations",
+        "count": 1,
+        "file": "billing_configurations.json"
+    },
+    {
+        "table": "majek_periods",
+        "count": 2,
+        "file": "majek_periods.json"
+    },
+    {
+        "table": "majek_registrations",
+        "count": 7,
+        "file": "majek_registrations.json"
+    },
+    {
+        "table": "bills",
+        "count": 1642,
+        "file": "bills.json"
+    },
+    {
+        "table": "bill_payments",
+        "count": 8,
+        "file": "bill_payments.json"
+    },
+    {
+        "table": "workflow_templates",
+        "count": 2,
+        "file": "workflow_templates.json"
+    },
+    {
+        "table": "workflow_steps",
+        "count": 4,
+        "file": "workflow_steps.json"
+    }
+]

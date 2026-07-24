@@ -1,0 +1,155 @@
+[
+    {
+        "id": "0d0b86e3-526f-46c6-ad2e-d4daa50dc458",
+        "organization_id": "7d75ada5-e3bc-40c7-bea5-7114be63752e",
+        "name": "Ketua OSIS\/OPPSI Putri",
+        "level": "fungsional",
+        "is_active": 1,
+        "created_at": "2026-07-17 17:53:27",
+        "updated_at": "2026-07-17 17:53:27"
+    },
+    {
+        "id": "1961e537-e2a7-4029-bb6b-77ec00ea990d",
+        "organization_id": "f057ff20-5e51-4ff3-baaa-8c30035a19bb",
+        "name": "Ketua Koperasi",
+        "level": "structural",
+        "is_active": 1,
+        "created_at": "2026-07-17 17:53:27",
+        "updated_at": "2026-07-17 17:53:27"
+    },
+    {
+        "id": "1ac9c98d-b2b6-4e31-8cce-cb6cba9abe31",
+        "organization_id": "836b4765-8fc1-4782-87e0-7b4dd432f8e7",
+        "name": "Wakil Kepala Madrasah",
+        "level": "structural",
+        "is_active": 1,
+        "created_at": "2026-07-17 17:53:27",
+        "updated_at": "2026-07-17 17:53:27"
+    },
+    {
+        "id": "22f9a0ee-f6df-4a71-89cf-cd25f2295ef8",
+        "organization_id": "a86238e7-a57a-4907-89da-690e9e5a1f28",
+        "name": "Pengasuh",
+        "level": "structural",
+        "is_active": 1,
+        "created_at": "2026-07-17 17:53:27",
+        "updated_at": "2026-07-17 17:53:27"
+    },
+    {
+        "id": "2f4862fa-1a89-44bc-9538-d57b41be9fbe",
+        "organization_id": "836b4765-8fc1-4782-87e0-7b4dd432f8e7",
+        "name": "Wali Kelas",
+        "level": "fungsional",
+        "is_active": 1,
+        "created_at": "2026-07-17 17:53:27",
+        "updated_at": "2026-07-17 17:53:27"
+    },
+    {
+        "id": "311b8d6b-e611-4d62-9bbc-c9fa22a40fc0",
+        "organization_id": "7d75ada5-e3bc-40c7-bea5-7114be63752e",
+        "name": "Musyrifah",
+        "level": "fungsional",
+        "is_active": 1,
+        "created_at": "2026-07-17 17:53:27",
+        "updated_at": "2026-07-17 17:53:27"
+    },
+    {
+        "id": "4221f7f3-d1ee-4f14-8f75-9146b71f5375",
+        "organization_id": "a86238e7-a57a-4907-89da-690e9e5a1f28",
+        "name": "Wakil Pengasuh",
+        "level": "structural",
+        "is_active": 1,
+        "created_at": "2026-07-17 17:53:27",
+        "updated_at": "2026-07-17 17:53:27"
+    },
+    {
+        "id": "58f8d453-0d75-4c95-aa49-b5ffd4e296bb",
+        "organization_id": "f057ff20-5e51-4ff3-baaa-8c30035a19bb",
+        "name": "Petugas Stok",
+        "level": "fungsional",
+        "is_active": 1,
+        "created_at": "2026-07-17 17:53:27",
+        "updated_at": "2026-07-17 17:53:27"
+    },
+    {
+        "id": "612a6d69-38e0-4365-9a18-5caa25f8716a",
+        "organization_id": "836b4765-8fc1-4782-87e0-7b4dd432f8e7",
+        "name": "Kepala Madrasah",
+        "level": "structural",
+        "is_active": 1,
+        "created_at": "2026-07-17 17:53:27",
+        "updated_at": "2026-07-17 17:53:27"
+    },
+    {
+        "id": "9b1a7b32-01b5-4abd-8df3-590909622746",
+        "organization_id": "87d14da1-7026-4e5e-98e4-fbd8bc494633",
+        "name": "Musyrif",
+        "level": "fungsional",
+        "is_active": 1,
+        "created_at": "2026-07-17 17:53:27",
+        "updated_at": "2026-07-17 17:53:27"
+    },
+    {
+        "id": "b666492d-311d-4f09-8c90-5420db302854",
+        "organization_id": "7d75ada5-e3bc-40c7-bea5-7114be63752e",
+        "name": "Kepala Kepengasuhan Putri",
+        "level": "structural",
+        "is_active": 1,
+        "created_at": "2026-07-17 17:53:27",
+        "updated_at": "2026-07-17 17:53:27"
+    },
+    {
+        "id": "c244b67d-ef37-47f9-beef-7b02ec6d865f",
+        "organization_id": "87d14da1-7026-4e5e-98e4-fbd8bc494633",
+        "name": "Kepala Kepengasuhan Putra",
+        "level": "structural",
+        "is_active": 1,
+        "created_at": "2026-07-17 17:53:27",
+        "updated_at": "2026-07-17 17:53:27"
+    },
+    {
+        "id": "d160d9f3-aca9-4f38-b4b3-8a0d7550b33a",
+        "organization_id": "a86238e7-a57a-4907-89da-690e9e5a1f28",
+        "name": "Bendahara Pondok",
+        "level": "structural",
+        "is_active": 1,
+        "created_at": "2026-07-17 17:53:27",
+        "updated_at": "2026-07-17 17:53:27"
+    },
+    {
+        "id": "d7018405-1710-4d0d-b071-29c38cfd2717",
+        "organization_id": "87d14da1-7026-4e5e-98e4-fbd8bc494633",
+        "name": "Ketua OSIS\/OPPSI Putra",
+        "level": "fungsional",
+        "is_active": 1,
+        "created_at": "2026-07-17 17:53:27",
+        "updated_at": "2026-07-17 17:53:27"
+    },
+    {
+        "id": "dc60a592-a81f-466a-94a5-3b0e9d336873",
+        "organization_id": "f057ff20-5e51-4ff3-baaa-8c30035a19bb",
+        "name": "Kasir",
+        "level": "fungsional",
+        "is_active": 1,
+        "created_at": "2026-07-17 17:53:27",
+        "updated_at": "2026-07-17 17:53:27"
+    },
+    {
+        "id": "ed2aaa99-24d7-49e1-a90f-460914183530",
+        "organization_id": "a86238e7-a57a-4907-89da-690e9e5a1f28",
+        "name": "Sekretaris Pondok",
+        "level": "structural",
+        "is_active": 1,
+        "created_at": "2026-07-17 17:53:27",
+        "updated_at": "2026-07-17 17:53:27"
+    },
+    {
+        "id": "fe2f998b-4ae6-4746-8457-3ddc5876f7d0",
+        "organization_id": "836b4765-8fc1-4782-87e0-7b4dd432f8e7",
+        "name": "Guru",
+        "level": "fungsional",
+        "is_active": 1,
+        "created_at": "2026-07-17 17:53:27",
+        "updated_at": "2026-07-17 17:53:27"
+    }
+]

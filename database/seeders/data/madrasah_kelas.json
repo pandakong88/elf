@@ -1,0 +1,156 @@
+[
+    {
+        "id": "019f9300-c863-724d-9320-870efd7f5628",
+        "name": "Awaliyah 2 (Pa)",
+        "jenjang": "ula",
+        "academic_year": "2026\/2027",
+        "wali_kelas_id": null,
+        "is_active": 1,
+        "created_by": "397de6c8-926e-41ec-aecf-ed71e4396f7a",
+        "created_at": "2026-07-24 07:22:09",
+        "updated_at": "2026-07-24 07:22:09"
+    },
+    {
+        "id": "019f9300-c869-7381-a513-3b287caa1df8",
+        "name": "Wustho 1 (Pa)",
+        "jenjang": "wustho",
+        "academic_year": "2026\/2027",
+        "wali_kelas_id": null,
+        "is_active": 1,
+        "created_by": "397de6c8-926e-41ec-aecf-ed71e4396f7a",
+        "created_at": "2026-07-24 07:22:09",
+        "updated_at": "2026-07-24 07:22:09"
+    },
+    {
+        "id": "019f9300-c86b-7139-ba7f-82355505c9bc",
+        "name": "Awaliyah 3 (Pa)",
+        "jenjang": "ula",
+        "academic_year": "2026\/2027",
+        "wali_kelas_id": null,
+        "is_active": 1,
+        "created_by": "397de6c8-926e-41ec-aecf-ed71e4396f7a",
+        "created_at": "2026-07-24 07:22:09",
+        "updated_at": "2026-07-24 07:22:09"
+    },
+    {
+        "id": "019f9300-c86e-7145-8495-1f057a0bba88",
+        "name": "Ulya 1 (Pa)",
+        "jenjang": "ulya",
+        "academic_year": "2026\/2027",
+        "wali_kelas_id": null,
+        "is_active": 1,
+        "created_by": "397de6c8-926e-41ec-aecf-ed71e4396f7a",
+        "created_at": "2026-07-24 07:22:09",
+        "updated_at": "2026-07-24 07:22:09"
+    },
+    {
+        "id": "019f9300-c872-72e0-b89d-7fbbc69d3ef3",
+        "name": "Ulya 2 (Pa)",
+        "jenjang": "ulya",
+        "academic_year": "2026\/2027",
+        "wali_kelas_id": null,
+        "is_active": 1,
+        "created_by": "397de6c8-926e-41ec-aecf-ed71e4396f7a",
+        "created_at": "2026-07-24 07:22:09",
+        "updated_at": "2026-07-24 07:22:09"
+    },
+    {
+        "id": "019f9300-c875-72cb-a98d-cf7ede50088c",
+        "name": "Wustho 2 (Pa)",
+        "jenjang": "wustho",
+        "academic_year": "2026\/2027",
+        "wali_kelas_id": null,
+        "is_active": 1,
+        "created_by": "397de6c8-926e-41ec-aecf-ed71e4396f7a",
+        "created_at": "2026-07-24 07:22:09",
+        "updated_at": "2026-07-24 07:22:09"
+    },
+    {
+        "id": "019f9300-c877-7113-ba04-ea12f68a71e0",
+        "name": "Awaliyah 1 (Pa)",
+        "jenjang": "ula",
+        "academic_year": "2026\/2027",
+        "wali_kelas_id": null,
+        "is_active": 1,
+        "created_by": "397de6c8-926e-41ec-aecf-ed71e4396f7a",
+        "created_at": "2026-07-24 07:22:09",
+        "updated_at": "2026-07-24 07:22:09"
+    },
+    {
+        "id": "019f930c-c5fd-704d-be8e-0f5371d0c95a",
+        "name": "Wustho 2 (Pi)",
+        "jenjang": "wustho",
+        "academic_year": "2026\/2027",
+        "wali_kelas_id": null,
+        "is_active": 1,
+        "created_by": "397de6c8-926e-41ec-aecf-ed71e4396f7a",
+        "created_at": "2026-07-24 07:35:15",
+        "updated_at": "2026-07-24 07:35:15"
+    },
+    {
+        "id": "019f930c-c605-7236-8737-2cf996625229",
+        "name": "Awaliyah 3 (Pi)",
+        "jenjang": "ula",
+        "academic_year": "2026\/2027",
+        "wali_kelas_id": null,
+        "is_active": 1,
+        "created_by": "397de6c8-926e-41ec-aecf-ed71e4396f7a",
+        "created_at": "2026-07-24 07:35:15",
+        "updated_at": "2026-07-24 07:35:15"
+    },
+    {
+        "id": "019f930c-c607-73fa-beb4-ec2f316821ed",
+        "name": "Awaliyah 2 (Pi)",
+        "jenjang": "ula",
+        "academic_year": "2026\/2027",
+        "wali_kelas_id": null,
+        "is_active": 1,
+        "created_by": "397de6c8-926e-41ec-aecf-ed71e4396f7a",
+        "created_at": "2026-07-24 07:35:15",
+        "updated_at": "2026-07-24 07:35:15"
+    },
+    {
+        "id": "019f930c-c609-7206-80c5-f28fdb85f5f8",
+        "name": "Awaliyah 1 (Pi)",
+        "jenjang": "ula",
+        "academic_year": "2026\/2027",
+        "wali_kelas_id": null,
+        "is_active": 1,
+        "created_by": "397de6c8-926e-41ec-aecf-ed71e4396f7a",
+        "created_at": "2026-07-24 07:35:15",
+        "updated_at": "2026-07-24 07:35:15"
+    },
+    {
+        "id": "019f930c-c60b-7187-96d9-91ef7d138501",
+        "name": "Tahasus (Pi)",
+        "jenjang": "ula",
+        "academic_year": "2026\/2027",
+        "wali_kelas_id": null,
+        "is_active": 1,
+        "created_by": "397de6c8-926e-41ec-aecf-ed71e4396f7a",
+        "created_at": "2026-07-24 07:35:15",
+        "updated_at": "2026-07-24 07:35:15"
+    },
+    {
+        "id": "019f930c-c60c-727e-8286-b65f34440c51",
+        "name": "Wustho 1 (Pi)",
+        "jenjang": "wustho",
+        "academic_year": "2026\/2027",
+        "wali_kelas_id": null,
+        "is_active": 1,
+        "created_by": "397de6c8-926e-41ec-aecf-ed71e4396f7a",
+        "created_at": "2026-07-24 07:35:15",
+        "updated_at": "2026-07-24 07:35:15"
+    },
+    {
+        "id": "019f930c-c60e-716b-ab41-6280105935ac",
+        "name": "Ulya 1 (Pi)",
+        "jenjang": "ulya",
+        "academic_year": "2026\/2027",
+        "wali_kelas_id": null,
+        "is_active": 1,
+        "created_by": "397de6c8-926e-41ec-aecf-ed71e4396f7a",
+        "created_at": "2026-07-24 07:35:15",
+        "updated_at": "2026-07-24 07:35:15"
+    }
+]

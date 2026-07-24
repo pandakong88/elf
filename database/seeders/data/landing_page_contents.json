@@ -1,0 +1,312 @@
+[
+    {
+        "id": "019f7136-c442-7070-80d3-563ab63f70b5",
+        "key": "hero_title",
+        "value": "Mencetak Generasi Agamis, Beradab Luhur & Berkualitas",
+        "type": "text",
+        "section": "hero",
+        "title": "Judul Utama Hero",
+        "created_at": "2026-07-17 17:54:02",
+        "updated_at": "2026-07-17 17:54:02"
+    },
+    {
+        "id": "019f7136-c445-70ea-b1fd-c696ce6bd08b",
+        "key": "hero_subtitle",
+        "value": "Pondok Pesantren Al-Fithroh Jejeran Bantul membimbing santri dengan tradisi keilmuan Ahlussunnah wal Jama'ah sejak tahun 1970, memadukan ketulusan salafiyah dengan kedisiplinan diniyah.",
+        "type": "text",
+        "section": "hero",
+        "title": "Sub-Judul Hero",
+        "created_at": "2026-07-17 17:54:02",
+        "updated_at": "2026-07-17 17:54:02"
+    },
+    {
+        "id": "019f7136-c448-70ad-ace2-43cbbc1c950c",
+        "key": "about_profile",
+        "value": "Pondok Pesantren Al-Fithroh berdiri sekitar tahun 1970, didirikan oleh al-Maghfurlahu K.H. Abdul Muhith Nawawi didukung oleh para sesepuh. Pada permulaannya, dahulu merupakan pondok pesantren tradisional dengan santri tetap (mukim) berjumlah sekitar 20 orang. Lambat laun semakin bertambah, yang awalnya hanya dari daerah sekitar, pada tahun-tahun berikutnya para santri datang dari berbagai daerah. Sejak akhir tahun 2004 kepengasuhan dilanjutkan oleh KH. Ahmad Mamsyad yang merupakan putra pertama KH. Abdul Muhith sampai sekarang.",
+        "type": "text",
+        "section": "about",
+        "title": "Profil Singkat Pondok",
+        "created_at": "2026-07-17 17:54:02",
+        "updated_at": "2026-07-17 17:54:02"
+    },
+    {
+        "id": "019f7136-c44b-7004-9951-4b4ad3775f4d",
+        "key": "about_vision",
+        "value": "Menciptakan generasi penerus yang agamis serta berkualitas dengan menegakkan agama Islam yang murni untuk menempuh madzhab ahlussunnah waljama'ah.",
+        "type": "text",
+        "section": "about",
+        "title": "Visi Pondok",
+        "created_at": "2026-07-17 17:54:02",
+        "updated_at": "2026-07-17 17:54:02"
+    },
+    {
+        "id": "019f7136-c44e-701c-b393-aa9bcaa42ef5",
+        "key": "about_mission",
+        "value": "1. Memberikan wadah atau media bagi anak-anak atau generasi muda maupun masyarakat umum yang memerlukan kajian, bertukar pikiran dalam bidang agama maupun keadaan masa kini (teknologi informasi).\n2. Meningkatkan kualitas dan membentuk generasi Islam yang memiliki keimanan dan ketaqwaan kepada Allah SWT.\n3. Menciptakan lulusan yang berkualitas serta dapat memperluas dan mengembangkan syiar Islam dimanapun.",
+        "type": "text",
+        "section": "about",
+        "title": "Misi Pondok",
+        "created_at": "2026-07-17 17:54:02",
+        "updated_at": "2026-07-17 17:54:02"
+    },
+    {
+        "id": "019f7136-c452-71b5-ba4b-1dd23a63b494",
+        "key": "contact_address",
+        "value": "Jejeran, Wonokromo, Pleret, Bantul, Yogyakarta, 55791",
+        "type": "text",
+        "section": "contact",
+        "title": "Alamat Sekretariat",
+        "created_at": "2026-07-17 17:54:02",
+        "updated_at": "2026-07-17 17:54:02"
+    },
+    {
+        "id": "019f7136-c455-7250-9ef7-e8abb70d6783",
+        "key": "contact_phone",
+        "value": "0898-6626-009 (Humas Putra) \/ 0857-1328-5438 (Humas Putri)",
+        "type": "text",
+        "section": "contact",
+        "title": "No Telepon Humas",
+        "created_at": "2026-07-17 17:54:02",
+        "updated_at": "2026-07-17 17:54:02"
+    },
+    {
+        "id": "019f7136-c459-7338-868f-5981b6a113a1",
+        "key": "contact_email",
+        "value": "info@alfithroh-jejeran.sch.id",
+        "type": "text",
+        "section": "contact",
+        "title": "Email Humas",
+        "created_at": "2026-07-17 17:54:02",
+        "updated_at": "2026-07-17 17:54:02"
+    },
+    {
+        "id": "019f7136-c45c-73d8-946d-b67b8026895a",
+        "key": "pedoman_title",
+        "value": "Buku Pedoman Santri PP. Al-Fithroh",
+        "type": "text",
+        "section": "contact",
+        "title": "Judul Buku Pedoman",
+        "created_at": "2026-07-17 17:54:02",
+        "updated_at": "2026-07-17 17:54:02"
+    },
+    {
+        "id": "019f7136-c460-7237-9633-ceb4c3b157b1",
+        "key": "pedoman_description",
+        "value": "Unduh dokumen buku pedoman resmi untuk mengetahui tata tertib, jadwal harian & mingguan kegiatan putra-putri, serta ketentuan administrasi pondok.",
+        "type": "text",
+        "section": "contact",
+        "title": "Deskripsi Buku Pedoman",
+        "created_at": "2026-07-17 17:54:02",
+        "updated_at": "2026-07-17 17:54:02"
+    },
+    {
+        "id": "019f7136-c462-73af-bb98-5e29322ca327",
+        "key": "registration_info",
+        "value": "Penerimaan Santri Baru (PSB) Pondok Pesantren Al-Fithroh Bantul. Syarat pendaftaran meliputi sowan kepada Pengasuh oleh orang tua\/wali, masa training maksimal 10 hari, melengkapi berkas fotokopi KK & pas foto formal berwarna, serta melunasi biaya administrasi masuk. Santri baru wajib menetap selama minimal 40 hari pertama.",
+        "type": "text",
+        "section": "contact",
+        "title": "Info Pendaftaran Baru",
+        "created_at": "2026-07-17 17:54:02",
+        "updated_at": "2026-07-17 17:54:02"
+    },
+    {
+        "id": "019f7136-c465-71ca-9eff-28b744ab97fd",
+        "key": "pedoman_file_url",
+        "value": "",
+        "type": "image_url",
+        "section": "contact",
+        "title": "Link File Buku Pedoman PDF",
+        "created_at": "2026-07-17 17:54:02",
+        "updated_at": "2026-07-17 17:54:02"
+    },
+    {
+        "id": "019f7136-c468-715b-8668-04005cad6110",
+        "key": "logo_url",
+        "value": "",
+        "type": "image_url",
+        "section": "general",
+        "title": "Logo Pondok Pesantren",
+        "created_at": "2026-07-17 17:54:02",
+        "updated_at": "2026-07-17 17:54:02"
+    },
+    {
+        "id": "019f7136-c46b-7144-8d3d-856d77ac96c9",
+        "key": "hero_image_url",
+        "value": "",
+        "type": "image_url",
+        "section": "hero",
+        "title": "Gambar Latar\/Banner Hero",
+        "created_at": "2026-07-17 17:54:02",
+        "updated_at": "2026-07-17 17:54:02"
+    },
+    {
+        "id": "019f8ca7-4952-707b-8818-0527780a3aa3",
+        "key": "wali_bank1_name_putra",
+        "value": "BRI",
+        "type": "text",
+        "section": "wali_portal",
+        "title": "Nama Bank 1 Putra",
+        "created_at": "2026-07-23 01:46:41",
+        "updated_at": "2026-07-23 01:46:41"
+    },
+    {
+        "id": "019f8ca7-49a6-70ca-aaf5-66756d72a9ce",
+        "key": "wali_bsi_putra",
+        "value": "7123456789",
+        "type": "text",
+        "section": "wali_portal",
+        "title": "No Rekening Bank 1 Putra",
+        "created_at": "2026-07-23 01:46:41",
+        "updated_at": "2026-07-23 01:46:41"
+    },
+    {
+        "id": "019f8ca7-49a9-728c-82f7-3f375b0b43c0",
+        "key": "wali_bsi_putra_an",
+        "value": "Ahmad Faishol Farid",
+        "type": "text",
+        "section": "wali_portal",
+        "title": "Atas Nama Bank 1 Putra",
+        "created_at": "2026-07-23 01:46:41",
+        "updated_at": "2026-07-23 01:46:41"
+    },
+    {
+        "id": "019f8ca7-49af-7036-80b2-adeb65d8d9f8",
+        "key": "wali_bank2_name_putra",
+        "value": "",
+        "type": "text",
+        "section": "wali_portal",
+        "title": "Nama Bank 2 Putra",
+        "created_at": "2026-07-23 01:46:41",
+        "updated_at": "2026-07-23 01:48:31"
+    },
+    {
+        "id": "019f8ca7-49b3-7227-8e6f-ba602ce27b45",
+        "key": "wali_bri_putra",
+        "value": "",
+        "type": "text",
+        "section": "wali_portal",
+        "title": "No Rekening Bank 2 Putra",
+        "created_at": "2026-07-23 01:46:41",
+        "updated_at": "2026-07-23 01:48:31"
+    },
+    {
+        "id": "019f8ca7-49b7-71ce-afed-d55f270aa50a",
+        "key": "wali_bri_putra_an",
+        "value": "",
+        "type": "text",
+        "section": "wali_portal",
+        "title": "Atas Nama Bank 2 Putra",
+        "created_at": "2026-07-23 01:46:41",
+        "updated_at": "2026-07-23 01:48:31"
+    },
+    {
+        "id": "019f8ca7-49ba-7155-8b6d-56671cc1f9ab",
+        "key": "wali_wa_putra",
+        "value": "6281326963142",
+        "type": "text",
+        "section": "wali_portal",
+        "title": "WA Bendahara Putra",
+        "created_at": "2026-07-23 01:46:41",
+        "updated_at": "2026-07-23 01:49:43"
+    },
+    {
+        "id": "019f8ca7-49bf-7202-b205-2e0b4f3bd771",
+        "key": "wali_wa_putra_name",
+        "value": "Bendahara Putra Al-Fithroh",
+        "type": "text",
+        "section": "wali_portal",
+        "title": "Nama Bendahara Putra",
+        "created_at": "2026-07-23 01:46:41",
+        "updated_at": "2026-07-23 01:46:41"
+    },
+    {
+        "id": "019f8ca7-49c1-7390-8783-72802debe699",
+        "key": "wali_bank1_name_putri",
+        "value": "BRI",
+        "type": "text",
+        "section": "wali_portal",
+        "title": "Nama Bank 1 Putri",
+        "created_at": "2026-07-23 01:46:41",
+        "updated_at": "2026-07-23 01:46:41"
+    },
+    {
+        "id": "019f8ca7-49c3-73f3-b9ee-a92eb861b459",
+        "key": "wali_bsi_putri",
+        "value": "7987654321",
+        "type": "text",
+        "section": "wali_portal",
+        "title": "No Rekening Bank 1 Putri",
+        "created_at": "2026-07-23 01:46:41",
+        "updated_at": "2026-07-23 01:46:41"
+    },
+    {
+        "id": "019f8ca7-49c6-73a5-aa6b-4e812faf9d2d",
+        "key": "wali_bsi_putri_an",
+        "value": "Jubaedah",
+        "type": "text",
+        "section": "wali_portal",
+        "title": "Atas Nama Bank 1 Putri",
+        "created_at": "2026-07-23 01:46:41",
+        "updated_at": "2026-07-23 01:46:41"
+    },
+    {
+        "id": "019f8ca7-49c9-7119-8033-4ad52b4469fc",
+        "key": "wali_bank2_name_putri",
+        "value": "",
+        "type": "text",
+        "section": "wali_portal",
+        "title": "Nama Bank 2 Putri",
+        "created_at": "2026-07-23 01:46:41",
+        "updated_at": "2026-07-23 01:48:31"
+    },
+    {
+        "id": "019f8ca7-49cc-70d0-b995-f10067828e73",
+        "key": "wali_bri_putri",
+        "value": "",
+        "type": "text",
+        "section": "wali_portal",
+        "title": "No Rekening Bank 2 Putri",
+        "created_at": "2026-07-23 01:46:41",
+        "updated_at": "2026-07-23 01:48:31"
+    },
+    {
+        "id": "019f8ca7-49d0-71ee-a87a-e9b7d5ca7ff8",
+        "key": "wali_bri_putri_an",
+        "value": "",
+        "type": "text",
+        "section": "wali_portal",
+        "title": "Atas Nama Bank 2 Putri",
+        "created_at": "2026-07-23 01:46:41",
+        "updated_at": "2026-07-23 01:48:31"
+    },
+    {
+        "id": "019f8ca7-49d2-7159-86de-bb5c8dbb9875",
+        "key": "wali_wa_putri",
+        "value": "6285111232701",
+        "type": "text",
+        "section": "wali_portal",
+        "title": "WA Bendahara Putri",
+        "created_at": "2026-07-23 01:46:41",
+        "updated_at": "2026-07-23 01:49:43"
+    },
+    {
+        "id": "019f8ca7-49d5-7003-9c90-9cbe19500175",
+        "key": "wali_wa_putri_name",
+        "value": "Bendahara Putri Al-Fithroh",
+        "type": "text",
+        "section": "wali_portal",
+        "title": "Nama Bendahara Putri",
+        "created_at": "2026-07-23 01:46:41",
+        "updated_at": "2026-07-23 01:46:41"
+    },
+    {
+        "id": "019f8ca7-49d8-71b4-ba9e-df770494b3bf",
+        "key": "wali_announcement",
+        "value": "Pembayaran tagihan santri dilakukan sebelum tanggal 10 setiap bulannya.",
+        "type": "text",
+        "section": "wali_portal",
+        "title": "Pengumuman Portal Wali",
+        "created_at": "2026-07-23 01:46:41",
+        "updated_at": "2026-07-23 01:46:41"
+    }
+]

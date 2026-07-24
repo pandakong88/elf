@@ -1,0 +1,26 @@
+[
+    {
+        "id": "019f81bd-8b6e-71ee-8a92-949764385728",
+        "month": 7,
+        "year": 2026,
+        "active_days": 30,
+        "tarif_per_hari": "3333.33",
+        "tarif_per_hari_putri": "3000.00",
+        "notes": null,
+        "created_by": "397de6c8-926e-41ec-aecf-ed71e4396f7a",
+        "created_at": "2026-07-20 22:55:10",
+        "updated_at": "2026-07-21 16:32:26"
+    },
+    {
+        "id": "019f8220-53af-727b-927f-925cedd98206",
+        "month": 8,
+        "year": 2026,
+        "active_days": 30,
+        "tarif_per_hari": "3333.33",
+        "tarif_per_hari_putri": "3000.00",
+        "notes": null,
+        "created_by": "397de6c8-926e-41ec-aecf-ed71e4396f7a",
+        "created_at": "2026-07-21 00:43:04",
+        "updated_at": "2026-07-21 00:43:04"
+    }
+]

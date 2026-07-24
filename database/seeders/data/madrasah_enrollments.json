@@ -1,0 +1,682 @@
+[
+    {
+        "id": "019f9305-11e2-70e9-8d46-2fbe3000f473",
+        "person_id": "019f9305-11ca-71d7-9e4e-22e489cf11e1",
+        "kelas_id": "019f9300-c863-724d-9320-870efd7f5628",
+        "academic_year": "2026\/2027",
+        "is_active": 1,
+        "created_by": "397de6c8-926e-41ec-aecf-ed71e4396f7a",
+        "created_at": "2026-07-24 07:26:50",
+        "updated_at": "2026-07-24 07:26:50"
+    },
+    {
+        "id": "019f9305-11ee-72c3-88e6-421c4730e21d",
+        "person_id": "019f9305-11e6-7397-9b3f-aa2c8d86094b",
+        "kelas_id": "019f9300-c869-7381-a513-3b287caa1df8",
+        "academic_year": "2026\/2027",
+        "is_active": 1,
+        "created_by": "397de6c8-926e-41ec-aecf-ed71e4396f7a",
+        "created_at": "2026-07-24 07:26:50",
+        "updated_at": "2026-07-24 07:26:50"
+    },
+    {
+        "id": "019f9305-11fa-708d-9804-b0ff6e6b9041",
+        "person_id": "019f9305-11ef-7208-9519-c1d191b0fa0b",
+        "kelas_id": "019f9300-c86b-7139-ba7f-82355505c9bc",
+        "academic_year": "2026\/2027",
+        "is_active": 1,
+        "created_by": "397de6c8-926e-41ec-aecf-ed71e4396f7a",
+        "created_at": "2026-07-24 07:26:50",
+        "updated_at": "2026-07-24 07:26:50"
+    },
+    {
+        "id": "019f9305-1201-7366-900c-7ecdf793a47f",
+        "person_id": "019f9305-11fb-70a8-934e-65fda9d1bdc8",
+        "kelas_id": "019f9300-c869-7381-a513-3b287caa1df8",
+        "academic_year": "2026\/2027",
+        "is_active": 1,
+        "created_by": "397de6c8-926e-41ec-aecf-ed71e4396f7a",
+        "created_at": "2026-07-24 07:26:50",
+        "updated_at": "2026-07-24 07:26:50"
+    },
+    {
+        "id": "019f9305-120d-72e8-a729-f439dc1ce56b",
+        "person_id": "019f9305-1203-722c-8578-b9912f690bd6",
+        "kelas_id": "019f9300-c863-724d-9320-870efd7f5628",
+        "academic_year": "2026\/2027",
+        "is_active": 1,
+        "created_by": "397de6c8-926e-41ec-aecf-ed71e4396f7a",
+        "created_at": "2026-07-24 07:26:50",
+        "updated_at": "2026-07-24 07:26:50"
+    },
+    {
+        "id": "019f9305-1217-70c6-9236-1bf6796b035b",
+        "person_id": "019f9305-120e-72d4-b345-e39899132731",
+        "kelas_id": "019f9300-c863-724d-9320-870efd7f5628",
+        "academic_year": "2026\/2027",
+        "is_active": 1,
+        "created_by": "397de6c8-926e-41ec-aecf-ed71e4396f7a",
+        "created_at": "2026-07-24 07:26:50",
+        "updated_at": "2026-07-24 07:26:50"
+    },
+    {
+        "id": "019f9305-1221-7089-85b5-1c6460ffbc30",
+        "person_id": "019f9305-121a-733f-8bf1-e2100c4ea68b",
+        "kelas_id": "019f9300-c863-724d-9320-870efd7f5628",
+        "academic_year": "2026\/2027",
+        "is_active": 1,
+        "created_by": "397de6c8-926e-41ec-aecf-ed71e4396f7a",
+        "created_at": "2026-07-24 07:26:50",
+        "updated_at": "2026-07-24 07:26:50"
+    },
+    {
+        "id": "019f9305-122f-7354-87da-c26d38b82c2e",
+        "person_id": "019f9305-1223-722b-8233-e52da6da0419",
+        "kelas_id": "019f9300-c86b-7139-ba7f-82355505c9bc",
+        "academic_year": "2026\/2027",
+        "is_active": 1,
+        "created_by": "397de6c8-926e-41ec-aecf-ed71e4396f7a",
+        "created_at": "2026-07-24 07:26:50",
+        "updated_at": "2026-07-24 07:26:50"
+    },
+    {
+        "id": "019f9305-123d-709b-897a-a91fd582fbd4",
+        "person_id": "019f9305-1230-7222-9ab8-55f3d68e4db3",
+        "kelas_id": "019f9300-c869-7381-a513-3b287caa1df8",
+        "academic_year": "2026\/2027",
+        "is_active": 1,
+        "created_by": "397de6c8-926e-41ec-aecf-ed71e4396f7a",
+        "created_at": "2026-07-24 07:26:50",
+        "updated_at": "2026-07-24 07:26:50"
+    },
+    {
+        "id": "019f9305-1243-7082-8405-629ada3712ad",
+        "person_id": "019f9305-123e-71f0-adcc-982f556d6026",
+        "kelas_id": "019f9300-c86b-7139-ba7f-82355505c9bc",
+        "academic_year": "2026\/2027",
+        "is_active": 1,
+        "created_by": "397de6c8-926e-41ec-aecf-ed71e4396f7a",
+        "created_at": "2026-07-24 07:26:50",
+        "updated_at": "2026-07-24 07:26:50"
+    },
+    {
+        "id": "019f9305-124e-70f9-95ff-2242e713399c",
+        "person_id": "019f9305-1245-7288-8117-f83beefb3036",
+        "kelas_id": "019f9300-c869-7381-a513-3b287caa1df8",
+        "academic_year": "2026\/2027",
+        "is_active": 1,
+        "created_by": "397de6c8-926e-41ec-aecf-ed71e4396f7a",
+        "created_at": "2026-07-24 07:26:50",
+        "updated_at": "2026-07-24 07:26:50"
+    },
+    {
+        "id": "019f9305-1256-71d3-b5d6-3e588f477cd4",
+        "person_id": "019f9305-1250-73e5-97fe-37ea5776eb60",
+        "kelas_id": "019f9300-c86e-7145-8495-1f057a0bba88",
+        "academic_year": "2026\/2027",
+        "is_active": 1,
+        "created_by": "397de6c8-926e-41ec-aecf-ed71e4396f7a",
+        "created_at": "2026-07-24 07:26:50",
+        "updated_at": "2026-07-24 07:26:50"
+    },
+    {
+        "id": "019f9305-1261-7093-86fb-7de1a5a2d874",
+        "person_id": "019f9305-1259-70b7-a1c2-8aea696b4eef",
+        "kelas_id": "019f9300-c872-72e0-b89d-7fbbc69d3ef3",
+        "academic_year": "2026\/2027",
+        "is_active": 1,
+        "created_by": "397de6c8-926e-41ec-aecf-ed71e4396f7a",
+        "created_at": "2026-07-24 07:26:50",
+        "updated_at": "2026-07-24 07:26:50"
+    },
+    {
+        "id": "019f9305-126b-7399-ba79-103d427e8eb9",
+        "person_id": "019f9305-1262-70dc-8712-4f732da15655",
+        "kelas_id": "019f9300-c872-72e0-b89d-7fbbc69d3ef3",
+        "academic_year": "2026\/2027",
+        "is_active": 1,
+        "created_by": "397de6c8-926e-41ec-aecf-ed71e4396f7a",
+        "created_at": "2026-07-24 07:26:50",
+        "updated_at": "2026-07-24 07:26:50"
+    },
+    {
+        "id": "019f9305-1274-72e2-9c09-c6c2f708b54f",
+        "person_id": "019f9305-126d-70e1-b091-ee90fa79283d",
+        "kelas_id": "019f9300-c875-72cb-a98d-cf7ede50088c",
+        "academic_year": "2026\/2027",
+        "is_active": 1,
+        "created_by": "397de6c8-926e-41ec-aecf-ed71e4396f7a",
+        "created_at": "2026-07-24 07:26:50",
+        "updated_at": "2026-07-24 07:26:50"
+    },
+    {
+        "id": "019f9305-127f-70df-bd46-b1a78270116a",
+        "person_id": "019f9305-1274-72e2-9c09-c6c2f7c29d2c",
+        "kelas_id": "019f9300-c863-724d-9320-870efd7f5628",
+        "academic_year": "2026\/2027",
+        "is_active": 1,
+        "created_by": "397de6c8-926e-41ec-aecf-ed71e4396f7a",
+        "created_at": "2026-07-24 07:26:51",
+        "updated_at": "2026-07-24 07:26:51"
+    },
+    {
+        "id": "019f9305-1286-7179-810f-40156f2aef3e",
+        "person_id": "019f9305-1280-7124-adab-c82e8a44afd5",
+        "kelas_id": "019f9300-c877-7113-ba04-ea12f68a71e0",
+        "academic_year": "2026\/2027",
+        "is_active": 1,
+        "created_by": "397de6c8-926e-41ec-aecf-ed71e4396f7a",
+        "created_at": "2026-07-24 07:26:51",
+        "updated_at": "2026-07-24 07:26:51"
+    },
+    {
+        "id": "019f9305-1291-7035-a711-7bb5b2d09e9b",
+        "person_id": "019f9305-1287-7137-8280-6c9dcdf20861",
+        "kelas_id": "019f9300-c869-7381-a513-3b287caa1df8",
+        "academic_year": "2026\/2027",
+        "is_active": 1,
+        "created_by": "397de6c8-926e-41ec-aecf-ed71e4396f7a",
+        "created_at": "2026-07-24 07:26:51",
+        "updated_at": "2026-07-24 07:26:51"
+    },
+    {
+        "id": "019f9305-1299-709e-a998-cb7ae3099480",
+        "person_id": "019f9305-1292-7230-a0a1-9d96f035102b",
+        "kelas_id": "019f9300-c86e-7145-8495-1f057a0bba88",
+        "academic_year": "2026\/2027",
+        "is_active": 1,
+        "created_by": "397de6c8-926e-41ec-aecf-ed71e4396f7a",
+        "created_at": "2026-07-24 07:26:51",
+        "updated_at": "2026-07-24 07:26:51"
+    },
+    {
+        "id": "019f9305-12a3-71a2-a245-b853843768d2",
+        "person_id": "019f9305-129b-72b3-8173-2f5a112633fd",
+        "kelas_id": "019f9300-c869-7381-a513-3b287caa1df8",
+        "academic_year": "2026\/2027",
+        "is_active": 1,
+        "created_by": "397de6c8-926e-41ec-aecf-ed71e4396f7a",
+        "created_at": "2026-07-24 07:26:51",
+        "updated_at": "2026-07-24 07:26:51"
+    },
+    {
+        "id": "019f9305-12ae-7271-b940-f95d079bfc17",
+        "person_id": "019f9305-12a4-726d-a27a-03f0944e86fa",
+        "kelas_id": "019f9300-c875-72cb-a98d-cf7ede50088c",
+        "academic_year": "2026\/2027",
+        "is_active": 1,
+        "created_by": "397de6c8-926e-41ec-aecf-ed71e4396f7a",
+        "created_at": "2026-07-24 07:26:51",
+        "updated_at": "2026-07-24 07:26:51"
+    },
+    {
+        "id": "019f9305-12b6-73dc-9fa6-4aa95b362b19",
+        "person_id": "019f9305-12b0-71e2-8fba-98573a909c9b",
+        "kelas_id": "019f9300-c863-724d-9320-870efd7f5628",
+        "academic_year": "2026\/2027",
+        "is_active": 1,
+        "created_by": "397de6c8-926e-41ec-aecf-ed71e4396f7a",
+        "created_at": "2026-07-24 07:26:51",
+        "updated_at": "2026-07-24 07:26:51"
+    },
+    {
+        "id": "019f9305-12c2-71b1-a149-2ab17574c367",
+        "person_id": "019f9305-12b7-70af-a58c-0509013567cf",
+        "kelas_id": "019f9300-c863-724d-9320-870efd7f5628",
+        "academic_year": "2026\/2027",
+        "is_active": 1,
+        "created_by": "397de6c8-926e-41ec-aecf-ed71e4396f7a",
+        "created_at": "2026-07-24 07:26:51",
+        "updated_at": "2026-07-24 07:26:51"
+    },
+    {
+        "id": "019f9305-12c8-73c9-8175-a5230f4d58ec",
+        "person_id": "019f9305-12c3-7345-9af9-f79790fa0961",
+        "kelas_id": "019f9300-c872-72e0-b89d-7fbbc69d3ef3",
+        "academic_year": "2026\/2027",
+        "is_active": 1,
+        "created_by": "397de6c8-926e-41ec-aecf-ed71e4396f7a",
+        "created_at": "2026-07-24 07:26:51",
+        "updated_at": "2026-07-24 07:26:51"
+    },
+    {
+        "id": "019f9305-12d5-7190-a9fd-769fd4415970",
+        "person_id": "019f9305-12ca-7154-acf3-a67621566972",
+        "kelas_id": "019f9300-c86b-7139-ba7f-82355505c9bc",
+        "academic_year": "2026\/2027",
+        "is_active": 1,
+        "created_by": "397de6c8-926e-41ec-aecf-ed71e4396f7a",
+        "created_at": "2026-07-24 07:26:51",
+        "updated_at": "2026-07-24 07:26:51"
+    },
+    {
+        "id": "019f9305-12e1-738e-9b4c-5d782059262e",
+        "person_id": "019f9305-12d7-7035-9ab5-ef00533a9ff8",
+        "kelas_id": "019f9300-c875-72cb-a98d-cf7ede50088c",
+        "academic_year": "2026\/2027",
+        "is_active": 1,
+        "created_by": "397de6c8-926e-41ec-aecf-ed71e4396f7a",
+        "created_at": "2026-07-24 07:26:51",
+        "updated_at": "2026-07-24 07:26:51"
+    },
+    {
+        "id": "019f9305-12e9-72f5-b82f-ebd58443f408",
+        "person_id": "019f9305-12e3-7047-9a67-db9b29359602",
+        "kelas_id": "019f9300-c86b-7139-ba7f-82355505c9bc",
+        "academic_year": "2026\/2027",
+        "is_active": 1,
+        "created_by": "397de6c8-926e-41ec-aecf-ed71e4396f7a",
+        "created_at": "2026-07-24 07:26:51",
+        "updated_at": "2026-07-24 07:26:51"
+    },
+    {
+        "id": "019f9305-12f4-704d-b411-f8b2c3d4b37f",
+        "person_id": "019f9305-12ea-7022-addd-7c88641963cd",
+        "kelas_id": "019f9300-c863-724d-9320-870efd7f5628",
+        "academic_year": "2026\/2027",
+        "is_active": 1,
+        "created_by": "397de6c8-926e-41ec-aecf-ed71e4396f7a",
+        "created_at": "2026-07-24 07:26:51",
+        "updated_at": "2026-07-24 07:26:51"
+    },
+    {
+        "id": "019f9305-12fd-703a-8505-9c18df117435",
+        "person_id": "019f9305-12f5-72ba-9103-a1bc33923f3b",
+        "kelas_id": "019f9300-c869-7381-a513-3b287caa1df8",
+        "academic_year": "2026\/2027",
+        "is_active": 1,
+        "created_by": "397de6c8-926e-41ec-aecf-ed71e4396f7a",
+        "created_at": "2026-07-24 07:26:51",
+        "updated_at": "2026-07-24 07:26:51"
+    },
+    {
+        "id": "019f9305-1307-718c-be64-b29052ec1e43",
+        "person_id": "019f9305-1300-7394-8fcf-d4af735c9081",
+        "kelas_id": "019f9300-c86b-7139-ba7f-82355505c9bc",
+        "academic_year": "2026\/2027",
+        "is_active": 1,
+        "created_by": "397de6c8-926e-41ec-aecf-ed71e4396f7a",
+        "created_at": "2026-07-24 07:26:51",
+        "updated_at": "2026-07-24 07:26:51"
+    },
+    {
+        "id": "019f9305-1310-708c-8031-83092725cf24",
+        "person_id": "019f9305-1308-712a-829a-e6fff2aafaf7",
+        "kelas_id": "019f9300-c869-7381-a513-3b287caa1df8",
+        "academic_year": "2026\/2027",
+        "is_active": 1,
+        "created_by": "397de6c8-926e-41ec-aecf-ed71e4396f7a",
+        "created_at": "2026-07-24 07:26:51",
+        "updated_at": "2026-07-24 07:26:51"
+    },
+    {
+        "id": "019f9305-131a-7103-b77a-7fa460623aa8",
+        "person_id": "019f9305-1313-7171-92cd-26298eea606c",
+        "kelas_id": "019f9300-c863-724d-9320-870efd7f5628",
+        "academic_year": "2026\/2027",
+        "is_active": 1,
+        "created_by": "397de6c8-926e-41ec-aecf-ed71e4396f7a",
+        "created_at": "2026-07-24 07:26:51",
+        "updated_at": "2026-07-24 07:26:51"
+    },
+    {
+        "id": "019f9305-1325-73f2-8998-fed2c8ba820c",
+        "person_id": "019f9305-131b-7066-a814-d71140020562",
+        "kelas_id": "019f9300-c875-72cb-a98d-cf7ede50088c",
+        "academic_year": "2026\/2027",
+        "is_active": 1,
+        "created_by": "397de6c8-926e-41ec-aecf-ed71e4396f7a",
+        "created_at": "2026-07-24 07:26:51",
+        "updated_at": "2026-07-24 07:26:51"
+    },
+    {
+        "id": "019f9305-132e-70b8-b067-05595351dd98",
+        "person_id": "019f9305-1326-7062-9fd6-97df2b433eb7",
+        "kelas_id": "019f9300-c875-72cb-a98d-cf7ede50088c",
+        "academic_year": "2026\/2027",
+        "is_active": 1,
+        "created_by": "397de6c8-926e-41ec-aecf-ed71e4396f7a",
+        "created_at": "2026-07-24 07:26:51",
+        "updated_at": "2026-07-24 07:26:51"
+    },
+    {
+        "id": "019f9305-133b-734d-af8f-aea199c06f9a",
+        "person_id": "019f9305-1331-73cb-9f66-384389aa92cd",
+        "kelas_id": "019f9300-c86b-7139-ba7f-82355505c9bc",
+        "academic_year": "2026\/2027",
+        "is_active": 1,
+        "created_by": "397de6c8-926e-41ec-aecf-ed71e4396f7a",
+        "created_at": "2026-07-24 07:26:51",
+        "updated_at": "2026-07-24 07:26:51"
+    },
+    {
+        "id": "019f9305-1358-72e8-bd4c-3d17aa596379",
+        "person_id": "019f9305-133d-729c-9552-57cfa755617a",
+        "kelas_id": "019f9300-c86b-7139-ba7f-82355505c9bc",
+        "academic_year": "2026\/2027",
+        "is_active": 1,
+        "created_by": "397de6c8-926e-41ec-aecf-ed71e4396f7a",
+        "created_at": "2026-07-24 07:26:51",
+        "updated_at": "2026-07-24 07:26:51"
+    },
+    {
+        "id": "019f9305-1360-7240-94c8-d8e971a1624f",
+        "person_id": "019f9305-1359-73a1-81c3-28fed01a5468",
+        "kelas_id": "019f9300-c872-72e0-b89d-7fbbc69d3ef3",
+        "academic_year": "2026\/2027",
+        "is_active": 1,
+        "created_by": "397de6c8-926e-41ec-aecf-ed71e4396f7a",
+        "created_at": "2026-07-24 07:26:51",
+        "updated_at": "2026-07-24 07:26:51"
+    },
+    {
+        "id": "019f930e-6ee8-73ac-ace4-d3652e39081e",
+        "person_id": "019f930e-6eca-72a6-9480-bdd1984be760",
+        "kelas_id": "019f930c-c5fd-704d-be8e-0f5371d0c95a",
+        "academic_year": "2026\/2027",
+        "is_active": 1,
+        "created_by": "397de6c8-926e-41ec-aecf-ed71e4396f7a",
+        "created_at": "2026-07-24 07:37:04",
+        "updated_at": "2026-07-24 07:37:04"
+    },
+    {
+        "id": "019f930e-6ef7-725d-85ff-a90fb933d5db",
+        "person_id": "019f930e-6eec-709c-95c8-585b3761bd58",
+        "kelas_id": "019f930c-c605-7236-8737-2cf996625229",
+        "academic_year": "2026\/2027",
+        "is_active": 1,
+        "created_by": "397de6c8-926e-41ec-aecf-ed71e4396f7a",
+        "created_at": "2026-07-24 07:37:04",
+        "updated_at": "2026-07-24 07:37:04"
+    },
+    {
+        "id": "019f930e-6f06-739a-a1ae-df01ee4b55dd",
+        "person_id": "019f930e-6ef9-7122-bba6-b83a72e53492",
+        "kelas_id": "019f930c-c607-73fa-beb4-ec2f316821ed",
+        "academic_year": "2026\/2027",
+        "is_active": 1,
+        "created_by": "397de6c8-926e-41ec-aecf-ed71e4396f7a",
+        "created_at": "2026-07-24 07:37:04",
+        "updated_at": "2026-07-24 07:37:04"
+    },
+    {
+        "id": "019f930e-6f14-70f5-b37c-fef1ecdd258c",
+        "person_id": "019f930e-6f08-7172-b862-23b8630e29ec",
+        "kelas_id": "019f930c-c607-73fa-beb4-ec2f316821ed",
+        "academic_year": "2026\/2027",
+        "is_active": 1,
+        "created_by": "397de6c8-926e-41ec-aecf-ed71e4396f7a",
+        "created_at": "2026-07-24 07:37:04",
+        "updated_at": "2026-07-24 07:37:04"
+    },
+    {
+        "id": "019f930e-6f22-72f2-9b92-c5339a5b84c5",
+        "person_id": "019f930e-6f16-714b-9929-b885d51372c7",
+        "kelas_id": "019f930c-c609-7206-80c5-f28fdb85f5f8",
+        "academic_year": "2026\/2027",
+        "is_active": 1,
+        "created_by": "397de6c8-926e-41ec-aecf-ed71e4396f7a",
+        "created_at": "2026-07-24 07:37:04",
+        "updated_at": "2026-07-24 07:37:04"
+    },
+    {
+        "id": "019f930e-6f30-71a2-95b3-7c38fe853863",
+        "person_id": "019f930e-6f23-72d3-a6b3-891f6497383c",
+        "kelas_id": "019f930c-c60b-7187-96d9-91ef7d138501",
+        "academic_year": "2026\/2027",
+        "is_active": 1,
+        "created_by": "397de6c8-926e-41ec-aecf-ed71e4396f7a",
+        "created_at": "2026-07-24 07:37:04",
+        "updated_at": "2026-07-24 07:37:04"
+    },
+    {
+        "id": "019f930e-6f48-736e-8dd2-5e20057f9430",
+        "person_id": "019f930e-6f3a-7087-9b20-97e5bb051237",
+        "kelas_id": "019f930c-c607-73fa-beb4-ec2f316821ed",
+        "academic_year": "2026\/2027",
+        "is_active": 1,
+        "created_by": "397de6c8-926e-41ec-aecf-ed71e4396f7a",
+        "created_at": "2026-07-24 07:37:04",
+        "updated_at": "2026-07-24 07:37:04"
+    },
+    {
+        "id": "019f930e-6f59-70d5-9257-62c70f31149a",
+        "person_id": "019f930e-6f4a-735d-b755-cb3d330862b5",
+        "kelas_id": "019f930c-c607-73fa-beb4-ec2f316821ed",
+        "academic_year": "2026\/2027",
+        "is_active": 1,
+        "created_by": "397de6c8-926e-41ec-aecf-ed71e4396f7a",
+        "created_at": "2026-07-24 07:37:04",
+        "updated_at": "2026-07-24 07:37:04"
+    },
+    {
+        "id": "019f930e-6f69-7092-9dbe-970e5269f31a",
+        "person_id": "019f930e-6f5a-7149-b741-fc85f6ef6fd8",
+        "kelas_id": "019f930c-c607-73fa-beb4-ec2f316821ed",
+        "academic_year": "2026\/2027",
+        "is_active": 1,
+        "created_by": "397de6c8-926e-41ec-aecf-ed71e4396f7a",
+        "created_at": "2026-07-24 07:37:04",
+        "updated_at": "2026-07-24 07:37:04"
+    },
+    {
+        "id": "019f930e-6f79-7077-93ce-c13878f8bb79",
+        "person_id": "019f930e-6f6a-7001-9c69-f923def1464c",
+        "kelas_id": "019f930c-c607-73fa-beb4-ec2f316821ed",
+        "academic_year": "2026\/2027",
+        "is_active": 1,
+        "created_by": "397de6c8-926e-41ec-aecf-ed71e4396f7a",
+        "created_at": "2026-07-24 07:37:04",
+        "updated_at": "2026-07-24 07:37:04"
+    },
+    {
+        "id": "019f930e-6f8a-7020-887d-1dfe85fe4992",
+        "person_id": "019f930e-6f7b-70ab-b049-b98d788df3f9",
+        "kelas_id": "019f930c-c607-73fa-beb4-ec2f316821ed",
+        "academic_year": "2026\/2027",
+        "is_active": 1,
+        "created_by": "397de6c8-926e-41ec-aecf-ed71e4396f7a",
+        "created_at": "2026-07-24 07:37:04",
+        "updated_at": "2026-07-24 07:37:04"
+    },
+    {
+        "id": "019f930e-6f99-739f-afce-bfc66174ce81",
+        "person_id": "019f930e-6f8b-71ab-a118-1c14778b918d",
+        "kelas_id": "019f930c-c607-73fa-beb4-ec2f316821ed",
+        "academic_year": "2026\/2027",
+        "is_active": 1,
+        "created_by": "397de6c8-926e-41ec-aecf-ed71e4396f7a",
+        "created_at": "2026-07-24 07:37:04",
+        "updated_at": "2026-07-24 07:37:04"
+    },
+    {
+        "id": "019f930e-6fa7-700c-b792-9e3ff1d902e2",
+        "person_id": "019f930e-6f9a-73a9-b626-1ebe0cddaa14",
+        "kelas_id": "019f930c-c60c-727e-8286-b65f34440c51",
+        "academic_year": "2026\/2027",
+        "is_active": 1,
+        "created_by": "397de6c8-926e-41ec-aecf-ed71e4396f7a",
+        "created_at": "2026-07-24 07:37:04",
+        "updated_at": "2026-07-24 07:37:04"
+    },
+    {
+        "id": "019f930e-6fba-7230-8262-7cfb0e31b7ba",
+        "person_id": "019f930e-6fa9-731b-a928-8491b0453db8",
+        "kelas_id": "019f930c-c60b-7187-96d9-91ef7d138501",
+        "academic_year": "2026\/2027",
+        "is_active": 1,
+        "created_by": "397de6c8-926e-41ec-aecf-ed71e4396f7a",
+        "created_at": "2026-07-24 07:37:04",
+        "updated_at": "2026-07-24 07:37:04"
+    },
+    {
+        "id": "019f930e-6fc9-7257-8c6b-87a4c52816ec",
+        "person_id": "019f930e-6fbc-717c-9f26-bb58430078b3",
+        "kelas_id": "019f930c-c605-7236-8737-2cf996625229",
+        "academic_year": "2026\/2027",
+        "is_active": 1,
+        "created_by": "397de6c8-926e-41ec-aecf-ed71e4396f7a",
+        "created_at": "2026-07-24 07:37:04",
+        "updated_at": "2026-07-24 07:37:04"
+    },
+    {
+        "id": "019f930e-6fd6-7010-ba15-4cadc8a0174e",
+        "person_id": "019f930e-6fca-704c-9095-c5a1256687e1",
+        "kelas_id": "019f930c-c5fd-704d-be8e-0f5371d0c95a",
+        "academic_year": "2026\/2027",
+        "is_active": 1,
+        "created_by": "397de6c8-926e-41ec-aecf-ed71e4396f7a",
+        "created_at": "2026-07-24 07:37:04",
+        "updated_at": "2026-07-24 07:37:04"
+    },
+    {
+        "id": "019f930e-6fe3-73d5-a165-7981bceb6879",
+        "person_id": "019f930e-6fd9-722c-97ab-16778a2f05a0",
+        "kelas_id": "019f930c-c607-73fa-beb4-ec2f316821ed",
+        "academic_year": "2026\/2027",
+        "is_active": 1,
+        "created_by": "397de6c8-926e-41ec-aecf-ed71e4396f7a",
+        "created_at": "2026-07-24 07:37:04",
+        "updated_at": "2026-07-24 07:37:04"
+    },
+    {
+        "id": "019f930e-6ff0-7377-8a04-011e18a1d1c3",
+        "person_id": "019f930e-6fe7-73b5-9965-230f0d9211aa",
+        "kelas_id": "019f930c-c60e-716b-ab41-6280105935ac",
+        "academic_year": "2026\/2027",
+        "is_active": 1,
+        "created_by": "397de6c8-926e-41ec-aecf-ed71e4396f7a",
+        "created_at": "2026-07-24 07:37:04",
+        "updated_at": "2026-07-24 07:37:04"
+    },
+    {
+        "id": "019f930e-6fff-73ce-a1ae-3492b53d9cc0",
+        "person_id": "019f930e-6ff1-722a-ba9a-b6f2c163d982",
+        "kelas_id": "019f930c-c607-73fa-beb4-ec2f316821ed",
+        "academic_year": "2026\/2027",
+        "is_active": 1,
+        "created_by": "397de6c8-926e-41ec-aecf-ed71e4396f7a",
+        "created_at": "2026-07-24 07:37:04",
+        "updated_at": "2026-07-24 07:37:04"
+    },
+    {
+        "id": "019f930e-700e-7174-afee-bf606c8ef776",
+        "person_id": "019f930e-7000-72ae-9f03-b92a4d416843",
+        "kelas_id": "019f930c-c60b-7187-96d9-91ef7d138501",
+        "academic_year": "2026\/2027",
+        "is_active": 1,
+        "created_by": "397de6c8-926e-41ec-aecf-ed71e4396f7a",
+        "created_at": "2026-07-24 07:37:04",
+        "updated_at": "2026-07-24 07:37:04"
+    },
+    {
+        "id": "019f930e-701d-7362-95f6-de3641ba6c03",
+        "person_id": "019f930e-700f-727a-94d1-846e766eb35a",
+        "kelas_id": "019f930c-c605-7236-8737-2cf996625229",
+        "academic_year": "2026\/2027",
+        "is_active": 1,
+        "created_by": "397de6c8-926e-41ec-aecf-ed71e4396f7a",
+        "created_at": "2026-07-24 07:37:04",
+        "updated_at": "2026-07-24 07:37:04"
+    },
+    {
+        "id": "019f930e-702d-73de-9648-3dd5b7f27626",
+        "person_id": "019f930e-701f-73a0-b9c3-b0f01853450a",
+        "kelas_id": "019f930c-c5fd-704d-be8e-0f5371d0c95a",
+        "academic_year": "2026\/2027",
+        "is_active": 1,
+        "created_by": "397de6c8-926e-41ec-aecf-ed71e4396f7a",
+        "created_at": "2026-07-24 07:37:04",
+        "updated_at": "2026-07-24 07:37:04"
+    },
+    {
+        "id": "019f930e-7038-70df-aac5-2f18c37c9dd1",
+        "person_id": "019f930e-702e-72bf-b1f0-41fa1fbba3e9",
+        "kelas_id": "019f930c-c60e-716b-ab41-6280105935ac",
+        "academic_year": "2026\/2027",
+        "is_active": 1,
+        "created_by": "397de6c8-926e-41ec-aecf-ed71e4396f7a",
+        "created_at": "2026-07-24 07:37:04",
+        "updated_at": "2026-07-24 07:37:04"
+    },
+    {
+        "id": "019f930e-7043-7120-b04b-09fff5cdd2ca",
+        "person_id": "019f930e-703b-73be-a445-ef691f81a73e",
+        "kelas_id": "019f930c-c60e-716b-ab41-6280105935ac",
+        "academic_year": "2026\/2027",
+        "is_active": 1,
+        "created_by": "397de6c8-926e-41ec-aecf-ed71e4396f7a",
+        "created_at": "2026-07-24 07:37:04",
+        "updated_at": "2026-07-24 07:37:04"
+    },
+    {
+        "id": "019f930e-7053-71ba-bf00-a2517717d4cf",
+        "person_id": "019f930e-7045-70ec-a997-c695065623e9",
+        "kelas_id": "019f930c-c5fd-704d-be8e-0f5371d0c95a",
+        "academic_year": "2026\/2027",
+        "is_active": 1,
+        "created_by": "397de6c8-926e-41ec-aecf-ed71e4396f7a",
+        "created_at": "2026-07-24 07:37:04",
+        "updated_at": "2026-07-24 07:37:04"
+    },
+    {
+        "id": "019f930e-7064-71f2-b13f-a7b9a21e6625",
+        "person_id": "019f930e-7055-72bf-a7b8-14d58d42a9f6",
+        "kelas_id": "019f930c-c609-7206-80c5-f28fdb85f5f8",
+        "academic_year": "2026\/2027",
+        "is_active": 1,
+        "created_by": "397de6c8-926e-41ec-aecf-ed71e4396f7a",
+        "created_at": "2026-07-24 07:37:04",
+        "updated_at": "2026-07-24 07:37:04"
+    },
+    {
+        "id": "019f930e-7074-71ec-967b-89a83b654fbf",
+        "person_id": "019f930e-7066-72c9-834f-90d856e56f38",
+        "kelas_id": "019f930c-c60e-716b-ab41-6280105935ac",
+        "academic_year": "2026\/2027",
+        "is_active": 1,
+        "created_by": "397de6c8-926e-41ec-aecf-ed71e4396f7a",
+        "created_at": "2026-07-24 07:37:04",
+        "updated_at": "2026-07-24 07:37:04"
+    },
+    {
+        "id": "019f930e-7085-707c-b6f1-fe6ce8a05546",
+        "person_id": "019f930e-7075-700c-a338-b975a0a23d77",
+        "kelas_id": "019f930c-c605-7236-8737-2cf996625229",
+        "academic_year": "2026\/2027",
+        "is_active": 1,
+        "created_by": "397de6c8-926e-41ec-aecf-ed71e4396f7a",
+        "created_at": "2026-07-24 07:37:04",
+        "updated_at": "2026-07-24 07:37:04"
+    },
+    {
+        "id": "019f930e-7095-7200-8b8a-e8d434834cc4",
+        "person_id": "019f930e-7087-7110-99db-8b25f0149837",
+        "kelas_id": "019f930c-c60c-727e-8286-b65f34440c51",
+        "academic_year": "2026\/2027",
+        "is_active": 1,
+        "created_by": "397de6c8-926e-41ec-aecf-ed71e4396f7a",
+        "created_at": "2026-07-24 07:37:04",
+        "updated_at": "2026-07-24 07:37:04"
+    },
+    {
+        "id": "019f930e-70a5-7329-b4b3-b9ead3b1fafd",
+        "person_id": "019f930e-7097-72bf-bd3f-13f45d213abc",
+        "kelas_id": "019f930c-c605-7236-8737-2cf996625229",
+        "academic_year": "2026\/2027",
+        "is_active": 1,
+        "created_by": "397de6c8-926e-41ec-aecf-ed71e4396f7a",
+        "created_at": "2026-07-24 07:37:04",
+        "updated_at": "2026-07-24 07:37:04"
+    },
+    {
+        "id": "019f930e-70b5-72c3-807f-1ed072780dbd",
+        "person_id": "019f930e-70a7-73e0-a77d-07181516c3c2",
+        "kelas_id": "019f930c-c605-7236-8737-2cf996625229",
+        "academic_year": "2026\/2027",
+        "is_active": 1,
+        "created_by": "397de6c8-926e-41ec-aecf-ed71e4396f7a",
+        "created_at": "2026-07-24 07:37:04",
+        "updated_at": "2026-07-24 07:37:04"
+    }
+]

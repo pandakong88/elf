@@ -1,0 +1,152 @@
+[
+    {
+        "id": "019f92fa-45de-70b0-bdb4-79bceca06675",
+        "dormitory_id": "019f92fa-45d2-71d5-8231-21033a6a75b4",
+        "name": "Kamar 8",
+        "capacity": 30,
+        "description": "Diimpor dari Setup Excel Massal Asrama",
+        "is_active": 1,
+        "created_at": "2026-07-24 07:15:03",
+        "updated_at": "2026-07-24 07:15:03"
+    },
+    {
+        "id": "019f92fa-45e2-7033-a451-8799c30f9642",
+        "dormitory_id": "019f92fa-45d2-71d5-8231-21033a6a75b4",
+        "name": "Kamar 9",
+        "capacity": 30,
+        "description": "Diimpor dari Setup Excel Massal Asrama",
+        "is_active": 1,
+        "created_at": "2026-07-24 07:15:03",
+        "updated_at": "2026-07-24 07:15:03"
+    },
+    {
+        "id": "019f92fa-45e5-7023-8bf9-aebb3d408885",
+        "dormitory_id": "019f92fa-45d2-71d5-8231-21033a6a75b4",
+        "name": "Kamar 10",
+        "capacity": 30,
+        "description": "Diimpor dari Setup Excel Massal Asrama",
+        "is_active": 1,
+        "created_at": "2026-07-24 07:15:03",
+        "updated_at": "2026-07-24 07:15:03"
+    },
+    {
+        "id": "019f92fa-45ec-70c3-b423-3c441be853cb",
+        "dormitory_id": "019f92fa-45e7-7173-8999-568fb5c82d98",
+        "name": "Kamar 12",
+        "capacity": 30,
+        "description": "Diimpor dari Setup Excel Massal Asrama",
+        "is_active": 1,
+        "created_at": "2026-07-24 07:15:03",
+        "updated_at": "2026-07-24 07:15:03"
+    },
+    {
+        "id": "019f92fa-45f1-71e8-8759-cf9be6c44cf4",
+        "dormitory_id": "019f92fa-45e7-7173-8999-568fb5c82d98",
+        "name": "Kamar 13",
+        "capacity": 30,
+        "description": "Diimpor dari Setup Excel Massal Asrama",
+        "is_active": 1,
+        "created_at": "2026-07-24 07:15:03",
+        "updated_at": "2026-07-24 07:15:03"
+    },
+    {
+        "id": "019f92fa-45f4-7065-b6cc-450a745945fd",
+        "dormitory_id": "019f92fa-45e7-7173-8999-568fb5c82d98",
+        "name": "Kamar 14",
+        "capacity": 30,
+        "description": "Diimpor dari Setup Excel Massal Asrama",
+        "is_active": 1,
+        "created_at": "2026-07-24 07:15:03",
+        "updated_at": "2026-07-24 07:15:03"
+    },
+    {
+        "id": "019f92fa-45f7-723a-a25f-01aadc2fcbb1",
+        "dormitory_id": "019f92fa-45e7-7173-8999-568fb5c82d98",
+        "name": "Kamar 15",
+        "capacity": 30,
+        "description": "Diimpor dari Setup Excel Massal Asrama",
+        "is_active": 1,
+        "created_at": "2026-07-24 07:15:03",
+        "updated_at": "2026-07-24 07:15:03"
+    },
+    {
+        "id": "019f92fa-45fc-72ff-a806-000691436706",
+        "dormitory_id": "019f92fa-45e7-7173-8999-568fb5c82d98",
+        "name": "Kamar 16",
+        "capacity": 30,
+        "description": "Diimpor dari Setup Excel Massal Asrama",
+        "is_active": 1,
+        "created_at": "2026-07-24 07:15:03",
+        "updated_at": "2026-07-24 07:15:03"
+    },
+    {
+        "id": "019f930b-9dac-70db-8a76-4754151afb25",
+        "dormitory_id": "019f930b-9da3-7316-a28b-04333f642b6d",
+        "name": "Kamar 4",
+        "capacity": 30,
+        "description": "Diimpor dari Setup Excel Massal Asrama",
+        "is_active": 1,
+        "created_at": "2026-07-24 07:33:59",
+        "updated_at": "2026-07-24 07:33:59"
+    },
+    {
+        "id": "019f930b-9daf-72ae-976e-7e0ee2ede6e3",
+        "dormitory_id": "019f930b-9da3-7316-a28b-04333f642b6d",
+        "name": "Kamar 6",
+        "capacity": 30,
+        "description": "Diimpor dari Setup Excel Massal Asrama",
+        "is_active": 1,
+        "created_at": "2026-07-24 07:33:59",
+        "updated_at": "2026-07-24 07:33:59"
+    },
+    {
+        "id": "019f930b-9db2-72e8-baf8-e821e29b5e39",
+        "dormitory_id": "019f930b-9da3-7316-a28b-04333f642b6d",
+        "name": "Kamar 1",
+        "capacity": 30,
+        "description": "Diimpor dari Setup Excel Massal Asrama",
+        "is_active": 1,
+        "created_at": "2026-07-24 07:33:59",
+        "updated_at": "2026-07-24 07:33:59"
+    },
+    {
+        "id": "019f930b-9db7-71ff-9049-1d84d0064789",
+        "dormitory_id": "019f930b-9da3-7316-a28b-04333f642b6d",
+        "name": "Kamar 5",
+        "capacity": 30,
+        "description": "Diimpor dari Setup Excel Massal Asrama",
+        "is_active": 1,
+        "created_at": "2026-07-24 07:33:59",
+        "updated_at": "2026-07-24 07:33:59"
+    },
+    {
+        "id": "019f930b-9dbc-7386-b729-39275a7c545d",
+        "dormitory_id": "019f930b-9da3-7316-a28b-04333f642b6d",
+        "name": "Kamar 3",
+        "capacity": 30,
+        "description": "Diimpor dari Setup Excel Massal Asrama",
+        "is_active": 1,
+        "created_at": "2026-07-24 07:33:59",
+        "updated_at": "2026-07-24 07:33:59"
+    },
+    {
+        "id": "019f930b-9dbf-7246-84de-f3992350450b",
+        "dormitory_id": "019f930b-9da3-7316-a28b-04333f642b6d",
+        "name": "Kamar 2",
+        "capacity": 30,
+        "description": "Diimpor dari Setup Excel Massal Asrama",
+        "is_active": 1,
+        "created_at": "2026-07-24 07:33:59",
+        "updated_at": "2026-07-24 07:33:59"
+    },
+    {
+        "id": "019f930b-9dc2-70b1-9db7-8a9ce3baf2d8",
+        "dormitory_id": "019f930b-9da3-7316-a28b-04333f642b6d",
+        "name": "Kamar 7",
+        "capacity": 30,
+        "description": "Diimpor dari Setup Excel Massal Asrama",
+        "is_active": 1,
+        "created_at": "2026-07-24 07:33:59",
+        "updated_at": "2026-07-24 07:33:59"
+    }
+]

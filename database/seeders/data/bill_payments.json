@@ -1,0 +1,90 @@
+[
+    {
+        "id": "019f9344-c233-7292-a86a-f2a6ea4cdf80",
+        "bill_id": "019f931d-eca2-711d-af36-69bddb07f4c2",
+        "amount_paid": "35000.00",
+        "payment_date": "2026-07-24",
+        "payment_method": "cash",
+        "logged_by": "d6ad4219-2ae9-4abc-84dc-1b0fe2c7d678",
+        "notes": "pelunasan syahriah jan - jul",
+        "created_at": "2026-07-24 08:36:24",
+        "updated_at": "2026-07-24 08:36:24"
+    },
+    {
+        "id": "019f9344-c24a-73fb-be0e-506032cf3550",
+        "bill_id": "019f931d-ed5c-710e-a687-1e7328583bfc",
+        "amount_paid": "35000.00",
+        "payment_date": "2026-07-24",
+        "payment_method": "cash",
+        "logged_by": "d6ad4219-2ae9-4abc-84dc-1b0fe2c7d678",
+        "notes": "pelunasan syahriah jan - jul",
+        "created_at": "2026-07-24 08:36:24",
+        "updated_at": "2026-07-24 08:36:24"
+    },
+    {
+        "id": "019f9344-c258-7059-8851-d58baf1aa997",
+        "bill_id": "019f931d-ee1c-73f7-bf50-5df8ea9d2d64",
+        "amount_paid": "35000.00",
+        "payment_date": "2026-07-24",
+        "payment_method": "cash",
+        "logged_by": "d6ad4219-2ae9-4abc-84dc-1b0fe2c7d678",
+        "notes": "pelunasan syahriah jan - jul",
+        "created_at": "2026-07-24 08:36:24",
+        "updated_at": "2026-07-24 08:36:24"
+    },
+    {
+        "id": "019f9344-c262-7167-8036-69c576824f23",
+        "bill_id": "019f931d-eecb-7394-9539-fd3f1f673120",
+        "amount_paid": "35000.00",
+        "payment_date": "2026-07-24",
+        "payment_method": "cash",
+        "logged_by": "d6ad4219-2ae9-4abc-84dc-1b0fe2c7d678",
+        "notes": "pelunasan syahriah jan - jul",
+        "created_at": "2026-07-24 08:36:24",
+        "updated_at": "2026-07-24 08:36:24"
+    },
+    {
+        "id": "019f9344-c26d-7035-bdbb-b613767b3db9",
+        "bill_id": "019f931d-ef81-70ab-8de0-c58023568b28",
+        "amount_paid": "35000.00",
+        "payment_date": "2026-07-24",
+        "payment_method": "cash",
+        "logged_by": "d6ad4219-2ae9-4abc-84dc-1b0fe2c7d678",
+        "notes": "pelunasan syahriah jan - jul",
+        "created_at": "2026-07-24 08:36:24",
+        "updated_at": "2026-07-24 08:36:24"
+    },
+    {
+        "id": "019f9344-c279-70db-ab8f-c883456b7491",
+        "bill_id": "019f931d-f036-71c9-89d2-ad158d633a54",
+        "amount_paid": "35000.00",
+        "payment_date": "2026-07-24",
+        "payment_method": "cash",
+        "logged_by": "d6ad4219-2ae9-4abc-84dc-1b0fe2c7d678",
+        "notes": "pelunasan syahriah jan - jul",
+        "created_at": "2026-07-24 08:36:24",
+        "updated_at": "2026-07-24 08:36:24"
+    },
+    {
+        "id": "019f9344-c27f-71f6-bb93-f3d1d2adf620",
+        "bill_id": "019f931d-f0ea-729d-800d-002e60d12fe9",
+        "amount_paid": "35000.00",
+        "payment_date": "2026-07-24",
+        "payment_method": "cash",
+        "logged_by": "d6ad4219-2ae9-4abc-84dc-1b0fe2c7d678",
+        "notes": "pelunasan syahriah jan - jul",
+        "created_at": "2026-07-24 08:36:24",
+        "updated_at": "2026-07-24 08:36:24"
+    },
+    {
+        "id": "019f9347-3e5f-7049-9237-0df25cdd5fdf",
+        "bill_id": "019f931d-f1a0-716a-8b19-1234b07ae392",
+        "amount_paid": "35000.00",
+        "payment_date": "2026-07-24",
+        "payment_method": "cash",
+        "logged_by": "d6ad4219-2ae9-4abc-84dc-1b0fe2c7d678",
+        "notes": "Pembayaran Kasir",
+        "created_at": "2026-07-24 08:39:07",
+        "updated_at": "2026-07-24 08:39:07"
+    }
+]

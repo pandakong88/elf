@@ -1,0 +1,42 @@
+[
+    {
+        "id": "019f874f-87f7-729c-8c4a-853f79cc9bb8",
+        "name": "Set Up Sistem",
+        "description": "",
+        "is_default": 0,
+        "is_archived": 0,
+        "created_by": "eb893567-1252-4a90-8b6e-061f9888468f",
+        "created_at": "2026-07-22 00:52:44",
+        "updated_at": "2026-07-22 00:52:44"
+    },
+    {
+        "id": "1fe16214-6eee-4939-99c5-7721706090b9",
+        "name": "Sensus Standar Bulanan",
+        "description": "Template standar untuk sensus rutin bulanan. Mencakup kehadiran, data kesehatan dasar, dan status pendidikan.",
+        "is_default": 1,
+        "is_archived": 0,
+        "created_by": "397de6c8-926e-41ec-aecf-ed71e4396f7a",
+        "created_at": "2026-07-17 17:54:02",
+        "updated_at": "2026-07-17 17:54:02"
+    },
+    {
+        "id": "ab666d71-8e95-476a-bfbe-5615bcfd3bbc",
+        "name": "Sensus Khataman",
+        "description": "Template khusus untuk event khataman. Mencatat progress hafalan\/bacaan Al-Quran santri.",
+        "is_default": 0,
+        "is_archived": 0,
+        "created_by": "397de6c8-926e-41ec-aecf-ed71e4396f7a",
+        "created_at": "2026-07-17 17:54:02",
+        "updated_at": "2026-07-17 17:54:02"
+    },
+    {
+        "id": "b82124f2-c64b-4c91-a868-f917d98983f5",
+        "name": "Sensus Data Wali",
+        "description": "Template khusus untuk memperbarui data kontak orang tua dan wali santri.",
+        "is_default": 0,
+        "is_archived": 0,
+        "created_by": "397de6c8-926e-41ec-aecf-ed71e4396f7a",
+        "created_at": "2026-07-17 17:54:02",
+        "updated_at": "2026-07-17 17:54:02"
+    }
+]

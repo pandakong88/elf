@@ -1,0 +1,35 @@
+[
+    {
+        "id": "019f92fa-45d2-71d5-8231-21033a6a75b4",
+        "organization_id": "a86238e7-a57a-4907-89da-690e9e5a1f28",
+        "name": "Komplek C Putra",
+        "gender": "L",
+        "description": null,
+        "is_active": 1,
+        "kas_komplek_amount": "5000.00",
+        "created_at": "2026-07-24 07:15:03",
+        "updated_at": "2026-07-24 07:15:03"
+    },
+    {
+        "id": "019f92fa-45e7-7173-8999-568fb5c82d98",
+        "organization_id": "a86238e7-a57a-4907-89da-690e9e5a1f28",
+        "name": "Komplek D Putra",
+        "gender": "L",
+        "description": null,
+        "is_active": 1,
+        "kas_komplek_amount": "5000.00",
+        "created_at": "2026-07-24 07:15:03",
+        "updated_at": "2026-07-24 07:16:45"
+    },
+    {
+        "id": "019f930b-9da3-7316-a28b-04333f642b6d",
+        "organization_id": "a86238e7-a57a-4907-89da-690e9e5a1f28",
+        "name": "Komplek Tahasus Putri",
+        "gender": "P",
+        "description": null,
+        "is_active": 1,
+        "kas_komplek_amount": "5000.00",
+        "created_at": "2026-07-24 07:33:59",
+        "updated_at": "2026-07-24 07:33:59"
+    }
+]
