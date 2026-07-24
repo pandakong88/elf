@@ -153,10 +153,19 @@ class RealTestingDataSeeder extends Seeder
                 // 5. Create/Get Madrasah Kelas
                 $kelas = null;
                 if (!empty($kelasName)) {
+                    $jenjang = 'ula';
+                    $lowerName = strtolower($kelasName);
+                    if (str_contains($lowerName, 'wustho')) {
+                        $jenjang = 'wustho';
+                    } elseif (str_contains($lowerName, 'ulya') || str_contains($lowerName, 'tahasus')) {
+                        $jenjang = 'ulya';
+                    }
+
                     $kelas = MadrasahKelas::firstOrCreate([
                         'name' => $kelasName,
                     ], [
                         'id'            => Str::uuid()->toString(),
+                        'jenjang'       => $jenjang,
                         'academic_year' => '2025/2026',
                         'is_active'     => true,
                     ]);
