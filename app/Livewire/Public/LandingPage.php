@@ -23,7 +23,7 @@ class LandingPage extends Component
             'about_mission' => "1. Menyelenggarakan pendidikan kepesantrenan tradisional dan formal secara terpadu.\n2. Menanamkan adab, kemandirian, dan kedisiplinan berlandaskan akhlak mulia.\n3. Menyelenggarakan program Tahfidzul Qur'an yang terstruktur.\n4. Mendidik santri agar mampu menghadapi tantangan global tanpa kehilangan jati diri muslim.",
             'contact_address' => 'Jl. Kedinding Lor No.99, Kenjeran, Surabaya, Jawa Timur 60129',
             'contact_phone' => '0812-3456-7890 (Humas Putra) / 0812-3456-7891 (Humas Putri)',
-            'contact_email' => 'info@alfithroh.pondok',
+            'contact_email' => 'info@elvith.id',
             'pedoman_title' => 'Buku Pedoman Santri 2026/2027',
             'pedoman_description' => 'Unduh buku pedoman resmi untuk mengetahui tata tertib, hak & kewajiban, serta informasi penting lainnya selama mukim di pondok.',
             'pedoman_file_url' => '',

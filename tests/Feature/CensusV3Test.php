@@ -58,7 +58,7 @@ class CensusV3Test extends TestCase
             'person_id' => $adminPerson->id,
             'name'      => 'Test Administrator',
             'username'  => 'admin',
-            'email'     => 'admin@alfithroh.pondok',
+            'email'     => 'admin@elvith.id',
             'password'  => 'rahasia123',
             'is_active' => true,
         ]);

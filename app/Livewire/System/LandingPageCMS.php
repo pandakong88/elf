@@ -51,7 +51,7 @@ class LandingPageCMS extends Component
         $this->about_mission = $contents['about_mission'] ?? "1. Menyelenggarakan pendidikan kepesantrenan tradisional dan formal secara terpadu.\n2. Menanamkan adab, kemandirian, dan kedisiplinan berlandaskan akhlak mulia.\n3. Menyelenggarakan program Tahfidzul Qur'an yang terstruktur.\n4. Mendidik santri agar mampu menghadapi tantangan global tanpa kehilangan jati diri muslim.";
         $this->contact_address = $contents['contact_address'] ?? 'Jl. Kedinding Lor No.99, Kenjeran, Surabaya, Jawa Timur 60129';
         $this->contact_phone = $contents['contact_phone'] ?? '0812-3456-7890 (Humas Putra) / 0812-3456-7891 (Humas Putri)';
-        $this->contact_email = $contents['contact_email'] ?? 'info@alfithroh.pondok';
+        $this->contact_email = $contents['contact_email'] ?? 'info@elvith.id';
         $this->pedoman_title = $contents['pedoman_title'] ?? 'Buku Pedoman Santri 2026/2027';
         $this->pedoman_description = $contents['pedoman_description'] ?? 'Unduh buku pedoman resmi untuk mengetahui tata tertib, hak & kewajiban, serta informasi penting lainnya selama mukim di pondok.';
         $this->registration_info = $contents['registration_info'] ?? 'Penerimaan Santri Baru (PSB) Tahun Ajaran 2026/2027 telah dibuka. Pendaftaran dapat dilakukan langsung di kantor sekretariat pusat Al-Fithroh.';

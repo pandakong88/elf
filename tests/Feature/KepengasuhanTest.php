@@ -32,7 +32,7 @@ class KepengasuhanTest extends TestCase
 
         $this->seed();
 
-        $this->adminUser = User::where('email', 'admin@alfithroh.pondok')->firstOrFail();
+        $this->adminUser = User::where('email', 'admin@elvith.id')->firstOrFail();
         $this->authToken = auth('api')->login($this->adminUser);
     }
 

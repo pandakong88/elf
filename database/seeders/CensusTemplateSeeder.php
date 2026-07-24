@@ -17,9 +17,9 @@ class CensusTemplateSeeder extends Seeder
 {
     public function run(): void
     {
-        $adminUser = User::where('email', 'admin@alfithroh.pondok')->firstOrFail();
-        $musyrifUser = User::where('email', 'musyrif@alfithroh.pondok')->firstOrFail();
-        $musyrifahUser = User::where('email', 'musyrifah@alfithroh.pondok')->firstOrFail();
+        $adminUser = User::where('email', 'admin@elvith.id')->firstOrFail();
+        $musyrifUser = User::where('email', 'musyrif@elvith.id')->firstOrFail();
+        $musyrifahUser = User::where('email', 'musyrifah@elvith.id')->firstOrFail();
 
         $asramaPutra = Dormitory::where('gender', 'L')->firstOrFail();
         $asramaPutri = Dormitory::where('gender', 'P')->firstOrFail();

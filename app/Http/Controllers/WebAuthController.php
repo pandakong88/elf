@@ -18,22 +18,73 @@ class WebAuthController extends Controller
             return redirect()->route('dashboard');
         }
 
-        $devUsers = User::with(['roles', 'person'])
+        $allUsers = User::with(['roles', 'person'])
             ->where('is_active', true)
             ->get()
             ->map(function ($user) {
+                $rolesList = $user->roles->pluck('name')->toArray();
                 return [
-                    'id'     => $user->id,
-                    'name'   => $user->name,
-                    'email'  => $user->email,
-                    'roles'  => $user->roles->pluck('name')->implode(', ') ?: 'Tanpa Role',
-                    'gender' => $user->person?->gender ? ($user->person->gender === 'L' ? 'Putra' : 'Putri') : '-',
+                    'id'          => $user->id,
+                    'name'        => $user->name,
+                    'email'       => $user->email,
+                    'roles_array' => $rolesList,
+                    'roles'       => implode(', ', $rolesList) ?: 'Tanpa Role',
+                    'gender'      => $user->person?->gender ? ($user->person->gender === 'L' ? 'Putra' : 'Putri') : '-',
                 ];
             })
             ->sortBy('name')
             ->values();
 
-        return view('auth.login', compact('devUsers'));
+        $devUsers = $allUsers;
+
+        $roleGroups = [
+            'super_admin' => [
+                'id'          => 'super_admin',
+                'title'       => 'Super Admin',
+                'subtitle'    => 'Akses Penuh Sistem',
+                'icon'        => '',
+                'icon_type'   => 'shield',
+                'bg_color'    => 'from-emerald-950/60 to-slate-900',
+                'border_color'=> 'border-emerald-500/40 hover:border-emerald-400',
+                'badge_color' => 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30',
+                'users'       => $allUsers->filter(fn($u) => in_array('super-admin', $u['roles_array']))->values(),
+            ],
+            'manajemen' => [
+                'id'          => 'manajemen',
+                'title'       => 'Manajemen',
+                'subtitle'    => 'Pengelola & Otoritas',
+                'icon'        => '',
+                'icon_type'   => 'building',
+                'bg_color'    => 'from-sky-950/60 to-slate-900',
+                'border_color'=> 'border-sky-500/40 hover:border-sky-400',
+                'badge_color' => 'bg-sky-500/20 text-sky-300 border-sky-500/30',
+                'users'       => $allUsers->filter(fn($u) => in_array('manajemen', $u['roles_array']))->values(),
+            ],
+            'bendahara_pondok' => [
+                'id'          => 'bendahara_pondok',
+                'title'       => 'Bendahara Pondok',
+                'subtitle'    => 'Keuangan Utama',
+                'icon'        => '',
+                'icon_type'   => 'banknotes',
+                'bg_color'    => 'from-amber-950/60 to-slate-900',
+                'border_color'=> 'border-amber-500/40 hover:border-amber-400',
+                'badge_color' => 'bg-amber-500/20 text-amber-300 border-amber-500/30',
+                'users'       => $allUsers->filter(fn($u) => in_array('bendahara-pondok', $u['roles_array']))->values(),
+            ],
+            'bendahara_unit' => [
+                'id'          => 'bendahara_unit',
+                'title'       => 'Bendahara Pa / Pi',
+                'subtitle'    => 'Kasir & Setoran Unit',
+                'icon'        => '',
+                'icon_type'   => 'credit-card',
+                'bg_color'    => 'from-purple-950/60 to-slate-900',
+                'border_color'=> 'border-purple-500/40 hover:border-purple-400',
+                'badge_color' => 'bg-purple-500/20 text-purple-300 border-purple-500/30',
+                'users'       => $allUsers->filter(fn($u) => in_array('bendahara-putra', $u['roles_array']) || in_array('bendahara-putri', $u['roles_array']) || in_array('bendahara-unit', $u['roles_array']))->values(),
+            ],
+        ];
+
+        return view('auth.login', compact('devUsers', 'roleGroups'));
     }
 
     /**

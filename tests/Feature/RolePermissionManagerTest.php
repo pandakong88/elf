@@ -23,8 +23,8 @@ class RolePermissionManagerTest extends TestCase
         // Seed the standard database records (users, roles, permissions)
         $this->seed();
 
-        $this->adminUser = User::where('email', 'admin@alfithroh.pondok')->firstOrFail();
-        $this->musyrifUser = User::where('email', 'musyrif@alfithroh.pondok')->firstOrFail();
+        $this->adminUser = User::where('email', 'admin@elvith.id')->firstOrFail();
+        $this->musyrifUser = User::where('email', 'musyrif@elvith.id')->firstOrFail();
     }
 
     public function test_guest_is_redirected_to_login(): void
@@ -101,7 +101,7 @@ class RolePermissionManagerTest extends TestCase
 
     public function test_admin_can_assign_roles_to_user(): void
     {
-        $operatorUser = User::where('email', 'operator@alfithroh.pondok')->firstOrFail();
+        $operatorUser = User::where('email', 'operator@elvith.id')->firstOrFail();
         
         $this->assertFalse($operatorUser->hasRole('musyrif'));
 
@@ -116,7 +116,7 @@ class RolePermissionManagerTest extends TestCase
 
     public function test_admin_can_toggle_user_status(): void
     {
-        $musyrif = User::where('email', 'musyrif@alfithroh.pondok')->firstOrFail();
+        $musyrif = User::where('email', 'musyrif@elvith.id')->firstOrFail();
         $this->assertTrue($musyrif->is_active);
 
         Livewire::actingAs($this->adminUser)
@@ -161,7 +161,7 @@ class RolePermissionManagerTest extends TestCase
 
         // Create another super-admin
         $anotherAdmin = User::factory()->create([
-            'email' => 'admin2@alfithroh.pondok',
+            'email' => 'admin2@elvith.id',
             'username' => 'admin2',
             'is_active' => true,
         ]);
@@ -177,7 +177,7 @@ class RolePermissionManagerTest extends TestCase
         $this->assertFalse($this->adminUser->fresh()->is_active);
 
         // Manager user with manage-roles permission but not super-admin
-        $manager = User::factory()->create(['email' => 'manager@alfithroh.pondok', 'username' => 'manager', 'is_active' => true]);
+        $manager = User::factory()->create(['email' => 'manager@elvith.id', 'username' => 'manager', 'is_active' => true]);
         $manager->givePermissionTo('manage-roles');
 
         // manager tries to deactivate anotherAdmin (who is the last active super-admin)

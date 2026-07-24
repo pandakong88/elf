@@ -24,7 +24,7 @@ class AuthTest extends TestCase
     public function test_login_with_correct_credentials(): void
     {
         $response = $this->postJson('/api/v1/auth/login', [
-            'email'    => 'admin@alfithroh.pondok',
+            'email'    => 'admin@elvith.id',
             'password' => 'rahasia123',
         ]);
 
@@ -46,7 +46,7 @@ class AuthTest extends TestCase
     public function test_login_with_incorrect_credentials(): void
     {
         $response = $this->postJson('/api/v1/auth/login', [
-            'email'    => 'admin@alfithroh.pondok',
+            'email'    => 'admin@elvith.id',
             'password' => 'wrongpassword',
         ]);
 
@@ -66,7 +66,7 @@ class AuthTest extends TestCase
     public function test_me_endpoint_returns_user_info_with_valid_token(): void
     {
         $loginResponse = $this->postJson('/api/v1/auth/login', [
-            'email'    => 'admin@alfithroh.pondok',
+            'email'    => 'admin@elvith.id',
             'password' => 'rahasia123',
         ]);
 
@@ -88,7 +88,7 @@ class AuthTest extends TestCase
                     'organization_ids',
                 ]
             ])
-            ->assertJsonPath('data.email', 'admin@alfithroh.pondok');
+            ->assertJsonPath('data.email', 'admin@elvith.id');
     }
 
     public function test_core_endpoint_requires_jwt_auth(): void
@@ -101,7 +101,7 @@ class AuthTest extends TestCase
     public function test_core_endpoint_allows_access_with_valid_token(): void
     {
         $loginResponse = $this->postJson('/api/v1/auth/login', [
-            'email'    => 'admin@alfithroh.pondok',
+            'email'    => 'admin@elvith.id',
             'password' => 'rahasia123',
         ]);
 

@@ -98,6 +98,8 @@ class RolePermissionSeeder extends Seeder
             'ketua-madrasah',
             'guru',
             'bendahara-pondok',
+            'bendahara-putra',
+            'bendahara-putri',
             'bendahara-unit',
             'pengurus-koperasi',
             'wali-santri',
@@ -153,6 +155,16 @@ class RolePermissionSeeder extends Seeder
             'view-tagihan', 'create-tagihan', 'record-pembayaran', 'void-pembayaran', 'manage-billing-config', 'manage-setoran-kolektif', 'view-laporan-keuangan', 'manage-adjustment'
         ]);
 
+        // bendahara-putra:
+        $roleInstances['bendahara-putra']->syncPermissions([
+            'view-tagihan', 'create-tagihan', 'record-pembayaran', 'void-pembayaran', 'manage-billing-config', 'manage-setoran-kolektif', 'view-laporan-keuangan', 'manage-adjustment'
+        ]);
+
+        // bendahara-putri:
+        $roleInstances['bendahara-putri']->syncPermissions([
+            'view-tagihan', 'create-tagihan', 'record-pembayaran', 'void-pembayaran', 'manage-billing-config', 'manage-setoran-kolektif', 'view-laporan-keuangan', 'manage-adjustment'
+        ]);
+
         // bendahara-unit:
         $roleInstances['bendahara-unit']->syncPermissions([
             'view-tagihan', 'record-pembayaran', 'view-laporan-keuangan'
@@ -175,7 +187,7 @@ class RolePermissionSeeder extends Seeder
         ]);
 
         // If base users are already seeded, we can stop here
-        if (User::where('email', 'admin@alfithroh.pondok')->exists()) {
+        if (User::where('email', 'admin@elvith.id')->exists()) {
             return;
         }
 
@@ -208,7 +220,7 @@ class RolePermissionSeeder extends Seeder
         ]);
 
         $adminUser = User::firstOrCreate([
-            'email' => 'admin@alfithroh.pondok',
+            'email' => 'admin@elvith.id',
         ], [
             'id'        => Str::uuid()->toString(),
             'person_id' => $adminPerson->id,
@@ -246,7 +258,7 @@ class RolePermissionSeeder extends Seeder
             'person_id' => $musyrifPerson->id,
             'name'      => 'Musyrif Ahmad',
             'username'  => 'musyrif',
-            'email'     => 'musyrif@alfithroh.pondok',
+            'email'     => 'musyrif@elvith.id',
             'password'  => 'rahasia123',
             'is_active' => true,
         ]);
@@ -278,7 +290,7 @@ class RolePermissionSeeder extends Seeder
             'person_id' => $musyrifahPerson->id,
             'name'      => 'Musyrifah Fatimah',
             'username'  => 'musyrifah',
-            'email'     => 'musyrifah@alfithroh.pondok',
+            'email'     => 'musyrifah@elvith.id',
             'password'  => 'rahasia123',
             'is_active' => true,
         ]);
@@ -309,7 +321,7 @@ class RolePermissionSeeder extends Seeder
             'person_id' => $pengasuhPerson->id,
             'name'      => 'Kiai Abdullah',
             'username'  => 'pengasuh',
-            'email'     => 'pengasuh@alfithroh.pondok',
+            'email'     => 'pengasuh@elvith.id',
             'password'  => 'rahasia123',
             'is_active' => true,
         ]);
@@ -340,7 +352,7 @@ class RolePermissionSeeder extends Seeder
             'person_id' => $operatorPerson->id,
             'name'      => 'Operator Data',
             'username'  => 'operator',
-            'email'     => 'operator@alfithroh.pondok',
+            'email'     => 'operator@elvith.id',
             'password'  => 'rahasia123',
             'is_active' => true,
         ]);
@@ -353,38 +365,38 @@ class RolePermissionSeeder extends Seeder
                 'name' => 'M. Jusam Masykuri',
                 'gender' => 'L',
                 'phone' => '0895 2920 4060',
-                'role' => 'musyrif',
+                'role' => 'manajemen',
                 'org_slug' => 'kepengasuhan-putra',
                 'username' => 'jusam',
-                'email' => 'jusam@alfithroh.pondok',
+                'email' => 'jusam@elvith.id',
             ],
             [
                 'name' => 'Latifatun Nurul Hamidah',
                 'gender' => 'P',
                 'phone' => '0856 0117 7914',
-                'role' => 'musyrif',
+                'role' => 'manajemen',
                 'org_slug' => 'kepengasuhan-putri',
                 'username' => 'latifatun',
-                'email' => 'latifatun@alfithroh.pondok',
+                'email' => 'latifatun@elvith.id',
             ],
             // WAKIL KETUA
             [
                 'name' => 'M. Iqbal Arjunanda Rizqi',
                 'gender' => 'L',
                 'phone' => '0813 2696 3142',
-                'role' => 'musyrif',
+                'role' => 'super-admin',
                 'org_slug' => 'kepengasuhan-putra',
                 'username' => 'iqbal.arjunanda',
-                'email' => 'iqbal.arjunanda@alfithroh.pondok',
+                'email' => 'iqbal.arjunanda@elvith.id',
             ],
             [
                 'name' => 'Mar’atus Sholikhah Imtikhani',
                 'gender' => 'P',
                 'phone' => '0858 7807 4169',
-                'role' => 'musyrif',
+                'role' => 'manajemen',
                 'org_slug' => 'kepengasuhan-putri',
                 'username' => 'maratus.sholikhah',
-                'email' => 'maratus.sholikhah@alfithroh.pondok',
+                'email' => 'maratus.sholikhah@elvith.id',
             ],
             // SEKRETARIS PUTRA
             [
@@ -394,7 +406,7 @@ class RolePermissionSeeder extends Seeder
                 'role' => 'musyrif',
                 'org_slug' => 'kepengasuhan-putra',
                 'username' => 'syafieuddin',
-                'email' => 'syafieuddin@alfithroh.pondok',
+                'email' => 'syafieuddin@elvith.id',
             ],
             [
                 'name' => 'Ahmad Yasiro',
@@ -403,7 +415,7 @@ class RolePermissionSeeder extends Seeder
                 'role' => 'musyrif',
                 'org_slug' => 'kepengasuhan-putra',
                 'username' => 'yasiro',
-                'email' => 'yasiro@alfithroh.pondok',
+                'email' => 'yasiro@elvith.id',
             ],
             [
                 'name' => 'Alif Khabibul M',
@@ -412,7 +424,7 @@ class RolePermissionSeeder extends Seeder
                 'role' => 'musyrif',
                 'org_slug' => 'kepengasuhan-putra',
                 'username' => 'alif.khabibul',
-                'email' => 'alif.khabibul@alfithroh.pondok',
+                'email' => 'alif.khabibul@elvith.id',
             ],
             // SEKRETARIS PUTRI
             [
@@ -422,26 +434,17 @@ class RolePermissionSeeder extends Seeder
                 'role' => 'musyrif',
                 'org_slug' => 'kepengasuhan-putri',
                 'username' => 'ulfah.nuryati',
-                'email' => 'ulfah.nuryati@alfithroh.pondok',
+                'email' => 'ulfah.nuryati@elvith.id',
             ],
             // BENDAHARA PUTRA
-            [
-                'name' => 'Taufiq Musthofa',
-                'gender' => 'L',
-                'phone' => '081234560005',
-                'role' => 'bendahara-pondok',
-                'org_slug' => 'kepengasuhan-putra',
-                'username' => 'taufiq.musthofa',
-                'email' => 'taufiq.musthofa@alfithroh.pondok',
-            ],
             [
                 'name' => 'Helmi Azhar',
                 'gender' => 'L',
                 'phone' => '081234560006',
-                'role' => 'bendahara-pondok',
+                'role' => 'bendahara-putra',
                 'org_slug' => 'kepengasuhan-putra',
                 'username' => 'helmi.azhar',
-                'email' => 'helmi.azhar@alfithroh.pondok',
+                'email' => 'helmi.azhar@elvith.id',
             ],
             [
                 'name' => 'M Husain Abdullah',
@@ -450,16 +453,16 @@ class RolePermissionSeeder extends Seeder
                 'role' => 'bendahara-pondok',
                 'org_slug' => 'kepengasuhan-putra',
                 'username' => 'husain.abdullah',
-                'email' => 'husain.abdullah@alfithroh.pondok',
+                'email' => 'husain.abdullah@elvith.id',
             ],
             [
                 'name' => 'Muhammad Muadib',
                 'gender' => 'L',
                 'phone' => '081234560008',
-                'role' => 'bendahara-pondok',
+                'role' => 'bendahara-putra',
                 'org_slug' => 'kepengasuhan-putra',
                 'username' => 'muadib',
-                'email' => 'muadib@alfithroh.pondok',
+                'email' => 'muadib@elvith.id',
             ],
             // BENDAHARA PUTRI
             [
@@ -469,25 +472,25 @@ class RolePermissionSeeder extends Seeder
                 'role' => 'bendahara-pondok',
                 'org_slug' => 'kepengasuhan-putri',
                 'username' => 'musyarofah',
-                'email' => 'musyarofah@alfithroh.pondok',
+                'email' => 'musyarofah@elvith.id',
             ],
             [
                 'name' => 'Fadilah Ayu Qodariyatun',
                 'gender' => 'P',
                 'phone' => '081234560010',
-                'role' => 'bendahara-pondok',
+                'role' => 'bendahara-putri',
                 'org_slug' => 'kepengasuhan-putri',
                 'username' => 'fadilah.ayu',
-                'email' => 'fadilah.ayu@alfithroh.pondok',
+                'email' => 'fadilah.ayu@elvith.id',
             ],
             [
                 'name' => 'Fanni Rahmasari',
                 'gender' => 'P',
                 'phone' => '081234560011',
-                'role' => 'bendahara-pondok',
+                'role' => 'bendahara-putri',
                 'org_slug' => 'kepengasuhan-putri',
                 'username' => 'fanni.rahmasari',
-                'email' => 'fanni.rahmasari@alfithroh.pondok',
+                'email' => 'fanni.rahmasari@elvith.id',
             ],
             // MAJLIS TALIM PUTRA
             [
@@ -497,7 +500,7 @@ class RolePermissionSeeder extends Seeder
                 'role' => 'musyrif',
                 'org_slug' => 'kepengasuhan-putra',
                 'username' => 'mudrik.alkahfi',
-                'email' => 'mudrik.alkahfi@alfithroh.pondok',
+                'email' => 'mudrik.alkahfi@elvith.id',
             ],
             [
                 'name' => 'Muhammad Nuril Izza',
@@ -506,7 +509,7 @@ class RolePermissionSeeder extends Seeder
                 'role' => 'musyrif',
                 'org_slug' => 'kepengasuhan-putra',
                 'username' => 'nuril.izza',
-                'email' => 'nuril.izza@alfithroh.pondok',
+                'email' => 'nuril.izza@elvith.id',
             ],
             // PENDIDIKAN PUTRI
             [
@@ -516,7 +519,7 @@ class RolePermissionSeeder extends Seeder
                 'role' => 'musyrif',
                 'org_slug' => 'kepengasuhan-putri',
                 'username' => 'fina.alifah',
-                'email' => 'fina.alifah@alfithroh.pondok',
+                'email' => 'fina.alifah@elvith.id',
             ],
             [
                 'name' => 'Nilna Zulfa Azizah',
@@ -525,7 +528,7 @@ class RolePermissionSeeder extends Seeder
                 'role' => 'musyrif',
                 'org_slug' => 'kepengasuhan-putri',
                 'username' => 'nilna.zulfa',
-                'email' => 'nilna.zulfa@alfithroh.pondok',
+                'email' => 'nilna.zulfa@elvith.id',
             ],
             [
                 'name' => 'Izzatunnafisah',
@@ -534,7 +537,7 @@ class RolePermissionSeeder extends Seeder
                 'role' => 'musyrif',
                 'org_slug' => 'kepengasuhan-putri',
                 'username' => 'izzatunnafisah',
-                'email' => 'izzatunnafisah@alfithroh.pondok',
+                'email' => 'izzatunnafisah@elvith.id',
             ],
             [
                 'name' => 'Wafiq Muna Azizah',
@@ -543,7 +546,7 @@ class RolePermissionSeeder extends Seeder
                 'role' => 'musyrif',
                 'org_slug' => 'kepengasuhan-putri',
                 'username' => 'wafiq.muna',
-                'email' => 'wafiq.muna@alfithroh.pondok',
+                'email' => 'wafiq.muna@elvith.id',
             ],
             [
                 'name' => 'Arina Khoirunnisa',
@@ -552,7 +555,7 @@ class RolePermissionSeeder extends Seeder
                 'role' => 'musyrif',
                 'org_slug' => 'kepengasuhan-putri',
                 'username' => 'arina.khoirunnisa',
-                'email' => 'arina.khoirunnisa@alfithroh.pondok',
+                'email' => 'arina.khoirunnisa@elvith.id',
             ],
             // KEAMANAN PUTRA
             [
@@ -562,7 +565,7 @@ class RolePermissionSeeder extends Seeder
                 'role' => 'musyrif',
                 'org_slug' => 'kepengasuhan-putra',
                 'username' => 'rifqi.riftianto',
-                'email' => 'rifqi.riftianto@alfithroh.pondok',
+                'email' => 'rifqi.riftianto@elvith.id',
             ],
             [
                 'name' => 'Yogi Setyo Anggoro',
@@ -571,7 +574,7 @@ class RolePermissionSeeder extends Seeder
                 'role' => 'musyrif',
                 'org_slug' => 'kepengasuhan-putra',
                 'username' => 'yogi.setyo',
-                'email' => 'yogi.setyo@alfithroh.pondok',
+                'email' => 'yogi.setyo@elvith.id',
             ],
             [
                 'name' => 'Nurokhim',
@@ -580,7 +583,7 @@ class RolePermissionSeeder extends Seeder
                 'role' => 'musyrif',
                 'org_slug' => 'kepengasuhan-putra',
                 'username' => 'nurokhim',
-                'email' => 'nurokhim@alfithroh.pondok',
+                'email' => 'nurokhim@elvith.id',
             ],
             [
                 'name' => 'Rifqi Darul Ihsan',
@@ -589,7 +592,7 @@ class RolePermissionSeeder extends Seeder
                 'role' => 'musyrif',
                 'org_slug' => 'kepengasuhan-putra',
                 'username' => 'rifqi.darul',
-                'email' => 'rifqi.darul@alfithroh.pondok',
+                'email' => 'rifqi.darul@elvith.id',
             ],
             [
                 'name' => 'M Misbakhul Munir',
@@ -598,7 +601,7 @@ class RolePermissionSeeder extends Seeder
                 'role' => 'musyrif',
                 'org_slug' => 'kepengasuhan-putra',
                 'username' => 'misbakhul.munir',
-                'email' => 'misbakhul.munir@alfithroh.pondok',
+                'email' => 'misbakhul.munir@elvith.id',
             ],
             [
                 'name' => 'Ainur Rohman',
@@ -607,7 +610,7 @@ class RolePermissionSeeder extends Seeder
                 'role' => 'musyrif',
                 'org_slug' => 'kepengasuhan-putra',
                 'username' => 'ainur.rohman',
-                'email' => 'ainur.rohman@alfithroh.pondok',
+                'email' => 'ainur.rohman@elvith.id',
             ],
             [
                 'name' => 'Yusuf Muda',
@@ -616,7 +619,7 @@ class RolePermissionSeeder extends Seeder
                 'role' => 'musyrif',
                 'org_slug' => 'kepengasuhan-putra',
                 'username' => 'yusuf.muda',
-                'email' => 'yusuf.muda@alfithroh.pondok',
+                'email' => 'yusuf.muda@elvith.id',
             ],
             // KEAMANAN PUTRI
             [
@@ -626,7 +629,7 @@ class RolePermissionSeeder extends Seeder
                 'role' => 'musyrif',
                 'org_slug' => 'kepengasuhan-putri',
                 'username' => 'luluatul',
-                'email' => 'luluatul@alfithroh.pondok',
+                'email' => 'luluatul@elvith.id',
             ],
             [
                 'name' => 'Nadia Putri Maulida',
@@ -635,7 +638,7 @@ class RolePermissionSeeder extends Seeder
                 'role' => 'musyrif',
                 'org_slug' => 'kepengasuhan-putri',
                 'username' => 'nadia.putri',
-                'email' => 'nadia.putri@alfithroh.pondok',
+                'email' => 'nadia.putri@elvith.id',
             ],
             [
                 'name' => 'Wida Anggriana',
@@ -644,7 +647,7 @@ class RolePermissionSeeder extends Seeder
                 'role' => 'musyrif',
                 'org_slug' => 'kepengasuhan-putri',
                 'username' => 'wida.anggriana',
-                'email' => 'wida.anggriana@alfithroh.pondok',
+                'email' => 'wida.anggriana@elvith.id',
             ],
             [
                 'name' => 'Arina Ma Anjana',
@@ -653,7 +656,7 @@ class RolePermissionSeeder extends Seeder
                 'role' => 'musyrif',
                 'org_slug' => 'kepengasuhan-putri',
                 'username' => 'arina.ma',
-                'email' => 'arina.ma@alfithroh.pondok',
+                'email' => 'arina.ma@elvith.id',
             ],
             [
                 'name' => 'Ilma Andini Nadiroh',
@@ -662,7 +665,7 @@ class RolePermissionSeeder extends Seeder
                 'role' => 'musyrif',
                 'org_slug' => 'kepengasuhan-putri',
                 'username' => 'ilma.andini',
-                'email' => 'ilma.andini@alfithroh.pondok',
+                'email' => 'ilma.andini@elvith.id',
             ],
             // MADRASAH DINIYAH PUTRA
             [
@@ -672,7 +675,7 @@ class RolePermissionSeeder extends Seeder
                 'role' => 'guru',
                 'org_slug' => 'madrasah-diniyah',
                 'username' => 'khoirul.anam',
-                'email' => 'khoirul.anam@alfithroh.pondok',
+                'email' => 'khoirul.anam@elvith.id',
             ],
             [
                 'name' => 'Muhammad Shulchan',
@@ -681,7 +684,7 @@ class RolePermissionSeeder extends Seeder
                 'role' => 'guru',
                 'org_slug' => 'madrasah-diniyah',
                 'username' => 'shulchan',
-                'email' => 'shulchan@alfithroh.pondok',
+                'email' => 'shulchan@elvith.id',
             ],
             [
                 'name' => 'Achmad Chatami Al-M.',
@@ -690,7 +693,7 @@ class RolePermissionSeeder extends Seeder
                 'role' => 'guru',
                 'org_slug' => 'madrasah-diniyah',
                 'username' => 'chatami',
-                'email' => 'chatami@alfithroh.pondok',
+                'email' => 'chatami@elvith.id',
             ],
             [
                 'name' => 'Hanif Masyhuri',
@@ -699,7 +702,7 @@ class RolePermissionSeeder extends Seeder
                 'role' => 'guru',
                 'org_slug' => 'madrasah-diniyah',
                 'username' => 'hanif.masyhuri',
-                'email' => 'hanif.masyhuri@alfithroh.pondok',
+                'email' => 'hanif.masyhuri@elvith.id',
             ],
             [
                 'name' => 'M. Abdul Malik',
@@ -708,7 +711,7 @@ class RolePermissionSeeder extends Seeder
                 'role' => 'guru',
                 'org_slug' => 'madrasah-diniyah',
                 'username' => 'abdul.malik',
-                'email' => 'abdul.malik@alfithroh.pondok',
+                'email' => 'abdul.malik@elvith.id',
             ],
             [
                 'name' => 'Riyan Khoirul Mustofa',
@@ -717,7 +720,7 @@ class RolePermissionSeeder extends Seeder
                 'role' => 'guru',
                 'org_slug' => 'madrasah-diniyah',
                 'username' => 'riyan.khoirul',
-                'email' => 'riyan.khoirul@alfithroh.pondok',
+                'email' => 'riyan.khoirul@elvith.id',
             ],
             [
                 'name' => 'M. Mujtaba',
@@ -726,7 +729,7 @@ class RolePermissionSeeder extends Seeder
                 'role' => 'guru',
                 'org_slug' => 'madrasah-diniyah',
                 'username' => 'mujtaba',
-                'email' => 'mujtaba@alfithroh.pondok',
+                'email' => 'mujtaba@elvith.id',
             ],
             [
                 'name' => 'Winarto',
@@ -735,7 +738,7 @@ class RolePermissionSeeder extends Seeder
                 'role' => 'guru',
                 'org_slug' => 'madrasah-diniyah',
                 'username' => 'winarto',
-                'email' => 'winarto@alfithroh.pondok',
+                'email' => 'winarto@elvith.id',
             ],
             // MADRASAH DINIYAH PUTRI
             [
@@ -745,7 +748,7 @@ class RolePermissionSeeder extends Seeder
                 'role' => 'guru',
                 'org_slug' => 'madrasah-diniyah',
                 'username' => 'halimah.nur',
-                'email' => 'halimah.nur@alfithroh.pondok',
+                'email' => 'halimah.nur@elvith.id',
             ],
             [
                 'name' => 'Elvina Sri Wijayanti',
@@ -754,7 +757,7 @@ class RolePermissionSeeder extends Seeder
                 'role' => 'guru',
                 'org_slug' => 'madrasah-diniyah',
                 'username' => 'elvina.sri',
-                'email' => 'elvina.sri@alfithroh.pondok',
+                'email' => 'elvina.sri@elvith.id',
             ],
             [
                 'name' => 'Shofiyatul Muniroh',
@@ -763,7 +766,7 @@ class RolePermissionSeeder extends Seeder
                 'role' => 'guru',
                 'org_slug' => 'madrasah-diniyah',
                 'username' => 'shofiyatul',
-                'email' => 'shofiyatul@alfithroh.pondok',
+                'email' => 'shofiyatul@elvith.id',
             ],
             [
                 'name' => 'Siti Mutmainah',
@@ -772,7 +775,7 @@ class RolePermissionSeeder extends Seeder
                 'role' => 'guru',
                 'org_slug' => 'madrasah-diniyah',
                 'username' => 'mutmainah',
-                'email' => 'mutmainah@alfithroh.pondok',
+                'email' => 'mutmainah@elvith.id',
             ],
             [
                 'name' => 'Lina Nurul Ashfa',
@@ -781,7 +784,7 @@ class RolePermissionSeeder extends Seeder
                 'role' => 'guru',
                 'org_slug' => 'madrasah-diniyah',
                 'username' => 'lina.nurul',
-                'email' => 'lina.nurul@alfithroh.pondok',
+                'email' => 'lina.nurul@elvith.id',
             ],
             [
                 'name' => 'Uswatun Khasanah',
@@ -790,7 +793,7 @@ class RolePermissionSeeder extends Seeder
                 'role' => 'guru',
                 'org_slug' => 'madrasah-diniyah',
                 'username' => 'uswatun',
-                'email' => 'uswatun@alfithroh.pondok',
+                'email' => 'uswatun@elvith.id',
             ],
             // KEBERSIHAN PUTRA
             [
@@ -800,7 +803,7 @@ class RolePermissionSeeder extends Seeder
                 'role' => 'musyrif',
                 'org_slug' => 'kepengasuhan-putra',
                 'username' => 'fathur.rohman',
-                'email' => 'fathur.rohman@alfithroh.pondok',
+                'email' => 'fathur.rohman@elvith.id',
             ],
             [
                 'name' => 'Wisnu Darojat',
@@ -809,7 +812,7 @@ class RolePermissionSeeder extends Seeder
                 'role' => 'musyrif',
                 'org_slug' => 'kepengasuhan-putra',
                 'username' => 'wisnu.darojat',
-                'email' => 'wisnu.darojat@alfithroh.pondok',
+                'email' => 'wisnu.darojat@elvith.id',
             ],
             // KEBERSIHAN PUTRI
             [
@@ -819,7 +822,7 @@ class RolePermissionSeeder extends Seeder
                 'role' => 'musyrif',
                 'org_slug' => 'kepengasuhan-putri',
                 'username' => 'erra.fazirra',
-                'email' => 'erra.fazirra@alfithroh.pondok',
+                'email' => 'erra.fazirra@elvith.id',
             ],
             [
                 'name' => 'Badriyatul Munawaroh',
@@ -828,7 +831,7 @@ class RolePermissionSeeder extends Seeder
                 'role' => 'musyrif',
                 'org_slug' => 'kepengasuhan-putri',
                 'username' => 'badriyatul',
-                'email' => 'badriyatul@alfithroh.pondok',
+                'email' => 'badriyatul@elvith.id',
             ],
             [
                 'name' => 'Siti Nur Zahroti Jannah',
@@ -837,7 +840,7 @@ class RolePermissionSeeder extends Seeder
                 'role' => 'musyrif',
                 'org_slug' => 'kepengasuhan-putri',
                 'username' => 'zahroti',
-                'email' => 'zahroti@alfithroh.pondok',
+                'email' => 'zahroti@elvith.id',
             ],
             [
                 'name' => 'Lialini Ulul Makarimi',
@@ -846,7 +849,7 @@ class RolePermissionSeeder extends Seeder
                 'role' => 'musyrif',
                 'org_slug' => 'kepengasuhan-putri',
                 'username' => 'lialini',
-                'email' => 'lialini@alfithroh.pondok',
+                'email' => 'lialini@elvith.id',
             ],
             [
                 'name' => 'Lina As’adah',
@@ -855,7 +858,7 @@ class RolePermissionSeeder extends Seeder
                 'role' => 'musyrif',
                 'org_slug' => 'kepengasuhan-putri',
                 'username' => 'lina.asadah',
-                'email' => 'lina.asadah@alfithroh.pondok',
+                'email' => 'lina.asadah@elvith.id',
             ],
             [
                 'name' => 'Tyas Fitri Musfiroh',
@@ -864,7 +867,7 @@ class RolePermissionSeeder extends Seeder
                 'role' => 'musyrif',
                 'org_slug' => 'kepengasuhan-putri',
                 'username' => 'tyas.fitri',
-                'email' => 'tyas.fitri@alfithroh.pondok',
+                'email' => 'tyas.fitri@elvith.id',
             ],
             // SARPRAS PUTRA
             [
@@ -874,7 +877,7 @@ class RolePermissionSeeder extends Seeder
                 'role' => 'musyrif',
                 'org_slug' => 'kepengasuhan-putra',
                 'username' => 'ahmad.ismail',
-                'email' => 'ahmad.ismail@alfithroh.pondok',
+                'email' => 'ahmad.ismail@elvith.id',
             ],
             [
                 'name' => 'M Sovwan Farid',
@@ -883,7 +886,7 @@ class RolePermissionSeeder extends Seeder
                 'role' => 'musyrif',
                 'org_slug' => 'kepengasuhan-putra',
                 'username' => 'sovwan.farid',
-                'email' => 'sovwan.farid@alfithroh.pondok',
+                'email' => 'sovwan.farid@elvith.id',
             ],
             [
                 'name' => 'M Hidayatullah',
@@ -892,7 +895,7 @@ class RolePermissionSeeder extends Seeder
                 'role' => 'musyrif',
                 'org_slug' => 'kepengasuhan-putra',
                 'username' => 'hidayatullah',
-                'email' => 'hidayatullah@alfithroh.pondok',
+                'email' => 'hidayatullah@elvith.id',
             ],
             // SARPRAS PUTRI
             [
@@ -902,7 +905,7 @@ class RolePermissionSeeder extends Seeder
                 'role' => 'musyrif',
                 'org_slug' => 'kepengasuhan-putri',
                 'username' => 'pratama.nita',
-                'email' => 'pratama.nita@alfithroh.pondok',
+                'email' => 'pratama.nita@elvith.id',
             ],
             [
                 'name' => 'Hanin Asna Nafisah',
@@ -911,7 +914,7 @@ class RolePermissionSeeder extends Seeder
                 'role' => 'musyrif',
                 'org_slug' => 'kepengasuhan-putri',
                 'username' => 'hanin.asna',
-                'email' => 'hanin.asna@alfithroh.pondok',
+                'email' => 'hanin.asna@elvith.id',
             ],
             // POSKESTREN PUTRI
             [
@@ -921,7 +924,7 @@ class RolePermissionSeeder extends Seeder
                 'role' => 'musyrif',
                 'org_slug' => 'kepengasuhan-putri',
                 'username' => 'aniiqoh',
-                'email' => 'aniiqoh@alfithroh.pondok',
+                'email' => 'aniiqoh@elvith.id',
             ],
             [
                 'name' => 'Nurul Fauziyah',
@@ -930,7 +933,7 @@ class RolePermissionSeeder extends Seeder
                 'role' => 'musyrif',
                 'org_slug' => 'kepengasuhan-putri',
                 'username' => 'nurul.fauziyah',
-                'email' => 'nurul.fauziyah@alfithroh.pondok',
+                'email' => 'nurul.fauziyah@elvith.id',
             ],
             [
                 'name' => 'Qorry ‘Aina Nilnal Muna',
@@ -939,7 +942,7 @@ class RolePermissionSeeder extends Seeder
                 'role' => 'musyrif',
                 'org_slug' => 'kepengasuhan-putri',
                 'username' => 'qorry.nilnal',
-                'email' => 'qorry.nilnal@alfithroh.pondok',
+                'email' => 'qorry.nilnal@elvith.id',
             ],
             // ABDI NDALEM PUTRA
             [
@@ -949,7 +952,7 @@ class RolePermissionSeeder extends Seeder
                 'role' => 'musyrif',
                 'org_slug' => 'kepengasuhan-putra',
                 'username' => 'muhlisin',
-                'email' => 'muhlisin@alfithroh.pondok',
+                'email' => 'muhlisin@elvith.id',
             ],
             [
                 'name' => 'Ahmad Nadhir',
@@ -958,7 +961,7 @@ class RolePermissionSeeder extends Seeder
                 'role' => 'musyrif',
                 'org_slug' => 'kepengasuhan-putra',
                 'username' => 'nadhir',
-                'email' => 'nadhir@alfithroh.pondok',
+                'email' => 'nadhir@elvith.id',
             ],
             // ABDI NDALEM PUTRI
             [
@@ -968,7 +971,7 @@ class RolePermissionSeeder extends Seeder
                 'role' => 'musyrif',
                 'org_slug' => 'kepengasuhan-putri',
                 'username' => 'shofiyyah',
-                'email' => 'shofiyyah@alfithroh.pondok',
+                'email' => 'shofiyyah@elvith.id',
             ],
             [
                 'name' => 'Qorri ‘Aina',
@@ -977,7 +980,7 @@ class RolePermissionSeeder extends Seeder
                 'role' => 'musyrif',
                 'org_slug' => 'kepengasuhan-putri',
                 'username' => 'qorri.aina',
-                'email' => 'qorri.aina@alfithroh.pondok',
+                'email' => 'qorri.aina@elvith.id',
             ],
             [
                 'name' => 'Nayli Wardatun Nufus',
@@ -986,7 +989,7 @@ class RolePermissionSeeder extends Seeder
                 'role' => 'musyrif',
                 'org_slug' => 'kepengasuhan-putri',
                 'username' => 'nayli.wardatun',
-                'email' => 'nayli.wardatun@alfithroh.pondok',
+                'email' => 'nayli.wardatun@elvith.id',
             ],
             [
                 'name' => 'Muhimmatun Khasanah',
@@ -995,7 +998,7 @@ class RolePermissionSeeder extends Seeder
                 'role' => 'musyrif',
                 'org_slug' => 'kepengasuhan-putri',
                 'username' => 'muhimmatun',
-                'email' => 'muhimmatun@alfithroh.pondok',
+                'email' => 'muhimmatun@elvith.id',
             ],
             [
                 'name' => 'Lailatul Mutmaina',
@@ -1004,7 +1007,7 @@ class RolePermissionSeeder extends Seeder
                 'role' => 'musyrif',
                 'org_slug' => 'kepengasuhan-putri',
                 'username' => 'lailatul.mutmaina',
-                'email' => 'lailatul.mutmaina@alfithroh.pondok',
+                'email' => 'lailatul.mutmaina@elvith.id',
             ],
         ];
 

@@ -43,8 +43,8 @@ class CensusTest extends TestCase
         $this->seed(\Database\Seeders\RolePermissionSeeder::class);
 
         $this->org = Organization::where('slug', 'ponpes-al-fithroh')->firstOrFail();
-        $this->adminUser   = User::where('email', 'admin@alfithroh.pondok')->firstOrFail();
-        $this->musyrifUser = User::where('email', 'musyrif@alfithroh.pondok')->firstOrFail();
+        $this->adminUser   = User::where('email', 'admin@elvith.id')->firstOrFail();
+        $this->musyrifUser = User::where('email', 'musyrif@elvith.id')->firstOrFail();
 
         // Buat asrama test
         $this->dormitory = Dormitory::create([
