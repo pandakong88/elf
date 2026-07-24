@@ -313,7 +313,15 @@
                     <h2 class="text-sm font-semibold text-slate-500 dark:text-slate-400 hidden sm:block">Dasbor Developer & Administrator</h2>
                     <h2 class="text-sm font-bold text-slate-700 dark:text-slate-200 sm:hidden">ELF System</h2>
                 </div>
-                <div class="flex items-center gap-4">
+                <div class="flex items-center gap-3 sm:gap-4">
+                    <!-- Shortcut Portal Wali Santri -->
+                    <a href="{{ url('/portal-wali') }}" target="_blank" 
+                       class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800/80 rounded-xl hover:bg-emerald-100 dark:hover:bg-emerald-900/60 transition-all shadow-sm">
+                        <svg class="w-4 h-4 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+                        <span class="hidden sm:inline">Portal Wali Santri</span>
+                        <span class="sm:hidden">Wali</span>
+                    </a>
+
                     <!-- Theme Toggle Button -->
                     <button id="theme-toggle" type="button" class="p-2 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-all" title="Ubah Tema">
                         <!-- Dark Icon -->
@@ -324,7 +332,7 @@
 
                     <div class="flex items-center gap-2">
                         <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                        <span class="text-xs text-slate-500 dark:text-slate-400 font-medium">Sesi Web Aktif</span>
+                        <span class="text-xs text-slate-500 dark:text-slate-400 font-medium hidden md:inline">Sesi Web Aktif</span>
                     </div>
                 </div>
             </header>
