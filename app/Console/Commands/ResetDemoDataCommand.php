@@ -40,7 +40,13 @@ class ResetDemoDataCommand extends Command
 
         $this->info('=== MENGOSONGKAN DATA DUMMY SISTEM ===');
 
-        DB::statement('SET FOREIGN_KEY_CHECKS=0;');
+        $driver = DB::getDriverName();
+
+        if ($driver === 'sqlite') {
+            DB::statement('PRAGMA foreign_keys = OFF;');
+        } elseif ($driver === 'mysql' || $driver === 'mariadb') {
+            DB::statement('SET FOREIGN_KEY_CHECKS=0;');
+        }
 
         $tablesToTruncate = [
             'bill_payments',
@@ -79,7 +85,11 @@ class ResetDemoDataCommand extends Command
         foreach ($tablesToTruncate as $table) {
             if (Schema::hasTable($table)) {
                 $count = DB::table($table)->count();
-                DB::table($table)->truncate();
+                if ($driver === 'sqlite') {
+                    DB::table($table)->delete();
+                } else {
+                    DB::table($table)->truncate();
+                }
                 $this->line("✔ Table [{$table}]: Dikosongkan ({$count} data dihapus)");
             }
         }
@@ -92,12 +102,16 @@ class ResetDemoDataCommand extends Command
         $deletedPersons = Person::whereNotIn('id', $userPersonIds)->delete();
         $this->line("✔ Table [persons]: {$deletedPersons} data santri/non-user dihapus. (" . count($userPersonIds) . " data pengurus/user tetap dipertahankan).");
 
-        DB::statement('SET FOREIGN_KEY_CHECKS=1;');
+        if ($driver === 'sqlite') {
+            DB::statement('PRAGMA foreign_keys = ON;');
+        } elseif ($driver === 'mysql' || $driver === 'mariadb') {
+            DB::statement('SET FOREIGN_KEY_CHECKS=1;');
+        }
 
         Artisan::call('cache:clear');
         Artisan::call('view:clear');
 
-        $this->info("\n=== PEMBERSAIHAN DUMMY SELESAI SUKSES ===");
+        $this->info("\n=== PEMBERSIHAN DUMMY SELESAI SUKSES ===");
         $this->info("Sistem sekarang 100% bersih dan siap diisi data Excel setup pondok Anda!");
 
         return Command::SUCCESS;
