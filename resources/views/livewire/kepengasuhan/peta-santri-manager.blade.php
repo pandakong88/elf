@@ -332,10 +332,30 @@
                                         @forelse($room->currentAssignments as $assignment)
                                             @php $rPerson = $assignment->person; @endphp
                                             <div class="flex items-center justify-between bg-white dark:bg-slate-900 p-2 rounded-lg text-xs shadow-sm">
-                                                <span class="font-bold text-slate-800 dark:text-slate-200 truncate">{{ $rPerson->name }}</span>
-                                                <button type="button" wire:click="openQuickProfile('{{ $rPerson->id }}')" class="text-slate-400 hover:text-emerald-600 p-0.5">
-                                                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                                                </button>
+                                                <span class="font-bold text-slate-800 dark:text-slate-200 truncate pr-1" title="{{ $rPerson->name }}">{{ $rPerson->name }}</span>
+                                                <div class="flex items-center gap-1 flex-shrink-0">
+                                                    <button type="button" wire:click="openQuickProfile('{{ $rPerson->id }}')"
+                                                        class="p-1 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 rounded transition-colors"
+                                                        title="Lihat Detail Profil">
+                                                        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                                                    </button>
+
+                                                    @can('manage-kamar')
+                                                    <button type="button" wire:click="openTransferRoomModal('{{ $rPerson->id }}')"
+                                                        class="p-1 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/60 dark:hover:bg-emerald-900 text-emerald-600 dark:text-emerald-300 rounded transition-colors"
+                                                        title="Pindah Kamar">
+                                                        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+                                                    </button>
+                                                    @endcan
+
+                                                    @can('manage-kelas')
+                                                    <button type="button" wire:click="openTransferKelasModal('{{ $rPerson->id }}')"
+                                                        class="p-1 bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-950/60 dark:hover:bg-indigo-900 text-indigo-600 dark:text-indigo-300 rounded transition-colors"
+                                                        title="Pindah Kelas">
+                                                        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+                                                    </button>
+                                                    @endcan
+                                                </div>
                                             </div>
                                         @empty
                                             <div class="text-center py-4 text-slate-400 text-xs italic">Kamar kosong</div>
@@ -371,20 +391,40 @@
                             @forelse($kelas->enrollments as $enrollment)
                                 @php $kPerson = $enrollment->person; @endphp
                                 <div class="flex items-center justify-between bg-slate-50 dark:bg-slate-800/50 p-2.5 rounded-xl border border-slate-100 dark:border-slate-700/50 text-xs">
-                                    <div class="flex items-center gap-2.5 min-w-0">
+                                    <div class="flex items-center gap-2.5 min-w-0 pr-1">
                                         <div class="w-7 h-7 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center text-[10px] font-bold text-slate-600 dark:text-slate-300 flex-shrink-0">
                                             {{ strtoupper(substr($kPerson->name, 0, 2)) }}
                                         </div>
                                         <div class="min-w-0">
-                                            <div class="font-bold text-slate-800 dark:text-slate-200 truncate">{{ $kPerson->name }}</div>
+                                            <div class="font-bold text-slate-800 dark:text-slate-200 truncate" title="{{ $kPerson->name }}">{{ $kPerson->name }}</div>
                                             <div class="text-[10px] text-slate-400">
                                                 Komplek: {{ $kPerson->roomAssignments->first()?->room?->dormitory?->name ?? 'Non-Asrama' }}
                                             </div>
                                         </div>
                                     </div>
-                                    <button type="button" wire:click="openQuickProfile('{{ $kPerson->id }}')" class="text-slate-400 hover:text-emerald-600 p-1">
-                                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                                    </button>
+                                    <div class="flex items-center gap-1 flex-shrink-0">
+                                        <button type="button" wire:click="openQuickProfile('{{ $kPerson->id }}')"
+                                            class="p-1 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 rounded transition-colors"
+                                            title="Lihat Detail Profil">
+                                            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                                        </button>
+
+                                        @can('manage-kamar')
+                                        <button type="button" wire:click="openTransferRoomModal('{{ $kPerson->id }}')"
+                                            class="p-1 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/60 dark:hover:bg-emerald-900 text-emerald-600 dark:text-emerald-300 rounded transition-colors"
+                                            title="Pindah Kamar">
+                                            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+                                        </button>
+                                        @endcan
+
+                                        @can('manage-kelas')
+                                        <button type="button" wire:click="openTransferKelasModal('{{ $kPerson->id }}')"
+                                            class="p-1 bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-950/60 dark:hover:bg-indigo-900 text-indigo-600 dark:text-indigo-300 rounded transition-colors"
+                                            title="Pindah Kelas">
+                                            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+                                        </button>
+                                        @endcan
+                                    </div>
                                 </div>
                             @empty
                                 <div class="text-center py-6 text-slate-400 text-xs italic">Belum ada santri terdaftar di kelas ini.</div>
@@ -617,7 +657,23 @@
                         </div>
                     @endif
 
-                    <div class="flex items-center justify-end gap-3 border-t border-slate-100 dark:border-slate-800 pt-4">
+                    <div class="flex flex-wrap items-center justify-end gap-3 border-t border-slate-100 dark:border-slate-800 pt-4">
+                        @can('manage-kamar')
+                        <button type="button" wire:click="openTransferRoomModal('{{ $selectedSantri->id }}')"
+                            class="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold rounded-xl text-xs shadow-md transition-all flex items-center gap-2">
+                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+                            <span>Pindah Kamar</span>
+                        </button>
+                        @endcan
+
+                        @can('manage-kelas')
+                        <button type="button" wire:click="openTransferKelasModal('{{ $selectedSantri->id }}')"
+                            class="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-extrabold rounded-xl text-xs shadow-md transition-all flex items-center gap-2">
+                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+                            <span>Pindah Kelas</span>
+                        </button>
+                        @endcan
+
                         <button type="button" wire:click="closeQuickProfile" class="px-6 py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-extrabold rounded-xl text-xs shadow-md transition-all">Tutup Informasi Profil</button>
                     </div>
                 </div>

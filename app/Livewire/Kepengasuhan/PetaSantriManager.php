@@ -175,6 +175,7 @@ class PetaSantriManager extends Component
     public function openTransferRoomModal(string $santriId): void
     {
         $person = Person::findOrFail($santriId);
+        $this->showQuickProfileModal = false;
         $this->transferSantriId   = $santriId;
         $this->transferSantriName = $person->name;
         $this->targetRoomId       = null;
@@ -220,6 +221,7 @@ class PetaSantriManager extends Component
     public function openTransferKelasModal(string $santriId): void
     {
         $person = Person::findOrFail($santriId);
+        $this->showQuickProfileModal = false;
         $this->transferKelasSantriId   = $santriId;
         $this->transferKelasSantriName = $person->name;
         $this->targetKelasId           = null;
