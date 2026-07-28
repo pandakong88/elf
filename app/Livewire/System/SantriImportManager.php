@@ -8,10 +8,13 @@ use App\Livewire\Concerns\SendsToast;
 use App\Modules\Core\Models\Person;
 use App\Modules\Core\Models\PersonRole;
 use App\Modules\Core\Models\Organization;
+use App\Modules\Kepengasuhan\Models\Guardian;
+use App\Modules\Kepengasuhan\Models\SantriGuardian;
 use App\Modules\Kepengasuhan\Models\SantriProfile;
 use App\Modules\Kepengasuhan\Models\Dormitory;
 use App\Modules\Kepengasuhan\Models\Room;
 use App\Modules\Kepengasuhan\Models\RoomAssignment;
+use App\Modules\Kepengasuhan\Services\SiblingService;
 use App\Modules\Madrasah\Models\MadrasahKelas;
 use App\Modules\Madrasah\Models\MadrasahEnrollment;
 use Illuminate\Support\Facades\DB;
@@ -248,11 +251,19 @@ class SantriImportManager extends Component
         }
 
         try {
-            $savedCount = 0;
-            $currentYear = (int)now()->format('Y');
+            $savedCount    = 0;
+            $currentYear   = (int)now()->format('Y');
+            $guardianCache = []; // Cache deduplikasi guardian by name+phone
 
-            DB::transaction(function () use (&$savedCount, $currentYear) {
+            // Ambil organisasi berdasarkan gender
+            $rootOrg  = Organization::where('slug', 'ponpes-al-fithroh')->first() ?? Organization::first();
+            $putraOrg = Organization::where('slug', 'kepengasuhan-putra')->first() ?? $rootOrg;
+            $putriOrg = Organization::where('slug', 'kepengasuhan-putri')->first() ?? $rootOrg;
+
+            DB::transaction(function () use (&$savedCount, &$guardianCache, $currentYear, $rootOrg, $putraOrg, $putriOrg) {
                 foreach ($this->tempValidSantri as $vs) {
+
+                    // 1. Buat data Person (tanpa phone — phone adalah milik wali)
                     $person = Person::create([
                         'id'          => Str::uuid()->toString(),
                         'nik'         => $vs['nik'] ?: null,
@@ -260,39 +271,87 @@ class SantriImportManager extends Component
                         'gender'      => $vs['gender'],
                         'birth_place' => $vs['birth_place'],
                         'birth_date'  => $vs['birth_date'],
-                        'phone'       => $vs['parent_phone'],
                         'address'     => $vs['address'],
                     ]);
 
+                    // 2. Buat NIS otomatis jika kosong
                     $nisNumber = $vs['nis'];
                     if (empty($nisNumber)) {
                         $nisNumber = $currentYear . sprintf('%04d', rand(1000, 9999));
                     }
 
+                    // 3. Map hubungan wali ke format sistem
+                    $relRaw = strtolower(trim($vs['parent_rel'] ?? ''));
+                    $relMapped = match(true) {
+                        str_contains($relRaw, 'ayah') || $relRaw === 'bapak' || $relRaw === 'father' => 'ayah_kandung',
+                        str_contains($relRaw, 'ibu')  || $relRaw === 'mama'  || $relRaw === 'mother' => 'ibu_kandung',
+                        str_contains($relRaw, 'kakek')                                               => 'kakek',
+                        str_contains($relRaw, 'nenek')                                               => 'nenek',
+                        str_contains($relRaw, 'paman') || $relRaw === 'om'                           => 'paman',
+                        str_contains($relRaw, 'bibi')  || $relRaw === 'tante'                        => 'bibi',
+                        str_contains($relRaw, 'kakak')                                               => 'kakak_kandung',
+                        default                                                                      => 'wali_resmi',
+                    };
+
+                    // 4. Buat SantriProfile
                     SantriProfile::create([
                         'id'                 => Str::uuid()->toString(),
                         'person_id'          => $person->id,
-                        'father_name'        => strtolower($vs['parent_rel']) === 'ayah' ? $vs['parent_name'] : null,
-                        'mother_name'        => strtolower($vs['parent_rel']) === 'ibu' ? $vs['parent_name'] : null,
+                        'father_name'        => $relMapped === 'ayah_kandung' ? $vs['parent_name'] : null,
+                        'mother_name'        => $relMapped === 'ibu_kandung'  ? $vs['parent_name'] : null,
                         'school_name'        => $vs['school_name'],
                         'has_active_sibling' => $vs['has_active_sibling'] ?? false,
                         'additional_info'    => ['nis' => $nisNumber],
                     ]);
 
-                    $rootOrg = Organization::where('slug', 'ponpes-al-fithroh')->first()
-                        ?? Organization::first();
+                    // 5. Tentukan organisasi berdasarkan gender santri
+                    $orgId = ($vs['gender'] === 'P' ? $putriOrg?->id : $putraOrg?->id) ?? $rootOrg->id;
 
                     PersonRole::create([
-                        'id'              => Str::uuid()->toString(),
-                        'person_id'       => $person->id,
-                        'organization_id' => $rootOrg->id,
-                        'role_type'       => 'santri',
+                        'id'                => Str::uuid()->toString(),
+                        'person_id'         => $person->id,
+                        'organization_id'   => $orgId,
+                        'role_type'         => 'santri',
                         'enrollment_status' => 'aktif',
-                        'presence_status' => $vs['presence_status'],
-                        'valid_from'      => now()->toDateString(),
-                        'is_active'       => true,
+                        'presence_status'   => $vs['presence_status'],
+                        'valid_from'        => now()->toDateString(),
+                        'is_active'         => true,
                     ]);
 
+                    // 6. Simpan Guardian ke tabel guardians (deduplikasi by nama+HP)
+                    if (!empty($vs['parent_name'])) {
+                        $cacheKey = strtolower(trim($vs['parent_name'])) . '_' . trim($vs['parent_phone'] ?? '');
+
+                        if (isset($guardianCache[$cacheKey])) {
+                            $guardian = $guardianCache[$cacheKey];
+                        } else {
+                            $guardian = Guardian::firstOrCreate(
+                                [
+                                    'name'          => $vs['parent_name'],
+                                    'phone_primary' => $vs['parent_phone'] ?: null,
+                                ],
+                                [
+                                    'address'   => $vs['address'] ?: null,
+                                    'is_active' => true,
+                                ]
+                            );
+                            $guardianCache[$cacheKey] = $guardian;
+                        }
+
+                        // 7. Buat relasi santri_guardians
+                        SantriGuardian::firstOrCreate(
+                            [
+                                'person_id'   => $person->id,
+                                'guardian_id' => $guardian->id,
+                            ],
+                            [
+                                'relationship' => $relMapped,
+                                'is_primary'   => true,
+                            ]
+                        );
+                    }
+
+                    // 8. Penempatan Kamar (jika Mukim)
                     if ($vs['presence_status'] === 'mukim' && $vs['dorm_id'] && $vs['room_name']) {
                         $room = Room::firstOrCreate(
                             [
@@ -300,14 +359,12 @@ class SantriImportManager extends Component
                                 'name'         => $vs['room_name'],
                             ],
                             [
-                                'id'          => Str::uuid()->toString(),
                                 'capacity'    => 10,
                                 'description' => 'Diimpor dari Setup Excel Massal',
                             ]
                         );
 
                         RoomAssignment::create([
-                            'id'         => Str::uuid()->toString(),
                             'person_id'  => $person->id,
                             'room_id'    => $room->id,
                             'valid_from' => now()->toDateString(),
@@ -315,9 +372,9 @@ class SantriImportManager extends Component
                         ]);
                     }
 
+                    // 9. Pendaftaran Kelas Madrasah
                     if ($vs['kelas_id']) {
                         MadrasahEnrollment::create([
-                            'id'            => Str::uuid()->toString(),
                             'person_id'     => $person->id,
                             'kelas_id'      => $vs['kelas_id'],
                             'academic_year' => $currentYear . '/' . ($currentYear + 1),
@@ -330,11 +387,15 @@ class SantriImportManager extends Component
                 }
             });
 
+            // 10. Auto-detect relasi Kakak-Adik dari guardian yang sama
+            $detectedSiblings = app(SiblingService::class)->detectSiblingsByGuardian();
+
             activity('santri')
                 ->causedBy(auth()->user())
-                ->log("Telah melakukan setup masal data santri baru. Berhasil diimpor: {$savedCount} santri.");
+                ->log("Import massal {$savedCount} santri berhasil. Guardian: " . count($guardianCache) . ". Relasi kakak-adik terdeteksi: {$detectedSiblings}.");
 
-            $this->toastSuccess("Berhasil mengimpor dan melakukan setup {$savedCount} data santri baru!");
+            $siblingMsg = $detectedSiblings > 0 ? " ({$detectedSiblings} relasi kakak-adik terdeteksi otomatis)" : '';
+            $this->toastSuccess("Berhasil mengimpor {$savedCount} santri & " . count($guardianCache) . " wali!{$siblingMsg}");
             $this->closeImportModal();
 
         } catch (\Exception $e) {
