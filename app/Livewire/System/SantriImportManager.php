@@ -133,7 +133,8 @@ class SantriImportManager extends Component
                     continue;
                 }
 
-                $errors = [];
+                $errors   = [];
+                $warnings = [];
 
                 if (empty($name)) {
                     $errors[] = 'Nama Lengkap Santri wajib diisi.';
@@ -192,12 +193,12 @@ class SantriImportManager extends Component
                     }
                 }
 
-                // Parent validation
-                if (empty($parentName)) {
-                    $errors[] = 'Nama Orang Tua / Wali wajib diisi.';
-                }
-                if (empty($parentPhone)) {
-                    $errors[] = 'No. HP / WA Wali wajib diisi.';
+                // Wali validation — opsional, hanya warning jika kosong
+                // Santri Laju boleh tanpa data wali (tidak akan mempengaruhi deteksi kakak-adik)
+                // Santri Mukim dianjurkan isi wali, tapi tidak diwajibkan
+                if ($presenceStatus === 'mukim' && empty($parentName)) {
+                    // Wali kosong untuk mukim: tandai warning tapi tetap valid
+                    $warnings[] = 'Santri Mukim tanpa data wali — akan disimpan tanpa relasi wali.';
                 }
 
                 if (!empty($errors)) {
@@ -208,25 +209,26 @@ class SantriImportManager extends Component
                     ];
                 } else {
                     $valid[] = [
-                        'row' => $rowNum,
-                        'name' => $name,
-                        'nik' => $nik ?: null,
-                        'nis' => $nis ?: null,
-                        'gender' => $gender,
-                        'birth_place' => $birthPlace ?: null,
-                        'birth_date' => !empty($birthDate) && strtotime($birthDate) ? date('Y-m-d', strtotime($birthDate)) : null,
-                        'presence_status' => $presenceStatus,
-                        'dorm_id' => $matchedDorm?->id,
-                        'dorm_name' => $matchedDorm?->name,
-                        'room_name' => $roomName,
-                        'kelas_id' => $matchedKelas?->id,
-                        'kelas_name' => $matchedKelas?->name,
-                        'parent_name' => $parentName,
-                        'parent_phone' => $parentPhone,
-                        'parent_rel' => $parentRel ?: 'Ayah',
-                        'address' => $address ?: null,
-                        'school_name' => $schoolName ?: null,
+                        'row'                => $rowNum,
+                        'name'               => $name,
+                        'nik'                => $nik ?: null,
+                        'nis'                => $nis ?: null,
+                        'gender'             => $gender,
+                        'birth_place'        => $birthPlace ?: null,
+                        'birth_date'         => !empty($birthDate) && strtotime($birthDate) ? date('Y-m-d', strtotime($birthDate)) : null,
+                        'presence_status'    => $presenceStatus,
+                        'dorm_id'            => $matchedDorm?->id,
+                        'dorm_name'          => $matchedDorm?->name,
+                        'room_name'          => $roomName,
+                        'kelas_id'           => $matchedKelas?->id,
+                        'kelas_name'         => $matchedKelas?->name,
+                        'parent_name'        => $parentName,
+                        'parent_phone'       => $parentPhone,
+                        'parent_rel'         => $parentRel ?: 'Ayah',
+                        'address'            => $address ?: null,
+                        'school_name'        => $schoolName ?: null,
                         'has_active_sibling' => $hasActiveSibling,
+                        'warnings'           => $warnings, // peringatan non-blocking
                     ];
                 }
             }
