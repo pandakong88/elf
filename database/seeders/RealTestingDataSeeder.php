@@ -15,22 +15,24 @@ use App\Modules\Madrasah\Models\MadrasahEnrollment;
 use App\Modules\Madrasah\Models\MadrasahKelas;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use PhpOffice\PhpSpreadsheet\IOFactory;
-
-use Illuminate\Support\Facades\Schema;
 
 class RealTestingDataSeeder extends Seeder
 {
     /**
-     * Run database seeds from Real Excel testing files.
+     * Run database seeds from 3 Real Excel setup files.
      */
     public function run(): void
     {
         $this->command?->info("🧹 Menghapus data santri, kamar, asrama, & kelas lama...");
 
-        // 1. Clean existing dummy data related to santri, rooms, classes (SQLite & MySQL compatible)
         Schema::disableForeignKeyConstraints();
+        DB::table('bill_payments')->truncate();
+        DB::table('bills')->truncate();
+        DB::table('billing_exceptions')->truncate();
+        DB::table('billing_configurations')->truncate();
         SantriGuardian::query()->truncate();
         Guardian::query()->truncate();
         RoomAssignment::query()->truncate();
@@ -40,10 +42,7 @@ class RealTestingDataSeeder extends Seeder
         Dormitory::query()->truncate();
         MadrasahKelas::query()->truncate();
 
-        // Delete PersonRole for santri & wali
         PersonRole::whereIn('role_type', ['santri', 'wali'])->delete();
-
-        // Delete Person records that belong to santri/wali (not staff/users)
         Person::whereDoesntHave('userAccount')
             ->whereDoesntHave('roles', function ($q) {
                 $q->where('role_type', 'pengurus');
@@ -52,216 +51,217 @@ class RealTestingDataSeeder extends Seeder
 
         Schema::enableForeignKeyConstraints();
 
-        $this->command?->info("✅ Clearing data lama selesai.");
+        $this->command?->info("✅ Clear data lama selesai.");
 
-        // 2. Fetch Base Organizations
+        // Fetch Organizations
         $rootOrg  = Organization::where('slug', 'ponpes-al-fithroh')->first() ?? Organization::first();
         $putraOrg = Organization::where('slug', 'kepengasuhan-putra')->first() ?? $rootOrg;
         $putriOrg = Organization::where('slug', 'kepengasuhan-putri')->first() ?? $rootOrg;
 
-        // 3. Define Excel file paths
-        $excelFiles = [
-            base_path('data testing/KOMPLEK C-D PA.xlsx'),
-            base_path('data testing/KOMPLEK TAHASUS PI.xlsx'),
+        // 1. Process Asrama & Kamar (File 1)
+        $file1Paths = [
+            base_path('Setup_1_Asrama_Putra_v2.xlsx'),
+            base_path('data testing/Hasil_Setup_Asrama_KomplekCD.xlsx'),
         ];
 
-        $totalImported = 0;
-        $guardiansCache = [];
-        $nisCounter = 1001;
+        foreach ($file1Paths as $filePath) {
+            if (!file_exists($filePath)) continue;
 
-        foreach ($excelFiles as $filePath) {
-            if (!file_exists($filePath)) {
-                $this->command?->error("File tidak ditemukan: {$filePath}");
-                continue;
-            }
-
-            $this->command?->info("📖 Membaca file: " . basename($filePath));
-            $spreadsheet = IOFactory::load($filePath);
-            $sheet = $spreadsheet->getActiveSheet();
+            $this->command?->info("📖 Impor Asrama & Kamar dari: " . basename($filePath));
+            $ss = IOFactory::load($filePath);
+            $sheet = $ss->getActiveSheet();
             $rows = $sheet->toArray();
+            array_shift($rows); // Skip header
 
-            if (count($rows) <= 1) {
-                continue;
+            foreach ($rows as $row) {
+                $dormName = trim((string)($row[0] ?? ''));
+                $gender   = strtoupper(trim((string)($row[1] ?? 'L')));
+                $roomName = trim((string)($row[2] ?? ''));
+                $capacity = (int)($row[3] ?? 10);
+
+                if (!$dormName || !$roomName) continue;
+
+                $dorm = Dormitory::firstOrCreate(
+                    ['name' => $dormName],
+                    ['gender' => in_array($gender, ['L', 'P']) ? $gender : 'L']
+                );
+
+                Room::firstOrCreate(
+                    ['dormitory_id' => $dorm->id, 'name' => $roomName],
+                    ['capacity' => $capacity > 0 ? $capacity : 10]
+                );
             }
+        }
 
-            // Remove header row
-            array_shift($rows);
+        // 2. Process Kelas Madrasah (File 2)
+        $file2Paths = [
+            base_path('Setup_2_Kelas_Putra_v2.xlsx'),
+            base_path('data testing/Hasil_Setup_Kelas_KomplekCD.xlsx'),
+        ];
 
-            foreach ($rows as $index => $row) {
-                $name        = trim((string)($row[0] ?? ''));
-                $nik         = trim((string)($row[1] ?? ''));
-                $nis         = trim((string)($row[2] ?? ''));
-                $genderRaw   = strtoupper(trim((string)($row[3] ?? '')));
-                $birthPlace  = trim((string)($row[4] ?? ''));
-                $birthDate   = trim((string)($row[5] ?? ''));
-                $statusRaw   = strtolower(trim((string)($row[6] ?? '')));
-                $dormName    = trim((string)($row[7] ?? ''));
-                $roomName    = trim((string)($row[8] ?? ''));
-                $kelasName   = trim((string)($row[9] ?? ''));
-                $parentName  = trim((string)($row[10] ?? ''));
-                $parentPhone = trim((string)($row[11] ?? ''));
-                $parentRel   = trim((string)($row[12] ?? 'Ayah'));
-                $address     = trim((string)($row[13] ?? ''));
-                $schoolName  = trim((string)($row[14] ?? ''));
+        foreach ($file2Paths as $filePath) {
+            if (!file_exists($filePath)) continue;
 
-                if (empty($name)) {
-                    continue;
+            $this->command?->info("📖 Impor Kelas Madrasah dari: " . basename($filePath));
+            $ss = IOFactory::load($filePath);
+            $sheet = $ss->getActiveSheet();
+            $rows = $sheet->toArray();
+            array_shift($rows); // Skip header
+
+            foreach ($rows as $row) {
+                $className = trim((string)($row[0] ?? ''));
+                $jenjangRaw = strtolower(trim((string)($row[1] ?? 'ula')));
+                
+                if (!$className) continue;
+
+                $jenjang = match(true) {
+                    str_contains($jenjangRaw, 'wusth') => 'wustho',
+                    str_contains($jenjangRaw, 'uly') => 'ulya',
+                    default => 'ula'
+                };
+
+                MadrasahKelas::firstOrCreate(
+                    ['name' => $className],
+                    ['jenjang' => $jenjang, 'academic_year' => '2025/2026', 'is_active' => true]
+                );
+            }
+        }
+
+        // 3. Process Santri & Wali (File 3)
+        $file3Paths = [
+            base_path('Setup_3_Santri_Wali_Putra_v2.xlsx'),
+            base_path('data testing/Hasil_Setup_Santri_Wali_KomplekCD.xlsx'),
+        ];
+
+        $importedSantri = 0;
+        $importedGuardians = 0;
+        $nisCounter = 20261001;
+        $guardiansCache = [];
+
+        foreach ($file3Paths as $filePath) {
+            if (!file_exists($filePath)) continue;
+
+            $this->command?->info("📖 Impor Santri & Wali dari: " . basename($filePath));
+            $ss = IOFactory::load($filePath);
+            $sheet = $ss->getActiveSheet();
+            $rows = $sheet->toArray();
+            array_shift($rows); // Skip header
+
+            foreach ($rows as $row) {
+                $santriName   = trim((string)($row[0] ?? ''));
+                $nik          = trim((string)($row[1] ?? ''));
+                $nis          = trim((string)($row[2] ?? ''));
+                $genderRaw    = strtoupper(trim((string)($row[3] ?? 'L')));
+                $birthPlace   = trim((string)($row[4] ?? ''));
+                $birthDate    = trim((string)($row[5] ?? ''));
+                $statusRaw    = strtolower(trim((string)($row[6] ?? 'mukim')));
+                $dormName     = trim((string)($row[7] ?? ''));
+                $roomName     = trim((string)($row[8] ?? ''));
+                $kelasName    = trim((string)($row[9] ?? ''));
+                $guardianName = trim((string)($row[10] ?? ''));
+                $guardianPhone= trim((string)($row[11] ?? ''));
+                $relationship = trim((string)($row[12] ?? 'Ayah'));
+                $address      = trim((string)($row[13] ?? ''));
+                $formalSchool = trim((string)($row[14] ?? ''));
+
+                if (!$santriName) continue;
+
+                $gender = in_array($genderRaw, ['L', 'P']) ? $genderRaw : 'L';
+                $residence = str_contains($statusRaw, 'laju') ? 'laju' : 'mukim';
+                if (!$nis) {
+                    $nis = (string)($nisCounter++);
                 }
 
-                // Determine Gender
-                $gender = in_array($genderRaw, ['P', 'PEREMPUAN', 'PUTRI']) ? 'P' : 'L';
-                $org = $gender === 'L' ? $putraOrg : $putriOrg;
+                $person = Person::create([
+                    'id' => Str::uuid(),
+                    'name' => $santriName,
+                    'gender' => $gender,
+                    'birth_place' => $birthPlace ?: null,
+                    'birth_date' => (!empty($birthDate) && strtotime($birthDate)) ? date('Y-m-d', strtotime($birthDate)) : null,
+                    'address' => $address ?: null,
+                ]);
 
-                // Determine Status
-                $presenceStatus = in_array($statusRaw, ['laju', 'non-mukim']) ? 'laju' : 'mukim';
+                $orgId = ($gender === 'P' ? $putriOrg?->id : $putraOrg?->id) ?? $rootOrg?->id;
 
-                // Generate NIS if empty
-                if (empty($nis)) {
-                    $nis = date('Y') . sprintf('%04d', $nisCounter++);
-                }
+                PersonRole::create([
+                    'person_id' => $person->id,
+                    'organization_id' => $orgId,
+                    'role_type' => 'santri',
+                    'enrollment_status' => 'aktif',
+                    'presence_status' => $residence,
+                    'valid_from' => now()->toDateString(),
+                ]);
 
-                // Generate NIK if empty
-                if (empty($nik)) {
-                    $nik = ($gender === 'L' ? '3578' : '3579') . sprintf('%012d', mt_rand(100000000000, 999999999999));
-                }
+                SantriProfile::create([
+                    'person_id' => $person->id,
+                    'additional_info' => [
+                        'nis' => $nis,
+                        'nik' => $nik ?: null,
+                        'residence_status' => $residence,
+                        'formal_school' => $formalSchool ?: null,
+                    ],
+                ]);
 
-                // 4. Create/Get Dormitory & Room if Mukim
-                $dorm = null;
-                $room = null;
-                if ($presenceStatus === 'mukim' && !empty($dormName)) {
-                    $dorm = Dormitory::firstOrCreate([
-                        'name' => $dormName,
-                    ], [
-                        'id'              => Str::uuid()->toString(),
-                        'organization_id' => $org->id,
-                        'gender'          => $gender,
-                        'is_active'       => true,
+                if (!empty($guardianName)) {
+                    $cacheKey = strtolower($guardianName . '_' . $guardianPhone);
+                    if (isset($guardiansCache[$cacheKey])) {
+                        $guardian = $guardiansCache[$cacheKey];
+                    } else {
+                        $guardian = Guardian::create([
+                            'id' => Str::uuid(),
+                            'name' => $guardianName,
+                            'phone_primary' => $guardianPhone ?: null,
+                            'address' => $address ?: null,
+                        ]);
+                        $guardiansCache[$cacheKey] = $guardian;
+                        $importedGuardians++;
+                    }
+
+                    SantriGuardian::create([
+                        'person_id' => $person->id,
+                        'guardian_id' => $guardian->id,
+                        'relationship' => $relationship ?: 'Ayah',
+                        'is_primary' => true,
                     ]);
+                }
 
-                    if (!empty($roomName)) {
-                        $room = Room::firstOrCreate([
-                            'dormitory_id' => $dorm->id,
-                            'name'         => $roomName,
-                        ], [
-                            'id'        => Str::uuid()->toString(),
-                            'capacity'  => 15,
+                if ($residence === 'mukim' && !empty($dormName) && !empty($roomName)) {
+                    $dorm = Dormitory::where('name', 'like', '%' . $dormName . '%')->first();
+                    if ($dorm) {
+                        $room = Room::where('dormitory_id', $dorm->id)->where('name', 'like', '%' . $roomName . '%')->first();
+                        if ($room) {
+                            RoomAssignment::create([
+                                'person_id' => $person->id,
+                                'room_id' => $room->id,
+                                'valid_from' => now()->toDateString(),
+                                'is_active' => true,
+                            ]);
+                        }
+                    }
+                }
+
+                if (!empty($kelasName)) {
+                    $kelas = MadrasahKelas::where('name', 'like', '%' . $kelasName . '%')->first();
+                    if ($kelas) {
+                        MadrasahEnrollment::create([
+                            'person_id' => $person->id,
+                            'kelas_id' => $kelas->id,
+                            'academic_year' => '2025/2026',
                             'is_active' => true,
                         ]);
                     }
                 }
 
-                // 5. Create/Get Madrasah Kelas
-                $kelas = null;
-                if (!empty($kelasName)) {
-                    $jenjang = 'ula';
-                    $lowerName = strtolower($kelasName);
-                    if (str_contains($lowerName, 'wustho')) {
-                        $jenjang = 'wustho';
-                    } elseif (str_contains($lowerName, 'ulya') || str_contains($lowerName, 'tahasus')) {
-                        $jenjang = 'ulya';
-                    }
-
-                    $kelas = MadrasahKelas::firstOrCreate([
-                        'name' => $kelasName,
-                    ], [
-                        'id'            => Str::uuid()->toString(),
-                        'jenjang'       => $jenjang,
-                        'academic_year' => '2025/2026',
-                        'is_active'     => true,
-                    ]);
-                }
-
-                // 6. Create/Get Guardian (Wali)
-                $guardianKey = strtolower(trim($parentName . '_' . $parentPhone));
-                if (isset($guardiansCache[$guardianKey])) {
-                    $guardian = $guardiansCache[$guardianKey];
-                } else {
-                    $guardian = Guardian::create([
-                        'id'            => Str::uuid()->toString(),
-                        'name'          => !empty($parentName) ? $parentName : 'Wali dari ' . $name,
-                        'gender'        => strtolower($parentRel) === 'ibu' ? 'P' : 'L',
-                        'phone_primary' => !empty($parentPhone) ? $parentPhone : '081234567890',
-                        'address'       => $address ?: 'Pondok Pesantren Al-Fithroh',
-                        'is_active'     => true,
-                    ]);
-                    $guardiansCache[$guardianKey] = $guardian;
-                }
-
-                // 7. Create Santri (Person)
-                $santriPerson = Person::create([
-                    'id'          => Str::uuid()->toString(),
-                    'nik'         => $nik,
-                    'name'        => $name,
-                    'gender'      => $gender,
-                    'birth_place' => $birthPlace ?: ($gender === 'L' ? 'Surabaya' : 'Sidoarjo'),
-                    'birth_date'  => !empty($birthDate) && strtotime($birthDate) ? date('Y-m-d', strtotime($birthDate)) : '2008-01-01',
-                    'phone'       => null,
-                    'address'     => $address ?: 'Pondok Pesantren Al-Fithroh',
-                    'notes'       => 'Santri Aktif (Impor Real Testing)',
-                ]);
-
-                // 8. Create Santri Guardian Pivot
-                SantriGuardian::create([
-                    'id'           => Str::uuid()->toString(),
-                    'person_id'    => $santriPerson->id,
-                    'guardian_id'  => $guardian->id,
-                    'relationship' => strtolower($parentRel) === 'ibu' ? 'ibu_kandung' : (strtolower($parentRel) === 'ayah' ? 'ayah_kandung' : 'wali_resmi'),
-                    'is_primary'   => true,
-                ]);
-
-                // 9. Create Santri PersonRole
-                PersonRole::create([
-                    'id'                => Str::uuid()->toString(),
-                    'person_id'         => $santriPerson->id,
-                    'organization_id'   => $org->id,
-                    'role_type'         => 'santri',
-                    'enrollment_status' => 'aktif',
-                    'presence_status'   => $presenceStatus,
-                    'valid_from'        => now()->startOfYear()->toDateString(),
-                    'is_active'         => true,
-                ]);
-
-                // 10. Create SantriProfile
-                SantriProfile::create([
-                    'id'              => Str::uuid()->toString(),
-                    'person_id'       => $santriPerson->id,
-                    'father_name'     => strtolower($parentRel) === 'ayah' ? $parentName : null,
-                    'mother_name'     => strtolower($parentRel) === 'ibu' ? $parentName : null,
-                    'father_phone'    => $parentPhone ?: null,
-                    'school_name'     => $schoolName ?: null,
-                    'additional_info' => ['nis' => $nis],
-                ]);
-
-                // 11. Create RoomAssignment if Mukim & Room assigned
-                if ($presenceStatus === 'mukim' && $room) {
-                    RoomAssignment::create([
-                        'id'         => Str::uuid()->toString(),
-                        'person_id'  => $santriPerson->id,
-                        'room_id'    => $room->id,
-                        'valid_from' => now()->startOfYear()->toDateString(),
-                        'is_active'  => true,
-                    ]);
-                }
-
-                // 12. Create MadrasahEnrollment if Kelas assigned
-                if ($kelas) {
-                    MadrasahEnrollment::create([
-                        'id'            => Str::uuid()->toString(),
-                        'person_id'     => $santriPerson->id,
-                        'kelas_id'      => $kelas->id,
-                        'academic_year' => '2025/2026',
-                        'is_active'     => true,
-                    ]);
-                }
-
-                $totalImported++;
+                $importedSantri++;
             }
         }
 
-        $this->command?->info("🎉 SELESAI! Impor data testing real berhasil:");
-        $this->command?->info("   → Total Santri Terimpor : {$totalImported}");
-        $this->command?->info("   → Total Komplek Asrama : " . Dormitory::count());
-        $this->command?->info("   → Total Kamar Asrama   : " . Room::count());
-        $this->command?->info("   → Total Kelas Madrasah : " . MadrasahKelas::count());
+        $this->command?->info("🎉 Impor Data Excel Selesai!");
+        $this->command?->line("✔ Total Asrama: " . Dormitory::count());
+        $this->command?->line("✔ Total Kamar: " . Room::count());
+        $this->command?->line("✔ Total Kelas Madrasah: " . MadrasahKelas::count());
+        $this->command?->line("✔ Total Santri Impor: " . $importedSantri);
+        $this->command?->line("✔ Total Wali Impor: " . $importedGuardians);
+        $this->command?->line("✔ Tarif & Tagihan: KOSONG (Siap dikonfigurasi manual).");
     }
 }

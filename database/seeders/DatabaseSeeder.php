@@ -16,11 +16,11 @@ class DatabaseSeeder extends Seeder
             PositionSeeder::class,           // 2. Jabatan per unit
             MasterDataSeeder::class,         // 3. Data referensi global
             RolePermissionSeeder::class,     // 4. Roles, permissions & pengurus/staff user
-            RealTestingDataSeeder::class,    // 5. Reset & Impor Real Santri, Kamar, Asrama & Kelas dari Excel data testing
+            RealTestingDataSeeder::class,    // 5. Impor Real Santri, Kamar, Asrama & Kelas dari Excel Setup v2
             CensusTemplateSeeder::class,     // 6. Template sensus default
             LandingPageContentSeeder::class, // 7. Landing Page CMS Content
-            ActivitySeeder::class,             // 8. Activities with Images
-            BillingConfigurationSeeder::class, // 9. Konfigurasi Tarif Aktif (syahriah, kas komplek, kebersihan)
+            ActivitySeeder::class,           // 8. Activities with Images
+            // BillingConfigurationSeeder (Dikosongkan agar tarif, tagihan & dispensasi disetup manual dari nol)
         ]);
     }
 }

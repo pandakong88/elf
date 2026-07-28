@@ -17,12 +17,16 @@ class CensusTemplateSeeder extends Seeder
 {
     public function run(): void
     {
-        $adminUser = User::where('email', 'admin@elvith.id')->firstOrFail();
-        $musyrifUser = User::where('email', 'musyrif@elvith.id')->firstOrFail();
-        $musyrifahUser = User::where('email', 'musyrifah@elvith.id')->firstOrFail();
+        $adminUser = User::where('email', 'admin@elvith.id')->first() ?? User::first();
+        $musyrifUser = User::where('email', 'musyrif@elvith.id')->first() ?? $adminUser;
+        $musyrifahUser = User::where('email', 'musyrifah@elvith.id')->first() ?? $adminUser;
 
-        $asramaPutra = Dormitory::where('gender', 'L')->firstOrFail();
-        $asramaPutri = Dormitory::where('gender', 'P')->firstOrFail();
+        $asramaPutra = Dormitory::where('gender', 'L')->first();
+        $asramaPutri = Dormitory::where('gender', 'P')->first() ?? $asramaPutra;
+
+        if (!$adminUser || !$asramaPutra) {
+            return;
+        }
 
         // =====================================================================
         // Template 1: Sensus Standar Bulanan (Default)
@@ -218,30 +222,32 @@ class CensusTemplateSeeder extends Seeder
             ->where('rooms.dormitory_id', $asramaPutra->id)
             ->count();
 
-        CensusV3CampaignDormitory::create([
-            'id'              => Str::uuid()->toString(),
-            'campaign_id'     => $campaign1->id,
-            'dormitory_id'    => $asramaPutra->id,
-            'assigned_to'     => $musyrifUser->id,
-            'status'          => 'pending',
-            'progress_filled' => 0,
-            'progress_total'  => $totalPutra,
-        ]);
+        CensusV3CampaignDormitory::firstOrCreate(
+            ['campaign_id' => $campaign1->id, 'dormitory_id' => $asramaPutra->id],
+            [
+                'id'              => Str::uuid()->toString(),
+                'assigned_to'     => $musyrifUser->id,
+                'status'          => 'pending',
+                'progress_filled' => 0,
+                'progress_total'  => $totalPutra,
+            ]
+        );
 
         $totalPutri = RoomAssignment::active()
             ->join('rooms', 'room_assignments.room_id', '=', 'rooms.id')
             ->where('rooms.dormitory_id', $asramaPutri->id)
             ->count();
 
-        CensusV3CampaignDormitory::create([
-            'id'              => Str::uuid()->toString(),
-            'campaign_id'     => $campaign1->id,
-            'dormitory_id'    => $asramaPutri->id,
-            'assigned_to'     => $musyrifahUser->id,
-            'status'          => 'pending',
-            'progress_filled' => 0,
-            'progress_total'  => $totalPutri,
-        ]);
+        CensusV3CampaignDormitory::firstOrCreate(
+            ['campaign_id' => $campaign1->id, 'dormitory_id' => $asramaPutri->id],
+            [
+                'id'              => Str::uuid()->toString(),
+                'assigned_to'     => $musyrifahUser->id,
+                'status'          => 'pending',
+                'progress_filled' => 0,
+                'progress_total'  => $totalPutri,
+            ]
+        );
 
         // =====================================================================
         // 5. Seed Kampanye Sensus 2: Sensus Wali Juni 2026 (Dormitory: Submitted & Approved)
@@ -264,16 +270,17 @@ class CensusTemplateSeeder extends Seeder
         ]);
 
         // Asrama Putra (Submitted)
-        $cdPutra = CensusV3CampaignDormitory::create([
-            'id'              => Str::uuid()->toString(),
-            'campaign_id'     => $campaign2->id,
-            'dormitory_id'    => $asramaPutra->id,
-            'assigned_to'     => $musyrifUser->id,
-            'status'          => 'submitted',
-            'progress_filled' => $totalPutra,
-            'progress_total'  => $totalPutra,
-            'submitted_at'    => now()->subDays(1),
-        ]);
+        $cdPutra = CensusV3CampaignDormitory::firstOrCreate(
+            ['campaign_id' => $campaign2->id, 'dormitory_id' => $asramaPutra->id],
+            [
+                'id'              => Str::uuid()->toString(),
+                'assigned_to'     => $musyrifUser->id,
+                'status'          => 'submitted',
+                'progress_filled' => $totalPutra,
+                'progress_total'  => $totalPutra,
+                'submitted_at'    => now()->subDays(1),
+            ]
+        );
 
         // Seed responses untuk asrama putra (salah satu santri punya perubahan data wali)
         $putraSantriAssignments = RoomAssignment::active()
@@ -328,47 +335,50 @@ class CensusTemplateSeeder extends Seeder
         }
 
         // Asrama Putri (Approved)
-        $cdPutri = CensusV3CampaignDormitory::create([
-            'id'              => Str::uuid()->toString(),
-            'campaign_id'     => $campaign2->id,
-            'dormitory_id'    => $asramaPutri->id,
-            'assigned_to'     => $musyrifahUser->id,
-            'status'          => 'approved',
-            'progress_filled' => $totalPutri,
-            'progress_total'  => $totalPutri,
-            'submitted_at'    => now()->subDays(2),
-            'approved_at'     => now()->subDays(1),
-        ]);
+        $cdPutri = CensusV3CampaignDormitory::firstOrCreate(
+            ['campaign_id' => $campaign2->id, 'dormitory_id' => $asramaPutri->id],
+            [
+                'id'              => Str::uuid()->toString(),
+                'assigned_to'     => $musyrifahUser->id,
+                'status'          => 'approved',
+                'progress_filled' => $totalPutri,
+                'progress_total'  => $totalPutri,
+                'submitted_at'    => now()->subDays(2),
+                'approved_at'     => now()->subDays(1),
+            ]
+        );
 
-        // Seed responses untuk asrama putri
-        $putriSantriAssignments = RoomAssignment::active()
-            ->join('rooms', 'room_assignments.room_id', '=', 'rooms.id')
-            ->where('rooms.dormitory_id', $asramaPutri->id)
-            ->select('room_assignments.*')
-            ->get();
+        // Seed responses untuk asrama putri (hanya jika asrama putri terpisah)
+        if ($asramaPutri && $asramaPutri->id !== $asramaPutra->id) {
+            $putriSantriAssignments = RoomAssignment::active()
+                ->join('rooms', 'room_assignments.room_id', '=', 'rooms.id')
+                ->where('rooms.dormitory_id', $asramaPutri->id)
+                ->select('room_assignments.*')
+                ->get();
 
-        foreach ($putriSantriAssignments as $assignment) {
-            $responseData = [
-                'father_name'       => 'Bapak Yusuf',
-                'father_phone'      => '081234567800',
-                'mother_name'       => 'Ibu Aminah',
-                'mother_phone'      => '081234567801',
-                'sibling_in_pesantren' => false,
-            ];
+            foreach ($putriSantriAssignments as $assignment) {
+                $responseData = [
+                    'father_name'       => 'Bapak Yusuf',
+                    'father_phone'      => '081234567800',
+                    'mother_name'       => 'Ibu Aminah',
+                    'mother_phone'      => '081234567801',
+                    'sibling_in_pesantren' => false,
+                ];
 
-            CensusV3Response::create([
-                'id'                     => Str::uuid()->toString(),
-                'campaign_id'            => $campaign2->id,
-                'dormitory_id'           => $asramaPutri->id,
-                'person_id'              => $assignment->person_id,
-                'room_id'                => $assignment->room_id,
-                'response_data'          => $responseData,
-                'input_method'           => 'web_ketua',
-                'inputted_by'            => $musyrifahUser->id,
-                'is_complete'            => true,
-                'has_profile_changes'    => false,
-                'profile_change_preview' => null,
-            ]);
+                CensusV3Response::create([
+                    'id'                     => Str::uuid()->toString(),
+                    'campaign_id'            => $campaign2->id,
+                    'dormitory_id'           => $asramaPutri->id,
+                    'person_id'              => $assignment->person_id,
+                    'room_id'                => $assignment->room_id,
+                    'response_data'          => $responseData,
+                    'input_method'           => 'web_ketua',
+                    'inputted_by'            => $musyrifahUser->id,
+                    'is_complete'            => true,
+                    'has_profile_changes'    => false,
+                    'profile_change_preview' => null,
+                ]);
+            }
         }
 
         $this->command->info('✅ CensusTemplateSeeder: 3 template & 2 kampanye sensus (dengan data isian dummy) berhasil dibuat.');
