@@ -58,6 +58,12 @@ return new class extends Migration
                 $table->foreignUuid('created_by');
                 $table->timestamps();
                 $table->softDeletes();
+
+                // Advanced & Subcycle features
+                $table->foreignUuid('parent_bill_id')->nullable();
+                $table->unsignedTinyInteger('installment_step')->nullable();
+                $table->uuid('installment_plan_id')->nullable();
+                $table->string('period_sub', 20)->nullable();
             });
 
             DB::statement('PRAGMA foreign_keys = ON;');

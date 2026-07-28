@@ -75,6 +75,12 @@ return new class extends Migration
                 $table->foreignUuid('created_by');
                 $table->timestamps();
                 $table->softDeletes();
+
+                // Advanced & Subcycle columns added in previous migrations
+                $table->foreignUuid('parent_bill_id')->nullable();
+                $table->unsignedTinyInteger('installment_step')->nullable();
+                $table->uuid('installment_plan_id')->nullable();
+                $table->string('period_sub', 20)->nullable();
             });
 
             if (Schema::hasTable('bills_temp')) {
