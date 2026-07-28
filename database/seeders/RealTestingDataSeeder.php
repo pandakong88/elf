@@ -11,6 +11,7 @@ use App\Modules\Kepengasuhan\Models\Room;
 use App\Modules\Kepengasuhan\Models\RoomAssignment;
 use App\Modules\Kepengasuhan\Models\SantriGuardian;
 use App\Modules\Kepengasuhan\Models\SantriProfile;
+use App\Modules\Kepengasuhan\Models\SantriSibling;
 use App\Modules\Madrasah\Models\MadrasahEnrollment;
 use App\Modules\Madrasah\Models\MadrasahKelas;
 use Illuminate\Database\Seeder;
@@ -33,6 +34,7 @@ class RealTestingDataSeeder extends Seeder
         DB::table('bills')->truncate();
         DB::table('billing_exceptions')->truncate();
         DB::table('billing_configurations')->truncate();
+        SantriSibling::query()->truncate();
         SantriGuardian::query()->truncate();
         Guardian::query()->truncate();
         RoomAssignment::query()->truncate();
@@ -256,12 +258,46 @@ class RealTestingDataSeeder extends Seeder
             }
         }
 
+        // 4. Auto-detect & Link Kakak-Adik (Santri Siblings)
+        $this->command?->info("🔗 Menghubungkan relasi Kakak-Adik antar Santri...");
+        $linkedSiblingsCount = 0;
+
+        $guardiansWithMultipleSantri = SantriGuardian::select('guardian_id')
+            ->groupBy('guardian_id')
+            ->havingRaw('COUNT(person_id) > 1')
+            ->pluck('guardian_id');
+
+        foreach ($guardiansWithMultipleSantri as $gId) {
+            $santriIds = SantriGuardian::where('guardian_id', $gId)->pluck('person_id')->toArray();
+            $count = count($santriIds);
+            for ($i = 0; $i < $count; $i++) {
+                for ($j = $i + 1; $j < $count; $j++) {
+                    $p1 = min($santriIds[$i], $santriIds[$j]);
+                    $p2 = max($santriIds[$i], $santriIds[$j]);
+
+                    SantriSibling::firstOrCreate(
+                        [
+                            'person_id' => $p1,
+                            'sibling_person_id' => $p2,
+                        ],
+                        [
+                            'relationship' => 'saudara',
+                            'auto_detected' => true,
+                            'is_confirmed' => true,
+                        ]
+                    );
+                    $linkedSiblingsCount++;
+                }
+            }
+        }
+
         $this->command?->info("🎉 Impor Data Excel Selesai!");
         $this->command?->line("✔ Total Asrama: " . Dormitory::count());
         $this->command?->line("✔ Total Kamar: " . Room::count());
         $this->command?->line("✔ Total Kelas Madrasah: " . MadrasahKelas::count());
         $this->command?->line("✔ Total Santri Impor: " . $importedSantri);
         $this->command?->line("✔ Total Wali Impor: " . $importedGuardians);
+        $this->command?->line("✔ Total Relasi Kakak-Adik Terdeteksi: " . $linkedSiblingsCount);
         $this->command?->line("✔ Tarif & Tagihan: KOSONG (Siap dikonfigurasi manual).");
     }
 }
