@@ -38,6 +38,10 @@ class ResetDemoDataCommand extends Command
             }
         }
 
+        $this->info('=== RUNNING MIGRATIONS ===');
+        Artisan::call('migrate', ['--force' => true]);
+        $this->line(Artisan::output());
+
         $this->info('=== MENGOSONGKAN DATA DUMMY SISTEM ===');
 
         $driver = DB::getDriverName();
