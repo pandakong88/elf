@@ -16,7 +16,7 @@ class DatabaseSeeder extends Seeder
             PositionSeeder::class,           // 2. Jabatan per unit
             MasterDataSeeder::class,         // 3. Data referensi global
             RolePermissionSeeder::class,     // 4. Roles, permissions & pengurus/staff user
-            RealTestingDataSeeder::class,    // 5. Impor Real Santri, Kamar, Asrama & Kelas dari Excel Setup v2
+            // RealTestingDataSeeder::class,    // 5. Dinonaktifkan — Data santri, kamar, asrama & kelas diinput manual
             CensusTemplateSeeder::class,     // 6. Template sensus default
             LandingPageContentSeeder::class, // 7. Landing Page CMS Content
             ActivitySeeder::class,           // 8. Activities with Images
