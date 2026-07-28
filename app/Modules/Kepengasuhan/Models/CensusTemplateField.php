@@ -92,7 +92,7 @@ class CensusTemplateField extends Model
             ['key' => 'mother_name',          'label' => 'Nama Ibu Kandung',         'type' => 'text',     'group' => 'Data Wali',  'options' => null,                                                         'profile_key' => 'mother_name',        'required' => false],
             ['key' => 'father_phone',         'label' => 'HP Ayah',                  'type' => 'text',     'group' => 'Data Wali',  'options' => null,                                                         'profile_key' => 'father_phone',       'required' => false],
             ['key' => 'mother_phone',         'label' => 'HP Ibu',                   'type' => 'text',     'group' => 'Data Wali',  'options' => null,                                                         'profile_key' => 'mother_phone',       'required' => false],
-            ['key' => 'sibling_in_pesantren', 'label' => 'Ada Saudara di Pondok?',   'type' => 'boolean',  'group' => 'Data Wali',  'options' => null,                                                         'profile_key' => null,                 'required' => false],
+            ['key' => 'sibling_in_pesantren', 'label' => 'Ada Saudara di Pondok?',   'type' => 'boolean',  'group' => 'Data Wali',  'options' => null,                                                         'profile_key' => 'has_active_sibling', 'required' => false],
         ];
     }
 }

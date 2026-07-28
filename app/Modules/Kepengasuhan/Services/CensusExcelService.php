@@ -203,9 +203,20 @@ class CensusExcelService
             $personId = trim($row[0]);
             if (!isset($parsed[$personId])) continue;
 
-            $siblingName = isset($row[2]) ? trim($row[2]) : '';
-            $siblingRelation = isset($row[3]) ? trim($row[3]) : '';
-            $siblingNik = isset($row[4]) ? trim($row[4]) : '';
+            // Kolom C (Index 2): Ada Saudara di Pondok? (Ya/Tidak)
+            $hasSiblingRaw = isset($row[2]) ? strtolower(trim($row[2])) : '';
+            if ($hasSiblingRaw === 'ya' || $hasSiblingRaw === 'true' || $hasSiblingRaw === '1') {
+                $parsed[$personId]['profile_updates']['has_active_sibling'] = true;
+                $parsed[$personId]['has_profile_update'] = true;
+            } elseif ($hasSiblingRaw === 'tidak' || $hasSiblingRaw === 'false' || $hasSiblingRaw === '0') {
+                $parsed[$personId]['profile_updates']['has_active_sibling'] = false;
+                $parsed[$personId]['has_profile_update'] = true;
+            }
+
+            // Kolom D (Index 3): Nama Saudara, Kolom E (Index 4): Relasi, Kolom F (Index 5): NIK/NIS
+            $siblingName = isset($row[3]) ? trim($row[3]) : '';
+            $siblingRelation = isset($row[4]) ? trim($row[4]) : '';
+            $siblingNik = isset($row[5]) ? trim($row[5]) : '';
 
             if (!empty($siblingName)) {
                 $parsed[$personId]['profile_updates']['sibling'] = [

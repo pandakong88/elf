@@ -8,12 +8,13 @@ use App\Modules\Core\Models\Person;
 use App\Modules\Kepengasuhan\Models\Activity;
 use App\Modules\Kepengasuhan\Models\ActivityAttendance;
 use App\Modules\Kepengasuhan\Services\ActivityService;
+use App\Traits\HasGenderScope;
 use Livewire\Component;
 use App\Livewire\Concerns\SendsToast;
 
 class ActivityAttendanceSheet extends Component
 {
-    use SendsToast;
+    use SendsToast, HasGenderScope;
 
     public $selectedActivityId = '';
     public $searchSantri = '';
@@ -181,7 +182,8 @@ class ActivityAttendanceSheet extends Component
             $selectedActivity = Activity::find($this->selectedActivityId);
             if ($selectedActivity) {
                 $santriQuery = Person::query()
-                    ->byRole('santri', $selectedActivity->organization_id);
+                    ->byRole('santri', $selectedActivity->organization_id)
+                    ->when($this->genderScope(), fn($q, $g) => $q->where('gender', $g));
 
                 if ($this->searchSantri) {
                     $santriQuery->where('name', 'like', '%' . $this->searchSantri . '%');
@@ -192,7 +194,12 @@ class ActivityAttendanceSheet extends Component
         }
 
         // Options for create activity form
-        $organizations = Organization::active()->get();
+        // Gender scope: filter organisasi yang relevan dengan gender user
+        $organizations = Organization::active()
+            ->when($this->genderScope(), function ($q, $g) {
+                $q->whereHas('dormitories', fn($dq) => $dq->where('gender', $g)->where('is_active', true));
+            })
+            ->get();
         $activityTypes = MasterData::byCategory('jenis_kegiatan')->active()->get();
 
         return view('livewire.kepengasuhan.activity-attendance-sheet', compact(

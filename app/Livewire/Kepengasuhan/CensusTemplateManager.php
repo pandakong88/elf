@@ -52,6 +52,11 @@ class CensusTemplateManager extends Component
 
     public function mount(): void
     {
+        $user = auth()->user();
+        if (!$user || !($user->hasRole('super-admin') || $user->hasRole('manajemen'))) {
+            abort(403, 'Akses ditolak. Halaman ini hanya untuk Super Admin dan Manajemen.');
+        }
+
         $this->availableSystemFields = CensusTemplateField::systemFieldDefinitions();
     }
 

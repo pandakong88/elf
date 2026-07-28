@@ -69,7 +69,18 @@
                             <span class="block text-[8px] font-extrabold text-slate-400 uppercase mb-0.5">Siklus</span>
                             <span class="text-[10px] font-extrabold text-slate-400 dark:text-slate-500">
                                 @php
-                                    $intervalMap = ['monthly' => 'Bulanan', 'semester' => 'Semesteran', 'yearly' => 'Tahunan', 'insidental' => 'Sekali Bayar'];
+                                    $intervalMap = [
+                                        'monthly' => 'Bulanan',
+                                        'biweekly' => '2x Sebulan',
+                                        '2x_monthly' => '2x Sebulan',
+                                        'trimonthly' => '3x Sebulan',
+                                        '3x_monthly' => '3x Sebulan',
+                                        'weekly' => '4x Sebulan',
+                                        '4x_monthly' => '4x Sebulan',
+                                        'semester' => 'Semesteran',
+                                        'yearly' => 'Tahunan',
+                                        'insidental' => 'Sekali Bayar'
+                                    ];
                                 @endphp
                                 🔒 {{ $intervalMap[$newConfigInterval] ?? $newConfigInterval }}
                             </span>
@@ -186,7 +197,8 @@
                                     <option value="syahriah_madrasah">📖 Syahriah Madrasah — Iuran sekolah diniyyah</option>
                                     <option value="kebersihan">🧹 Kebersihan — Iuran sampah / kebersihan</option>
                                     <option value="kitab">📕 Kitab — Buku pelajaran diniyyah</option>
-                                    <option value="pendaftaran">🎫 Pendaftaran / Event — Ziarah, haflah, dll.</option>
+                                    <option value="pendaftaran">🎫 Pendaftaran — Pendaftaran Santri Baru (PSB)</option>
+                                    <option value="event_iuran">🎉 Event / Insidental — Ziarah, Bukhoren, Haflah, dll.</option>
                                 </select>
                             </div>
                         </div>
@@ -227,15 +239,23 @@
                     <div class="p-5 space-y-5">
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
-                                <label class="block text-[10px] font-extrabold text-slate-450 dark:text-slate-500 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
-                                    Siklus Penagihan 🔒 <span class="text-[8.5px] lowercase font-normal italic text-slate-400">(tidak dapat diubah)</span>
+                                <label class="block text-[10px] font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
+                                    Siklus Penagihan
+                                    @if($hasIssuedBills)
+                                        🔒 <span class="text-[8.5px] lowercase font-normal italic text-slate-400">(dikunci karena sudah ada tagihan terbit)</span>
+                                    @else
+                                        <span class="text-rose-400">*</span>
+                                    @endif
                                 </label>
-                                <select wire:model="newConfigInterval" disabled
-                                    class="w-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 rounded-xl px-4 py-2.5 text-xs cursor-not-allowed">
-                                    <option value="monthly">📅 Bulanan — ditagih setiap bulan</option>
-                                    <option value="semester">📆 Semesteran — ditagih 6 bulan sekali</option>
-                                    <option value="yearly">🗓️ Tahunan — ditagih sekali dalam setahun</option>
-                                    <option value="insidental">⚡ Sekali Bayar — iuran event atau kegiatan khusus</option>
+                                <select wire:model="newConfigInterval" {{ $hasIssuedBills ? 'disabled' : '' }}
+                                    class="w-full {{ $hasIssuedBills ? 'bg-slate-100 dark:bg-slate-800 text-slate-500 cursor-not-allowed' : 'bg-white dark:bg-slate-950/60 text-slate-800 dark:text-slate-200' }} border border-slate-200 dark:border-slate-700/80 rounded-xl px-4 py-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 transition-all">
+                                    <option value="monthly">📅 Bulanan — ditagih 12x dalam setahun (setiap bulan)</option>
+                                    <option value="semester">📆 2x Dalam Setahun — ditagih Semesteran (per 6 bulan)</option>
+                                    <option value="caturwulan">⏳ 3x Dalam Setahun — ditagih Caturwulan (per 4 bulan)</option>
+                                    <option value="triwulan">📆 4x Dalam Setahun — ditagih Triwulan (per 3 bulan)</option>
+                                    <option value="bimulanan">⏳ 6x Dalam Setahun — ditagih Dwibulanan / Bimulanan (per 2 bulan)</option>
+                                    <option value="yearly">🗓️ Tahunan — ditagih 1x dalam setahun</option>
+                                    <option value="insidental">⚡ Sekali Bayar — iuran event / insidental / kegiatan khusus</option>
                                 </select>
                             </div>
                             <div>
@@ -246,6 +266,56 @@
                                     class="w-full bg-white dark:bg-slate-950/60 border border-slate-200 dark:border-slate-700/80 text-slate-800 dark:text-slate-200 rounded-xl px-4 py-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 transition-all">
                                 @error('newConfigEffectiveFrom') <span class="text-[10px] text-rose-500 mt-1 block">{{ $message }}</span> @enderror
                                 <span class="text-[9px] text-slate-400 mt-1 block">Tarif mulai berlaku sejak tanggal ini.</span>
+                            </div>
+                        </div>
+
+                        {{-- Section Tenggat Pembayaran (Due Date) --}}
+                        <div class="p-4 bg-slate-50 dark:bg-slate-950/40 rounded-xl border border-slate-200/80 dark:border-slate-800 space-y-3">
+                            <div class="flex items-center justify-between">
+                                <label class="block text-[10px] font-extrabold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
+                                    ⏰ Tenggat Pembayaran (Due Date)
+                                </label>
+                                <span class="text-[9px] font-medium text-slate-400">Aturan batas waktu pelunasan tagihan</span>
+                            </div>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                <div>
+                                    <label class="block text-[9px] font-bold text-slate-400 uppercase mb-1">Tipe Tenggat</label>
+                                    <select wire:model.live="newConfigDueDayType"
+                                        class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700/80 text-slate-800 dark:text-slate-200 rounded-xl px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500/30">
+                                        @if(in_array($newConfigInterval, ['insidental', 'once', 'event', 'sekali']))
+                                            <option value="fixed_date">📌 Tanggal Paten / Spesifik (Misal: 31 Agustus 2026)</option>
+                                            <option value="days_after">⏳ Jumlah Hari Setelah Terbit (Misal: 7 Hari)</option>
+                                            <option value="none">🌐 Tanpa Tenggat Waktu (Bebas)</option>
+                                            <option value="fixed_day">📅 Tanggal Tetap Bulanan (Misal: Tgl 10)</option>
+                                        @else
+                                            <option value="fixed_day">📅 Tanggal Tetap Bulanan (Misal: Tgl 10 tiap bulan)</option>
+                                            <option value="fixed_date">📌 Tanggal Paten / Spesifik (Misal: 31 Agustus 2026)</option>
+                                            <option value="days_after">⏳ Jumlah Hari Setelah Terbit (Misal: 7 Hari)</option>
+                                            <option value="none">🌐 Tanpa Tenggat Waktu (Bebas)</option>
+                                        @endif
+                                    </select>
+                                </div>
+                                @if($newConfigDueDayType === 'fixed_date')
+                                    <div>
+                                        <label class="block text-[9px] font-bold text-slate-400 uppercase mb-1">Pilih Tanggal Paten</label>
+                                        <input type="date" wire:model="newConfigDueDateSpecific"
+                                            class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700/80 text-slate-800 dark:text-slate-200 rounded-xl px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500/30">
+                                        @error('newConfigDueDateSpecific') <span class="text-[10px] text-rose-500 mt-1 block">{{ $message }}</span> @enderror
+                                    </div>
+                                @elseif($newConfigDueDayType !== 'none')
+                                    <div>
+                                        <label class="block text-[9px] font-bold text-slate-400 uppercase mb-1">
+                                            {{ $newConfigDueDayType === 'fixed_day' ? 'Jatuh Tempo Tanggal' : 'Jumlah Hari Pelunasan' }}
+                                        </label>
+                                        <div class="relative">
+                                            <input type="number" min="1" max="31" wire:model="newConfigDueDayValue"
+                                                class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700/80 text-slate-800 dark:text-slate-200 rounded-xl px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500/30">
+                                            <span class="absolute right-3 top-2 text-[10px] text-slate-400 font-medium">
+                                                {{ $newConfigDueDayType === 'fixed_day' ? 'Setiap bulan' : 'Hari' }}
+                                            </span>
+                                        </div>
+                                    </div>
+                                @endif
                             </div>
                         </div>
 

@@ -9,6 +9,7 @@ use App\Modules\Kepengasuhan\Models\RoomAssignment;
 use App\Modules\Kepengasuhan\Services\DormitoryService;
 use App\Modules\Core\Models\PersonRole;
 use App\Modules\Kepengasuhan\Services\SantriStatusService;
+use App\Traits\HasGenderScope;
 use Livewire\Attributes\Computed;
 use Livewire\Component;
 use App\Livewire\Concerns\SendsToast;
@@ -16,12 +17,11 @@ use Livewire\WithPagination;
 
 class DormitoryList extends Component
 {
-    use SendsToast;
+    use SendsToast, WithPagination, HasGenderScope;
 
-    use WithPagination;
-
-    public $search       = '';
-    public $genderFilter = '';
+    public $search        = '';
+    public $genderFilter  = '';
+    public bool $isGenderLocked = false;
 
     // =========================================================================
     // Modal: Assign Santri ke Kamar
@@ -81,6 +81,17 @@ class DormitoryList extends Component
     // Lifecycle
     // =========================================================================
 
+    public function mount(): void
+    {
+        $scope = $this->genderScope();
+        if ($scope) {
+            // User memiliki gender scope — kunci filter ke gender mereka
+            $this->genderFilter   = $scope;
+            $this->isGenderLocked = true;
+        }
+        // super-admin / manajemen: genderFilter tetap '' (bebas pilih semua)
+    }
+
     public function updatingSearch()
     {
         $this->resetPage();
@@ -114,6 +125,12 @@ class DormitoryList extends Component
 
     public function saveDormitory(): void
     {
+        // Guard: user ber-gender scope tidak boleh menyimpan asrama lawan jenis
+        if ($this->genderScope() && $this->dormitoryGender !== $this->genderScope()) {
+            $this->toastError('Anda hanya dapat mengelola asrama sesuai gender yang diizinkan untuk akun Anda.');
+            return;
+        }
+
         $this->validate([
             'dormitoryName'   => 'required|string|max:100',
             'dormitoryGender' => 'required|in:L,P',
@@ -417,13 +434,19 @@ class DormitoryList extends Component
             });
         }
 
-        if ($this->genderFilter) {
+        // Gender scope: super-admin/manajemen boleh filter manual, role lain di-enforce server-side
+        $enforced = $this->genderScope();
+        if ($enforced) {
+            // Selalu enforce berdasarkan scope user, abaikan URL input
+            $query->where('gender', $enforced);
+        } elseif ($this->genderFilter) {
+            // super-admin / manajemen: boleh pakai filter manual
             $query->where('gender', $this->genderFilter);
         }
 
         // Scope untuk musyrif (hanya asrama milik organisasinya)
         $user = auth()->user();
-        if (!$user->hasRole('super-admin') && !$user->hasRole('pengasuh')) {
+        if (!$user->hasRole('super-admin') && !$user->hasRole('pengasuh') && !$user->hasRole('manajemen')) {
             $orgIds = $user->getOrganizationIds();
             if (!empty($orgIds)) {
                 $query->whereIn('organization_id', $orgIds);
@@ -452,8 +475,8 @@ class DormitoryList extends Component
             $santriList = $santriQuery->limit(8)->get();
         }
 
-        // Waiting list (santri tanpa kamar)
-        $waitingListGender = $this->genderFilter ?: null;
+        // Waiting list (santri tanpa kamar) — gunakan scope gender yg di-enforce
+        $waitingListGender = $this->genderScope() ?? ($this->genderFilter ?: null);
         $waitingList = [];
         if ($waitingListGender) {
             $service = app(DormitoryService::class);

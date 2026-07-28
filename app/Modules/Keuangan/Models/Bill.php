@@ -24,6 +24,7 @@ class Bill extends Model
         'parent_bill_id',
         'period_month',
         'period_year',
+        'period_sub',
         'amount',
         'amount_paid',
         'status',
@@ -39,8 +40,39 @@ class Bill extends Model
         'due_date' => 'date',
         'period_month' => 'integer',
         'period_year' => 'integer',
+        'period_sub' => 'integer',
         'deleted_at' => 'datetime',
     ];
+
+    public function getPeriodFormattedAttribute(): string
+    {
+        $monthNames = [
+            1 => 'Januari', 2 => 'Februari', 3 => 'Maret', 4 => 'April',
+            5 => 'Mei', 6 => 'Juni', 7 => 'Juli', 8 => 'Agustus',
+            9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Desember'
+        ];
+
+        $base = ($this->period_month && isset($monthNames[$this->period_month]))
+            ? $monthNames[$this->period_month] . ' ' . $this->period_year
+            : ($this->period_year ? (string)$this->period_year : '-');
+
+        if ($this->period_sub) {
+            $interval = $this->config?->interval;
+            $maxSub = match($interval) {
+                'biweekly', '2x_monthly' => 2,
+                'trimonthly', '3x_monthly' => 3,
+                'weekly', '4x_monthly' => 4,
+                default => null,
+            };
+
+            if ($maxSub) {
+                return $base . " (Periode {$this->period_sub}/{$maxSub})";
+            }
+            return $base . " (Periode {$this->period_sub})";
+        }
+
+        return $base;
+    }
 
     public function person(): BelongsTo
     {

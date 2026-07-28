@@ -185,6 +185,71 @@ class BillingConfigurationPrintSetup extends Component
                 'headers' => $headers,
                 'gridData' => $gridData,
             ];
+        } elseif (in_array($layoutType, ['caturwulan', '3x_yearly'])) {
+            // Caturwulan layout (3 columns)
+            $periods = [
+                1 => "Caturwulan 1 (Jan–Apr)",
+                2 => "Caturwulan 2 (Mei–Agt)",
+                3 => "Caturwulan 3 (Sep–Des)",
+            ];
+
+            $gridData = $santriList->map(function ($santri) use ($periods, $config) {
+                $bills = [];
+                foreach (array_keys($periods) as $pNum) {
+                    $bill = Bill::where('person_id', $santri->id)
+                        ->where('billing_config_id', $config->id)
+                        ->where('period_month', (int)$pNum)
+                        ->where('period_year', (int)$this->selectedYear)
+                        ->first();
+                    $bills[] = $bill;
+                }
+
+                return [
+                    'person' => $santri,
+                    'room_name' => $santri->room_name ?? null,
+                    'dormitory_name' => $santri->dormitory_name ?? null,
+                    'bills' => $bills,
+                ];
+            });
+
+            return [
+                'type' => 'caturwulan',
+                'headers' => array_values($periods),
+                'gridData' => $gridData,
+            ];
+        } elseif (in_array($layoutType, ['triwulan', '4x_yearly'])) {
+            // Triwulan layout (4 columns)
+            $periods = [
+                1 => "Triwulan 1 (Jan–Mar)",
+                2 => "Triwulan 2 (Apr–Jun)",
+                3 => "Triwulan 3 (Jul–Sep)",
+                4 => "Triwulan 4 (Okt–Des)",
+            ];
+
+            $gridData = $santriList->map(function ($santri) use ($periods, $config) {
+                $bills = [];
+                foreach (array_keys($periods) as $pNum) {
+                    $bill = Bill::where('person_id', $santri->id)
+                        ->where('billing_config_id', $config->id)
+                        ->where('period_month', (int)$pNum)
+                        ->where('period_year', (int)$this->selectedYear)
+                        ->first();
+                    $bills[] = $bill;
+                }
+
+                return [
+                    'person' => $santri,
+                    'room_name' => $santri->room_name ?? null,
+                    'dormitory_name' => $santri->dormitory_name ?? null,
+                    'bills' => $bills,
+                ];
+            });
+
+            return [
+                'type' => 'triwulan',
+                'headers' => array_values($periods),
+                'gridData' => $gridData,
+            ];
         } elseif ($layoutType === 'semester') {
             // Semester layout (2 columns)
             $periods = [];

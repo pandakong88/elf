@@ -7,6 +7,7 @@ use App\Modules\Core\Models\Person;
 use App\Modules\Kepengasuhan\Models\Dormitory;
 use App\Modules\Madrasah\Models\MadrasahKelas;
 use App\Modules\Keuangan\Models\BillingConfiguration;
+use App\Modules\Keuangan\Models\Bill;
 use App\Models\User;
 use App\Traits\HasGenderScope;
 
@@ -19,6 +20,9 @@ class BillingConfigurationEdit extends Component
     public string $newConfigType = '';
     public float|int|string|null $newConfigAmount = null;
     public string $newConfigInterval = 'monthly';
+    public string $newConfigDueDayType = 'fixed_day';
+    public int|string|null $newConfigDueDayValue = 10;
+    public ?string $newConfigDueDateSpecific = null;
     public array  $newConfigManagerRoles = [];
     public array  $newConfigManagerIds = [];
     public string $newConfigCoManagerSearchQuery = '';
@@ -33,6 +37,8 @@ class BillingConfigurationEdit extends Component
     public array  $newConfigGenderTargets = [];
     public array  $newConfigResidenceTargets = ['mukim', 'laju'];
 
+    public bool   $hasIssuedBills = false;
+
     public function mount(string $id): void
     {
         $config = BillingConfiguration::findOrFail($id);
@@ -42,6 +48,10 @@ class BillingConfigurationEdit extends Component
         $this->newConfigType = $config->type;
         $this->newConfigAmount = (float) $config->amount;
         $this->newConfigInterval = $config->interval;
+        $this->newConfigDueDayType = $config->due_day_type ?? 'fixed_day';
+        $this->newConfigDueDayValue = $config->due_day_value ?? 10;
+        $this->newConfigDueDateSpecific = $config->due_date_specific ? $config->due_date_specific->format('Y-m-d') : null;
+        $this->hasIssuedBills = Bill::where('billing_config_id', $config->id)->exists();
 
         // Safely parse manager_role whether stored as a JSON array or a plain string
         $rawRole = $config->getRawOriginal('manager_role');
@@ -238,6 +248,9 @@ class BillingConfigurationEdit extends Component
         $this->validate([
             'newConfigName' => 'required|string|max:255',
             'newConfigAmount' => 'required|numeric|min:0',
+            'newConfigDueDayType' => 'required|string|in:fixed_day,fixed_date,days_after,none',
+            'newConfigDueDayValue' => 'nullable|numeric|min:1|max:31',
+            'newConfigDueDateSpecific' => 'nullable|required_if:newConfigDueDayType,fixed_date|date',
             'newConfigEffectiveFrom' => 'required|date',
             'newConfigGenderTargets' => 'required|array|min:1',
             'newConfigResidenceTargets' => 'required|array|min:1',
@@ -268,7 +281,11 @@ class BillingConfigurationEdit extends Component
         $config->update([
             'label' => $this->newConfigName,
             'amount' => $this->newConfigAmount,
+            'interval' => $this->newConfigInterval,
             'effective_from' => $this->newConfigEffectiveFrom,
+            'due_day_type' => $this->newConfigDueDayType,
+            'due_day_value' => $this->newConfigDueDayValue ? (int)$this->newConfigDueDayValue : null,
+            'due_date_specific' => $this->newConfigDueDayType === 'fixed_date' ? $this->newConfigDueDateSpecific : null,
             'manager_role' => !empty($this->newConfigManagerRoles) ? json_encode($this->newConfigManagerRoles) : null,
             'manager_ids' => !empty($this->newConfigManagerIds) ? $this->newConfigManagerIds : null,
             'target_type' => $this->newConfigTargetType,

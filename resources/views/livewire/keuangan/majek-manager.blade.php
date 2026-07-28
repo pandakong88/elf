@@ -112,10 +112,16 @@
                     <span class="font-black text-rose-500 dark:text-rose-400 text-base">{{ $this->overallStats['unpaid'] }}</span>
                 </div>
             </div>
-            <button type="button" wire:click="openAddModal"
-                class="px-4 py-2.5 bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-xs font-bold transition-all shadow-sm flex items-center gap-2 shrink-0">
-                + Tambah Peserta
-            </button>
+            <div class="flex flex-wrap items-center gap-2 shrink-0">
+                <button type="button" wire:click="openCopyPeriodModal"
+                    class="px-3.5 py-2 bg-violet-600 hover:bg-violet-700 text-white rounded-xl text-xs font-bold transition-all shadow-sm flex items-center gap-1.5">
+                    📋 Salin Peserta dari Bulan Lain
+                </button>
+                <button type="button" wire:click="openAddModal"
+                    class="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-xs font-bold transition-all shadow-sm flex items-center gap-2">
+                    + Tambah Peserta
+                </button>
+            </div>
         </div>
 
         {{-- Search and Filter Bar --}}
@@ -938,6 +944,147 @@
                     <button type="button" wire:click="removePeserta"
                         class="px-5 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-bold transition-all shadow-sm">
                         🗑️ Ya, Hapus
+                    </button>
+                </div>
+            </div>
+        </div>
+    @endif
+
+    {{-- ══════════════════════════════════════════════════════════════════════ --}}
+    {{-- MODAL: SALIN PESERTA DARI BULAN LAIN                                   --}}
+    {{-- ══════════════════════════════════════════════════════════════════════ --}}
+    @if($showCopyPeriodModal)
+        <div class="fixed inset-0 bg-slate-900/70 backdrop-blur-sm z-50 flex items-center justify-center p-4" wire:click.self="closeCopyPeriodModal">
+            <div class="bg-white dark:bg-slate-900 rounded-3xl w-full max-w-lg border border-slate-100 dark:border-slate-800 shadow-2xl overflow-hidden p-6 space-y-5">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-2xl bg-violet-100 dark:bg-violet-950/40 text-violet-600 dark:text-violet-400 flex items-center justify-center text-xl shrink-0">
+                            📋
+                        </div>
+                        <div>
+                            <h3 class="font-extrabold text-base text-slate-800 dark:text-slate-100">Salin Peserta Majek dari Bulan Lain</h3>
+                            <p class="text-xs text-slate-400 mt-0.5">Duplikasi pendaftar katering ke periode <strong>{{ $this->monthLabel }}</strong>.</p>
+                        </div>
+                    </div>
+
+                    @if($this->genderScope())
+                        <span class="px-2.5 py-1 bg-purple-50 dark:bg-purple-950/50 border border-purple-200 dark:border-purple-800 text-purple-700 dark:text-purple-300 rounded-xl text-[10px] font-extrabold uppercase tracking-wider">
+                            {{ $this->genderScope() === 'L' ? '👦 Scope Putra' : '👧 Scope Putri' }}
+                        </span>
+                    @endif
+                </div>
+
+                <div class="space-y-4 pt-1">
+                    @if(!$this->activePeriod)
+                        <div class="p-3.5 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/50 rounded-2xl text-xs space-y-2">
+                            <div class="font-extrabold text-amber-700 dark:text-amber-300 flex items-center gap-1.5">
+                                <svg class="w-4 h-4 text-amber-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                                <span>Konfigurasi Periode {{ $this->monthLabel }} Belum Dibuat!</span>
+                            </div>
+                            <p class="text-amber-600 dark:text-amber-400 text-[11px] leading-relaxed">
+                                Untuk mencegah kesalahan tarif/nominal, Anda wajib mengatur <strong>Konfigurasi Periode (Hari Aktif & Tarif Majek)</strong> bulan ini terlebih dahulu sebelum menyalin santri.
+                            </p>
+                            <button type="button" wire:click="closeCopyPeriodModal(); openPeriodModal();" class="px-3.5 py-1.5 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-xl text-[10px] transition-all inline-flex items-center gap-1">
+                                ⚙️ Atur Konfigurasi {{ $this->monthLabel }} Sekarang
+                            </button>
+                        </div>
+                    @endif
+
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-[10px] font-extrabold text-slate-400 uppercase tracking-wider mb-1.5">Bulan Asal</label>
+                            <select wire:model.live="copySourceMonth" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 dark:text-slate-200">
+                                @for($m = 1; $m <= 12; $m++)
+                                    <option value="{{ $m }}">{{ \Carbon\Carbon::createFromDate(2026, $m, 1)->translatedFormat('F') }}</option>
+                                @endfor
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-[9px] font-extrabold text-slate-400 uppercase tracking-wider mb-1.5">Tahun Asal</label>
+                            <select wire:model.live="copySourceYear" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 dark:text-slate-200">
+                                @for($y = date('Y') - 1; $y <= date('Y') + 1; $y++)
+                                    <option value="{{ $y }}">{{ $y }}</option>
+                                @endfor
+                            </select>
+                        </div>
+                    </div>
+
+                    @php
+                        $preview = $this->copyPreviewData;
+                    @endphp
+
+                    <!-- Summary Stats Pill -->
+                    <div class="grid grid-cols-3 gap-2 text-center text-[10px]">
+                        <div class="p-2.5 bg-slate-50 dark:bg-slate-800/60 rounded-2xl border border-slate-100 dark:border-slate-800">
+                            <span class="text-slate-400 block font-bold uppercase">Total Bulan Asal</span>
+                            <span class="text-sm font-black text-slate-800 dark:text-slate-100">{{ $preview['total_source'] }} Santri</span>
+                        </div>
+                        <div class="p-2.5 bg-emerald-50 dark:bg-emerald-950/30 rounded-2xl border border-emerald-200/60 dark:border-emerald-800/40">
+                            <span class="text-emerald-600 dark:text-emerald-400 block font-bold uppercase">Akan Disalin</span>
+                            <span class="text-sm font-black text-emerald-700 dark:text-emerald-300">+{{ $preview['will_copy_count'] }} Santri</span>
+                        </div>
+                        <div class="p-2.5 bg-amber-50 dark:bg-amber-950/30 rounded-2xl border border-amber-200/60 dark:border-amber-800/40">
+                            <span class="text-amber-600 dark:text-amber-400 block font-bold uppercase">Sudah Ada (Skip)</span>
+                            <span class="text-sm font-black text-amber-700 dark:text-amber-300">{{ $preview['already_registered_count'] }} Santri</span>
+                        </div>
+                    </div>
+
+                    <!-- Interactive Live Preview Table of Santri List -->
+                    <div class="space-y-1.5">
+                        <label class="block text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">Preview Daftar Santri yang Akan Disalin:</label>
+                        <div class="border border-slate-200/60 dark:border-slate-800 rounded-2xl overflow-hidden max-h-48 overflow-y-auto bg-slate-50/50 dark:bg-slate-950/30">
+                            <table class="w-full text-left border-collapse text-xs">
+                                <thead class="sticky top-0 bg-slate-100 dark:bg-slate-950 z-10">
+                                    <tr class="border-b border-slate-200 dark:border-slate-800 text-slate-500 font-extrabold uppercase tracking-wider text-[9px]">
+                                        <th class="py-2 px-3">Nama Santri</th>
+                                        <th class="py-2 px-3 text-center">Sesi</th>
+                                        <th class="py-2 px-3 text-right">Status Penyalinan</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-100 dark:divide-slate-800/50">
+                                    @forelse($preview['students'] as $st)
+                                        <tr class="hover:bg-white dark:hover:bg-slate-800/40 transition-colors">
+                                            <td class="py-2 px-3 font-bold text-slate-800 dark:text-slate-200">
+                                                {{ $st['name'] }}
+                                                <span class="text-[9px] font-normal text-slate-400">({{ $st['gender'] === 'L' ? 'Putra' : 'Putri' }})</span>
+                                            </td>
+                                            <td class="py-2 px-3 text-center text-[10px] font-semibold text-slate-500">
+                                                {{ $st['sesi'] }}
+                                            </td>
+                                            <td class="py-2 px-3 text-right">
+                                                @if($st['is_already'])
+                                                    <span class="inline-block px-2 py-0.5 bg-slate-200/60 dark:bg-slate-800 text-slate-500 text-[9px] font-bold rounded-lg">
+                                                        Sudah Ada (Dilewati)
+                                                    </span>
+                                                @else
+                                                    <span class="inline-block px-2 py-0.5 bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 text-[9px] font-bold rounded-lg border border-emerald-200 dark:border-emerald-900/50">
+                                                        ✓ Akan Disalin
+                                                    </span>
+                                                @endif
+                                            </td>
+                                        </tr>
+                                    @empty
+                                        <tr>
+                                            <td colspan="3" class="py-6 text-center text-slate-400 text-xs italic">
+                                                Tidak ada santri peserta Majek pada bulan yang dipilih.
+                                            </td>
+                                        </tr>
+                                    @endforelse
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-3 pt-2">
+                    <button type="button" wire:click="closeCopyPeriodModal"
+                        class="flex-1 py-2.5 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 font-bold rounded-xl text-xs hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
+                        Batal
+                    </button>
+                    <button type="button" wire:click="copyRegistrationsFromPeriod"
+                        @if(!$this->activePeriod || $preview['will_copy_count'] === 0) disabled @endif
+                        class="flex-1 py-2.5 bg-gradient-to-br from-violet-600 to-purple-700 hover:from-violet-500 hover:to-purple-600 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold rounded-xl text-xs transition-colors shadow-lg shadow-violet-500/20">
+                        Ya, Salin {{ $preview['will_copy_count'] }} Santri
                     </button>
                 </div>
             </div>

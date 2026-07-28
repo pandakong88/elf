@@ -30,6 +30,11 @@ class CensusV3Review extends Component
 
     public function mount(string $campaign, string $dormitory): void
     {
+        $user = auth()->user();
+        if (!$user || !($user->hasRole('super-admin') || $user->hasRole('manajemen'))) {
+            abort(403, 'Akses ditolak. Halaman ini hanya untuk Super Admin dan Manajemen.');
+        }
+
         $this->campaignId = $campaign;
         $this->dormitoryId = $dormitory;
     }

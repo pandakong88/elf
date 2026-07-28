@@ -348,6 +348,7 @@ class SaudaraSheet implements FromArray, WithTitle, WithHeadings, ShouldAutoSize
         return [
             'ID Santri (Jangan Diubah)',
             'Nama Santri',
+            'Ada Saudara di Pondok? (Ya/Tidak)',
             'Nama Lengkap Saudara di Pondok',
             'Status Hubungan',
             'NIK/NIS Saudara (jika tahu)',
@@ -359,10 +360,13 @@ class SaudaraSheet implements FromArray, WithTitle, WithHeadings, ShouldAutoSize
         $data = [];
         foreach ($this->santris as $s) {
             $person = $s['person'];
+            $profile = $person->santriProfile;
+            $hasSiblingLabel = ($profile && $profile->has_active_sibling) ? 'Ya' : 'Tidak';
 
             $data[] = [
                 $person->id,
                 $person->name,
+                $hasSiblingLabel,
                 '', // Diisi manual oleh user
                 '', // Kakak/Adik/Kembar
                 '', // NIK/NIS
@@ -374,14 +378,23 @@ class SaudaraSheet implements FromArray, WithTitle, WithHeadings, ShouldAutoSize
 
     public function styles(Worksheet $sheet)
     {
-        $sheet->getStyle('A1:E1')->getFont()->setBold(true);
-        $sheet->getStyle('A1:E1')->getFill()
+        $sheet->getStyle('A1:F1')->getFont()->setBold(true);
+        $sheet->getStyle('A1:F1')->getFill()
             ->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)
             ->getStartColor()->setARGB('FFE0E0E0');
 
         $rowCount = count($this->santris) + 1;
         for ($i = 2; $i <= $rowCount; $i++) {
-            $valRel = $sheet->getCell('D' . $i)->getDataValidation();
+            // Validation for Ada Saudara (Column C)
+            $valSibling = $sheet->getCell('C' . $i)->getDataValidation();
+            $valSibling->setType(DataValidation::TYPE_LIST);
+            $valSibling->setErrorStyle(DataValidation::STYLE_INFORMATION);
+            $valSibling->setAllowBlank(false);
+            $valSibling->setShowDropDown(true);
+            $valSibling->setFormula1('"Ya,Tidak"');
+
+            // Validation for Status Hubungan (Column E)
+            $valRel = $sheet->getCell('E' . $i)->getDataValidation();
             $valRel->setType(DataValidation::TYPE_LIST);
             $valRel->setFormula1('"kakak,adik,kembar"');
         }

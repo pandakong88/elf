@@ -122,6 +122,8 @@ class SantriImportManager extends Component
                 $parentRel   = trim((string)($row[12] ?? 'Ayah'));
                 $address     = trim((string)($row[13] ?? ''));
                 $schoolName  = trim((string)($row[14] ?? ''));
+                $hasSibRaw   = strtoupper(trim((string)($row[15] ?? '')));
+                $hasActiveSibling = in_array($hasSibRaw, ['YA', 'TRUE', '1', 'YES']);
 
                 // Ignore empty rows
                 if (empty($name) && empty($nik) && empty($genderRaw)) {
@@ -221,6 +223,7 @@ class SantriImportManager extends Component
                         'parent_rel' => $parentRel ?: 'Ayah',
                         'address' => $address ?: null,
                         'school_name' => $schoolName ?: null,
+                        'has_active_sibling' => $hasActiveSibling,
                     ];
                 }
             }
@@ -267,12 +270,13 @@ class SantriImportManager extends Component
                     }
 
                     SantriProfile::create([
-                        'id'              => Str::uuid()->toString(),
-                        'person_id'       => $person->id,
-                        'father_name'     => strtolower($vs['parent_rel']) === 'ayah' ? $vs['parent_name'] : null,
-                        'mother_name'     => strtolower($vs['parent_rel']) === 'ibu' ? $vs['parent_name'] : null,
-                        'school_name'     => $vs['school_name'],
-                        'additional_info' => ['nis' => $nisNumber],
+                        'id'                 => Str::uuid()->toString(),
+                        'person_id'          => $person->id,
+                        'father_name'        => strtolower($vs['parent_rel']) === 'ayah' ? $vs['parent_name'] : null,
+                        'mother_name'        => strtolower($vs['parent_rel']) === 'ibu' ? $vs['parent_name'] : null,
+                        'school_name'        => $vs['school_name'],
+                        'has_active_sibling' => $vs['has_active_sibling'] ?? false,
+                        'additional_info'    => ['nis' => $nisNumber],
                     ]);
 
                     $rootOrg = Organization::where('slug', 'ponpes-al-fithroh')->first()

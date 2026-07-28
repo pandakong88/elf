@@ -48,6 +48,11 @@ class CensusV3CampaignWizard extends Component
 
     public function mount(): void
     {
+        $user = auth()->user();
+        if (!$user || !($user->hasRole('super-admin') || $user->hasRole('manajemen'))) {
+            abort(403, 'Akses ditolak. Halaman ini hanya untuk Super Admin dan Manajemen.');
+        }
+
         $now = Carbon::now();
         $this->month = $now->month;
         $this->year = $now->year;

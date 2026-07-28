@@ -19,6 +19,9 @@ class BillingConfigurationCreate extends Component
     public string $newConfigType = '';
     public float|int|string|null $newConfigAmount = null;
     public string $newConfigInterval = 'monthly';
+    public string $newConfigDueDayType = 'fixed_day';
+    public int|string|null $newConfigDueDayValue = 10;
+    public ?string $newConfigDueDateSpecific = null;
     public array  $newConfigManagerRoles = [];
     public array  $newConfigManagerIds = [];
     public string $newConfigCoManagerSearchQuery = '';
@@ -198,6 +201,9 @@ class BillingConfigurationCreate extends Component
             'newConfigType' => 'required|string',
             'newConfigAmount' => 'required|numeric|min:0',
             'newConfigInterval' => 'required|string',
+            'newConfigDueDayType' => 'required|string|in:fixed_day,fixed_date,days_after,none',
+            'newConfigDueDayValue' => 'nullable|numeric|min:1|max:31',
+            'newConfigDueDateSpecific' => 'nullable|required_if:newConfigDueDayType,fixed_date|date',
             'newConfigEffectiveFrom' => 'required|date',
             'newConfigGenderTargets' => 'required|array|min:1',
             'newConfigResidenceTargets' => 'required|array|min:1',
@@ -231,6 +237,9 @@ class BillingConfigurationCreate extends Component
             'amount' => $this->newConfigAmount,
             'effective_from' => $this->newConfigEffectiveFrom,
             'interval' => $this->newConfigInterval,
+            'due_day_type' => $this->newConfigDueDayType,
+            'due_day_value' => $this->newConfigDueDayValue ? (int)$this->newConfigDueDayValue : null,
+            'due_date_specific' => $this->newConfigDueDayType === 'fixed_date' ? $this->newConfigDueDateSpecific : null,
             'manager_role' => !empty($this->newConfigManagerRoles) ? json_encode($this->newConfigManagerRoles) : null,
             'manager_ids' => !empty($this->newConfigManagerIds) ? $this->newConfigManagerIds : null,
             'target_type' => $this->newConfigTargetType,

@@ -229,12 +229,27 @@ class KeuanganPrintController extends Controller
         } else {
             $layoutType = $config->interval;
 
-            if ($layoutType === 'semester') {
-                $periods = [];
-                $prevSem  = $semester === 1 ? 2 : 1;
-                $prevYear = $semester === 1 ? $year - 1 : $year;
-                $periods["{$prevSem}-{$prevYear}"] = "Sem {$prevSem} / {$prevYear}";
-                $periods["{$semester}-{$year}"]    = "Sem {$semester} / {$year}";
+            if (in_array($layoutType, ['semester', '2x_yearly', 'caturwulan', '3x_yearly', 'triwulan', '4x_yearly'])) {
+                if (in_array($layoutType, ['caturwulan', '3x_yearly'])) {
+                    $periods = [
+                        "1-{$year}" => "Caturwulan 1",
+                        "2-{$year}" => "Caturwulan 2",
+                        "3-{$year}" => "Caturwulan 3",
+                    ];
+                } elseif (in_array($layoutType, ['triwulan', '4x_yearly'])) {
+                    $periods = [
+                        "1-{$year}" => "Triwulan 1",
+                        "2-{$year}" => "Triwulan 2",
+                        "3-{$year}" => "Triwulan 3",
+                        "4-{$year}" => "Triwulan 4",
+                    ];
+                } else {
+                    $periods = [];
+                    $prevSem  = $semester === 1 ? 2 : 1;
+                    $prevYear = $semester === 1 ? $year - 1 : $year;
+                    $periods["{$prevSem}-{$prevYear}"] = "Sem {$prevSem} / {$prevYear}";
+                    $periods["{$semester}-{$year}"]    = "Sem {$semester} / {$year}";
+                }
 
                 $gridData = $santriList->map(function ($santri) use ($periods, $config, $year, $semester) {
                     $bills = [];
@@ -474,15 +489,30 @@ class KeuanganPrintController extends Controller
         } else {
             $layoutType = $config->interval;
 
-            if ($layoutType === 'semester') {
+            if (in_array($layoutType, ['semester', '2x_yearly', 'caturwulan', '3x_yearly', 'triwulan', '4x_yearly'])) {
                 $semester = (int) $request->query('semester', now()->month <= 6 ? 1 : 2);
                 $year     = (int) $request->query('year', now()->year);
 
-                $periods = [];
-                $prevSem  = $semester === 1 ? 2 : 1;
-                $prevYear = $semester === 1 ? $year - 1 : $year;
-                $periods["{$prevSem}-{$prevYear}"] = "Sem {$prevSem} / {$prevYear}";
-                $periods["{$semester}-{$year}"]    = "Sem {$semester} / {$year}";
+                if (in_array($layoutType, ['caturwulan', '3x_yearly'])) {
+                    $periods = [
+                        "1-{$year}" => "Caturwulan 1",
+                        "2-{$year}" => "Caturwulan 2",
+                        "3-{$year}" => "Caturwulan 3",
+                    ];
+                } elseif (in_array($layoutType, ['triwulan', '4x_yearly'])) {
+                    $periods = [
+                        "1-{$year}" => "Triwulan 1",
+                        "2-{$year}" => "Triwulan 2",
+                        "3-{$year}" => "Triwulan 3",
+                        "4-{$year}" => "Triwulan 4",
+                    ];
+                } else {
+                    $periods = [];
+                    $prevSem  = $semester === 1 ? 2 : 1;
+                    $prevYear = $semester === 1 ? $year - 1 : $year;
+                    $periods["{$prevSem}-{$prevYear}"] = "Sem {$prevSem} / {$prevYear}";
+                    $periods["{$semester}-{$year}"]    = "Sem {$semester} / {$year}";
+                }
 
                 $gridData = $santriList->map(function ($santri) use ($periods, $config, $year, $semester) {
                     $bills = [];

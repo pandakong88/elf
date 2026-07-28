@@ -30,6 +30,11 @@ class MajekManager extends Component
     public float  $periodTarifPerHariPutri = 3000.00;
     public string $periodNotes       = '';
 
+    // ─── Copy Period Modal ────────────────────────────────────────────────────
+    public bool   $showCopyPeriodModal = false;
+    public int    $copySourceMonth     = 1;
+    public int    $copySourceYear      = 2026;
+
     // ─── Add Participant Modal (Shared Tab) ──────────────────────────────────
     public bool   $showAddModal      = false;
     public string $addTab            = 'komplek'; // 'komplek' | 'pencarian'
@@ -211,6 +216,73 @@ class MajekManager extends Component
             'paid'    => $paid,
             'partial' => $partial,
             'unpaid'  => max(0, $total - $paid - $partial),
+        ];
+    }
+
+    #[Computed]
+    public function copyPreviewData(): array
+    {
+        if (!$this->showCopyPeriodModal) {
+            return [
+                'students' => [],
+                'total_source' => 0,
+                'will_copy_count' => 0,
+                'already_registered_count' => 0,
+            ];
+        }
+
+        $existingPersonIdsMap = MajekRegistration::where('month', $this->month)
+            ->where('year', $this->year)
+            ->pluck('person_id')
+            ->flip()
+            ->toArray();
+
+        $sourceRegs = MajekRegistration::with('person')
+            ->where('month', $this->copySourceMonth)
+            ->where('year', $this->copySourceYear)
+            ->whereHas('person', fn($q) => $q->when($this->genderScope(), fn($sq, $g) => $sq->where('gender', $g)))
+            ->get();
+
+        $willCopyCount = 0;
+        $alreadyCount = 0;
+        $studentsList = [];
+
+        foreach ($sourceRegs as $reg) {
+            $isAlready = isset($existingPersonIdsMap[$reg->person_id]);
+            if ($isAlready) {
+                $alreadyCount++;
+            } else {
+                $willCopyCount++;
+            }
+
+            $sesiLabel = match(true) {
+                $reg->session_pagi && $reg->session_sore => '2x (Pagi+Sore)',
+                $reg->session_pagi                       => '1x Pagi',
+                $reg->session_sore                       => '1x Sore',
+                default                                  => '—',
+            };
+
+            $studentsList[] = [
+                'id'         => $reg->person_id,
+                'name'       => $reg->person->name ?? 'Santri Tidak Ditemukan',
+                'gender'     => $reg->person->gender ?? 'L',
+                'sesi'       => $sesiLabel,
+                'is_already' => $isAlready,
+            ];
+        }
+
+        usort($studentsList, function($a, $b) {
+            if ($a['is_already'] !== $b['is_already']) {
+                return $a['is_already'] ? 1 : -1;
+            }
+            return strcmp($a['name'], $b['name']);
+        });
+
+        return [
+            'students'                 => $studentsList,
+            'total_source'             => count($sourceRegs),
+            'will_copy_count'          => $willCopyCount,
+            'already_registered_count' => $alreadyCount,
         ];
     }
 
@@ -430,6 +502,110 @@ class MajekManager extends Component
         unset($this->activePeriod, $this->tarif2x, $this->tarif1x, $this->tarif2xPutri, $this->tarif1xPutri);
         $this->showPeriodModal = false;
         $this->flashSuccess    = 'Konfigurasi periode berhasil disimpan.';
+    }
+
+    // =========================================================================
+    // Copy Period Modal & Action
+    // =========================================================================
+
+    public function openCopyPeriodModal(): void
+    {
+        if ($this->month === 1) {
+            $this->copySourceMonth = 12;
+            $this->copySourceYear  = $this->year - 1;
+        } else {
+            $this->copySourceMonth = $this->month - 1;
+            $this->copySourceYear  = $this->year;
+        }
+        $this->showCopyPeriodModal = true;
+    }
+
+    public function closeCopyPeriodModal(): void
+    {
+        $this->showCopyPeriodModal = false;
+    }
+
+    public function copyRegistrationsFromPeriod(): void
+    {
+        if ($this->copySourceMonth === $this->month && $this->copySourceYear === $this->year) {
+            $this->flashError = 'Bulan asal salinan tidak boleh sama dengan bulan yang sedang aktif.';
+            return;
+        }
+
+        // Ensure active period exists for target month & year
+        $targetPeriod = $this->activePeriod;
+        if (!$targetPeriod) {
+            $targetMonthName = Carbon::createFromDate($this->year, $this->month, 1)->translatedFormat('F Y');
+            $this->flashError = "Konfigurasi Periode (Hari Aktif & Tarif) untuk bulan {$targetMonthName} belum dibuat. Silakan atur konfigurasi bulan ini terlebih dahulu.";
+            $this->showCopyPeriodModal = false;
+            return;
+        }
+
+        // Get source registrations
+        $sourceRegs = MajekRegistration::where('month', $this->copySourceMonth)
+            ->where('year', $this->copySourceYear)
+            ->whereHas('person', fn($q) => $q->when($this->genderScope(), fn($sq, $g) => $sq->where('gender', $g)))
+            ->with('person')
+            ->get();
+
+        if ($sourceRegs->isEmpty()) {
+            $sourceMonthName = Carbon::createFromDate($this->copySourceYear, $this->copySourceMonth, 1)->translatedFormat('F Y');
+            $this->flashError = "Tidak ditemukan data peserta Majek pada periode {$sourceMonthName}.";
+            return;
+        }
+
+        // Get existing registered person_ids in target period
+        $existingPersonIds = MajekRegistration::where('month', $this->month)
+            ->where('year', $this->year)
+            ->pluck('person_id')
+            ->toArray();
+
+        $addedCount = 0;
+        $targetPeriodDays = $targetPeriod->active_days;
+
+        DB::transaction(function () use ($sourceRegs, $existingPersonIds, $targetPeriod, $targetPeriodDays, &$addedCount) {
+            foreach ($sourceRegs as $srcReg) {
+                if (in_array($srcReg->person_id, $existingPersonIds)) {
+                    continue; // Skip already registered in target month
+                }
+
+                $gender = $srcReg->person?->gender ?? 'L';
+                $dailyRate = $targetPeriod->getTarifPerHariForGender($gender);
+
+                $days = $targetPeriodDays;
+
+                $amountPagi = $srcReg->session_pagi ? ($dailyRate * $days) : 0;
+                $amountSore = $srcReg->session_sore ? ($dailyRate * $days) : 0;
+
+                $newReg = MajekRegistration::create([
+                    'person_id'     => $srcReg->person_id,
+                    'month'         => $this->month,
+                    'year'          => $this->year,
+                    'session_pagi'  => $srcReg->session_pagi,
+                    'session_sore'  => $srcReg->session_sore,
+                    'active_days'   => $days,
+                    'amount_pagi'   => $amountPagi,
+                    'amount_sore'   => $amountSore,
+                    'registered_by' => auth()->id(),
+                    'notes'         => $srcReg->notes,
+                ]);
+
+                $this->createUnpaidBills($newReg);
+                $addedCount++;
+            }
+        });
+
+        unset($this->activePeriod, $this->registrations, $this->paidStatuses, $this->paidDetails);
+        $this->showCopyPeriodModal = false;
+
+        $sourceMonthName = Carbon::createFromDate($this->copySourceYear, $this->copySourceMonth, 1)->translatedFormat('F Y');
+        $targetMonthName = Carbon::createFromDate($this->year, $this->month, 1)->translatedFormat('F Y');
+
+        if ($addedCount > 0) {
+            $this->flashSuccess = "Berhasil menyalin {$addedCount} peserta Majek dari periode {$sourceMonthName} ke {$targetMonthName}.";
+        } else {
+            $this->flashError = "Seluruh peserta Majek dari {$sourceMonthName} sudah terdaftar pada periode {$targetMonthName}.";
+        }
     }
 
     public function recalculateAllUnpaidRegistrations(): void

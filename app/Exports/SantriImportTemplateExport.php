@@ -50,6 +50,7 @@ class SantriDataSheet implements FromArray, WithTitle, WithHeadings, ShouldAutoS
             'Hubungan Wali',
             'Alamat Lengkap',
             'Asal Sekolah',
+            'Ada Saudara di Pondok? (Ya/Tidak)',
         ];
     }
 
@@ -72,6 +73,7 @@ class SantriDataSheet implements FromArray, WithTitle, WithHeadings, ShouldAutoS
                 'Ayah',
                 'Jl. Raya Ampel No. 45, Surabaya',
                 'SDN Ampel 1',
+                'Ya',
             ],
             [
                 'Siti Fatimah',
@@ -89,6 +91,7 @@ class SantriDataSheet implements FromArray, WithTitle, WithHeadings, ShouldAutoS
                 'Ibu',
                 'Jl. Veteran No. 12, Gresik',
                 'MI Miftahul Ulum',
+                'Tidak',
             ],
         ];
     }
@@ -96,8 +99,8 @@ class SantriDataSheet implements FromArray, WithTitle, WithHeadings, ShouldAutoS
     public function styles(Worksheet $sheet)
     {
         // Header styling
-        $sheet->getStyle('A1:O1')->getFont()->setBold(true);
-        $sheet->getStyle('A1:O1')->getFill()
+        $sheet->getStyle('A1:P1')->getFont()->setBold(true);
+        $sheet->getStyle('A1:P1')->getFill()
             ->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)
             ->getStartColor()->setARGB('FFE2E8F0');
 
@@ -142,6 +145,12 @@ class SantriDataSheet implements FromArray, WithTitle, WithHeadings, ShouldAutoS
             $valHub->setType(DataValidation::TYPE_LIST);
             $valHub->setFormula1('"Ayah,Ibu,Wali"');
             $valHub->setShowDropDown(true);
+
+            // Ada Saudara di Pondok? (Column P)
+            $valSib = $sheet->getCell('P' . $i)->getDataValidation();
+            $valSib->setType(DataValidation::TYPE_LIST);
+            $valSib->setFormula1('"Ya,Tidak"');
+            $valSib->setShowDropDown(true);
         }
     }
 }
@@ -223,6 +232,7 @@ class SantriInstructionSheet implements FromArray, WithTitle, WithHeadings, Shou
             ['Hubungan Wali', 'Ayah / Ibu / Wali', 'Pilih peran wali.'],
             ['Alamat Lengkap', 'Teks Bebas', 'Alamat rumah wali/santri.'],
             ['Asal Sekolah', 'Teks Bebas', 'Sekolah asal sebelum masuk pondok.'],
+            ['Ada Saudara di Pondok?', 'Ya / Tidak', 'Opsional. Pilih Ya jika santri memiliki saudara kandung yang juga mondok di Al-Fithroh.'],
         ];
     }
 

@@ -19,49 +19,293 @@
         </div>
     @endif
 
-    <!-- Navigation Tabs -->
-    <div class="flex border-b border-slate-200 dark:border-slate-800 gap-2 overflow-x-auto pb-1">
-        <button wire:click="$set('activeTab', 'generate')" class="px-5 py-3 text-xs font-bold transition-all border-b-2 flex items-center gap-2 whitespace-nowrap {{ $activeTab === 'generate' ? 'border-emerald-500 text-emerald-600 dark:text-emerald-400' : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300' }}">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
-            <span>Penerbitan Tagihan</span>
-        </button>
-        <button wire:click="$set('activeTab', 'rates')" class="px-5 py-3 text-xs font-bold transition-all border-b-2 flex items-center gap-2 whitespace-nowrap {{ $activeTab === 'rates' ? 'border-emerald-500 text-emerald-600 dark:text-emerald-400' : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300' }}">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/></svg>
-            <span>Konfigurasi Tarif & Target</span>
-        </button>
-        <button wire:click="$set('activeTab', 'cashier')" class="px-5 py-3 text-xs font-bold transition-all border-b-2 flex items-center gap-2 whitespace-nowrap {{ $activeTab === 'cashier' ? 'border-emerald-500 text-emerald-600 dark:text-emerald-400' : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300' }}">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
-            <span>Kasir Utama (12 Bulan)</span>
-        </button>
-        <button wire:click="$set('activeTab', 'payments_log')" class="px-5 py-3 text-xs font-bold transition-all border-b-2 flex items-center gap-2 whitespace-nowrap {{ $activeTab === 'payments_log' ? 'border-emerald-500 text-emerald-600 dark:text-emerald-400' : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300' }}">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/></svg>
-            <span>Riwayat Setoran (Log)</span>
-        </button>
-        <button wire:click="$set('activeTab', 'exceptions')" class="px-5 py-3 text-xs font-bold transition-all border-b-2 flex items-center gap-2 whitespace-nowrap {{ $activeTab === 'exceptions' ? 'border-emerald-500 text-emerald-600 dark:text-emerald-400' : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300' }}">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
-            <span>Dispensasi & Potongan</span>
-        </button>
-        <button wire:click="$set('activeTab', 'registration_rates')" class="px-5 py-3 text-xs font-bold transition-all border-b-2 flex items-center gap-2 whitespace-nowrap {{ $activeTab === 'registration_rates' ? 'border-emerald-500 text-emerald-600 dark:text-emerald-400' : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300' }}">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-            <span>Tarif Santri Baru &amp; Kitab</span>
-        </button>
-        <button wire:click="$set('activeTab', 'installments')" class="px-5 py-3 text-xs font-bold transition-all border-b-2 flex items-center gap-2 whitespace-nowrap {{ $activeTab === 'installments' ? 'border-emerald-500 text-emerald-600 dark:text-emerald-400' : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300' }}">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-            <span>Cicilan Event</span>
-        </button>
-    </div>
+    @if($historyDetailConfigId)
+        {{-- ================================================================= --}}
+        {{-- DEDICATED VIEW: DETAIL RIWAYAT PENERBITAN TAGIHAN                 --}}
+        {{-- Isolated render - very fast, no heavy tabs rendered below          --}}
+        {{-- ================================================================= --}}
+        @php $hStats = $this->historyDetailStats; @endphp
+        <div class="space-y-5">
 
-    <!-- Tabs Contents -->
-    <div>
-        <!-- TAB 1: GENERATE TAGIHAN -->
-        @if ($activeTab === 'generate')
-            <div class="space-y-8">
-                <!-- Choices.js dependencies & ultra-sleek high-contrast styling -->
-                <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css"/>
-                <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
-                <style>
-                    .choices { margin-bottom: 0 !important; }
-                    .choices__inner {
+            {{-- ── HEADER NAVIGASI ── --}}
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 rounded-2xl shadow-sm">
+                <div class="flex items-center gap-4">
+                    <button type="button" wire:click="closeHistoryDetail"
+                        class="flex items-center gap-2 px-4 py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-xl transition-all text-xs font-bold shadow-sm">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+                        Kembali
+                    </button>
+                    <div>
+                        <div class="flex items-center gap-2 flex-wrap">
+                            <h2 class="text-base font-black text-slate-900 dark:text-white uppercase tracking-wide">{{ $hStats['config_label'] ?? 'Detail Penerbitan' }}</h2>
+                            <span class="px-2.5 py-0.5 bg-indigo-100 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 text-[10px] font-extrabold rounded-lg uppercase">
+                                {{ $hStats['period_label'] ?? '' }}
+                            </span>
+                        </div>
+                        <p class="text-[11px] text-slate-400 mt-0.5">
+                            Diterbitkan: {{ $hStats['created_at'] ? \Carbon\Carbon::parse($hStats['created_at'])->translatedFormat('d F Y · H:i') : '-' }} WIB
+                        </p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-3">
+                    <div class="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0"/></svg>
+                        <span class="font-bold text-slate-700 dark:text-slate-200">{{ number_format($hStats['total_count'] ?? 0) }}</span> Santri Terdaftar
+                    </div>
+                    @if(($hStats['unpaid_count'] ?? 0) > 0)
+                        <button type="button"
+                            wire:click="openBatchDeleteConfirmModal('{{ $historyDetailConfigId }}', {{ $historyDetailMonth }}, {{ $historyDetailYear }})"
+                            class="px-3.5 py-2 bg-rose-500/10 hover:bg-rose-600 text-rose-600 hover:text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shadow-2xs">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                            <span>Hapus Unpaid Periode Ini</span>
+                        </button>
+                    @endif
+                </div>
+            </div>
+
+            {{-- ── 4 STAT CARDS ── --}}
+            <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                <div class="p-4 bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl">
+                    <div class="flex items-center gap-2 mb-2">
+                        <div class="w-7 h-7 bg-slate-100 dark:bg-slate-800 rounded-lg flex items-center justify-center">
+                            <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                        </div>
+                        <span class="text-[10px] font-black text-slate-400 uppercase tracking-wider">Total</span>
+                    </div>
+                    <span class="text-2xl font-black text-slate-900 dark:text-white block">{{ number_format($hStats['total_count'] ?? 0) }}</span>
+                    <span class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 block">Rp {{ number_format($hStats['total_amount'] ?? 0, 0, ',', '.') }}</span>
+                </div>
+
+                <div class="p-4 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-900/40 rounded-2xl">
+                    <div class="flex items-center gap-2 mb-2">
+                        <div class="w-7 h-7 bg-emerald-100 dark:bg-emerald-900/50 rounded-lg flex items-center justify-center">
+                            <svg class="w-4 h-4 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        </div>
+                        <span class="text-[10px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">Lunas</span>
+                    </div>
+                    <span class="text-2xl font-black text-emerald-700 dark:text-emerald-300 block">{{ number_format($hStats['paid_count'] ?? 0) }}</span>
+                    <span class="text-[11px] text-emerald-600 dark:text-emerald-400 mt-0.5 block">Rp {{ number_format($hStats['paid_amount'] ?? 0, 0, ',', '.') }}</span>
+                </div>
+
+                <div class="p-4 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/40 rounded-2xl">
+                    <div class="flex items-center gap-2 mb-2">
+                        <div class="w-7 h-7 bg-amber-100 dark:bg-amber-900/50 rounded-lg flex items-center justify-center">
+                            <svg class="w-4 h-4 text-amber-600 dark:text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        </div>
+                        <span class="text-[10px] font-black text-amber-600 dark:text-amber-400 uppercase tracking-wider">Cicilan</span>
+                    </div>
+                    <span class="text-2xl font-black text-amber-700 dark:text-amber-300 block">{{ number_format($hStats['partial_count'] ?? 0) }}</span>
+                    <span class="text-[11px] text-amber-600 dark:text-amber-400 mt-0.5 block">Sisa Rp {{ number_format($hStats['partial_remaining'] ?? 0, 0, ',', '.') }}</span>
+                </div>
+
+                <div class="p-4 bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-900/40 rounded-2xl">
+                    <div class="flex items-center gap-2 mb-2">
+                        <div class="w-7 h-7 bg-rose-100 dark:bg-rose-900/50 rounded-lg flex items-center justify-center">
+                            <svg class="w-4 h-4 text-rose-600 dark:text-rose-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                        </div>
+                        <span class="text-[10px] font-black text-rose-600 dark:text-rose-400 uppercase tracking-wider">Belum Bayar</span>
+                    </div>
+                    <span class="text-2xl font-black text-rose-700 dark:text-rose-300 block">{{ number_format($hStats['unpaid_count'] ?? 0) }}</span>
+                    <span class="text-[11px] text-rose-600 dark:text-rose-400 mt-0.5 block">Rp {{ number_format($hStats['unpaid_amount'] ?? 0, 0, ',', '.') }}</span>
+                </div>
+            </div>
+
+            {{-- ── PROGRESS BAR PELUNASAN ── --}}
+            <div class="p-4 bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl">
+                <div class="flex justify-between items-center text-xs font-bold mb-2">
+                    <span class="text-slate-500 uppercase tracking-wider">Capaian Pelunasan Batch Ini</span>
+                    <span class="text-emerald-600 dark:text-emerald-400">{{ $hStats['progress_percent'] ?? 0 }}% Lunas</span>
+                </div>
+                <div class="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-2.5 overflow-hidden">
+                    <div class="bg-gradient-to-r from-emerald-400 to-emerald-600 h-2.5 rounded-full transition-all duration-700"
+                        style="width: {{ $hStats['progress_percent'] ?? 0 }}%"></div>
+                </div>
+                <div class="flex justify-between text-[10px] text-slate-400 mt-1.5">
+                    <span>0%</span>
+                    <span>Lunas: {{ $hStats['paid_count'] ?? 0 }} / {{ $hStats['total_count'] ?? 0 }} santri</span>
+                    <span>100%</span>
+                </div>
+            </div>
+
+            {{-- ── TABEL SANTRI DENGAN SEARCH & FILTER ── --}}
+            <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm overflow-hidden">
+
+                {{-- Search & Filter Header --}}
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 border-b border-slate-100 dark:border-slate-800">
+                    <div>
+                        <h3 class="text-sm font-extrabold text-slate-900 dark:text-white uppercase tracking-wide">Daftar Santri</h3>
+                        <p class="text-[11px] text-slate-400">Filter berdasarkan nama, NIS, atau status pembayaran</p>
+                    </div>
+                    <div class="flex items-center gap-2 flex-wrap">
+                        {{-- Search Input --}}
+                        <div class="relative">
+                            <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                            <input
+                                type="text"
+                                wire:model.live.debounce.400ms="historyDetailSearch"
+                                placeholder="Nama Santri atau NIS..."
+                                class="pl-8 pr-4 py-2 w-52 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 rounded-xl text-xs font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-400 placeholder-slate-400 transition-all"
+                            >
+                        </div>
+                        {{-- Status Filter --}}
+                        <select wire:model.live="historyDetailStatusFilter"
+                            class="py-2 pl-3 pr-8 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 rounded-xl text-xs font-bold focus:outline-none focus:ring-2 focus:ring-indigo-500/50 cursor-pointer">
+                            <option value="">Semua Status</option>
+                            <option value="unpaid">Belum Bayar</option>
+                            <option value="partial">Cicilan / Parsial</option>
+                            <option value="paid">Lunas</option>
+                        </select>
+                        {{-- Clear button --}}
+                        @if($historyDetailSearch || $historyDetailStatusFilter)
+                            <button type="button" wire:click="$set('historyDetailSearch', ''); $set('historyDetailStatusFilter', '')"
+                                class="px-3 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-400 rounded-xl text-xs font-bold transition-all flex items-center gap-1">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                                Reset
+                            </button>
+                        @endif
+                    </div>
+                </div>
+
+                {{-- Tabel --}}
+                @php $pageBills = $this->historyDetailBills; @endphp
+                <div class="overflow-x-auto">
+                    <table class="w-full text-xs">
+                        <thead>
+                            <tr class="bg-slate-50 dark:bg-slate-800/60 text-slate-500 dark:text-slate-400 uppercase tracking-wider text-[10px]">
+                                <th class="px-4 py-3 text-left font-extrabold">No</th>
+                                <th class="px-4 py-3 text-left font-extrabold">Santri</th>
+                                <th class="px-4 py-3 text-left font-extrabold">Nominal</th>
+                                <th class="px-4 py-3 text-left font-extrabold">Dibayar</th>
+                                <th class="px-4 py-3 text-left font-extrabold">Status</th>
+                                <th class="px-4 py-3 text-center font-extrabold">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+                            @forelse($pageBills as $dBillIdx => $dBill)
+                                <tr class="hover:bg-slate-50/80 dark:hover:bg-slate-800/30 transition-colors">
+                                    <td class="px-4 py-3 text-slate-400 font-mono text-[10px]">
+                                        {{ $pageBills->firstItem() + $dBillIdx }}
+                                    </td>
+                                    <td class="px-4 py-3">
+                                        <div class="font-bold text-slate-900 dark:text-white">{{ $dBill->person?->name ?? '-' }}</div>
+                                        <div class="text-[10px] text-slate-400 font-mono">{{ $dBill->person?->nis ?? '-' }}</div>
+                                    </td>
+                                    <td class="px-4 py-3 font-bold text-slate-700 dark:text-slate-300">
+                                        Rp {{ number_format($dBill->amount, 0, ',', '.') }}
+                                    </td>
+                                    <td class="px-4 py-3">
+                                        @if($dBill->status === 'paid')
+                                            <span class="font-bold text-emerald-600 dark:text-emerald-400">Rp {{ number_format($dBill->amount_paid, 0, ',', '.') }}</span>
+                                        @elseif($dBill->status === 'partial')
+                                            <span class="font-bold text-amber-600 dark:text-amber-400">Rp {{ number_format($dBill->amount_paid, 0, ',', '.') }}</span>
+                                        @else
+                                            <span class="text-slate-400">—</span>
+                                        @endif
+                                    </td>
+                                    <td class="px-4 py-3">
+                                        @if($dBill->status === 'paid')
+                                            <span class="inline-flex items-center gap-1 px-2.5 py-1 bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300 rounded-lg font-bold text-[10px] uppercase">
+                                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+                                                Lunas
+                                            </span>
+                                        @elseif($dBill->status === 'partial')
+                                            <span class="inline-flex items-center gap-1 px-2.5 py-1 bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 rounded-lg font-bold text-[10px] uppercase">
+                                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                                Cicilan
+                                            </span>
+                                        @else
+                                            <span class="inline-flex items-center gap-1 px-2.5 py-1 bg-rose-100 dark:bg-rose-900/40 text-rose-700 dark:text-rose-300 rounded-lg font-bold text-[10px] uppercase">
+                                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                                                Unpaid
+                                            </span>
+                                        @endif
+                                    </td>
+                                    <td class="px-4 py-3 text-center">
+                                        @if($dBill->status === 'unpaid' && $dBill->amount_paid == 0)
+                                            <button type="button"
+                                                wire:click="openIndividualDeleteConfirmModal('{{ $dBill->id }}')"
+                                                class="p-1.5 text-rose-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/30 rounded-lg transition-all"
+                                                title="Hapus tagihan santri ini">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                            </button>
+                                        @else
+                                            <span class="text-[10px] text-slate-300 dark:text-slate-600 font-bold">Terkunci</span>
+                                        @endif
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="6" class="py-16 text-center">
+                                        <div class="flex flex-col items-center gap-3">
+                                            <div class="w-12 h-12 rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
+                                                <svg class="w-6 h-6 text-slate-300 dark:text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                                            </div>
+                                            <p class="text-slate-400 font-semibold text-xs">Tidak ada santri yang cocok dengan filter.</p>
+                                            @if($historyDetailSearch || $historyDetailStatusFilter)
+                                                <button type="button" wire:click="$set('historyDetailSearch', ''); $set('historyDetailStatusFilter', '')"
+                                                    class="text-xs text-indigo-500 hover:text-indigo-700 font-bold underline">Reset Filter</button>
+                                            @endif
+                                        </div>
+                                    </td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+
+                {{-- Pagination --}}
+                @if($pageBills->hasPages())
+                    <div class="px-4 py-3 border-t border-slate-100 dark:border-slate-800">
+                        {{ $pageBills->links() }}
+                    </div>
+                @endif
+
+            </div>{{-- end table card --}}
+        </div>{{-- end space-y-5 --}}
+    @else
+        <!-- Navigation Tabs -->
+        <div class="flex border-b border-slate-200 dark:border-slate-800 gap-2 overflow-x-auto pb-1">
+            <button wire:click="$set('activeTab', 'generate')" class="px-5 py-3 text-xs font-bold transition-all border-b-2 flex items-center gap-2 whitespace-nowrap {{ $activeTab === 'generate' ? 'border-emerald-500 text-emerald-600 dark:text-emerald-400' : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300' }}">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                <span>Penerbitan Tagihan</span>
+            </button>
+            <button wire:click="$set('activeTab', 'rates')" class="px-5 py-3 text-xs font-bold transition-all border-b-2 flex items-center gap-2 whitespace-nowrap {{ $activeTab === 'rates' ? 'border-emerald-500 text-emerald-600 dark:text-emerald-400' : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300' }}">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/></svg>
+                <span>Konfigurasi Tarif & Target</span>
+            </button>
+            <button wire:click="$set('activeTab', 'cashier')" class="px-5 py-3 text-xs font-bold transition-all border-b-2 flex items-center gap-2 whitespace-nowrap {{ $activeTab === 'cashier' ? 'border-emerald-500 text-emerald-600 dark:text-emerald-400' : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300' }}">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+                <span>Kasir Utama (12 Bulan)</span>
+            </button>
+            <button wire:click="$set('activeTab', 'payments_log')" class="px-5 py-3 text-xs font-bold transition-all border-b-2 flex items-center gap-2 whitespace-nowrap {{ $activeTab === 'payments_log' ? 'border-emerald-500 text-emerald-600 dark:text-emerald-400' : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300' }}">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/></svg>
+                <span>Riwayat Setoran (Log)</span>
+            </button>
+            <button wire:click="$set('activeTab', 'exceptions')" class="px-5 py-3 text-xs font-bold transition-all border-b-2 flex items-center gap-2 whitespace-nowrap {{ $activeTab === 'exceptions' ? 'border-emerald-500 text-emerald-600 dark:text-emerald-400' : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300' }}">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+                <span>Dispensasi & Potongan</span>
+            </button>
+            <button wire:click="$set('activeTab', 'registration_rates')" class="px-5 py-3 text-xs font-bold transition-all border-b-2 flex items-center gap-2 whitespace-nowrap {{ $activeTab === 'registration_rates' ? 'border-emerald-500 text-emerald-600 dark:text-emerald-400' : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300' }}">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                <span>Tarif Santri Baru &amp; Kitab</span>
+            </button>
+            <button wire:click="$set('activeTab', 'installments')" class="px-5 py-3 text-xs font-bold transition-all border-b-2 flex items-center gap-2 whitespace-nowrap {{ $activeTab === 'installments' ? 'border-emerald-500 text-emerald-600 dark:text-emerald-400' : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300' }}">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                <span>Cicilan Event</span>
+            </button>
+        </div>
+
+        <!-- Tabs Contents -->
+        <div>
+            <!-- TAB 1: GENERATE TAGIHAN -->
+            @if ($activeTab === 'generate')
+                <div class="space-y-8">
+                    <!-- Choices.js dependencies & ultra-sleek high-contrast styling -->
+                    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css"/>
+                    <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
+                    <style>
+                        .choices { margin-bottom: 0 !important; }
+                        .choices__inner {
                         background-color: #f8fafc !important;
                         border: 1.5px solid #cbd5e1 !important;
                         border-radius: 0.75rem !important;
@@ -205,14 +449,29 @@
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
                     <!-- Left: Dynamic Custom Generator Form -->
                     <div class="lg:col-span-2 bg-white dark:bg-slate-900 border border-slate-200/50 dark:border-slate-800 p-6 sm:p-8 rounded-3xl space-y-6 shadow-sm">
-                        <div>
-                            <h3 class="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider block font-serif-display">Penerbitan Tagihan Dinamis (Dynamic Bill Generator)</h3>
-                            <p class="text-[11px] text-slate-400">Pilih konfigurasi tarif aktif untuk menerbitkan tagihan secara otomatis ke kelompok target santri yang telah ditentukan.</p>
+                        <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800/80 pb-4">
+                            <div>
+                                <h3 class="text-sm font-extrabold text-slate-900 dark:text-white uppercase tracking-wider font-serif-display flex items-center gap-2">
+                                    <svg class="w-4 h-4 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                                    <span>Generator Penerbitan Tagihan Dinamis</span>
+                                </h3>
+                                <p class="text-[11px] text-slate-400 mt-0.5">Terbitkan tagihan otomatis ke santri berdasarkan tarif & siklus penagihan yang telah ditentukan.</p>
+                            </div>
+                            @php
+                                $selectedConfig = $genConfigId ? $activeConfigs->firstWhere('id', $genConfigId) : null;
+                            @endphp
+                            @if($selectedConfig)
+                                <span class="px-3 py-1 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 text-[10px] font-black rounded-xl uppercase tracking-wider hidden sm:inline-flex">
+                                    {{ $selectedConfig->interval }}
+                                </span>
+                            @endif
                         </div>
 
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <!-- Form Field Section -->
+                        <div class="space-y-4">
+                            <!-- 1. Select Tariff Dropdown (Full Width for Clarity) -->
                             <div>
-                                <label class="block text-[10px] font-extrabold text-slate-400 uppercase tracking-wider mb-2">Pilih Konfigurasi Tarif</label>
+                                <label class="block text-[10px] font-extrabold text-slate-400 uppercase tracking-wider mb-2">Pilih Konfigurasi Tarif Target <span class="text-rose-500">*</span></label>
                                 <div x-data="{
                                     initChoices() {
                                         if (typeof Choices === 'undefined') return;
@@ -248,78 +507,152 @@
                                     <select x-ref="configSelect" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-100 rounded-xl px-4 py-2.5 text-xs focus:ring-2 focus:ring-emerald-500 font-bold shadow-xs">
                                         <option value="">-- Pilih Konfigurasi Tarif --</option>
                                         @foreach($activeConfigs as $cfg)
-                                            <option value="{{ $cfg->id }}" @selected($genConfigId == $cfg->id)>{{ $cfg->label }} (Rp {{ number_format($cfg->amount, 0, ',', '.') }} / {{ $cfg->interval }})</option>
+                                            <option value="{{ $cfg->id }}" @selected($genConfigId == $cfg->id)>
+                                                {{ $cfg->label }} — Rp {{ number_format($cfg->amount, 0, ',', '.') }} ({{ strtoupper($cfg->interval) }})
+                                            </option>
                                         @endforeach
                                     </select>
                                 </div>
                             </div>
-                            @php
-                                $selectedConfig = $genConfigId ? $activeConfigs->firstWhere('id', $genConfigId) : null;
-                            @endphp
-                            <div>
-                                <label class="block text-[10px] font-extrabold text-slate-400 uppercase tracking-wider mb-2">Periode / Semester</label>
-                                <select wire:model="genMonth" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-100 rounded-xl px-4 py-2.5 text-xs focus:ring-2 focus:ring-emerald-500 font-bold shadow-xs">
-                                    @if($selectedConfig && $selectedConfig->interval === 'semester')
-                                        <option value="1">Semester 1 (Ganjil)</option>
-                                        <option value="2">Semester 2 (Genap)</option>
-                                    @elseif($selectedConfig && in_array($selectedConfig->interval, ['once', 'insidental', 'event', 'sekali']))
-                                        <option value="1">Insidental / Event (Sekali)</option>
+
+                            <!-- 2. Dynamic Mode & Period Inputs -->
+                            @if($selectedConfig)
+                                <div class="p-4 bg-slate-50/80 dark:bg-slate-950/50 border border-slate-200/80 dark:border-slate-800 rounded-2xl space-y-4">
+                                    <!-- Summary Header Card -->
+                                    <div class="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-slate-200/60 dark:border-slate-800 text-xs">
+                                        <div class="flex items-center gap-2">
+                                            <span class="font-bold text-slate-800 dark:text-slate-200">{{ $selectedConfig->label }}</span>
+                                            <span class="px-2 py-0.5 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-md text-[10px] font-extrabold">
+                                                Rp {{ number_format($selectedConfig->amount, 0, ',', '.') }}
+                                            </span>
+                                        </div>
+                                        <div class="text-[10px] font-semibold text-slate-400">
+                                            <span>Target: {{ ucfirst($selectedConfig->target_type) }}</span>
+                                        </div>
+                                    </div>
+
+                                    <!-- Mode Penerbitan Dropdown -->
+                                    <div>
+                                        <label class="block text-[10px] font-extrabold text-slate-500 uppercase tracking-wider mb-1.5">Mode Penerbitan Tagihan <span class="text-rose-500">*</span></label>
+                                        <select wire:model.live="genMode" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-100 rounded-xl px-4 py-2.5 text-xs focus:ring-2 focus:ring-emerald-500 font-bold shadow-xs">
+                                            <option value="single">📌 Periode Terpilih Saja (misal: Periode 1 / Bulan Terpilih)</option>
+                                            @if(!in_array($selectedConfig->interval, ['once', 'insidental', 'event', 'sekali']))
+                                                <option value="full_year">
+                                                    🎓 Semua Periode Sekaligus Dalam Setahun 
+                                                    @if(in_array($selectedConfig->interval, ['semester', '2x_yearly'])) (2 Semester sekaligus)
+                                                    @elseif(in_array($selectedConfig->interval, ['caturwulan', '3x_yearly'])) (3 Caturwulan sekaligus)
+                                                    @elseif(in_array($selectedConfig->interval, ['triwulan', '4x_yearly'])) (4 Triwulan sekaligus)
+                                                    @elseif(in_array($selectedConfig->interval, ['bimulanan', '6x_yearly'])) (6 Dwibulanan sekaligus)
+                                                    @else (12 Bulan / 1 Tahun Ajaran)
+                                                    @endif
+                                                </option>
+                                            @endif
+                                        </select>
+                                    </div>
+
+                                    @if(in_array($selectedConfig->interval, ['once', 'insidental', 'event', 'sekali']))
+                                        <!-- Insidental Info Box -->
+                                        <div class="p-3 bg-purple-50 dark:bg-purple-950/40 border border-purple-200 dark:border-purple-800/50 rounded-xl flex flex-wrap items-center justify-between gap-3">
+                                            <div>
+                                                <span class="block text-[10px] font-extrabold text-purple-700 dark:text-purple-300 uppercase tracking-wider">⚡ Tagihan Insidental / Event</span>
+                                                <span class="text-xs font-bold text-slate-800 dark:text-slate-200 block mt-0.5">
+                                                    Tarif Sekali Bayar — Diterbitkan 1x untuk Tahun {{ $genYear }}
+                                                </span>
+                                            </div>
+                                            <div class="flex items-center gap-2 text-[11px] font-semibold">
+                                                <span class="px-2.5 py-1 bg-white dark:bg-slate-900 border border-purple-200 dark:border-purple-800 rounded-xl text-purple-700 dark:text-purple-300">
+                                                    Resmi Berlaku: {{ $selectedConfig->effective_from ? $selectedConfig->effective_from->format('d M Y') : '—' }}
+                                                </span>
+                                                <span class="px-2.5 py-1 bg-white dark:bg-slate-900 border border-purple-200 dark:border-purple-800 rounded-xl text-purple-700 dark:text-purple-300">
+                                                    Tenggat: 
+                                                    @if($selectedConfig->due_day_type === 'fixed_date' && $selectedConfig->due_date_specific)
+                                                        {{ $selectedConfig->due_date_specific->format('d M Y') }}
+                                                    @elseif($selectedConfig->due_day_type === 'days_after')
+                                                        {{ $selectedConfig->due_day_value }} Hari
+                                                    @elseif($selectedConfig->due_day_type === 'fixed_day')
+                                                        Tgl {{ $selectedConfig->due_day_value }}
+                                                    @else
+                                                        Bebas
+                                                    @endif
+                                                </span>
+                                            </div>
+                                        </div>
                                     @else
-                                        @for($m = 1; $m <= 12; $m++)
-                                            <option value="{{ $m }}">{{ $m }} ({{ date('F', mktime(0, 0, 0, $m, 1)) }})</option>
-                                        @endfor
+                                        <!-- Period & Year Select Grid -->
+                                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                            @if($genMode === 'single' || $selectedConfig->interval === 'monthly')
+                                                <div>
+                                                    <label class="block text-[10px] font-extrabold text-slate-500 uppercase tracking-wider mb-1.5">
+                                                        @if($genMode === 'full_year')
+                                                            Bulan Awal Mulai (12 Bulan Berurutan) <span class="text-rose-500">*</span>
+                                                        @else
+                                                            Pilih Periode Penagihan <span class="text-rose-500">*</span>
+                                                        @endif
+                                                    </label>
+                                                    <select wire:model="genMonth" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-100 rounded-xl px-4 py-2.5 text-xs focus:ring-2 focus:ring-emerald-500 font-bold shadow-xs">
+                                                        @if($genMode === 'single' && in_array($selectedConfig->interval, ['semester', '2x_yearly']))
+                                                            <option value="1">Semester 1 (Ganjil / Periode 1)</option>
+                                                            <option value="2">Semester 2 (Genap / Periode 2)</option>
+                                                        @elseif($genMode === 'single' && in_array($selectedConfig->interval, ['caturwulan', '3x_yearly']))
+                                                            <option value="1">Caturwulan 1 (Jan–Apr / Periode 1)</option>
+                                                            <option value="2">Caturwulan 2 (Mei–Agt / Periode 2)</option>
+                                                            <option value="3">Caturwulan 3 (Sep–Des / Periode 3)</option>
+                                                        @elseif($genMode === 'single' && in_array($selectedConfig->interval, ['triwulan', '4x_yearly']))
+                                                            <option value="1">Triwulan 1 (Jan–Mar / Periode 1)</option>
+                                                            <option value="2">Triwulan 2 (Apr–Jun / Periode 2)</option>
+                                                            <option value="3">Triwulan 3 (Jul–Sep / Periode 3)</option>
+                                                            <option value="4">Triwulan 4 (Okt–Des / Periode 4)</option>
+                                                        @elseif($genMode === 'single' && in_array($selectedConfig->interval, ['bimulanan', '6x_yearly']))
+                                                            <option value="1">Dwibulanan 1 (Jan–Feb / Siklus 1)</option>
+                                                            <option value="2">Dwibulanan 2 (Mar–Apr / Siklus 2)</option>
+                                                            <option value="3">Dwibulanan 3 (Mei–Jun / Siklus 3)</option>
+                                                            <option value="4">Dwibulanan 4 (Jul–Agt / Siklus 4)</option>
+                                                            <option value="5">Dwibulanan 5 (Sep–Okt / Siklus 5)</option>
+                                                            <option value="6">Dwibulanan 6 (Nov–Des / Siklus 6)</option>
+                                                        @else
+                                                            @for($m = 1; $m <= 12; $m++)
+                                                                <option value="{{ $m }}">Bulan {{ $m }} ({{ date('F', mktime(0, 0, 0, $m, 1)) }})</option>
+                                                            @endfor
+                                                        @endif
+                                                    </select>
+                                                </div>
+                                            @endif
+                                            <div class="{{ ($genMode === 'full_year' && $selectedConfig->interval !== 'monthly') ? 'sm:col-span-2' : '' }}">
+                                                <label class="block text-[10px] font-extrabold text-slate-500 uppercase tracking-wider mb-1.5">Tahun Penagihan <span class="text-rose-500">*</span></label>
+                                                <select wire:model="genYear" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-100 rounded-xl px-4 py-2.5 text-xs focus:ring-2 focus:ring-emerald-500 font-bold shadow-xs cursor-pointer">
+                                                    @for($y = now()->format('Y') - 1; $y <= now()->format('Y') + 2; $y++)
+                                                        <option value="{{ $y }}">
+                                                            {{ $y }}
+                                                            @if($y == now()->format('Y') - 1) — Tahun Lalu
+                                                            @elseif($y == now()->format('Y')) — Tahun Ini ✓
+                                                            @elseif($y == now()->format('Y') + 1) — Tahun Depan
+                                                            @elseif($y == now()->format('Y') + 2) — 2 Tahun Depan
+                                                            @endif
+                                                        </option>
+                                                    @endfor
+                                                </select>
+                                            </div>
+                                        </div>
                                     @endif
-                                </select>
-                            </div>
-                            <div>
-                                <label class="block text-[10px] font-extrabold text-slate-400 uppercase tracking-wider mb-2">Tahun</label>
-                                <select wire:model="genYear" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-100 rounded-xl px-4 py-2.5 text-xs focus:ring-2 focus:ring-emerald-500 font-bold shadow-xs">
-                                    @for($y = now()->format('Y') - 1; $y <= now()->format('Y') + 2; $y++)
-                                        <option value="{{ $y }}">{{ $y }}</option>
-                                    @endfor
-                                </select>
-                            </div>
+                                </div>
+                            @endif
                         </div>
 
-                        <div class="flex flex-col sm:flex-row flex-wrap items-center justify-between gap-3 pt-2">
-                            @php
-                                $selectedConfig = $genConfigId ? $activeConfigs->firstWhere('id', $genConfigId) : null;
-                            @endphp
+                        <!-- 3. Clean Primary Action Button -->
+                        @if($selectedConfig)
+                            <div class="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-slate-100 dark:border-slate-800">
+                                <button type="button" wire:click="openDeleteUnpaidModal('{{ $selectedConfig->id }}')"
+                                        class="px-4 py-2.5 bg-rose-500/10 hover:bg-rose-500 text-rose-600 hover:text-white rounded-xl text-xs font-bold transition-all border border-rose-200 dark:border-rose-900 flex items-center gap-1.5 shadow-2xs">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                    <span>Hapus Unpaid Tarif Ini</span>
+                                </button>
 
-                            @if($selectedConfig)
-                                @if($selectedConfig->interval === 'monthly')
-                                    <div class="w-full grid grid-cols-1 sm:grid-cols-3 gap-2 bg-slate-50 dark:bg-slate-950/60 p-2.5 rounded-2xl border border-slate-200/60 dark:border-slate-800">
-                                        <button type="button" wire:click="generateFullAcademicYearFromConfig" 
-                                                wire:confirm="Apakah Anda yakin ingin men-generate tagihan 1 Tahun Ajaran (12 Bulan) mulai dari Juli {{ $genYear }} s/d Juni {{ $genYear + 1 }}?"
-                                                class="px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-[10px] font-extrabold transition-all shadow-xs flex items-center justify-center gap-1.5 text-center">
-                                            <span>🎓 1 Thn Ajaran (Juli-Juni)</span>
-                                        </button>
-                                        <button type="button" wire:click="generateCalendarYearFromConfig" 
-                                                wire:confirm="Apakah Anda yakin ingin men-generate tagihan 1 Tahun Kalender (12 Bulan) dari Januari {{ $genYear }} s/d Desember {{ $genYear }}?"
-                                                class="px-3 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-[10px] font-extrabold transition-all shadow-xs flex items-center justify-center gap-1.5 text-center">
-                                            <span>📆 1 Thn Kalender (Jan-Des)</span>
-                                        </button>
-                                        <button type="button" wire:click="generateCustom12MonthsFromConfig" 
-                                                wire:confirm="Apakah Anda yakin ingin men-generate tagihan 12 bulan berurutan mulai dari Bulan {{ $genMonth }}/{{ $genYear }}?"
-                                                class="px-3 py-2 bg-sky-600 hover:bg-sky-700 text-white rounded-xl text-[10px] font-extrabold transition-all shadow-xs flex items-center justify-center gap-1.5 text-center">
-                                            <span>🔄 12 Bln (Mulai Bln {{ $genMonth }})</span>
-                                        </button>
-                                    </div>
-                                @elseif($selectedConfig->interval === 'semester')
-                                    <button type="button" wire:click="generateFullAcademicYearFromConfig" 
-                                            wire:confirm="Apakah Anda yakin ingin men-generate tagihan 2 semester sekaligus di tahun {{ $genYear }}?"
-                                            class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition-all shadow-md flex items-center gap-2">
-                                        <span>📅 Terbitkan 2 Semester Sekaligus</span>
-                                    </button>
-                                @endif
-                            @endif
-
-                            <div class="w-full flex justify-end">
-                                <button type="button" wire:click="generateDynamicBills" class="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-all shadow-md flex items-center gap-2">
-                                    <span>⚡ Terbitkan Periode Terpilih Ini</span>
+                                <button type="button" wire:click="openGeneratePreviewModal" class="px-6 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white rounded-xl text-xs font-bold transition-all shadow-md flex items-center gap-2 ml-auto">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                                    <span>Pratinjau & Terbitkan Tagihan</span>
                                 </button>
                             </div>
-                        </div>
+                        @endif
                     </div>
 
                     <!-- Right: Polished Active Billing Status Panel (Point 5) -->
@@ -387,10 +720,18 @@
                                 </select>
                             </div>
                             <div class="w-28">
-                                <select wire:model.live="histYear" class="w-full bg-slate-50/90 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-100 rounded-xl px-2.5 py-2 text-xs focus:ring-2 focus:ring-emerald-500 font-bold shadow-xs">
+                                <select wire:model.live="histYear" class="w-full bg-slate-50/90 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-100 rounded-xl px-2.5 py-2 text-xs focus:ring-2 focus:ring-emerald-500 font-bold shadow-xs cursor-pointer">
                                     <option value="">🗓️ Semua Thn</option>
                                     @for($y = now()->format('Y') - 2; $y <= now()->format('Y') + 2; $y++)
-                                        <option value="{{ $y }}">{{ $y }}</option>
+                                        <option value="{{ $y }}">
+                                            {{ $y }}
+                                            @if($y == now()->format('Y') - 2) (2 Thn Lalu)
+                                            @elseif($y == now()->format('Y') - 1) (Thn Lalu)
+                                            @elseif($y == now()->format('Y')) (Thn Ini ✓)
+                                            @elseif($y == now()->format('Y') + 1) (Thn Depan)
+                                            @elseif($y == now()->format('Y') + 2) (2 Thn Depan)
+                                            @endif
+                                        </option>
                                     @endfor
                                 </select>
                             </div>
@@ -474,13 +815,7 @@
                                             </span>
                                         </td>
                                         <td class="py-3.5 px-4 text-center font-bold text-slate-700 dark:text-slate-300">
-                                            @if($cfg && $cfg->interval === 'semester')
-                                                Semester {{ $hist->period_month }} / {{ $hist->period_year }}
-                                            @elseif($cfg && in_array($cfg->interval, ['once', 'insidental', 'event', 'sekali']))
-                                                Event / Tahun {{ $hist->period_year }}
-                                            @else
-                                                {{ date('F', mktime(0, 0, 0, $hist->period_month, 1)) }} {{ $hist->period_year }}
-                                            @endif
+                                            {{ $this->formatPeriodLabel($cfg?->interval, $hist->period_month, $hist->period_year) }}
                                         </td>
                                         <td class="py-3.5 px-4 text-center font-bold text-emerald-600 dark:text-emerald-400">
                                             👤 {{ $hist->total_students }} Santri
@@ -498,11 +833,20 @@
                                         </td>
                                         <td class="py-3.5 px-4 text-center">
                                             @if($cfg)
-                                                <button wire:click="deleteBatchGeneration('{{ $cfg->id }}', {{ $hist->period_month }}, {{ $hist->period_year }})"
-                                                        wire:confirm="Apakah Anda yakin ingin membatalkan & menghapus massal seluruh tagihan BELUM DIBAYAR untuk iuran '{{ $cfg->label }}' periode ini? Tagihan yang sudah dibayar lunas atau sebagian tidak akan terhapus demi keamanan data."
-                                                        class="px-3 py-1.5 bg-rose-500/10 hover:bg-rose-500 text-rose-600 hover:text-white rounded-xl text-[10px] font-bold transition-all shadow-2xs">
-                                                    🗑️ Hapus Unpaid
-                                                </button>
+                                                <div class="flex items-center justify-center gap-1.5">
+                                                    <button wire:click="viewHistoryDetail('{{ $cfg->id }}', {{ $hist->period_month }}, {{ $hist->period_year }})"
+                                                            title="Lihat Detail Penerbitan & Progress Pelunasan"
+                                                            class="px-2.5 py-1.5 bg-indigo-500/10 hover:bg-indigo-600 text-indigo-600 hover:text-white rounded-xl text-[10px] font-bold transition-all inline-flex items-center gap-1 shadow-2xs">
+                                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                                                        <span>Detail</span>
+                                                    </button>
+                                                    <button wire:click="openBatchDeleteConfirmModal('{{ $cfg->id }}', {{ $hist->period_month }}, {{ $hist->period_year }})"
+                                                            title="Hapus Massal Tagihan Unpaid Periode Ini"
+                                                            class="px-2.5 py-1.5 bg-rose-500/10 hover:bg-rose-600 text-rose-600 hover:text-white rounded-xl text-[10px] font-bold transition-all inline-flex items-center gap-1 shadow-2xs">
+                                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                                        <span>Hapus Unpaid</span>
+                                                    </button>
+                                                </div>
                                             @else
                                                 <span class="text-slate-300 dark:text-slate-700">—</span>
                                             @endif
@@ -870,15 +1214,21 @@
                                     </span>
                                 </div>
                             </div>
-                            <div class="flex gap-5 text-xs shrink-0">
-                                <div>
-                                    <span class="text-slate-500 text-[9px] uppercase tracking-wider block">Komplek</span>
-                                    <span class="font-bold text-emerald-400">{{ $selectedSantri->roomAssignments->firstWhere('is_active', true)?->room?->dormitory?->name ?? '🚗 Laju' }}</span>
+                            <div class="flex items-center gap-3 shrink-0">
+                                <div class="flex gap-4 text-xs">
+                                    <div>
+                                        <span class="text-slate-500 text-[9px] uppercase tracking-wider block">Komplek</span>
+                                        <span class="font-bold text-emerald-400">{{ $selectedSantri->roomAssignments->firstWhere('is_active', true)?->room?->dormitory?->name ?? 'Laju' }}</span>
+                                    </div>
+                                    <div>
+                                        <span class="text-slate-500 text-[9px] uppercase tracking-wider block">Kelas</span>
+                                        <span class="font-bold text-amber-400">{{ $selectedSantri->madrasahEnrollments->firstWhere('is_active', true)?->kelas?->name ?? 'Non-Madrasah' }}</span>
+                                    </div>
                                 </div>
-                                <div>
-                                    <span class="text-slate-500 text-[9px] uppercase tracking-wider block">Kelas</span>
-                                    <span class="font-bold text-amber-400">{{ $selectedSantri->madrasahEnrollments->firstWhere('is_active', true)?->kelas?->name ?? 'Non-Madrasah' }}</span>
-                                </div>
+                                <button type="button" wire:click="openKasirAddBillModal" class="px-3 py-2 bg-emerald-500/20 hover:bg-emerald-500 text-emerald-300 hover:text-white border border-emerald-500/30 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shadow-2xs">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
+                                    <span>Buka Tagihan Di Muka</span>
+                                </button>
                             </div>
                         </div>
 
@@ -938,6 +1288,34 @@
                             </div>
                         @endif
 
+                        {{-- LEGENDA KASIR RESMI & INTERAKTIF --}}
+                        <div class="flex flex-wrap items-center justify-between gap-3 px-5 py-3.5 bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl shadow-2xs text-[10px]">
+                            <div class="flex items-center gap-2">
+                                <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                                <span class="font-extrabold uppercase tracking-wider text-slate-500 dark:text-slate-400 text-[10px]">Legenda Status:</span>
+                            </div>
+                            <div class="flex flex-wrap items-center gap-4 text-slate-600 dark:text-slate-300 font-bold">
+                                <span class="inline-flex items-center gap-1.5">
+                                    <span class="w-4 h-4 bg-emerald-500 rounded-full inline-flex items-center justify-center text-white shadow-2xs">
+                                        <svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
+                                    </span>
+                                    <span>Lunas</span>
+                                </span>
+                                <span class="inline-flex items-center gap-1.5">
+                                    <input type="checkbox" class="rounded text-emerald-600 accent-emerald-600 w-3.5 h-3.5" disabled checked>
+                                    <span>Belum Bayar (klik untuk pilih)</span>
+                                </span>
+                                <span class="inline-flex items-center gap-1.5">
+                                    <input type="checkbox" class="rounded text-amber-500 accent-amber-500 w-3.5 h-3.5" disabled checked>
+                                    <span class="text-amber-600 dark:text-amber-400">Cicilan / Parsial</span>
+                                </span>
+                                <span class="inline-flex items-center gap-1.5 text-slate-400">
+                                    <span class="text-slate-300 dark:text-slate-600 font-bold">—</span>
+                                    <span>Belum Terbit</span>
+                                </span>
+                            </div>
+                        </div>
+
                         {{-- 1: TAGIHAN BULANAN (Jan-Des tabel) --}}
                         @php $bulananBills = $this->bulananBills; @endphp
                         <div class="bg-white dark:bg-slate-900 border border-slate-200/50 dark:border-slate-800 rounded-3xl shadow-sm overflow-hidden">
@@ -946,9 +1324,16 @@
                                     <h4 class="text-xs font-extrabold text-slate-700 dark:text-slate-300 uppercase tracking-widest">📋 Tagihan Bulanan</h4>
                                     <p class="text-[10px] text-slate-400">Lembar iuran Januari — Desember</p>
                                 </div>
-                                <select wire:model.live="cashierYear" class="bg-slate-50 dark:bg-slate-950 border border-slate-200/60 dark:border-slate-800 text-slate-800 dark:text-slate-200 rounded-xl px-3 py-1.5 text-xs font-bold focus:ring-emerald-500">
+                                <select wire:model.live="cashierYear" class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 rounded-xl px-3 py-1.5 text-xs font-bold focus:ring-2 focus:ring-emerald-500 shadow-sm cursor-pointer">
                                     @for($y = $nowYear - 2; $y <= $nowYear + 1; $y++)
-                                        <option value="{{ $y }}">{{ $y }}</option>
+                                        <option value="{{ $y }}">
+                                            {{ $y }}
+                                            @if($y === $nowYear - 2) — 2 Tahun Lalu
+                                            @elseif($y === $nowYear - 1) — Tahun Lalu
+                                            @elseif($y === $nowYear) — Tahun Ini ✓
+                                            @elseif($y === $nowYear + 1) — Tahun Depan
+                                            @endif
+                                        </option>
                                     @endfor
                                 </select>
                             </div>
@@ -1006,62 +1391,66 @@
                                         </tbody>
                                     </table>
                                 </div>
-                                {{-- Legend --}}
-                                <div class="flex items-center gap-4 px-5 py-3 border-t border-slate-100 dark:border-slate-800 text-[9px] text-slate-400 font-semibold">
-                                    <span class="flex items-center gap-1"><span class="w-4 h-4 bg-emerald-500 rounded-full inline-flex items-center justify-center"><svg class="w-2 h-2 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg></span> Lunas</span>
-                                    <span class="flex items-center gap-1"><input type="checkbox" class="rounded text-emerald-600 accent-emerald-600 w-3.5 h-3.5" disabled> Belum Bayar (klik untuk pilih)</span>
-                                    <span class="flex items-center gap-1"><input type="checkbox" class="rounded text-amber-500 accent-amber-500 w-3.5 h-3.5" disabled checked> Cicilan/Parsial</span>
-                                    <span class="flex items-center gap-1"><span class="text-slate-300">—</span> Belum Terbit</span>
-                                </div>
                             @endif
                         </div>
 
-                        {{-- 2: TAGIHAN SEMESTER --}}
+                        {{-- 2: TAGIHAN PERIODE (Semester / Caturwulan / Triwulan) --}}
                         @php $semesterBills = $this->semesterBills; @endphp
                         @if(!empty($semesterBills))
-                            <div class="bg-white dark:bg-slate-900 border border-slate-200/50 dark:border-slate-800 rounded-3xl shadow-sm overflow-hidden">
+                            <div class="bg-white dark:bg-slate-900 border border-slate-200/50 dark:border-slate-800 rounded-3xl shadow-sm overflow-hidden space-y-3">
                                 <div class="px-5 py-4 border-b border-slate-100 dark:border-slate-800">
-                                    <h4 class="text-xs font-extrabold text-slate-700 dark:text-slate-300 uppercase tracking-widest">📅 Tagihan Semester</h4>
-                                    <p class="text-[10px] text-slate-400">Iuran yang dibayarkan per 6 bulan (Semester 1 & 2)</p>
+                                    <h4 class="text-xs font-extrabold text-slate-700 dark:text-slate-300 uppercase tracking-widest">📅 Tagihan Periode (Semester / Caturwulan / Triwulan / Dwibulanan)</h4>
+                                    <p class="text-[10px] text-slate-400">Iuran yang dibayarkan 2x, 3x, 4x, atau 6x dalam setahun</p>
                                 </div>
-                                <div class="overflow-x-auto">
-                                    <table class="w-full text-xs border-collapse">
-                                        <thead>
-                                            <tr class="bg-slate-50 dark:bg-slate-950 border-b border-slate-200 dark:border-slate-800">
-                                                <th class="py-3 px-4 text-left text-[9px] font-extrabold text-slate-500 uppercase tracking-wider">Jenis Iuran</th>
-                                                <th class="py-3 px-4 text-center text-[9px] font-extrabold text-slate-500 uppercase tracking-wider">Semester 1 (Jan–Jun)</th>
-                                                <th class="py-3 px-4 text-center text-[9px] font-extrabold text-slate-500 uppercase tracking-wider">Semester 2 (Jul–Des)</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
-                                            @foreach($semesterBills as $configId => $configData)
-                                                <tr class="hover:bg-slate-50/60 dark:hover:bg-slate-800/30">
-                                                    <td class="py-3 px-4 font-semibold text-slate-700 dark:text-slate-300">{{ $configData['label'] }}</td>
-                                                    @foreach([1 => 'Semester 1', 2 => 'Semester 2'] as $semNum => $semLabel)
-                                                        @php $sBill = $configData['bills'][$semNum] ?? null; @endphp
-                                                        <td class="py-3 px-4 text-center">
-                                                            @if(!$sBill)
-                                                                <span class="text-[10px] text-slate-400 italic">Belum Terbit</span>
-                                                            @elseif($sBill->status === 'paid')
-                                                                <span class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 rounded-xl text-[10px] font-bold">
-                                                                    ✓ Lunas · Rp {{ number_format($sBill->amount, 0, ',', '.') }}
+                                <div class="p-5 space-y-4">
+                                    @foreach($semesterBills as $configId => $configData)
+                                        @php
+                                            $maxP = $configData['max_period'] ?? 2;
+                                            $titleType = $configData['type_title'] ?? 'Semester';
+                                        @endphp
+                                        <div class="p-4 bg-slate-50/70 dark:bg-slate-950/60 border border-slate-200/60 dark:border-slate-800 rounded-2xl space-y-2.5">
+                                            <div class="flex items-center justify-between">
+                                                <span class="text-xs font-bold text-slate-800 dark:text-slate-200">{{ $configData['label'] }}</span>
+                                                <span class="text-[9px] font-extrabold uppercase px-2 py-0.5 rounded bg-indigo-100 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300">
+                                                    {{ $maxP }}x Dalam Setahun
+                                                </span>
+                                            </div>
+                                            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                                                @for($pNum = 1; $pNum <= $maxP; $pNum++)
+                                                    @php $sBill = $configData['bills'][$pNum] ?? null; @endphp
+                                                    <div class="p-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-center space-y-1">
+                                                        <span class="block text-[9px] font-black uppercase text-slate-400 dark:text-slate-500">
+                                                            {{ $titleType }} {{ $pNum }}
+                                                        </span>
+                                                        @if(!$sBill)
+                                                            <span class="text-[10px] text-slate-400 dark:text-slate-600 italic block py-1">— Belum Terbit</span>
+                                                        @elseif($sBill->status === 'paid')
+                                                            <span class="inline-flex items-center justify-center gap-1 px-2.5 py-1 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 rounded-xl text-[10px] font-bold shadow-2xs">
+                                                                <svg class="w-3 h-3 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
+                                                                Lunas · Rp {{ number_format($sBill->amount, 0, ',', '.') }}
+                                                            </span>
+                                                        @elseif($sBill->status === 'partial')
+                                                            <label class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl border cursor-pointer transition-all
+                                                                {{ in_array($sBill->id, $selectedBillIds) ? 'bg-amber-100 border-amber-400 dark:bg-amber-950/40' : 'bg-amber-50/50 border-amber-200 dark:bg-amber-950/20 dark:border-amber-800 hover:border-amber-300' }}">
+                                                                <input type="checkbox" wire:model.live="selectedBillIds" value="{{ $sBill->id }}" class="rounded text-amber-500 accent-amber-500 focus:ring-amber-400 w-3.5 h-3.5">
+                                                                <span class="text-[10px] font-bold text-amber-700 dark:text-amber-300">
+                                                                    Cicilan (Sisa Rp {{ number_format($sBill->amount - $sBill->amount_paid, 0, ',', '.') }})
                                                                 </span>
-                                                            @else
-                                                                <label class="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl border cursor-pointer transition-all
-                                                                    {{ in_array($sBill->id, $selectedBillIds) ? 'bg-rose-50 border-rose-400 dark:bg-rose-950/20' : 'bg-slate-50 border-slate-200 dark:bg-slate-950 dark:border-slate-700 hover:border-rose-300' }}">
-                                                                    <input type="checkbox" wire:model.live="selectedBillIds" value="{{ $sBill->id }}" class="rounded text-rose-500 focus:ring-rose-400 w-3.5 h-3.5">
-                                                                    <span class="text-[10px] font-bold text-slate-700 dark:text-slate-300">
-                                                                        Rp {{ number_format($sBill->amount - $sBill->amount_paid, 0, ',', '.') }}
-                                                                        @if($sBill->status === 'partial') <span class="text-amber-500">(cicilan)</span> @endif
-                                                                    </span>
-                                                                </label>
-                                                            @endif
-                                                        </td>
-                                                    @endforeach
-                                                </tr>
-                                            @endforeach
-                                        </tbody>
-                                    </table>
+                                                            </label>
+                                                        @else
+                                                            <label class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl border cursor-pointer transition-all
+                                                                {{ in_array($sBill->id, $selectedBillIds) ? 'bg-emerald-50 border-emerald-400 dark:bg-emerald-950/20' : 'bg-slate-50 border-slate-200 dark:bg-slate-950 dark:border-slate-700 hover:border-emerald-300' }}">
+                                                                <input type="checkbox" wire:model.live="selectedBillIds" value="{{ $sBill->id }}" class="rounded text-emerald-600 accent-emerald-600 focus:ring-emerald-500 w-3.5 h-3.5">
+                                                                <span class="text-[10px] font-bold text-slate-700 dark:text-slate-300">
+                                                                    Rp {{ number_format($sBill->amount - $sBill->amount_paid, 0, ',', '.') }}
+                                                                </span>
+                                                            </label>
+                                                        @endif
+                                                    </div>
+                                                @endfor
+                                            </div>
+                                        </div>
+                                    @endforeach
                                 </div>
                             </div>
                         @endif
@@ -1080,7 +1469,7 @@
                                             <div class="flex items-center gap-3 min-w-0">
                                                 @if($ib->status !== 'paid')
                                                     <input type="checkbox" wire:model.live="selectedBillIds" value="{{ $ib->id }}"
-                                                        class="rounded text-purple-600 focus:ring-purple-500 w-4 h-4 shrink-0">
+                                                        class="rounded {{ $ib->status === 'partial' ? 'text-amber-500 accent-amber-500 focus:ring-amber-400' : 'text-emerald-600 accent-emerald-600 focus:ring-emerald-500' }} w-4 h-4 shrink-0">
                                                 @else
                                                     <span class="w-4 h-4 bg-emerald-500 rounded-full flex items-center justify-center shrink-0">
                                                         <svg class="w-2.5 h-2.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
@@ -1099,8 +1488,8 @@
                                                     <span class="text-[10px] font-bold text-amber-500">Sisa Rp {{ number_format($ib->amount - $ib->amount_paid, 0, ',', '.') }}</span>
                                                     <span class="block text-[9px] text-slate-400">dari Rp {{ number_format($ib->amount, 0, ',', '.') }}</span>
                                                 @else
-                                                    <span class="text-[10px] font-bold text-rose-500">Rp {{ number_format($ib->amount, 0, ',', '.') }}</span>
-                                                    <span class="block text-[9px] text-slate-400">Belum Dibayar</span>
+                                                    <span class="text-[10px] font-bold text-slate-700 dark:text-slate-300">Rp {{ number_format($ib->amount, 0, ',', '.') }}</span>
+                                                    <span class="block text-[9px] text-emerald-600 font-semibold">Belum Dibayar</span>
                                                 @endif
                                             </div>
                                         </div>
@@ -1265,6 +1654,32 @@
                             Tambah Dispensasi Baru
                         </a>
                     </div>
+
+                    <!-- Filter Controls for Exceptions -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-slate-50/60 dark:bg-slate-950/40 p-4 rounded-2xl border border-slate-200/60 dark:border-slate-800">
+                        <!-- Search Box -->
+                        <div>
+                            <label class="block text-[9px] font-extrabold text-slate-400 uppercase tracking-wider mb-1.5">Cari Dispensasi / Tagihan / Santri</label>
+                            <div class="relative">
+                                <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                                </span>
+                                <input type="text" wire:model.live.debounce.300ms="exceptionSearch" placeholder="Cari nama/alasan potongan, nama iuran, atau nama santri..." 
+                                    class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-100 rounded-xl pl-9 pr-4 py-2 text-xs font-bold focus:ring-2 focus:ring-emerald-500 shadow-2xs">
+                            </div>
+                        </div>
+
+                        <!-- Type Filter -->
+                        <div>
+                            <label class="block text-[9px] font-extrabold text-slate-400 uppercase tracking-wider mb-1.5">Tipe Keringanan</label>
+                            <select wire:model.live="exceptionTypeFilter" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-100 rounded-xl px-4 py-2 text-xs font-bold focus:ring-2 focus:ring-emerald-500 shadow-2xs">
+                                <option value="">-- Semua Tipe Keringanan --</option>
+                                <option value="discount">🏷️ Potongan (Discount)</option>
+                                <option value="waived">🎉 Bebas Biaya (Waived / Gratis)</option>
+                                <option value="custom">⚙️ Tarif Khusus (Custom Amount)</option>
+                            </select>
+                        </div>
+                    </div>
                     
                     <div class="overflow-x-auto">
                         <table class="w-full text-left border-collapse text-xs">
@@ -1314,7 +1729,16 @@
                                             @endif
                                         </td>
                                         <td class="py-3 px-4 text-center">
-                                            <div class="flex items-center justify-center gap-3">
+                                            <div class="flex items-center justify-center gap-2">
+                                                <a href="{{ route('keuangan.billing.exceptions.create', [
+                                                    'copy_config_id' => $first->billing_config_id,
+                                                    'copy_type' => $first->exception_type,
+                                                    'copy_amount' => $first->amount,
+                                                    'copy_notes' => $first->notes
+                                                ]) }}" wire:navigate class="text-xs font-bold text-violet-600 hover:text-violet-700 dark:text-violet-400 dark:hover:text-violet-300 transition-colors flex items-center gap-1" title="Salin daftar santri penerima ke tagihan/iuran lain">
+                                                    📋 Salin
+                                                </a>
+                                                <span class="text-slate-350 dark:text-slate-700">|</span>
                                                 <a href="{{ route('keuangan.billing.exceptions.edit', [
                                                     'config_id' => $first->billing_config_id,
                                                     'type' => $first->exception_type,
@@ -1741,7 +2165,7 @@
                                                         $months = [1=>'Jan',2=>'Feb',3=>'Mar',4=>'Apr',5=>'Mei',6=>'Jun',7=>'Jul',8=>'Agt',9=>'Sep',10=>'Okt',11=>'Nov',12=>'Des'];
                                                         $mName = $months[$bill->period_month] ?? $bill->period_month;
                                                     @endphp
-                                                    {{ $mName }} {{ $bill->period_year }}
+                                                    {{ $mName }} {{ $bill->period_year }} @if($bill->period_sub) <span class="text-[10px] font-semibold text-amber-600 dark:text-amber-400 block">(Gel. {{ $bill->period_sub }})</span> @endif
                                                 @endif
                                             @else
                                                 —
@@ -1791,14 +2215,16 @@
                     </div>
 
                     <!-- Pagination Footer for Payments Log -->
-                    @if($paymentsLog->hasPages())
+                    @if($paymentsLog->total() > 0)
                         <div class="px-5 py-4 border-t border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-slate-50/50 dark:bg-slate-950/20">
                             <div class="text-[11px] font-semibold text-slate-400">
                                 Menampilkan <span class="font-bold text-slate-700 dark:text-slate-300">{{ $paymentsLog->firstItem() ?? 0 }}</span> s.d. <span class="font-bold text-slate-700 dark:text-slate-300">{{ $paymentsLog->lastItem() ?? 0 }}</span> dari <span class="font-bold text-emerald-600 dark:text-emerald-400">{{ $paymentsLog->total() }}</span> pembayaran dicatat
                             </div>
-                            <div>
-                                {{ $paymentsLog->links(data: ['scrollTo' => false]) }}
-                            </div>
+                            @if($paymentsLog->hasPages())
+                                <div>
+                                    {{ $paymentsLog->links(data: ['scrollTo' => false]) }}
+                                </div>
+                            @endif
                         </div>
                     @endif
                 </div>
@@ -2067,5 +2493,414 @@
                 </div>
             @endif
         @endif
-    </div>
+
+        <!-- Live Preview Generator Modal -->
+        @if($showGeneratePreviewModal)
+            <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
+                <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 sm:p-8 max-w-2xl w-full shadow-2xl space-y-6 animate-in fade-in zoom-in-95 duration-150">
+                    <!-- Modal Header -->
+                    <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-4">
+                        <div class="flex items-center gap-3">
+                            <div class="p-2.5 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-2xl">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                            </div>
+                            <div>
+                                <h3 class="text-base font-extrabold text-slate-900 dark:text-white uppercase tracking-wider font-serif-display">Pratinjau Simulasi Tagihan</h3>
+                                <p class="text-xs text-slate-400">Konfirmasi rincian sebelum tagihan resmi diterbitkan ke kasir & wali santri.</p>
+                            </div>
+                        </div>
+                        <button type="button" wire:click="$set('showGeneratePreviewModal', false)" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-all">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                        </button>
+                    </div>
+
+                    <!-- Simulation Stats Grid -->
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <div class="p-3.5 bg-slate-50 dark:bg-slate-950/60 border border-slate-200/60 dark:border-slate-800 rounded-2xl">
+                            <span class="block text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">Target Santri</span>
+                            <span class="text-lg font-black text-slate-900 dark:text-white mt-1 block">
+                                {{ number_format($previewGenStats['student_count'] ?? 0, 0, ',', '.') }} Santri
+                            </span>
+                            <span class="text-[10px] font-semibold text-slate-400 block mt-0.5">Filter: {{ ucfirst($previewGenStats['target_type'] ?? 'all') }}</span>
+                        </div>
+
+                        <div class="p-3.5 bg-slate-50 dark:bg-slate-950/60 border border-slate-200/60 dark:border-slate-800 rounded-2xl">
+                            <span class="block text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">Lembar Tagihan</span>
+                            <span class="text-lg font-black text-indigo-600 dark:text-indigo-400 mt-1 block">
+                                {{ number_format($previewGenStats['total_bills'] ?? 0, 0, ',', '.') }} Lembar
+                            </span>
+                            <span class="text-[10px] font-semibold text-slate-400 block mt-0.5">{{ $previewGenStats['student_count'] ?? 0 }} × {{ $previewGenStats['period_count'] ?? 1 }} Periode</span>
+                        </div>
+
+                        <div class="p-3.5 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl">
+                            <span class="block text-[10px] font-extrabold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">Total Nilai Tagihan</span>
+                            <span class="text-lg font-black text-emerald-700 dark:text-emerald-300 mt-1 block">
+                                Rp {{ number_format($previewGenStats['total_amount'] ?? 0, 0, ',', '.') }}
+                            </span>
+                            <span class="text-[10px] font-semibold text-emerald-600/80 dark:text-emerald-400/80 block mt-0.5">Rp {{ number_format($previewGenStats['config_amount'] ?? 0, 0, ',', '.') }} / lembar</span>
+                        </div>
+                    </div>
+
+                    <!-- Simulation Visual Card (Tampilan di Kasir / Lembar Kolektif) -->
+                    <div class="space-y-2">
+                        <label class="block text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">Simulasi Gambaran Tagihan (Tampilan Kasir & Kolektif)</label>
+                        <div class="p-4 bg-slate-50/80 dark:bg-slate-950/40 border border-slate-200/80 dark:border-slate-800 rounded-2xl max-h-48 overflow-y-auto space-y-2">
+                            @foreach(($previewGenStats['periods'] ?? []) as $prd)
+                                <div class="flex items-center justify-between p-3 bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800 rounded-xl text-xs">
+                                    <div class="flex items-center gap-2.5">
+                                        <div class="w-2 h-2 rounded-full bg-emerald-500"></div>
+                                        <div>
+                                            <span class="font-bold text-slate-900 dark:text-slate-100 block">{{ $previewGenStats['config_label'] ?? '' }}</span>
+                                            <span class="text-[10px] text-slate-400">{{ $prd['label'] }} {{ $previewGenStats['gen_year'] ?? '' }}</span>
+                                        </div>
+                                    </div>
+                                    <div class="text-right">
+                                        <span class="font-extrabold text-slate-900 dark:text-slate-100 block">Rp {{ number_format($previewGenStats['config_amount'] ?? 0, 0, ',', '.') }}</span>
+                                        <span class="px-2 py-0.5 bg-amber-500/10 text-amber-600 dark:text-amber-400 text-[9px] font-black rounded-md uppercase">Belum Dibayar</span>
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+
+                    <!-- Modal Actions -->
+                    <div class="flex items-center justify-end gap-3 pt-3 border-t border-slate-100 dark:border-slate-800">
+                        <button type="button" wire:click="$set('showGeneratePreviewModal', false)" class="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-xl text-xs font-bold transition-all">
+                            Batal
+                        </button>
+
+                        <button type="button" wire:click="confirmGenerateBills" class="px-6 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white rounded-xl text-xs font-bold transition-all shadow-md flex items-center gap-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                            <span>Ya, Terbitkan Tagihan Sekarang</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        @endif
+
+        <!-- Delete Unpaid Bills Modal -->
+        @if($showDeleteUnpaidModal)
+            <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
+                <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 sm:p-8 max-w-lg w-full shadow-2xl space-y-6 animate-in fade-in zoom-in-95 duration-150">
+                    <!-- Modal Header -->
+                    <div class="flex items-center justify-between border-b border-rose-100 dark:border-rose-950/60 pb-4">
+                        <div class="flex items-center gap-3">
+                            <div class="p-2.5 bg-rose-500/10 text-rose-600 dark:text-rose-400 rounded-2xl">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                            </div>
+                            <div>
+                                <h3 class="text-base font-extrabold text-slate-900 dark:text-white uppercase tracking-wider font-serif-display">Konfirmasi Hapus Tagihan</h3>
+                                <p class="text-xs text-rose-600 dark:text-rose-400 font-semibold mt-0.5">Pembersihan Massal Tagihan Belum Lunas</p>
+                            </div>
+                        </div>
+                        <button type="button" wire:click="$set('showDeleteUnpaidModal', false)" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-all">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                        </button>
+                    </div>
+
+                    <!-- Simulation Stats Grid -->
+                    <div class="grid grid-cols-2 gap-3">
+                        <div class="p-3.5 bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-900/50 rounded-2xl">
+                            <span class="block text-[10px] font-extrabold text-rose-700 dark:text-rose-300 uppercase tracking-wider">Akan Dihapus (Unpaid)</span>
+                            <span class="text-xl font-black text-rose-600 dark:text-rose-400 mt-1 block">
+                                {{ number_format($deleteUnpaidStats['unpaid_count'] ?? 0, 0, ',', '.') }} Lembar
+                            </span>
+                            <span class="text-[10px] font-semibold text-rose-600/80 block mt-0.5">Belum ada pembayaran</span>
+                        </div>
+
+                        <div class="p-3.5 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl">
+                            <span class="block text-[10px] font-extrabold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">Terlindungi & Aman</span>
+                            <span class="text-xl font-black text-emerald-700 dark:text-emerald-300 mt-1 block">
+                                {{ number_format($deleteUnpaidStats['paid_count'] ?? 0, 0, ',', '.') }} Lembar
+                            </span>
+                            <span class="text-[10px] font-semibold text-emerald-600/80 dark:text-emerald-400/80 block mt-0.5">Sudah lunas / dicicil</span>
+                        </div>
+                    </div>
+
+                    <!-- Warning Notice Box -->
+                    <div class="p-4 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/50 rounded-2xl space-y-2">
+                        <div class="flex items-start gap-2.5">
+                            <svg class="w-5 h-5 text-amber-600 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                            <div class="text-xs text-slate-700 dark:text-slate-300 space-y-1">
+                                <span class="font-extrabold block text-amber-800 dark:text-amber-300">Penting Diketahui:</span>
+                                <p class="leading-relaxed">
+                                    Tindakan ini hanya menghapus lembar tagihan yang <strong>belum pernah dibayar</strong> untuk tarif <strong>'{{ $deleteUnpaidStats['config_label'] ?? '' }}'</strong>.
+                                </p>
+                                <p class="leading-relaxed text-[11px] text-slate-500 dark:text-slate-400 pt-1 border-t border-amber-200/60 dark:border-amber-900/40">
+                                    💡 Jika Anda ingin menghapus seluruh tagihan secara bersih (termasuk yang lunas), silakan minta <strong>Super Admin</strong> untuk melakukannya demi keamanan data & audit pembukuan.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Modal Actions -->
+                    <div class="flex items-center justify-end gap-3 pt-3 border-t border-slate-100 dark:border-slate-800">
+                        <button type="button" wire:click="$set('showDeleteUnpaidModal', false)" class="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-xl text-xs font-bold transition-all">
+                            Batal
+                        </button>
+
+                        <button type="button" wire:click="confirmDeleteUnpaidBills" class="px-6 py-2.5 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-bold transition-all shadow-md flex items-center gap-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                            <span>Ya, Hapus {{ $deleteUnpaidStats['unpaid_count'] ?? 0 }} Tagihan Unpaid</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        @endif
+
+        <!-- Kasir Wizard: Buka Tagihan Di Muka / Susulan -->
+        @if($showKasirAddBillModal && $selectedSantri)
+            <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/70 backdrop-blur-sm">
+                <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden">
+
+                    {{-- ===== MODAL HEADER ===== --}}
+                    <div class="flex items-center justify-between px-6 pt-6 pb-4 border-b border-slate-100 dark:border-slate-800">
+                        <div class="flex items-center gap-3">
+                            <div class="p-2.5 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-2xl">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
+                            </div>
+                            <div>
+                                <h3 class="text-sm font-extrabold text-slate-900 dark:text-white">Buka Tagihan Di Muka / Susulan</h3>
+                                <p class="text-[11px] text-slate-400 mt-0.5">Untuk: <span class="font-bold text-emerald-600 dark:text-emerald-400">{{ $selectedSantri->name }}</span></p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            {{-- Step indicator --}}
+                            <div class="flex items-center gap-1.5 text-[10px] font-bold">
+                                <span class="px-2.5 py-1 rounded-full {{ $kasirWizardStep === 1 ? 'bg-emerald-600 text-white' : 'bg-slate-200 dark:bg-slate-700 text-slate-500' }}">1 Tarif</span>
+                                <span class="text-slate-400">›</span>
+                                <span class="px-2.5 py-1 rounded-full {{ $kasirWizardStep === 2 ? 'bg-emerald-600 text-white' : 'bg-slate-200 dark:bg-slate-700 text-slate-500' }}">2 Periode</span>
+                            </div>
+                            <button type="button" wire:click="$set('showKasirAddBillModal', false)" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-all">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                            </button>
+                        </div>
+                    </div>
+
+                    {{-- ===== STEP 1: PILIH TARIF ===== --}}
+                    @if($kasirWizardStep === 1)
+                        <div class="px-6 py-5 space-y-3">
+                            <p class="text-[11px] text-slate-500 font-semibold">Pilih tarif iuran yang ingin dibuka untuk santri ini. Tarif dengan ikon <span class="text-amber-500 font-bold">⚠</span> berarti santri ini bukan target utama tarif tersebut, namun Anda tetap bisa membukanya.</p>
+
+                            <div class="space-y-2 max-h-72 overflow-y-auto pr-1">
+                                @foreach($activeConfigs as $cfg)
+                                    @php
+                                        $isSelected = $kasirAddConfigId === $cfg->id;
+                                    @endphp
+                                    <button type="button"
+                                        wire:click="$set('kasirAddConfigId', '{{ $cfg->id }}')"
+                                        class="w-full text-left flex items-center justify-between gap-3 p-3.5 rounded-2xl border transition-all
+                                            {{ $isSelected
+                                                ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-950/30'
+                                                : 'border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 hover:border-slate-400 dark:hover:border-slate-500' }}">
+                                        <div class="flex items-center gap-3 min-w-0">
+                                            <div class="shrink-0 w-8 h-8 rounded-xl flex items-center justify-center {{ $isSelected ? 'bg-emerald-500 text-white' : 'bg-white dark:bg-slate-700 text-slate-400' }} border border-slate-200 dark:border-slate-600">
+                                                @if($isSelected)
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+                                                @else
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                                                @endif
+                                            </div>
+                                            <div class="min-w-0">
+                                                <span class="block text-xs font-bold text-slate-900 dark:text-white truncate">{{ $cfg->label }}</span>
+                                                <span class="block text-[10px] text-slate-400 font-semibold">Rp {{ number_format($cfg->amount, 0, ',', '.') }} / {{ strtoupper($cfg->interval) }}</span>
+                                            </div>
+                                        </div>
+                                        @if($isSelected && !$kasirSantriIsInTarget)
+                                            <span class="shrink-0 inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-amber-100 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-700 text-amber-700 dark:text-amber-300 text-[10px] font-extrabold">
+                                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                                                Bukan Target
+                                            </span>
+                                        @endif
+                                    </button>
+                                @endforeach
+                            </div>
+
+                            @if($kasirAddConfigId && !$kasirSantriIsInTarget)
+                                <div class="p-3 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/50 rounded-xl text-[11px] text-amber-800 dark:text-amber-300 font-semibold leading-relaxed">
+                                    <svg class="w-3.5 h-3.5 inline mr-1 -mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                                    Perhatian: Santri ini <strong>bukan target</strong> tarif terpilih. Kemungkinan data komplek/kelas belum diperbarui. Anda tetap bisa melanjutkan jika yakin.
+                                </div>
+                            @endif
+                        </div>
+
+                        <div class="flex items-center justify-end gap-3 px-6 py-4 border-t border-slate-100 dark:border-slate-800">
+                            <button type="button" wire:click="$set('showKasirAddBillModal', false)" class="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-xl text-xs font-bold transition-all">
+                                Batal
+                            </button>
+                            <button type="button" wire:click="kasirGoToStep2" @disabled(!$kasirAddConfigId)
+                                class="px-6 py-2.5 rounded-xl text-xs font-bold transition-all shadow-sm flex items-center gap-2
+                                    {{ $kasirAddConfigId ? 'bg-emerald-600 hover:bg-emerald-700 text-white' : 'bg-slate-200 dark:bg-slate-700 text-slate-400 cursor-not-allowed' }}">
+                                Pilih Periode
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                            </button>
+                        </div>
+                    @endif
+
+                    {{-- ===== STEP 2: PILIH PERIODE ===== --}}
+                    @if($kasirWizardStep === 2)
+                        @php
+                            $selectedCfg = $activeConfigs->firstWhere('id', $kasirAddConfigId);
+                            $hasAnyAvailable = collect($kasirAvailablePeriods)->where('exists', false)->isNotEmpty();
+                        @endphp
+                        <div class="px-6 py-5 space-y-3">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <span class="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">Tarif Terpilih</span>
+                                    <p class="text-xs font-bold text-slate-900 dark:text-white">{{ $selectedCfg?->label }}</p>
+                                </div>
+                                <span class="text-[10px] font-bold text-slate-400">
+                                    {{ count($kasirSelectedPeriods) }} periode dipilih
+                                </span>
+                            </div>
+
+                            <div class="space-y-2 max-h-72 overflow-y-auto pr-1">
+                                @forelse($kasirAvailablePeriods as $idx => $period)
+                                    @php $checked = in_array($idx, $kasirSelectedPeriods); @endphp
+                                    <button type="button"
+                                        wire:click="{{ $period['exists'] ? '' : 'toggleKasirPeriod(' . $idx . ')' }}"
+                                        @class([
+                                            'w-full text-left flex items-center justify-between gap-3 p-3 rounded-xl border transition-all',
+                                            'border-emerald-500 bg-emerald-50 dark:bg-emerald-950/30' => $checked && !$period['exists'],
+                                            'border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 hover:border-emerald-400' => !$checked && !$period['exists'],
+                                            'border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/30 opacity-50 cursor-not-allowed' => $period['exists'],
+                                        ])>
+                                        <div class="flex items-center gap-2.5">
+                                            <div @class([
+                                                'w-5 h-5 rounded-md border-2 flex items-center justify-center shrink-0',
+                                                'border-emerald-500 bg-emerald-500' => $checked && !$period['exists'],
+                                                'border-slate-300 dark:border-slate-600' => !$checked && !$period['exists'],
+                                                'border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800' => $period['exists'],
+                                            ])>
+                                                @if($checked && !$period['exists'])
+                                                    <svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
+                                                @endif
+                                            </div>
+                                            <span class="text-xs font-bold {{ $period['exists'] ? 'text-slate-400 line-through' : 'text-slate-800 dark:text-slate-200' }}">
+                                                {{ $period['label'] }}
+                                            </span>
+                                        </div>
+                                        @if($period['exists'])
+                                            <span class="shrink-0 text-[10px] font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                                                Sudah ada
+                                            </span>
+                                        @else
+                                            <span class="shrink-0 text-[10px] font-semibold text-slate-400">Belum ada</span>
+                                        @endif
+                                    </button>
+                                @empty
+                                    <div class="text-center py-8 text-slate-400 text-xs">Tidak ada periode tersedia.</div>
+                                @endforelse
+                            </div>
+
+                            @if(!$hasAnyAvailable)
+                                <div class="p-3 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800/50 rounded-xl text-[11px] text-emerald-800 dark:text-emerald-300 font-semibold">
+                                    Semua periode dalam daftar ini sudah ada tagihannya untuk santri ini. Tidak ada yang perlu dibuka.
+                                </div>
+                            @endif
+                        </div>
+
+                        <div class="flex items-center justify-between gap-3 px-6 py-4 border-t border-slate-100 dark:border-slate-800">
+                            <button type="button" wire:click="kasirGoBackToStep1" class="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+                                Ganti Tarif
+                            </button>
+                            <div class="flex gap-2">
+                                <button type="button" wire:click="$set('showKasirAddBillModal', false)" class="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-xl text-xs font-bold transition-all">
+                                    Batal
+                                </button>
+                                <button type="button" wire:click="generateFutureBillForSelectedSantri"
+                                    @disabled(empty($kasirSelectedPeriods))
+                                    class="px-5 py-2.5 rounded-xl text-xs font-bold transition-all shadow-sm flex items-center gap-2
+                                        {{ !empty($kasirSelectedPeriods) ? 'bg-emerald-600 hover:bg-emerald-700 text-white' : 'bg-slate-200 dark:bg-slate-700 text-slate-400 cursor-not-allowed' }}">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
+                                    Buka {{ count($kasirSelectedPeriods) > 0 ? count($kasirSelectedPeriods) . ' ' : '' }}Tagihan
+                                </button>
+                            </div>
+                        </div>
+                    @endif
+
+                </div>
+            </div>
+        @endif
+
+
+
+
+        {{-- ========================================== --}}
+        {{-- MODAL 2: KONFIRMASI HAPUS KUSTOM & INDAH  --}}
+        {{-- ========================================== --}}
+        @if($showDeleteConfirmModal)
+            <div class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/70 backdrop-blur-xs flex items-center justify-center p-4">
+                <div class="bg-white dark:bg-slate-900 border border-rose-200 dark:border-rose-900/40 rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl space-y-6 animate-in fade-in zoom-in-95 duration-150 text-center">
+                    
+                    <!-- Professional SVG Warning Icon -->
+                    <div class="mx-auto w-16 h-16 bg-rose-500/10 text-rose-600 dark:text-rose-400 rounded-3xl flex items-center justify-center border border-rose-500/20">
+                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                    </div>
+
+                    <!-- Modal Title & Warning Body -->
+                    <div class="space-y-2">
+                        <h3 class="text-base font-extrabold text-slate-900 dark:text-white uppercase tracking-wider font-serif-display">
+                            {{ $deleteConfirmData['title'] ?? 'Konfirmasi Pembatalan Tagihan' }}
+                        </h3>
+                        <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                            {{ $deleteConfirmData['warning'] ?? 'Apakah Anda yakin ingin membatalkan & menghapus tagihan ini dari database?' }}
+                        </p>
+                    </div>
+
+                    <!-- Target Detail Box -->
+                    <div class="p-4 bg-rose-50/60 dark:bg-rose-950/20 border border-rose-200/60 dark:border-rose-900/30 rounded-2xl text-left space-y-2 text-xs">
+                        @if($deleteType === 'individual')
+                            <div class="flex justify-between items-center">
+                                <span class="text-[10px] font-bold text-slate-400 uppercase">Nama Santri</span>
+                                <span class="font-extrabold text-slate-900 dark:text-slate-100">{{ $deleteConfirmData['santri_name'] ?? '-' }}</span>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span class="text-[10px] font-bold text-slate-400 uppercase">NIS</span>
+                                <span class="font-bold font-mono text-slate-700 dark:text-slate-300">{{ $deleteConfirmData['nis'] ?? '-' }}</span>
+                            </div>
+                        @else
+                            <div class="flex justify-between items-center">
+                                <span class="text-[10px] font-bold text-slate-400 uppercase">Jumlah Tagihan Unpaid</span>
+                                <span class="font-extrabold text-rose-600 dark:text-rose-400">{{ number_format($deleteConfirmData['count'] ?? 0, 0, ',', '.') }} Lembar</span>
+                            </div>
+                        @endif
+
+                        <div class="flex justify-between items-center">
+                            <span class="text-[10px] font-bold text-slate-400 uppercase">Nama Tarif</span>
+                            <span class="font-bold text-slate-800 dark:text-slate-200">{{ $deleteConfirmData['config_label'] ?? '-' }}</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-[10px] font-bold text-slate-400 uppercase">Periode</span>
+                            <span class="font-bold text-slate-800 dark:text-slate-200">{{ $deleteConfirmData['period_label'] ?? '-' }}</span>
+                        </div>
+                        @if(isset($deleteConfirmData['amount']) || isset($deleteConfirmData['total_amount']))
+                            <div class="flex justify-between items-center pt-2 border-t border-rose-200/50 dark:border-rose-900/40">
+                                <span class="text-[10px] font-extrabold text-rose-700 dark:text-rose-300 uppercase">Total Nominal</span>
+                                <span class="font-black text-rose-700 dark:text-rose-300">Rp {{ number_format($deleteConfirmData['amount'] ?? ($deleteConfirmData['total_amount'] ?? 0), 0, ',', '.') }}</span>
+                            </div>
+                        @endif
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="flex items-center justify-end gap-3 pt-2">
+                        <button type="button" wire:click="$set('showDeleteConfirmModal', false)"
+                            class="w-1/2 py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-xl text-xs font-bold transition-all">
+                            Batal
+                        </button>
+                        <button type="button" wire:click="executeConfirmedDeletion"
+                            class="w-1/2 py-2.5 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-bold transition-all shadow-md inline-flex items-center justify-center gap-1.5">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                            Ya, Hapus Tagihan
+                        </button>
+                    </div>
+
+                </div>
+            </div>
+        @endif
+    @endif
 </div>
+</div>
+

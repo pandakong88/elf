@@ -26,6 +26,14 @@ class CensusV3Dashboard extends Component
         $this->censusService = $censusService;
     }
 
+    public function mount(): void
+    {
+        $user = auth()->user();
+        if (!$user || !($user->hasRole('super-admin') || $user->hasRole('manajemen'))) {
+            abort(403, 'Akses ditolak. Halaman ini hanya untuk Super Admin dan Manajemen.');
+        }
+    }
+
     public function updatingSearch(): void
     {
         $this->resetPage();

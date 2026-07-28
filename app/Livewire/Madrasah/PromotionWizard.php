@@ -7,8 +7,11 @@ use App\Modules\Core\Models\Person;
 use App\Modules\Core\Models\PersonRole;
 use App\Modules\Madrasah\Models\MadrasahEnrollment;
 use App\Modules\Madrasah\Models\MadrasahKelas;
+use App\Modules\Madrasah\Models\MadrasahPromotionBatch;
+use App\Modules\Madrasah\Models\MadrasahPromotionBatchItem;
 use App\Traits\HasGenderScope;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Livewire\Component;
 
@@ -26,8 +29,11 @@ class PromotionWizard extends Component
     public bool  $isLoaded     = false;
 
     // Undo / Rollback State
-    public ?array $lastPromotionBatch   = null;
-    public bool   $showUndoConfirmModal = false;
+    public ?MadrasahPromotionBatch $lastPromotionBatch   = null;
+    public bool                    $showUndoConfirmModal = false;
+
+    // Password Gate Confirmation State
+    public string $confirmPassword = '';
 
     public function mount(): void
     {
@@ -41,8 +47,10 @@ class PromotionWizard extends Component
             $this->isGenderLocked = true;
         }
 
-        // Restore last promotion batch from session if exists
-        $this->lastPromotionBatch = session()->get('last_promotion_batch', null);
+        // Load latest active promotion batch from Database
+        $this->lastPromotionBatch = MadrasahPromotionBatch::where('status', 'sukses')
+            ->orderBy('executed_at', 'desc')
+            ->first();
 
         $this->loadPromotionData();
     }
@@ -166,6 +174,11 @@ class PromotionWizard extends Component
 
     public function updateTargetClass(string $classId, string $targetClassId): void
     {
+        if (!auth()->user()->can('manage-kelas') && !auth()->user()->can('execute-kenaikan-kelas')) {
+            $this->toastError('Akses ditolak: Anda tidak memiliki izin untuk mengelola kenaikan kelas.');
+            return;
+        }
+
         if (isset($this->promotionMap[$classId])) {
             $this->promotionMap[$classId]['target_class_id'] = $targetClassId;
 
@@ -180,6 +193,11 @@ class PromotionWizard extends Component
 
     public function toggleStudentStatus(string $classId, string $personId, string $newStatus): void
     {
+        if (!auth()->user()->can('manage-kelas') && !auth()->user()->can('execute-kenaikan-kelas')) {
+            $this->toastError('Akses ditolak: Anda tidak memiliki izin untuk mengelola kenaikan kelas.');
+            return;
+        }
+
         if (isset($this->promotionMap[$classId])) {
             foreach ($this->promotionMap[$classId]['students'] as &$student) {
                 if ($student['person_id'] === $personId) {
@@ -192,6 +210,11 @@ class PromotionWizard extends Component
 
     public function setAllStudentsStatusInClass(string $classId, string $status): void
     {
+        if (!auth()->user()->can('manage-kelas') && !auth()->user()->can('execute-kenaikan-kelas')) {
+            $this->toastError('Akses ditolak: Anda tidak memiliki izin untuk mengelola kenaikan kelas.');
+            return;
+        }
+
         if (isset($this->promotionMap[$classId])) {
             foreach ($this->promotionMap[$classId]['students'] as &$student) {
                 $student['status'] = $status;
@@ -209,6 +232,21 @@ class PromotionWizard extends Component
 
     public function requestMassPromotionConfirm(): void
     {
+        if (!auth()->user()->can('execute-kenaikan-kelas')) {
+            $this->toastError('Akses ditolak: Anda tidak memiliki izin untuk mengeksekusi kenaikan kelas massal.');
+            return;
+        }
+
+        // Academic Year Lock Check
+        $alreadyProcessed = MadrasahPromotionBatch::where('from_academic_year', $this->fromAcademicYear)
+            ->where('status', 'sukses')
+            ->exists();
+
+        if ($alreadyProcessed) {
+            $this->toastError("Tahun Ajaran {$this->fromAcademicYear} sudah pernah diproses Kenaikan Kelas. Batalkan (Undo) batch sebelumnya terlebih dahulu jika ingin memproses ulang.");
+            return;
+        }
+
         if (empty($this->promotionMap)) {
             $this->toastError('Tidak ada data kenaikan kelas untuk diproses.');
             return;
@@ -219,6 +257,8 @@ class PromotionWizard extends Component
             $totalSantri += count($cData['students']);
         }
 
+        $this->confirmPassword    = '';
+        $this->resetErrorBag();
         $this->confirmAction      = 'executeMassPromotion';
         $this->confirmTitle       = 'Konfirmasi Kenaikan & Kelulusan Massal';
         $this->confirmMessage     = "Apakah Anda YAKIN ingin memproses kenaikan kelas & kelulusan serentak untuk {$totalSantri} santri dari Tahun Ajaran {$this->fromAcademicYear} ke Tahun Ajaran {$this->toAcademicYear}?";
@@ -229,8 +269,6 @@ class PromotionWizard extends Component
 
     public function processConfirmedAction(): void
     {
-        $this->showConfirmModal = false;
-
         if ($this->confirmAction === 'executeMassPromotion') {
             $this->executeMassPromotion();
         }
@@ -238,103 +276,129 @@ class PromotionWizard extends Component
 
     public function executeMassPromotion(): void
     {
+        if (!auth()->user()->can('execute-kenaikan-kelas')) {
+            $this->toastError('Akses ditolak: Anda tidak memiliki izin untuk mengeksekusi kenaikan kelas massal.');
+            return;
+        }
+
+        if (empty($this->confirmPassword) || !Hash::check($this->confirmPassword, auth()->user()->password)) {
+            $this->addError('confirmPassword', 'Password konfirmasi yang Anda masukkan salah.');
+            $this->toastError('Konfirmasi Password Salah. Eksekusi Kenaikan Kelas Dibatalkan.');
+            return;
+        }
+
         if (empty($this->promotionMap)) {
             $this->toastError('Tidak ada data kenaikan kelas untuk diproses.');
             return;
         }
 
-        $totalPromoted  = 0;
-        $totalRetained  = 0;
-        $totalGraduated = 0;
+        $totalPromoted   = 0;
+        $totalRetained   = 0;
+        $totalGraduated  = 0;
         $affectedPersons = [];
 
         DB::transaction(function () use (&$totalPromoted, &$totalRetained, &$totalGraduated, &$affectedPersons) {
+            $batch = MadrasahPromotionBatch::create([
+                'id'                 => Str::uuid()->toString(),
+                'from_academic_year' => $this->fromAcademicYear,
+                'to_academic_year'   => $this->toAcademicYear,
+                'executed_at'        => now(),
+                'executed_by'        => auth()->id(),
+                'executed_by_name'   => auth()->user()->name ?? 'Admin',
+                'status'             => 'sukses',
+            ]);
+
             foreach ($this->promotionMap as $classData) {
-                $sourceClassId  = $classData['class_id'];
-                $targetClassId  = $classData['target_class_id'];
+                $sourceClassId = $classData['class_id'];
+                $targetClassId = $classData['target_class_id'];
 
                 foreach ($classData['students'] as $st) {
                     $personId = $st['person_id'];
                     $status   = $st['status'];
                     $affectedPersons[] = $personId;
 
-                    // 1. Deactivate old enrollment for this academic year
-                    MadrasahEnrollment::where('person_id', $personId)
+                    // Fetch previous active enrollment
+                    $oldEnrollment = MadrasahEnrollment::where('person_id', $personId)
                         ->where('kelas_id', $sourceClassId)
                         ->where('is_active', true)
-                        ->update([
-                            'is_active' => false,
-                        ]);
+                        ->first();
+
+                    if ($oldEnrollment) {
+                        $oldEnrollment->update(['is_active' => false]);
+                    }
+
+                    $newEnrollmentId = null;
+                    $prevRoleStatus  = null;
 
                     if ($status === 'promoted' && $targetClassId !== 'lulus') {
-                        // Create/Update enrollment in target class for TO academic year
-                        MadrasahEnrollment::updateOrCreate(
-                            [
-                                'person_id'     => $personId,
-                                'kelas_id'      => $targetClassId,
-                                'academic_year' => $this->toAcademicYear,
-                            ],
-                            [
-                                'is_active'  => true,
-                                'created_by' => auth()->id(),
-                            ]
-                        );
+                        $newEnr = MadrasahEnrollment::create([
+                            'id'            => Str::uuid()->toString(),
+                            'person_id'     => $personId,
+                            'kelas_id'      => $targetClassId,
+                            'academic_year' => $this->toAcademicYear,
+                            'is_active'     => true,
+                            'created_by'    => auth()->id(),
+                        ]);
+                        $newEnrollmentId = $newEnr->id;
                         $totalPromoted++;
                     } elseif ($status === 'retained') {
-                        // Retained: enroll again in SAME class for TO academic year
-                        MadrasahEnrollment::updateOrCreate(
-                            [
-                                'person_id'     => $personId,
-                                'kelas_id'      => $sourceClassId,
-                                'academic_year' => $this->toAcademicYear,
-                            ],
-                            [
-                                'is_active'  => true,
-                                'created_by' => auth()->id(),
-                            ]
-                        );
+                        $newEnr = MadrasahEnrollment::create([
+                            'id'            => Str::uuid()->toString(),
+                            'person_id'     => $personId,
+                            'kelas_id'      => $sourceClassId,
+                            'academic_year' => $this->toAcademicYear,
+                            'is_active'     => true,
+                            'created_by'    => auth()->id(),
+                        ]);
+                        $newEnrollmentId = $newEnr->id;
                         $totalRetained++;
                     } elseif ($status === 'graduated' || $targetClassId === 'lulus') {
-                        // Graduated: Update PersonRole enrollment_status to 'alumni'
-                        PersonRole::where('person_id', $personId)
+                        $personRole = PersonRole::where('person_id', $personId)
                             ->where('role_type', 'santri')
-                            ->update([
+                            ->first();
+
+                        if ($personRole) {
+                            $prevRoleStatus = $personRole->enrollment_status;
+                            $personRole->update([
                                 'enrollment_status' => 'alumni',
                                 'is_active'         => false,
                                 'presence_status'   => null,
                                 'left_at'           => now()->toDateString(),
                             ]);
-
+                        }
                         $totalGraduated++;
                     }
+
+                    // Save Batch Item in Database
+                    MadrasahPromotionBatchItem::create([
+                        'id'                          => Str::uuid()->toString(),
+                        'batch_id'                    => $batch->id,
+                        'person_id'                   => $personId,
+                        'source_kelas_id'             => $sourceClassId,
+                        'target_kelas_id'             => $targetClassId,
+                        'status'                      => $status,
+                        'previous_enrollment_id'      => $oldEnrollment?->id,
+                        'new_enrollment_id'           => $newEnrollmentId,
+                        'previous_person_role_status' => $prevRoleStatus,
+                    ]);
                 }
             }
+
+            // Update Batch Summary
+            $batch->update([
+                'total_students'  => count(array_unique($affectedPersons)),
+                'total_promoted'  => $totalPromoted,
+                'total_retained'  => $totalRetained,
+                'total_graduated' => $totalGraduated,
+            ]);
+
+            $this->lastPromotionBatch = $batch;
         });
 
-        // Save batch audit details for UNDO action
-        $batchData = [
-            'batch_id'           => Str::uuid()->toString(),
-            'from_academic_year' => $this->fromAcademicYear,
-            'to_academic_year'   => $this->toAcademicYear,
-            'executed_at'        => now()->format('d M Y H:i:s'),
-            'total_students'     => count(array_unique($affectedPersons)),
-            'total_promoted'     => $totalPromoted,
-            'total_retained'     => $totalRetained,
-            'total_graduated'    => $totalGraduated,
-            'executed_by'        => auth()->user()->name ?? 'Admin',
-            'status'             => 'sukses',
-            'person_ids'         => array_unique($affectedPersons),
-        ];
+        $this->showConfirmModal = false;
+        $this->confirmPassword  = '';
 
-        $this->lastPromotionBatch = $batchData;
-        session()->put('last_promotion_batch', $batchData);
-
-        // Push to overall promotion batch history session
-        $batchHistory = session()->get('promotion_batch_history', []);
-        array_unshift($batchHistory, $batchData);
-        session()->put('promotion_batch_history', array_slice($batchHistory, 0, 20));
-
-        $this->toastSuccess("Proses Massal Selesai: {$totalPromoted} Naik, {$totalRetained} Tinggal, {$totalGraduated} Lulus.");
+        $this->toastSuccess("Proses Kenaikan Kelas Massal Berhasil: {$totalPromoted} Naik, {$totalRetained} Tinggal, {$totalGraduated} Lulus.");
         $this->loadPromotionData();
     }
 
@@ -429,67 +493,97 @@ class PromotionWizard extends Component
         return $logs;
     }
 
-    public function getBatchHistoryProperty(): array
+    public function getBatchHistoryProperty()
     {
-        return session()->get('promotion_batch_history', []);
+        return MadrasahPromotionBatch::orderBy('executed_at', 'desc')->get();
     }
 
     // =========================================================================
-    // UNDO / ROLLBACK FEATURE
+    // UNDO / ROLLBACK FEATURE (Database-Driven & Permanent)
     // =========================================================================
 
     public function openUndoConfirmModal(): void
     {
-        if (!$this->lastPromotionBatch) {
-            $this->toastError('Tidak ada riwayat kenaikan kelas yang dapat dibatalkan.');
+        if (!auth()->user()->can('execute-kenaikan-kelas')) {
+            $this->toastError('Akses ditolak: Anda tidak memiliki izin untuk membatalkan kenaikan kelas.');
             return;
         }
+
+        $this->lastPromotionBatch = MadrasahPromotionBatch::where('status', 'sukses')
+            ->orderBy('executed_at', 'desc')
+            ->first();
+
+        if (!$this->lastPromotionBatch) {
+            $this->toastError('Tidak ada riwayat kenaikan kelas aktif yang dapat dibatalkan.');
+            return;
+        }
+
+        $this->confirmPassword      = '';
+        $this->resetErrorBag();
         $this->showUndoConfirmModal = true;
     }
 
     public function executeUndoMassPromotion(): void
     {
-        if (!$this->lastPromotionBatch) {
-            $this->toastError('Tidak ada riwayat kenaikan kelas yang dapat dibatalkan.');
+        if (!auth()->user()->can('execute-kenaikan-kelas')) {
+            $this->toastError('Akses ditolak: Anda tidak memiliki izin untuk membatalkan kenaikan kelas.');
             return;
         }
 
-        $personIds        = $this->lastPromotionBatch['person_ids'] ?? [];
-        $fromAcademicYear = $this->lastPromotionBatch['from_academic_year'];
-        $toAcademicYear   = $this->lastPromotionBatch['to_academic_year'];
-
-        DB::transaction(function () use ($personIds, $fromAcademicYear, $toAcademicYear) {
-            // 1. Deactivate all new enrollments created for TO academic year
-            MadrasahEnrollment::whereIn('person_id', $personIds)
-                ->where('academic_year', $toAcademicYear)
-                ->update(['is_active' => false]);
-
-            // 2. Reactivate previous enrollments in FROM academic year
-            MadrasahEnrollment::whereIn('person_id', $personIds)
-                ->where('academic_year', $fromAcademicYear)
-                ->update(['is_active' => true]);
-
-            // 3. Revert PersonRole status back to 'aktif'
-            PersonRole::whereIn('person_id', $personIds)
-                ->where('role_type', 'santri')
-                ->update([
-                    'enrollment_status' => 'aktif',
-                    'is_active'         => true,
-                    'left_at'           => null,
-                ]);
-        });
-
-        // Mark last batch as di_undo in session history
-        $batchHistory = session()->get('promotion_batch_history', []);
-        if (!empty($batchHistory)) {
-            $batchHistory[0]['status'] = 'di_undo';
-            session()->put('promotion_batch_history', $batchHistory);
+        if (empty($this->confirmPassword) || !Hash::check($this->confirmPassword, auth()->user()->password)) {
+            $this->addError('confirmPassword', 'Password konfirmasi yang Anda masukkan salah.');
+            $this->toastError('Konfirmasi Password Salah. Pembatalan Kenaikan Kelas Dibatalkan.');
+            return;
         }
+
+        $targetBatch = MadrasahPromotionBatch::where('status', 'sukses')
+            ->orderBy('executed_at', 'desc')
+            ->first();
+
+        if (!$targetBatch) {
+            $this->toastError('Tidak ada riwayat batch kenaikan kelas yang dapat dibatalkan.');
+            return;
+        }
+
+        DB::transaction(function () use ($targetBatch) {
+            $items = MadrasahPromotionBatchItem::where('batch_id', $targetBatch->id)->get();
+
+            foreach ($items as $item) {
+                // 1. Deactivate newly created enrollment
+                if ($item->new_enrollment_id) {
+                    MadrasahEnrollment::where('id', $item->new_enrollment_id)->update(['is_active' => false]);
+                }
+
+                // 2. Reactivate previous enrollment
+                if ($item->previous_enrollment_id) {
+                    MadrasahEnrollment::where('id', $item->previous_enrollment_id)->update(['is_active' => true]);
+                }
+
+                // 3. Revert PersonRole status if changed to alumni
+                if ($item->previous_person_role_status) {
+                    PersonRole::where('person_id', $item->person_id)
+                        ->where('role_type', 'santri')
+                        ->update([
+                            'enrollment_status' => $item->previous_person_role_status,
+                            'is_active'         => true,
+                            'left_at'           => null,
+                        ]);
+                }
+            }
+
+            // Mark Batch as 'di_undo'
+            $targetBatch->update([
+                'status'         => 'di_undo',
+                'undone_at'      => now(),
+                'undone_by'      => auth()->id(),
+                'undone_by_name' => auth()->user()->name ?? 'Admin',
+            ]);
+        });
 
         $this->toastSuccess('Kenaikan kelas massal BERHASIL DIBATALKAN. Seluruh data santri dikembalikan ke posisi semula.');
         $this->lastPromotionBatch   = null;
         $this->showUndoConfirmModal = false;
-        session()->forget('last_promotion_batch');
+        $this->confirmPassword      = '';
 
         $this->loadPromotionData();
     }

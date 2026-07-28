@@ -39,8 +39,9 @@ class DashboardTagihan extends Component
             'syahriah_madrasah' => 'Syahriah Madrasah',
             'kebersihan'        => 'Uang Kebersihan',
             'kitab'             => 'Biaya Kitab / Buku',
-            'pendaftaran'       => 'Biaya Pendaftaran Santri Baru',
+            'pendaftaran'       => 'Biaya Pendaftaran',
             'event_iuran'       => 'Iuran Acara / Event',
+            'insidental'        => 'Iuran Acara / Event',
         ];
 
         return $labels[$type] ?? ucwords(str_replace('_', ' ', $type));
@@ -56,6 +57,107 @@ class DashboardTagihan extends Component
         ];
 
         return $months[$month] ?? '';
+    }
+
+    public function getBillPeriodLabel(Bill $bill): string
+    {
+        $interval = $bill->config?->interval ?? 'monthly';
+
+        if (in_array($interval, ['semester', '2x_yearly'])) {
+            $s = $bill->period_sub ?? ($bill->period_month && $bill->period_month <= 6 ? 1 : 2);
+            return "Semester {$s} ({$bill->period_year})";
+        }
+
+        if (in_array($interval, ['caturwulan', '3x_yearly'])) {
+            $cw = $bill->period_sub ?? ($bill->period_month ? ($bill->period_month <= 4 ? 1 : ($bill->period_month <= 8 ? 2 : 3)) : 1);
+            return "Caturwulan {$cw} ({$bill->period_year})";
+        }
+
+        if (in_array($interval, ['triwulan', '4x_yearly'])) {
+            $tw = $bill->period_sub ?? ($bill->period_month ? (int)ceil($bill->period_month / 3) : 1);
+            return "Triwulan {$tw} ({$bill->period_year})";
+        }
+
+        if (in_array($interval, ['bimulanan', '6x_yearly'])) {
+            $b = $bill->period_sub ?? ($bill->period_month ? (int)ceil($bill->period_month / 2) : 1);
+            return "Dwibulanan {$b} ({$bill->period_year})";
+        }
+
+        if (in_array($interval, ['once', 'insidental', 'event', 'sekali', 'yearly'])) {
+            return "Tahun {$bill->period_year}";
+        }
+
+        $monthName = $this->getMonthName($bill->period_month);
+        return trim("{$monthName} {$bill->period_year}");
+    }
+
+    public function classifyBillPeriodStatus(Bill $bill, int $currentMonth, int $currentYear): string
+    {
+        // 1. Safety net: If due_date exists and due_date >= today (and unpaid), it cannot be past yet!
+        if ($bill->due_date && $bill->due_date->gte(now()->startOfDay()) && $bill->status !== 'paid') {
+            $bMonth = $bill->period_month ?? (int)$bill->due_date->format('m');
+            $bYear  = $bill->period_year ?? (int)$bill->due_date->format('Y');
+            if ($bYear > $currentYear || ($bYear === $currentYear && $bMonth > $currentMonth)) {
+                return 'future';
+            }
+            return 'current';
+        }
+
+        $interval = $bill->config?->interval ?? 'monthly';
+        $bYear    = $bill->period_year ?? (int)($bill->due_date ? $bill->due_date->format('Y') : $bill->created_at->format('Y'));
+        $bMonth   = $bill->period_month ?? (int)($bill->due_date ? $bill->due_date->format('m') : $bill->created_at->format('m'));
+        $sub      = $bill->period_sub;
+
+        // Determine period start month & end month based on interval
+        if (in_array($interval, ['semester', '2x_yearly'])) {
+            $s = $sub ?? ($bMonth <= 6 ? 1 : 2);
+            $startM = ($s - 1) * 6 + 1;
+            $endM   = $s * 6;
+        } elseif (in_array($interval, ['caturwulan', '3x_yearly'])) {
+            $cw = $sub ?? ($bMonth <= 4 ? 1 : ($bMonth <= 8 ? 2 : 3));
+            $startM = ($cw - 1) * 4 + 1;
+            $endM   = $cw * 4;
+        } elseif (in_array($interval, ['triwulan', '4x_yearly'])) {
+            $tw = $sub ?? (int)ceil($bMonth / 3);
+            $startM = ($tw - 1) * 3 + 1;
+            $endM   = $tw * 3;
+        } elseif (in_array($interval, ['bimulanan', '6x_yearly'])) {
+            $b = $sub ?? ($bMonth ? (int)ceil($bMonth / 2) : 1);
+            $startM = ($b - 1) * 2 + 1;
+            $endM   = $b * 2;
+        } elseif (in_array($interval, ['yearly'])) {
+            $startM = 1;
+            $endM   = 12;
+        } else {
+            // monthly
+            $startM = $bMonth;
+            $endM   = $bMonth;
+        }
+
+        if ($bYear < $currentYear) {
+            return 'past';
+        } elseif ($bYear > $currentYear) {
+            return 'future';
+        } else {
+            if ($currentMonth > $endM) {
+                return 'past';
+            } elseif ($currentMonth < $startM) {
+                return 'future';
+            } else {
+                return 'current';
+            }
+        }
+    }
+
+    public function getBillDisplayName(Bill $bill): string
+    {
+        if (!empty($bill->notes)) {
+            return $bill->notes;
+        }
+        if ($bill->config && !empty($bill->config->label)) {
+            return $bill->config->label;
+        }
+        return $this->getBillTypeLabel($bill->bill_type);
     }
 
     public function render()
@@ -101,7 +203,8 @@ class DashboardTagihan extends Component
         $currentMonth = (int) $now->format('m');
         $currentYear  = (int) $now->format('Y');
 
-        $allBills = Bill::where('person_id', $this->personId)
+        $allBills = Bill::with('config')
+            ->where('person_id', $this->personId)
             ->whereNotIn('status', ['refund_requested', 'refunded', 'cancelled'])
             ->get();
 
@@ -118,36 +221,42 @@ class DashboardTagihan extends Component
             'event_iuran'       => 9,
         ];
 
-        // Grouping Logika 3 Blok
+        // Grouping Logika Blok
         $currentMonthBills = collect();
         $pastUnpaidBills   = collect();
+        $eventBills        = collect();
         $futureBills       = collect();
         $pastPaidBills     = collect();
 
         foreach ($allBills as $bill) {
-            $bMonth = $bill->period_month ?? ($bill->due_date ? (int)$bill->due_date->format('m') : (int)$bill->created_at->format('m'));
-            $bYear  = $bill->period_year ?? ($bill->due_date ? (int)$bill->due_date->format('Y') : (int)$bill->created_at->format('Y'));
+            $interval = $bill->config?->interval;
+            $isEvent = in_array($interval, ['once', 'insidental', 'event', 'sekali']) || in_array($bill->bill_type, ['kitab', 'pendaftaran', 'event_iuran']);
 
-            $isPast   = ($bYear < $currentYear) || ($bYear === $currentYear && $bMonth < $currentMonth);
-            $isCurrent= ($bYear === $currentYear && $bMonth === $currentMonth);
-            $isFuture = ($bYear > $currentYear) || ($bYear === $currentYear && $bMonth > $currentMonth);
+            if ($isEvent) {
+                if ($bill->status === 'paid') {
+                    $pastPaidBills->push($bill);
+                } else {
+                    $eventBills->push($bill);
+                }
+                continue;
+            }
 
-            if ($isPast) {
+            $status = $this->classifyBillPeriodStatus($bill, $currentMonth, $currentYear);
+
+            if ($status === 'past') {
                 if ($bill->status === 'paid') {
                     $pastPaidBills->push($bill);
                 } else {
                     $pastUnpaidBills->push($bill);
                 }
-            } elseif ($isCurrent) {
+            } elseif ($status === 'current') {
                 $currentMonthBills->push($bill);
-            } elseif ($isFuture) {
+            } elseif ($status === 'future') {
                 $futureBills->push($bill);
             }
         }
 
-        // PENGURUTAN TERSTRUKTUR & RAPI (TIDAK MELOMPAT-LOMPAT):
-        
-        // 1. Tagihan Bulan Ini: Utamakan yang BELUM DIBAYAR/DICICIL, lalu urutkan jenis tagihan (SPP -> Majek -> Kas)
+        // PENGURUTAN TERSTRUKTUR & RAPI:
         $currentMonthBills = $currentMonthBills->sort(function($a, $b) use ($typePriority) {
             $statusRankA = ($a->status === 'paid') ? 1 : 0;
             $statusRankB = ($b->status === 'paid') ? 1 : 0;
@@ -160,7 +269,10 @@ class DashboardTagihan extends Component
             return $a->created_at <=> $b->created_at;
         })->values();
 
-        // 2. Tunggakan Lalu: Urutkan Kronologis Waktu TERLAMA (Jan 2025 -> Feb 2025) baru prioritas jenis tagihan
+        $eventBills = $eventBills->sort(function($a, $b) {
+            return $a->created_at <=> $b->created_at;
+        })->values();
+
         $pastUnpaidBills = $pastUnpaidBills->sort(function($a, $b) use ($typePriority) {
             $periodA = ($a->period_year ?? 2000) * 100 + ($a->period_month ?? 1);
             $periodB = ($b->period_year ?? 2000) * 100 + ($b->period_month ?? 1);
@@ -171,7 +283,6 @@ class DashboardTagihan extends Component
             return $prioA <=> $prioB;
         })->values();
 
-        // 3. Tagihan Mendatang: Urutkan Periode Terdekat (Aug 2026 -> Sep 2026) lalu jenis tagihan
         $futureBills = $futureBills->sort(function($a, $b) use ($typePriority) {
             $periodA = ($a->period_year ?? 2099) * 100 + ($a->period_month ?? 1);
             $periodB = ($b->period_year ?? 2099) * 100 + ($b->period_month ?? 1);
@@ -183,10 +294,11 @@ class DashboardTagihan extends Component
         })->values();
 
         // Kalkulasi Total
+        $totalEventUnpaid              = $eventBills->whereIn('status', ['unpaid', 'partial'])->sum(fn($b) => max(0, $b->amount - $b->amount_paid));
         $this->totalCurrentMonthUnpaid = $currentMonthBills->whereIn('status', ['unpaid', 'partial'])->sum(fn($b) => max(0, $b->amount - $b->amount_paid));
         $this->totalPastTunggakan      = $pastUnpaidBills->sum(fn($b) => max(0, $b->amount - $b->amount_paid));
         $this->totalTunggakan          = $this->totalPastTunggakan;
-        $this->totalHarusDibayarNow    = $this->totalCurrentMonthUnpaid + $this->totalPastTunggakan;
+        $this->totalHarusDibayarNow    = $this->totalCurrentMonthUnpaid + $this->totalPastTunggakan + $totalEventUnpaid;
 
         $this->totalFuturePaid         = $futureBills->where('status', 'paid')->sum('amount');
         $this->totalAllPaid            = $allBills->sum('amount_paid');
@@ -198,9 +310,10 @@ class DashboardTagihan extends Component
         $simulasiWaUrl = '';
 
         if ($simulasiSisaUang > 0) {
-            // Urutkan tagihan belum lunas dari past -> current -> future
+            // Urutkan tagihan belum lunas dari past -> event -> current -> future
             $unpaidQueue = collect()
                 ->merge($pastUnpaidBills)
+                ->merge($eventBills->whereIn('status', ['unpaid', 'partial']))
                 ->merge($currentMonthBills->whereIn('status', ['unpaid', 'partial']))
                 ->merge($futureBills->whereIn('status', ['unpaid', 'partial']));
 
@@ -211,7 +324,7 @@ class DashboardTagihan extends Component
                 if ($kekurangan <= 0) continue;
 
                 $bMonthName = $this->getMonthName($bill->period_month);
-                $label = ($bill->notes ?? $this->getBillTypeLabel($bill->bill_type)) . ($bMonthName ? " ($bMonthName {$bill->period_year})" : "");
+                $label = $this->getBillDisplayName($bill) . ($bMonthName ? " ($bMonthName {$bill->period_year})" : "");
 
                 if ($simulasiSisaUang >= $kekurangan) {
                     $simulasiHasil[] = [
@@ -276,6 +389,7 @@ class DashboardTagihan extends Component
             'currentYear'             => $currentYear,
             'currentMonthName'        => $this->getMonthName($currentMonth),
             'currentMonthBills'       => $currentMonthBills,
+            'eventBills'              => $eventBills,
             'pastUnpaidBills'         => $pastUnpaidBills,
             'futureBills'             => $futureBills,
             'pastPaidBills'           => $pastPaidBills,

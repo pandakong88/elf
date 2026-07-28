@@ -21,6 +21,9 @@ class BillingConfiguration extends Model
         'dormitory_id',
         'effective_from',
         'interval',
+        'due_day_type',
+        'due_day_value',
+        'due_date_specific',
         'manager_role',
         'manager_ids',
         'target_type',
@@ -33,10 +36,12 @@ class BillingConfiguration extends Model
     protected $casts = [
         'amount' => 'decimal:2',
         'effective_from' => 'date',
+        'due_date_specific' => 'date',
         'is_active' => 'boolean',
         'target_filters' => 'array',
         'can_be_installment' => 'boolean',
         'manager_ids' => 'array',
+        'due_day_value' => 'integer',
     ];
 
     public function dormitory(): BelongsTo

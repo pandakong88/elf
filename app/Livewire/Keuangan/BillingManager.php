@@ -31,6 +31,7 @@ class BillingManager extends Component
     public ?string $genConfigId = null;
     public int $genMonth;
     public int $genYear;
+    public int $genSubPeriod = 1;
 
     // Tab: Dispensasi / Potongan (Exceptions)
     public bool $showMembersModal = false;
@@ -46,6 +47,23 @@ class BillingManager extends Component
     public ?string $selectedParentBillId = null;
     public bool $showInstallmentDetailsModal = false;
     public string $instFilterSearch = '';
+
+    // Dedicated View Halaman Detail Riwayat Penerbitan (Option 2)
+    public ?string $historyDetailConfigId = null;
+    public ?int $historyDetailMonth = null;
+    public ?int $historyDetailYear = null;
+    public ?int $historyDetailSub = null;
+    public string $historyDetailSearch = '';
+    public string $historyDetailStatusFilter = '';
+
+    // Modal Konfirmasi Hapus Kustom (Batch & Individual)
+    public bool $showDeleteConfirmModal = false;
+    public ?string $deleteType = null; // 'batch' | 'individual'
+    public ?string $deleteBillId = null;
+    public ?string $deleteConfigId = null;
+    public ?int $deletePeriodMonth = null;
+    public ?int $deletePeriodYear = null;
+    public array $deleteConfirmData = [];
 
     // Tab: Kasir Pembayaran
     public string  $searchQuery     = '';
@@ -272,6 +290,17 @@ class BillingManager extends Component
     public string $payLogMethod = '';
     public string $payLogDate   = '';
 
+    // Filters for exceptions (Dispensasi & Keringanan)
+    public string $exceptionSearch     = '';
+    public string $exceptionTypeFilter = '';
+
+    public function updatingActiveTab(): void
+    {
+        $this->resetPage();
+        $this->resetPage('payLogPage');
+        $this->resetPage('historyPage');
+    }
+
     public function updatingPayLogSearch(): void { $this->resetPage('payLogPage'); }
     public function updatingPayLogMethod(): void { $this->resetPage('payLogPage'); }
     public function updatingPayLogDate(): void { $this->resetPage('payLogPage'); }
@@ -291,13 +320,266 @@ class BillingManager extends Component
             $this->activeTab = (string) request()->query('activeTab');
         }
 
-        $this->genMonth = (int) now()->format('m');
+        $this->genMonth = 1;
         $this->genYear = (int) now()->format('Y');
 
         $this->newConfigEffectiveFrom = now()->toDateString();
         $this->cashierYear = (int) now()->format('Y');
 
         $this->loadKitabPrices();
+    }
+
+    public string $genMode = 'single'; // 'single' or 'full_year'
+    public bool   $showGeneratePreviewModal = false;
+    public array  $previewGenStats = [];
+
+    public bool   $showDeleteUnpaidModal = false;
+    public ?string $configIdToDelete = null;
+    public array  $deleteUnpaidStats = [];
+
+    // =====================================================================
+    // Kasir Wizard: "Buka Tagihan Di Muka / Susulan"
+    // =====================================================================
+    public bool    $showKasirAddBillModal  = false;
+    public int     $kasirWizardStep        = 1;           // 1 = pilih tarif, 2 = pilih periode
+    public ?string $kasirAddConfigId       = null;
+    public bool    $kasirSantriIsInTarget  = true;        // warning flag
+    public array   $kasirAvailablePeriods  = [];          // computed list
+    public array   $kasirSelectedPeriods   = [];          // checked by kasir
+
+    public function openKasirAddBillModal(): void
+    {
+        if (!$this->selectedSantriId) {
+            $this->toastError('Pilih santri terlebih dahulu.');
+            return;
+        }
+        $this->kasirWizardStep       = 1;
+        $this->kasirAddConfigId      = null;
+        $this->kasirSantriIsInTarget = true;
+        $this->kasirAvailablePeriods = [];
+        $this->kasirSelectedPeriods  = [];
+        $this->showKasirAddBillModal = true;
+    }
+
+    // Called by Livewire when kasirAddConfigId changes (wire:model.live)
+    public function updatedKasirAddConfigId(): void
+    {
+        $this->kasirAvailablePeriods = [];
+        $this->kasirSelectedPeriods  = [];
+        $this->kasirSantriIsInTarget = true;
+
+        if (!$this->kasirAddConfigId || !$this->selectedSantriId) return;
+
+        $config = BillingConfiguration::find($this->kasirAddConfigId);
+        if (!$config) return;
+
+        $billingService = new BillingService();
+        $this->kasirSantriIsInTarget = $billingService->isSantriInTargetForConfig($config, $this->selectedSantriId);
+        $this->kasirAvailablePeriods = $billingService->getAvailablePeriodsForSantri($config, $this->selectedSantriId);
+    }
+
+    public function kasirGoToStep2(): void
+    {
+        if (!$this->kasirAddConfigId) {
+            $this->toastError('Pilih tarif terlebih dahulu.');
+            return;
+        }
+        $this->updatedKasirAddConfigId(); // ensure periods are fresh
+        $this->kasirWizardStep = 2;
+    }
+
+    public function kasirGoBackToStep1(): void
+    {
+        $this->kasirWizardStep      = 1;
+        $this->kasirSelectedPeriods = [];
+    }
+
+    public function toggleKasirPeriod(int $index): void
+    {
+        $period = $this->kasirAvailablePeriods[$index] ?? null;
+        if (!$period || $period['exists']) return; // ignore already-billed
+
+        if (in_array($index, $this->kasirSelectedPeriods)) {
+            $this->kasirSelectedPeriods = array_values(array_filter(
+                $this->kasirSelectedPeriods,
+                fn($i) => $i !== $index
+            ));
+        } else {
+            $this->kasirSelectedPeriods[] = $index;
+        }
+    }
+
+    public function generateFutureBillForSelectedSantri(BillingService $billingService): void
+    {
+        if (!$this->selectedSantriId || !$this->kasirAddConfigId) {
+            $this->toastError('Data tidak lengkap.');
+            return;
+        }
+        if (empty($this->kasirSelectedPeriods)) {
+            $this->toastError('Pilih minimal 1 periode.');
+            return;
+        }
+
+        $config        = BillingConfiguration::findOrFail($this->kasirAddConfigId);
+        $totalGenerated = 0;
+        $totalSkipped   = 0;
+
+        foreach ($this->kasirSelectedPeriods as $index) {
+            $period = $this->kasirAvailablePeriods[$index] ?? null;
+            if (!$period || $period['exists']) continue; // double-safety
+
+            $res = $billingService->generateBillsFromConfig(
+                $this->kasirAddConfigId,
+                (int) $period['month'],
+                (int) $period['year'],
+                auth()->id() ?: User::first()?->id,
+                null,
+                $this->selectedSantriId   // force only this santri
+            );
+            $totalGenerated += $res['generated'];
+            $totalSkipped   += $res['skipped'];
+        }
+
+        if ($totalGenerated > 0) {
+            $msg = "{$totalGenerated} tagihan '{$config->label}' berhasil dibuka untuk santri ini!";
+            session()->flash('message', $msg);
+            $this->toastSuccess($msg);
+        } else {
+            $msg = 'Semua periode yang dipilih sudah ada tagihannya.';
+            session()->flash('error', $msg);
+            $this->toastError($msg);
+        }
+
+        $this->showKasirAddBillModal = false;
+        $this->kasirSelectedPeriods  = [];
+        $this->kasirAvailablePeriods = [];
+        $this->selectSantri($this->selectedSantriId);
+    }
+
+    public function openDeleteUnpaidModal(string $configId): void
+    {
+        $config = BillingConfiguration::findOrFail($configId);
+
+        $unpaidCount = Bill::where('billing_config_id', $configId)
+            ->whereIn('status', ['unpaid', 'partial'])
+            ->where('amount_paid', 0)
+            ->count();
+
+        $paidCount = Bill::where('billing_config_id', $configId)
+            ->where(function($q) {
+                $q->where('amount_paid', '>', 0)
+                  ->orWhere('status', 'paid');
+            })
+            ->count();
+
+        $this->configIdToDelete = $configId;
+        $this->deleteUnpaidStats = [
+            'config_label' => $config->label,
+            'unpaid_count' => $unpaidCount,
+            'paid_count' => $paidCount,
+            'total_count' => $unpaidCount + $paidCount,
+        ];
+
+        $this->showDeleteUnpaidModal = true;
+    }
+
+    public function confirmDeleteUnpaidBills(): void
+    {
+        if ($this->configIdToDelete) {
+            $this->deleteAllUnpaidBillsForConfig($this->configIdToDelete);
+        }
+        $this->showDeleteUnpaidModal = false;
+        $this->configIdToDelete = null;
+    }
+
+    public function openGeneratePreviewModal(): void
+    {
+        if (!$this->genMonth) {
+            $this->genMonth = 1;
+        }
+
+        $this->validate([
+            'genConfigId' => 'required',
+            'genMonth'    => 'required|integer|min:1|max:12',
+            'genYear'     => 'required|integer|min:2020|max:2030',
+        ]);
+
+        $config = BillingConfiguration::findOrFail($this->genConfigId);
+        $billingService = new BillingService();
+        $targetStudents = $billingService->getTargetPersonsForConfig($config);
+        $studentCount = $targetStudents->count();
+
+        $periodsList = [];
+        if (in_array($config->interval, ['once', 'insidental', 'event', 'sekali'])) {
+            $periodsList[] = [
+                'label' => "Insidental ({$this->genYear})",
+                'month' => $config->effective_from ? (int)$config->effective_from->format('m') : 1,
+            ];
+        } elseif ($this->genMode === 'full_year') {
+            if (in_array($config->interval, ['semester', '2x_yearly'])) {
+                $periodsList[] = ['label' => 'Semester 1 (Jan–Jun)', 'month' => 1];
+                $periodsList[] = ['label' => 'Semester 2 (Jul–Des)', 'month' => 7];
+            } elseif (in_array($config->interval, ['caturwulan', '3x_yearly'])) {
+                $periodsList[] = ['label' => 'Caturwulan 1 (Jan–Apr)', 'month' => 1];
+                $periodsList[] = ['label' => 'Caturwulan 2 (Mei–Agt)', 'month' => 5];
+                $periodsList[] = ['label' => 'Caturwulan 3 (Sep–Des)', 'month' => 9];
+            } elseif (in_array($config->interval, ['triwulan', '4x_yearly'])) {
+                $periodsList[] = ['label' => 'Triwulan 1 (Jan–Mar)', 'month' => 1];
+                $periodsList[] = ['label' => 'Triwulan 2 (Apr–Jun)', 'month' => 4];
+                $periodsList[] = ['label' => 'Triwulan 3 (Jul–Sep)', 'month' => 7];
+                $periodsList[] = ['label' => 'Triwulan 4 (Okt–Des)', 'month' => 10];
+            } elseif (in_array($config->interval, ['bimulanan', '6x_yearly'])) {
+                $periodsList[] = ['label' => 'Dwibulanan 1 (Jan–Feb)', 'month' => 1];
+                $periodsList[] = ['label' => 'Dwibulanan 2 (Mar–Apr)', 'month' => 3];
+                $periodsList[] = ['label' => 'Dwibulanan 3 (Mei–Jun)', 'month' => 5];
+                $periodsList[] = ['label' => 'Dwibulanan 4 (Jul–Agt)', 'month' => 7];
+                $periodsList[] = ['label' => 'Dwibulanan 5 (Sep–Okt)', 'month' => 9];
+                $periodsList[] = ['label' => 'Dwibulanan 6 (Nov–Des)', 'month' => 11];
+            } else {
+                $startMonth = (int)$this->genMonth;
+                $startYear = (int)$this->genYear;
+                for ($i = 0; $i < 12; $i++) {
+                    $m = (($startMonth - 1 + $i) % 12) + 1;
+                    $y = $startYear + (int)floor(($startMonth - 1 + $i) / 12);
+                    $monthName = date('F', mktime(0, 0, 0, $m, 1));
+                    $periodsList[] = ['label' => "Bulan {$m} ({$monthName} {$y})", 'month' => $m];
+                }
+            }
+        } else {
+            $m = (int)$this->genMonth;
+            $label = $this->formatPeriodLabel($config->interval, $m, $this->genYear);
+            $periodsList[] = ['label' => $label, 'month' => $m];
+        }
+
+        $periodCount = count($periodsList);
+        $totalBillsToCreate = $studentCount * $periodCount;
+        $totalAmount = (float)$config->amount * $totalBillsToCreate;
+
+        $this->previewGenStats = [
+            'config_label'  => $config->label,
+            'config_amount' => (float)$config->amount,
+            'interval'      => $config->interval,
+            'target_type'   => $config->target_type,
+            'student_count' => $studentCount,
+            'period_count'  => $periodCount,
+            'periods'       => $periodsList,
+            'total_bills'   => $totalBillsToCreate,
+            'total_amount'  => $totalAmount,
+            'gen_year'      => $this->genYear,
+            'gen_mode'      => $this->genMode,
+        ];
+
+        $this->showGeneratePreviewModal = true;
+    }
+
+    public function confirmGenerateBills(BillingService $billingService): void
+    {
+        if ($this->genMode === 'full_year') {
+            $this->generateFullAcademicYearFromConfig($billingService);
+        } else {
+            $this->generateDynamicBills($billingService);
+        }
+        $this->showGeneratePreviewModal = false;
     }
 
     public function generateDynamicBills(BillingService $billingService): void
@@ -309,21 +591,41 @@ class BillingManager extends Component
         ]);
 
         $config = BillingConfiguration::findOrFail($this->genConfigId);
-        $periodMonth = $this->genMonth;
-        if ($config->interval === 'semester' && ($periodMonth < 1 || $periodMonth > 2)) {
-            $periodMonth = 1;
-        } elseif (in_array($config->interval, ['once', 'insidental', 'event', 'sekali'])) {
-            $periodMonth = 1;
+        $isEventInterval = in_array($config->interval, ['once', 'insidental', 'event', 'sekali']);
+
+        $periodMonth = (int) $this->genMonth;
+        $periodSub = null;
+
+        if (in_array($config->interval, ['semester', '2x_yearly'])) {
+            $periodSub = ($periodMonth >= 1 && $periodMonth <= 2) ? $periodMonth : 1;
+            $periodMonth = ($periodSub - 1) * 6 + 1; // 1 or 7
+        } elseif (in_array($config->interval, ['caturwulan', '3x_yearly'])) {
+            $periodSub = ($periodMonth >= 1 && $periodMonth <= 3) ? $periodMonth : 1;
+            $periodMonth = ($periodSub - 1) * 4 + 1; // 1, 5, 9
+        } elseif (in_array($config->interval, ['triwulan', '4x_yearly'])) {
+            $periodSub = ($periodMonth >= 1 && $periodMonth <= 4) ? $periodMonth : 1;
+            $periodMonth = ($periodSub - 1) * 3 + 1; // 1, 4, 7, 10
+        } elseif (in_array($config->interval, ['bimulanan', '6x_yearly'])) {
+            $periodSub = ($periodMonth >= 1 && $periodMonth <= 6) ? $periodMonth : 1;
+            $periodMonth = ($periodSub - 1) * 2 + 1; // 1, 3, 5, 7, 9, 11
+        } elseif ($isEventInterval) {
+            $periodMonth = $config->effective_from ? (int)$config->effective_from->format('m') : 1;
         }
 
         $result = $billingService->generateBillsFromConfig(
             $this->genConfigId,
             $periodMonth,
             $this->genYear,
-            auth()->id() ?: User::first()?->id
+            auth()->id() ?: User::first()?->id,
+            $periodSub
         );
 
-        session()->flash('message', "Tagihan berhasil dibuat: {$result['generated']} tagihan baru dibuat, {$result['skipped']} tagihan dilewati (sudah ada).");
+        if ($isEventInterval) {
+            session()->flash('message', "Tagihan Insidental '{$config->label}' untuk tahun {$this->genYear} berhasil diterbitkan: {$result['generated']} tagihan baru dibuat, {$result['skipped']} tagihan dilewati (sudah ada).");
+        } else {
+            $subMsg = $subPeriod ? " (Gelombang {$subPeriod})" : "";
+            session()->flash('message', "Tagihan{$subMsg} berhasil dibuat: {$result['generated']} tagihan baru dibuat, {$result['skipped']} tagihan dilewati (sudah ada).");
+        }
     }
 
     public function generateFullAcademicYearFromConfig(BillingService $billingService): void
@@ -338,49 +640,61 @@ class BillingManager extends Component
         $totalSkipped = 0;
 
         if ($config->interval === 'monthly') {
-            // Generate 12 months starting from July of genYear to June of genYear + 1
-            $months = [
-                ['m' => 7, 'y' => $this->genYear],
-                ['m' => 8, 'y' => $this->genYear],
-                ['m' => 9, 'y' => $this->genYear],
-                ['m' => 10, 'y' => $this->genYear],
-                ['m' => 11, 'y' => $this->genYear],
-                ['m' => 12, 'y' => $this->genYear],
-                ['m' => 1, 'y' => $this->genYear + 1],
-                ['m' => 2, 'y' => $this->genYear + 1],
-                ['m' => 3, 'y' => $this->genYear + 1],
-                ['m' => 4, 'y' => $this->genYear + 1],
-                ['m' => 5, 'y' => $this->genYear + 1],
-                ['m' => 6, 'y' => $this->genYear + 1],
-            ];
+            $startMonth = (int)$this->genMonth;
+            $startYear = (int)$this->genYear;
 
-            foreach ($months as $p) {
-                $res = $billingService->generateBillsFromConfig($config->id, $p['m'], $p['y'], auth()->id() ?: User::first()?->id);
+            for ($i = 0; $i < 12; $i++) {
+                $m = (($startMonth - 1 + $i) % 12) + 1;
+                $y = $startYear + (int)floor(($startMonth - 1 + $i) / 12);
+
+                $res = $billingService->generateBillsFromConfig($config->id, $m, $y, auth()->id() ?: User::first()?->id);
                 $totalGenerated += $res['generated'];
                 $totalSkipped += $res['skipped'];
             }
 
-            session()->flash('message', "Tagihan 1 Tahun Ajaran ({$this->genYear}/" . ($this->genYear + 1) . ") untuk iuran '{$config->label}' berhasil diterbitkan: {$totalGenerated} tagihan baru, {$totalSkipped} tagihan dilewati.");
+            $endMonth = (($startMonth - 1 + 11) % 12) + 1;
+            $endYear = $startYear + (int)floor(($startMonth - 1 + 11) / 12);
 
-        } elseif ($config->interval === 'semester') {
-            // Generate 2 semesters (Semester 1 and 2 of genYear)
-            $semesters = [
-                ['m' => 1, 'y' => $this->genYear],
-                ['m' => 2, 'y' => $this->genYear],
-            ];
+            $startMonthName = date('F', mktime(0, 0, 0, $startMonth, 1));
+            $endMonthName = date('F', mktime(0, 0, 0, $endMonth, 1));
 
-            foreach ($semesters as $p) {
-                $res = $billingService->generateBillsFromConfig($config->id, $p['m'], $p['y'], auth()->id() ?: User::first()?->id);
-                $totalGenerated += $res['generated'];
-                $totalSkipped += $res['skipped'];
-            }
-
-            session()->flash('message', "Tagihan 2 Semester untuk iuran '{$config->label}' di tahun {$this->genYear} berhasil diterbitkan: {$totalGenerated} tagihan baru, {$totalSkipped} tagihan dilewati.");
+            session()->flash('message', "Tagihan 12 Bulan ({$startMonthName} {$startYear} s/d {$endMonthName} {$endYear}) untuk iuran '{$config->label}' berhasil diterbitkan: {$totalGenerated} tagihan baru, {$totalSkipped} tagihan dilewati.");
 
         } else {
-            // interval is once or other, just run once
-            $res = $billingService->generateBillsFromConfig($config->id, $this->genMonth, $this->genYear, auth()->id() ?: User::first()?->id);
-            session()->flash('message', "Tagihan iuran '{$config->label}' untuk periode {$this->genMonth}/{$this->genYear} berhasil diterbitkan: {$res['generated']} tagihan baru, {$res['skipped']} tagihan dilewati.");
+            $periodCount = match($config->interval) {
+                'bimulanan', '6x_yearly'  => 6,
+                'caturwulan', '3x_yearly' => 3,
+                'triwulan', '4x_yearly'   => 4,
+                'semester', '2x_yearly'   => 2,
+                default                   => 1,
+            };
+
+            if ($periodCount > 1) {
+                $startMonth = (int)($this->genMonth ?: 1);
+                $startYear  = (int)($this->genYear ?: date('Y'));
+                $stepMonths = match($config->interval) {
+                    'bimulanan', '6x_yearly'  => 2,
+                    'caturwulan', '3x_yearly' => 4,
+                    'triwulan', '4x_yearly'   => 3,
+                    'semester', '2x_yearly'   => 6,
+                    default                   => 12,
+                };
+
+                for ($p = 1; $p <= $periodCount; $p++) {
+                    $offset = ($p - 1) * $stepMonths;
+                    $monthForCycle = (($startMonth - 1 + $offset) % 12) + 1;
+                    $yearForCycle  = $startYear + (int)floor(($startMonth - 1 + $offset) / 12);
+
+                    $res = $billingService->generateBillsFromConfig($config->id, $monthForCycle, $yearForCycle, auth()->id() ?: User::first()?->id, $p);
+                    $totalGenerated += $res['generated'];
+                    $totalSkipped += $res['skipped'];
+                }
+                $typeName = match($periodCount) { 6 => 'Dwibulanan', 3 => 'Caturwulan', 4 => 'Triwulan', default => 'Semester' };
+                session()->flash('message', "Tagihan {$periodCount} {$typeName} (mulai Bulan {$startMonth}/{$startYear}) untuk iuran '{$config->label}' berhasil diterbitkan: {$totalGenerated} tagihan baru, {$totalSkipped} tagihan dilewati.");
+            } else {
+                $res = $billingService->generateBillsFromConfig($config->id, $this->genMonth, $this->genYear, auth()->id() ?: User::first()?->id);
+                session()->flash('message', "Tagihan iuran '{$config->label}' untuk periode {$this->genMonth}/{$this->genYear} berhasil diterbitkan: {$res['generated']} tagihan baru, {$res['skipped']} tagihan dilewati.");
+            }
         }
     }
 
@@ -437,10 +751,7 @@ class BillingManager extends Component
                 }
             }
 
-            $endM = ($this->genMonth == 1) ? 12 : ($this->genMonth - 1);
-            $endY = ($this->genMonth == 1) ? $this->genYear : ($this->genYear + 1);
-
-            session()->flash('message', "Tagihan 12 Bulan ({$this->genMonth}/{$this->genYear} s/d {$endM}/{$endY}) untuk iuran '{$config->label}' berhasil diterbitkan: {$totalGenerated} tagihan baru, {$totalSkipped} tagihan dilewati.");
+            session()->flash('message', "Tagihan 12 Bulan berurutan untuk iuran '{$config->label}' berhasil diterbitkan: {$totalGenerated} tagihan baru, {$totalSkipped} tagihan dilewati.");
         } else {
             $this->generateFullAcademicYearFromConfig($billingService);
         }
@@ -457,52 +768,393 @@ class BillingManager extends Component
         if (!$isCentral && $user) {
             $userRoles = $user->roles->pluck('name')->toArray();
             $userId = $user->id;
-            
+
             $hasAccess = false;
-            if (empty($config->manager_role) && empty($config->manager_ids)) {
+            if (is_null($config->manager_role) && is_null($config->manager_ids)) {
                 $hasAccess = true;
-            }
-            if (!empty($config->manager_ids) && in_array($userId, (array)$config->manager_ids)) {
+            } elseif (!is_null($config->manager_ids) && in_array($userId, (array)$config->manager_ids)) {
                 $hasAccess = true;
-            }
-            if (!$hasAccess && $config->manager_role) {
-                $managerRoles = [];
-                $rawRole = $config->getRawOriginal('manager_role');
-                if ($rawRole) {
-                    $decoded = json_decode($rawRole, true);
-                    if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
-                        $managerRoles = $decoded;
-                    } else {
-                        $managerRoles = [$rawRole];
-                    }
-                }
+            } elseif (!is_null($config->manager_role)) {
                 foreach ($userRoles as $role) {
-                    if (in_array($role, $managerRoles)) {
+                    if (str_contains($config->manager_role, $role)) {
                         $hasAccess = true;
                         break;
                     }
                 }
             }
+
             if (!$hasAccess) {
-                session()->flash('error', 'Anda tidak memiliki wewenang untuk mengelola iuran ini.');
+                session()->flash('error', 'Anda tidak memiliki akses untuk menghapus tagihan dari tarif ini.');
                 return;
             }
         }
 
-        // Run deletion of unpaid bills
-        $deletedCount = DB::transaction(function () use ($configId, $month, $year) {
-            $query = Bill::where('billing_config_id', $configId)
-                ->where('period_month', $month)
-                ->where('period_year', $year)
-                ->where('status', 'unpaid')
-                ->where('amount_paid', 0.00);
-            
-            $count = $query->count();
-            $query->delete();
-            return $count;
-        });
+        $bills = Bill::where('billing_config_id', $configId)
+            ->where('period_month', $month)
+            ->where('period_year', $year)
+            ->get();
 
-        session()->flash('message', "Berhasil menghapus {$deletedCount} tagihan berstatus belum dibayar (unpaid) untuk iuran '{$config->label}' periode {$month}/{$year}.");
+        $deletedCount = 0;
+        $skippedPaid = 0;
+
+        foreach ($bills as $bill) {
+            if ($bill->amount_paid > 0 || $bill->status === 'paid' || $bill->status === 'partial') {
+                $skippedPaid++;
+                continue;
+            }
+
+            $bill->delete();
+            $deletedCount++;
+        }
+
+        if ($skippedPaid > 0) {
+            session()->flash('message', "Berhasil menghapus {$deletedCount} tagihan belum dibayar. {$skippedPaid} tagihan dilewati karena sudah ada pembayaran.");
+        } else {
+            session()->flash('message', "Berhasil menghapus seluruh {$deletedCount} tagihan untuk periode {$month}/{$year}.");
+        }
+    }
+
+    public function deleteAllUnpaidBillsForConfig(string $configId): void
+    {
+        $config = BillingConfiguration::findOrFail($configId);
+
+        // Security check for unit manager delegation
+        $user = auth()->user();
+        $isCentral = $user && ($user->hasRole('super-admin') || $user->hasRole('manajemen') || $user->hasRole('bendahara-pondok') || $user->hasRole('bendahara-pusat'));
+        
+        if (!$isCentral && $user) {
+            $userRoles = $user->roles->pluck('name')->toArray();
+            $userId = $user->id;
+
+            $hasAccess = false;
+            if (is_null($config->manager_role) && is_null($config->manager_ids)) {
+                $hasAccess = true;
+            } elseif (!is_null($config->manager_ids) && in_array($userId, (array)$config->manager_ids)) {
+                $hasAccess = true;
+            } elseif (!is_null($config->manager_role)) {
+                foreach ($userRoles as $role) {
+                    if (str_contains($config->manager_role, $role)) {
+                        $hasAccess = true;
+                        break;
+                    }
+                }
+            }
+
+            if (!$hasAccess) {
+                session()->flash('error', 'Anda tidak memiliki akses untuk menghapus tagihan dari tarif ini.');
+                return;
+            }
+        }
+
+        $sessionMsg = "Berhasil memproses tindakan.";
+    }
+
+    public function viewHistoryDetail(string $configId, int $month, int $year, ?int $sub = null): void
+    {
+        $this->historyDetailConfigId = $configId;
+        $this->historyDetailMonth = $month;
+        $this->historyDetailYear = $year;
+        $this->historyDetailSub = $sub;
+        $this->historyDetailSearch = '';
+        $this->historyDetailStatusFilter = '';
+        $this->resetPage('historyDetailNavPage');
+    }
+
+    public function closeHistoryDetail(): void
+    {
+        $this->historyDetailConfigId = null;
+        $this->historyDetailMonth = null;
+        $this->historyDetailYear = null;
+        $this->historyDetailSub = null;
+        $this->historyDetailSearch = '';
+        $this->historyDetailStatusFilter = '';
+    }
+
+    public function updatedHistoryDetailSearch(): void
+    {
+        $this->resetPage('historyDetailNavPage');
+    }
+
+    public function updatedHistoryDetailStatusFilter(): void
+    {
+        $this->resetPage('historyDetailNavPage');
+    }
+
+    public function getHistoryDetailStatsProperty(): array
+    {
+        if (!$this->historyDetailConfigId || !$this->historyDetailYear) {
+            return [];
+        }
+
+        $config = BillingConfiguration::find($this->historyDetailConfigId);
+
+        $query = Bill::where('billing_config_id', $this->historyDetailConfigId)
+            ->where('period_year', $this->historyDetailYear);
+
+        if ($this->historyDetailSub) {
+            $query->where('period_sub', $this->historyDetailSub);
+        } else {
+            $query->where('period_month', $this->historyDetailMonth);
+        }
+
+        $bills = $query->get();
+
+        $totalCount = $bills->count();
+        $totalAmount = $bills->sum('amount');
+
+        $paidBills = $bills->where('status', 'paid');
+        $paidCount = $paidBills->count();
+        $paidAmount = $paidBills->sum('amount');
+
+        $partialBills = $bills->where('status', 'partial');
+        $partialCount = $partialBills->count();
+        $partialRemaining = $partialBills->sum(fn($b) => $b->amount - $b->amount_paid);
+
+        $unpaidBills = $bills->where('status', 'unpaid');
+        $unpaidCount = $unpaidBills->count();
+        $unpaidAmount = $unpaidBills->sum('amount');
+
+        $progressPercent = $totalCount > 0 ? round(($paidCount / $totalCount) * 100, 1) : 0;
+
+        return [
+            'config_label'      => $config?->label ?? 'Iuran',
+            'interval'          => $config?->interval ?? 'monthly',
+            'period_label'      => $this->formatPeriodLabel($config?->interval, $this->historyDetailMonth, $this->historyDetailYear, $this->historyDetailSub),
+            'total_count'       => $totalCount,
+            'total_amount'      => $totalAmount,
+            'paid_count'        => $paidCount,
+            'paid_amount'       => $paidAmount,
+            'partial_count'     => $partialCount,
+            'partial_remaining' => $partialRemaining,
+            'unpaid_count'      => $unpaidCount,
+            'unpaid_amount'     => $unpaidAmount,
+            'progress_percent'  => $progressPercent,
+            'created_at'        => $bills->first()?->created_at,
+        ];
+    }
+
+    public function getHistoryDetailBillsProperty()
+    {
+        if (!$this->historyDetailConfigId || !$this->historyDetailYear) {
+            return new \Illuminate\Pagination\LengthAwarePaginator([], 0, 15);
+        }
+
+        $query = Bill::where('billing_config_id', $this->historyDetailConfigId)
+            ->where('period_year', $this->historyDetailYear)
+            ->with(['person', 'person.santriProfile']);
+
+        if ($this->historyDetailSub) {
+            $query->where('period_sub', $this->historyDetailSub);
+        } else {
+            $query->where('period_month', $this->historyDetailMonth);
+        }
+
+        if ($this->historyDetailStatusFilter !== '') {
+            $query->where('status', $this->historyDetailStatusFilter);
+        }
+
+        if (trim($this->historyDetailSearch) !== '') {
+            $search = '%' . trim($this->historyDetailSearch) . '%';
+            $query->whereHas('person', function($q) use ($search) {
+                $q->where('name', 'like', $search)
+                  ->orWhere('nis', 'like', $search);
+            });
+        }
+
+        return $query->orderBy('status', 'desc')->paginate(15, ['*'], 'historyDetailNavPage');
+    }
+
+    public function openBatchDeleteConfirmModal(string $configId, int $month, int $year): void
+    {
+        $config = BillingConfiguration::findOrFail($configId);
+
+        // Security check for unit manager delegation
+        $user = auth()->user();
+        $isCentral = $user && ($user->hasRole('super-admin') || $user->hasRole('manajemen') || $user->hasRole('bendahara-pondok') || $user->hasRole('bendahara-pusat'));
+        
+        if (!$isCentral && $user) {
+            $userRoles = $user->roles->pluck('name')->toArray();
+            $userId = $user->id;
+
+            $hasAccess = false;
+            if (is_null($config->manager_role) && is_null($config->manager_ids)) {
+                $hasAccess = true;
+            } elseif (!is_null($config->manager_ids) && in_array($userId, (array)$config->manager_ids)) {
+                $hasAccess = true;
+            } elseif (!is_null($config->manager_role)) {
+                foreach ($userRoles as $role) {
+                    if (str_contains($config->manager_role, $role)) {
+                        $hasAccess = true;
+                        break;
+                    }
+                }
+            }
+
+            if (!$hasAccess) {
+                session()->flash('error', 'Anda tidak memiliki akses untuk menghapus tagihan dari tarif ini.');
+                return;
+            }
+        }
+
+        $query = Bill::where('billing_config_id', $configId)
+            ->where('period_year', $year)
+            ->where('status', 'unpaid')
+            ->where('amount_paid', 0);
+
+        if (in_array($config->interval, ['semester', '2x_yearly'])) {
+            $semMonths = ($month >= 7 || $month == 2) ? [7, 2] : [1];
+            $query->whereIn('period_month', $semMonths);
+        } else {
+            $query->where('period_month', $month);
+        }
+
+        $unpaidBills = $query->get();
+
+        $this->deleteType = 'batch';
+        $this->deleteConfigId = $configId;
+        $this->deletePeriodMonth = $month;
+        $this->deletePeriodYear = $year;
+
+        $periodLabel = $this->formatPeriodLabel($config->interval, $month, $year);
+
+        $this->deleteConfirmData = [
+            'title'        => 'Hapus Massal Tagihan Belum Dibayar (Unpaid)',
+            'config_label' => $config->label,
+            'period_label' => $periodLabel,
+            'count'        => $unpaidBills->count(),
+            'total_amount' => $unpaidBills->sum('amount'),
+            'warning'      => 'Seluruh tagihan yang belum dibayar pada periode ini akan dihapus permanen. Tagihan yang sudah dibayar/cicilan TIDAK akan terpengaruh.',
+        ];
+
+        $this->showDeleteConfirmModal = true;
+    }
+
+    public function openIndividualDeleteConfirmModal(string $billId): void
+    {
+        $bill = Bill::with(['config', 'person'])->findOrFail($billId);
+
+        if ($bill->status === 'paid' || $bill->amount_paid > 0) {
+            session()->flash('error', 'Tagihan yang sudah dibayar lunas atau dicicil tidak dapat dihapus demi integritas pembukuan.');
+            return;
+        }
+
+        $this->deleteType = 'individual';
+        $this->deleteBillId = $billId;
+
+        $periodLabel = $this->formatPeriodLabel($bill->config?->interval, $bill->period_month, $bill->period_year, $bill->period_sub);
+
+        $this->deleteConfirmData = [
+            'title'        => 'Hapus Tagihan Santri Spesifik',
+            'santri_name'  => $bill->person?->name ?? 'Santri',
+            'nis'          => $bill->person?->nis ?? '-',
+            'config_label' => $bill->config?->label ?? str_replace('_', ' ', $bill->bill_type),
+            'period_label' => $periodLabel,
+            'amount'       => $bill->amount,
+            'warning'      => 'Tagihan untuk santri ini akan dibatalkan & dihapus dari sistem. Tagihan santri lainnya dalam periode ini tetap aman.',
+        ];
+
+        $this->showDeleteConfirmModal = true;
+    }
+
+    public function executeConfirmedDeletion(): void
+    {
+        if ($this->deleteType === 'batch' && $this->deleteConfigId) {
+            $config = BillingConfiguration::find($this->deleteConfigId);
+            $query = Bill::where('billing_config_id', $this->deleteConfigId)
+                ->where('period_year', $this->deletePeriodYear)
+                ->where('status', 'unpaid')
+                ->where('amount_paid', 0);
+
+            if (in_array($config?->interval, ['semester', '2x_yearly'])) {
+                $semMonths = ($this->deletePeriodMonth >= 7 || $this->deletePeriodMonth == 2) ? [7, 2] : [1];
+                $query->whereIn('period_month', $semMonths);
+            } else {
+                $query->where('period_month', $this->deletePeriodMonth);
+            }
+
+            $bills = $query->get();
+
+            $deletedCount = 0;
+            foreach ($bills as $b) {
+                $b->delete();
+                $deletedCount++;
+            }
+
+            session()->flash('message', "Berhasil membatalkan & menghapus massal {$deletedCount} tagihan belum dibayar untuk '{$config?->label}'.");
+
+            if ($this->historyDetailConfigId === $this->deleteConfigId && $this->historyDetailYear === $this->deletePeriodYear) {
+                $this->closeHistoryDetail();
+            }
+        } elseif ($this->deleteType === 'individual' && $this->deleteBillId) {
+            $bill = Bill::with(['config', 'person'])->find($this->deleteBillId);
+            if ($bill && $bill->status === 'unpaid' && $bill->amount_paid == 0) {
+                $santriName = $bill->person?->name;
+                $configLabel = $bill->config?->label;
+                $bill->delete();
+                session()->flash('message', "Berhasil menghapus tagihan '{$configLabel}' milik santri {$santriName}.");
+            }
+        }
+
+        $this->showDeleteConfirmModal = false;
+        $this->deleteType = null;
+        $this->deleteBillId = null;
+        $this->deleteConfigId = null;
+    }
+
+    public function formatPeriodLabel(?string $interval, int $month, int $year, ?int $sub = null): string
+    {
+        if (in_array($interval, ['bimulanan', '6x_yearly'])) {
+            $labels = [
+                1 => 'Dwibulanan 1 (Jan–Feb)',
+                2 => 'Dwibulanan 2 (Mar–Apr)',
+                3 => 'Dwibulanan 3 (Mei–Jun)',
+                4 => 'Dwibulanan 4 (Jul–Agt)',
+                5 => 'Dwibulanan 5 (Sep–Okt)',
+                6 => 'Dwibulanan 6 (Nov–Des)',
+            ];
+            $bNum = $sub ?? ($month > 6 ? (int)ceil($month / 2) : $month);
+            return ($labels[$bNum] ?? "Dwibulanan {$bNum}") . " {$year}";
+        }
+
+        if (in_array($interval, ['triwulan', '4x_yearly'])) {
+            $labels = [
+                1 => 'Triwulan 1 (Jan–Mar)',
+                2 => 'Triwulan 2 (Apr–Jun)',
+                3 => 'Triwulan 3 (Jul–Sep)',
+                4 => 'Triwulan 4 (Okt–Des)',
+            ];
+            $twNum = $sub ?? ($month > 4 ? (int)ceil($month / 3) : $month);
+            return ($labels[$twNum] ?? "Triwulan {$twNum}") . " {$year}";
+        }
+
+        if (in_array($interval, ['caturwulan', '3x_yearly'])) {
+            $labels = [
+                1 => 'Caturwulan 1 (Jan–Apr)',
+                2 => 'Caturwulan 2 (Mei–Agt)',
+                3 => 'Caturwulan 3 (Sep–Des)',
+            ];
+            $cwNum = $sub ?? ($month > 3 ? ($month <= 4 ? 1 : ($month <= 8 ? 2 : 3)) : $month);
+            return ($labels[$cwNum] ?? "Caturwulan {$cwNum}") . " {$year}";
+        }
+
+        if (in_array($interval, ['semester', '2x_yearly'])) {
+            $semNum = ($sub === 2 || $month >= 7 || $month === 2) ? 2 : 1;
+            return "Semester {$semNum} {$year}";
+        }
+
+        if (in_array($interval, ['once', 'insidental', 'event', 'sekali'])) {
+            return "Insidental ({$year})";
+        }
+
+        $monthNames = [
+            1 => 'Januari', 2 => 'Februari', 3 => 'Maret', 4 => 'April',
+            5 => 'Mei', 6 => 'Juni', 7 => 'Juli', 8 => 'Agustus',
+            9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Desember'
+        ];
+        $mName = $monthNames[$month] ?? "Bulan {$month}";
+        $subLabel = $sub ? " Gel.{$sub}" : "";
+
+        return "{$mName} {$year}{$subLabel}";
     }
 
 
@@ -554,14 +1206,14 @@ class BillingManager extends Component
             $configId = $bill->billing_config_id;
             if (isset($unpaidGrouped[$configId])) {
                 foreach ($unpaidGrouped[$configId] as $ub) {
-                    $date1 = $ub->due_date ? $ub->due_date->toDateString() : '0000-00-00';
-                    $date2 = $bill->due_date ? $bill->due_date->toDateString() : '0000-00-00';
+                    $date1 = $ub->due_date ? $ub->due_date->toDateString() : sprintf('%04d-%02d-01', $ub->period_year, $ub->period_month);
+                    $date2 = $bill->due_date ? $bill->due_date->toDateString() : sprintf('%04d-%02d-01', $bill->period_year, $bill->period_month);
 
                     $isOlder = false;
                     if ($date1 !== $date2) {
                         $isOlder = $date1 < $date2;
                     } else {
-                        $isOlder = $ub->created_at <= $bill->created_at;
+                        $isOlder = $ub->created_at < $bill->created_at;
                     }
 
                     if ($isOlder && !in_array($ub->id, $this->selectedBillIds)) {
@@ -579,14 +1231,14 @@ class BillingManager extends Component
             $configId = $bill->billing_config_id;
             if (isset($unpaidGrouped[$configId])) {
                 foreach ($unpaidGrouped[$configId] as $ub) {
-                    $date1 = $ub->due_date ? $ub->due_date->toDateString() : '0000-00-00';
-                    $date2 = $bill->due_date ? $bill->due_date->toDateString() : '0000-00-00';
+                    $date1 = $ub->due_date ? $ub->due_date->toDateString() : sprintf('%04d-%02d-01', $ub->period_year, $ub->period_month);
+                    $date2 = $bill->due_date ? $bill->due_date->toDateString() : sprintf('%04d-%02d-01', $bill->period_year, $bill->period_month);
 
                     $isNewer = false;
                     if ($date1 !== $date2) {
                         $isNewer = $date1 > $date2;
                     } else {
-                        $isNewer = $ub->created_at >= $bill->created_at;
+                        $isNewer = $ub->created_at > $bill->created_at;
                     }
 
                     if ($isNewer) {
@@ -627,14 +1279,17 @@ class BillingManager extends Component
         $userRoles = $user->roles->pluck('name')->toArray();
         $userId = $user->id;
 
-        return $query->whereHas('config', function($q) use ($userRoles, $userId) {
-            $q->where(function($sub) use ($userRoles, $userId) {
-                $sub->whereNull('manager_role')->whereNull('manager_ids');
-                $sub->orWhereJsonContains('manager_ids', $userId);
-                foreach ($userRoles as $role) {
-                    $sub->orWhere('manager_role', 'like', '%' . $role . '%');
-                }
-            });
+        return $query->where(function($parentQ) use ($userRoles, $userId) {
+            $parentQ->whereNull('billing_config_id')
+                ->orWhereHas('config', function($q) use ($userRoles, $userId) {
+                    $q->where(function($sub) use ($userRoles, $userId) {
+                        $sub->whereNull('manager_role')->whereNull('manager_ids');
+                        $sub->orWhereJsonContains('manager_ids', $userId);
+                        foreach ($userRoles as $role) {
+                            $sub->orWhere('manager_role', 'like', '%' . $role . '%');
+                        }
+                    });
+                });
         });
     }
 
@@ -700,10 +1355,10 @@ class BillingManager extends Component
         // Group: configId -> month -> bill
         $configs = [];
         foreach ($bills as $bill) {
-            $cid = $bill->billing_config_id;
+            $cid = $bill->billing_config_id ?: 'custom_' . $bill->bill_type;
             if (!isset($configs[$cid])) {
                 $configs[$cid] = [
-                    'label'  => $bill->config?->label ?? $bill->bill_type,
+                    'label'  => $bill->config?->label ?? str_replace('_', ' ', $bill->bill_type),
                     'months' => array_fill(1, 12, null),
                 ];
             }
@@ -720,20 +1375,55 @@ class BillingManager extends Component
 
         $query = Bill::where('person_id', $this->selectedSantriId)
             ->where('period_year', $year)
-            ->whereHas('config', fn($q) => $q->where('interval', 'semester'))
+            ->whereHas('config', fn($q) => $q->whereIn('interval', ['semester', '2x_yearly', 'caturwulan', '3x_yearly', 'triwulan', '4x_yearly', 'bimulanan', '6x_yearly']))
             ->with('config');
 
         $query = $this->applyManagerRoleScope($query);
         $bills = $query->orderBy('period_month')->get();
 
-        // Group: configId -> [sem1_bill, sem2_bill]
+        // Group: configId -> ['label' => ..., 'interval' => ..., 'max_period' => ..., 'bills' => [...]]
         $configs = [];
         foreach ($bills as $bill) {
-            $cid = $bill->billing_config_id;
+            $cid = $bill->billing_config_id ?: 'sem_' . $bill->bill_type;
+            $interval = $bill->config?->interval ?? 'semester';
+
+            $maxPeriod = match($interval) {
+                'bimulanan', '6x_yearly'  => 6,
+                'caturwulan', '3x_yearly' => 3,
+                'triwulan', '4x_yearly'   => 4,
+                default                   => 2,
+            };
+
+            $typeTitle = match($interval) {
+                'bimulanan', '6x_yearly'  => 'Dwibulanan',
+                'caturwulan', '3x_yearly' => 'Caturwulan',
+                'triwulan', '4x_yearly'   => 'Triwulan',
+                default                   => 'Semester',
+            };
+
             if (!isset($configs[$cid])) {
-                $configs[$cid] = ['label' => $bill->config?->label ?? $bill->bill_type, 'bills' => []];
+                $configs[$cid] = [
+                    'label'      => $bill->config?->label ?? str_replace('_', ' ', $bill->bill_type),
+                    'interval'   => $interval,
+                    'max_period' => $maxPeriod,
+                    'type_title' => $typeTitle,
+                    'bills'      => [],
+                ];
             }
-            $configs[$cid]['bills'][$bill->period_month] = $bill;
+
+            // Determine 1-based cycle index (1..max_period) for grid column placement
+            $cycleIndex = $bill->period_sub;
+            if (!$cycleIndex) {
+                $m = $bill->period_month ?? 1;
+                $cycleIndex = match($interval) {
+                    'bimulanan', '6x_yearly'  => (int)ceil($m / 2),
+                    'caturwulan', '3x_yearly' => $m <= 4 ? 1 : ($m <= 8 ? 2 : 3),
+                    'triwulan', '4x_yearly'   => (int)ceil($m / 3),
+                    default                   => $m <= 6 ? 1 : 2,
+                };
+            }
+
+            $configs[$cid]['bills'][$cycleIndex] = $bill;
         }
 
         return $configs;
@@ -746,7 +1436,7 @@ class BillingManager extends Component
         $query = Bill::where('person_id', $this->selectedSantriId)
             ->where(function($q) {
                 $q->whereNull('billing_config_id')
-                  ->orWhereHas('config', fn($sq) => $sq->whereIn('interval', ['once', 'insidental', 'event', 'sekali', 'yearly']));
+                  ->orWhereHas('config', fn($sq) => $sq->whereNotIn('interval', ['monthly', 'semester', '2x_yearly', 'caturwulan', '3x_yearly', 'triwulan', '4x_yearly', 'bimulanan', '6x_yearly']));
             })
             ->with('config');
 
@@ -1177,10 +1867,25 @@ class BillingManager extends Component
             });
         }
 
+        // Apply Search & Type Filter for Dispensasi / Exception List
+        if (!empty($this->exceptionSearch)) {
+            $kw = strtolower(trim($this->exceptionSearch));
+            $exceptions = $exceptions->filter(function ($exc) use ($kw) {
+                $matchNotes  = str_contains(strtolower($exc->notes ?? ''), $kw);
+                $matchConfig = str_contains(strtolower($exc->configuration->label ?? ''), $kw);
+                $matchPerson = str_contains(strtolower($exc->person->name ?? ''), $kw);
+                return $matchNotes || $matchConfig || $matchPerson;
+            });
+        }
+
+        if (!empty($this->exceptionTypeFilter)) {
+            $exceptions = $exceptions->filter(fn($exc) => $exc->exception_type === $this->exceptionTypeFilter);
+        }
+
         $user = auth()->user();
         $isCentral = $user && ($user->hasRole('super-admin') || $user->hasRole('manajemen') || $user->hasRole('bendahara-pondok') || $user->hasRole('bendahara-pusat'));
 
-        $activeConfigs = BillingConfiguration::with('creator')->where('is_active', true)->get();
+        $activeConfigs = BillingConfiguration::with('creator')->where('is_active', true)->orderBy('label')->get();
         $installmentConfigs = BillingConfiguration::where('is_active', true)
             ->where('can_be_installment', true)
             ->get();
@@ -1438,6 +2143,7 @@ class BillingManager extends Component
             'selectedSantri'      => $selectedSantri,
             'exceptions'          => $exceptions,
             'activeConfigs'       => $activeConfigs,
+            'allSantriList'       => Person::whereHas('activeRoles', fn($q) => $q->where('role_type', 'santri')->where('enrollment_status', 'aktif'))->when($this->genderScope(), fn($q, $g) => $q->where('gender', $g))->orderBy('name')->get(['id', 'name', 'gender']),
             'installmentConfigs'  => $installmentConfigs,
             'bills'               => $billsQuery->paginate(10),
             'dormitories'         => Dormitory::when($this->genderScope(), fn($q, $g) => $q->where('gender', $g))->orderBy('name')->get(),

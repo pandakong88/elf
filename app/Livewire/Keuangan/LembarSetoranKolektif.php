@@ -152,8 +152,8 @@ class LembarSetoranKolektif extends Component
                     ->get();
                 
                 foreach ($subsequentBills as $sb) {
-                    $date1 = $sb->due_date ? $sb->due_date->toDateString() : '0000-00-00';
-                    $date2 = $bill->due_date ? $bill->due_date->toDateString() : '0000-00-00';
+                    $date1 = $sb->due_date ? $sb->due_date->toDateString() : sprintf('%04d-%02d-01', $sb->period_year, $sb->period_month);
+                    $date2 = $bill->due_date ? $bill->due_date->toDateString() : sprintf('%04d-%02d-01', $bill->period_year, $bill->period_month);
                     
                     $isNewer = false;
                     if ($date1 !== $date2) {
@@ -199,8 +199,8 @@ class LembarSetoranKolektif extends Component
                 foreach ($priorBills as $pb) {
                     if ($pb->id === $bill->id) continue;
                     
-                    $date1 = $pb->due_date ? $pb->due_date->toDateString() : '0000-00-00';
-                    $date2 = $bill->due_date ? $bill->due_date->toDateString() : '0000-00-00';
+                    $date1 = $pb->due_date ? $pb->due_date->toDateString() : sprintf('%04d-%02d-01', $pb->period_year, $pb->period_month);
+                    $date2 = $bill->due_date ? $bill->due_date->toDateString() : sprintf('%04d-%02d-01', $bill->period_year, $bill->period_month);
                     
                     $isOlder = false;
                     if ($date1 !== $date2) {
@@ -309,8 +309,8 @@ class LembarSetoranKolektif extends Component
                     ->get();
                 
                 foreach ($subsequentBills as $sb) {
-                    $date1 = $sb->due_date ? $sb->due_date->toDateString() : '0000-00-00';
-                    $date2 = $bill->due_date ? $bill->due_date->toDateString() : '0000-00-00';
+                    $date1 = $sb->due_date ? $sb->due_date->toDateString() : sprintf('%04d-%02d-01', $sb->period_year, $sb->period_month);
+                    $date2 = $bill->due_date ? $bill->due_date->toDateString() : sprintf('%04d-%02d-01', $bill->period_year, $bill->period_month);
                     
                     $isNewer = false;
                     if ($date1 !== $date2) {
@@ -366,8 +366,8 @@ class LembarSetoranKolektif extends Component
                 foreach ($priorBills as $pb) {
                     if ($pb->id === $bill->id) continue;
                     
-                    $date1 = $pb->due_date ? $pb->due_date->toDateString() : '0000-00-00';
-                    $date2 = $bill->due_date ? $bill->due_date->toDateString() : '0000-00-00';
+                    $date1 = $pb->due_date ? $pb->due_date->toDateString() : sprintf('%04d-%02d-01', $pb->period_year, $pb->period_month);
+                    $date2 = $bill->due_date ? $bill->due_date->toDateString() : sprintf('%04d-%02d-01', $bill->period_year, $bill->period_month);
                     
                     $isOlder = false;
                     if ($date1 !== $date2) {
@@ -512,8 +512,18 @@ class LembarSetoranKolektif extends Component
                 $bill = $bills->get($billId);
                 if ($bill && $bill->person_id === $studentId) {
                     $periodLabel = '';
-                    if ($this->activeInterval === 'semester') {
-                        $periodLabel = "Sem " . $bill->period_month;
+                    if (in_array($this->activeInterval, ['semester', '2x_yearly'])) {
+                        $semNum = ($bill->period_month >= 7) ? 2 : 1;
+                        $periodLabel = "Sem " . $semNum;
+                    } elseif (in_array($this->activeInterval, ['caturwulan', '3x_yearly'])) {
+                        $cwNum = (int)ceil($bill->period_month / 4);
+                        $periodLabel = "Caturwulan " . $cwNum;
+                    } elseif (in_array($this->activeInterval, ['triwulan', '4x_yearly'])) {
+                        $twNum = (int)ceil($bill->period_month / 3);
+                        $periodLabel = "Triwulan " . $twNum;
+                    } elseif (in_array($this->activeInterval, ['bimulanan', '6x_yearly'])) {
+                        $bmNum = (int)ceil($bill->period_month / 2);
+                        $periodLabel = "Bimulanan " . $bmNum;
                     } elseif (in_array($this->activeInterval, ['once', 'insidental', 'event', 'sekali'])) {
                         $periodLabel = "Event";
                     } else {
@@ -550,9 +560,25 @@ class LembarSetoranKolektif extends Component
         $interval = $this->activeInterval;
         $periods = [];
 
-        if ($interval === 'semester') {
+        if (in_array($interval, ['semester', '2x_yearly'])) {
             $periods["1-{$this->year}"] = "Semester 1";
-            $periods["2-{$this->year}"] = "Semester 2";
+            $periods["7-{$this->year}"] = "Semester 2";
+        } elseif (in_array($interval, ['caturwulan', '3x_yearly'])) {
+            $periods["1-{$this->year}"] = "Caturwulan 1";
+            $periods["5-{$this->year}"] = "Caturwulan 2";
+            $periods["9-{$this->year}"] = "Caturwulan 3";
+        } elseif (in_array($interval, ['triwulan', '4x_yearly'])) {
+            $periods["1-{$this->year}"] = "Triwulan 1";
+            $periods["4-{$this->year}"] = "Triwulan 2";
+            $periods["7-{$this->year}"] = "Triwulan 3";
+            $periods["10-{$this->year}"] = "Triwulan 4";
+        } elseif (in_array($interval, ['bimulanan', '6x_yearly'])) {
+            $periods["1-{$this->year}"] = "Bimulanan 1";
+            $periods["3-{$this->year}"] = "Bimulanan 2";
+            $periods["5-{$this->year}"] = "Bimulanan 3";
+            $periods["7-{$this->year}"] = "Bimulanan 4";
+            $periods["9-{$this->year}"] = "Bimulanan 5";
+            $periods["11-{$this->year}"] = "Bimulanan 6";
         } elseif (in_array($interval, ['once', 'insidental', 'event', 'sekali', 'yearly'])) {
             $periods["1-{$this->year}"] = $this->config?->label ?? str_replace('_', ' ', $this->activeBillType);
         } else {
@@ -590,6 +616,33 @@ class LembarSetoranKolektif extends Component
         });
     }
 
+    protected function isTargetMatched(BillingConfiguration $config, string $targetId, string $targetType): bool
+    {
+        if ($config->target_type === 'all') {
+            return true;
+        }
+
+        if ($config->target_type !== $targetType) {
+            return false;
+        }
+
+        $filters = $config->target_filters;
+        if (empty($filters)) {
+            return true;
+        }
+
+        if (is_array($filters) && isset($filters['ids'])) {
+            $ids = (array)$filters['ids'];
+            return empty($ids) || in_array($targetId, $ids);
+        }
+
+        if (is_array($filters) && !array_is_list($filters)) {
+            return true;
+        }
+
+        return in_array($targetId, (array)$filters);
+    }
+
     public function getSheetsList(): Collection
     {
         $sheets = collect();
@@ -609,12 +662,8 @@ class LembarSetoranKolektif extends Component
  
         foreach ($dormitories as $d) {
             foreach ($komplekConfigs as $config) {
-                // If it has target filters and targets dormitory specifically, verify if dormitory is in filters
-                if ($config->target_type === 'dormitory' && !empty($config->target_filters)) {
-                    $filters = collect($config->target_filters)->flatten()->toArray();
-                    if (!in_array($d->id, $filters)) {
-                        continue;
-                    }
+                if (!$this->isTargetMatched($config, $d->id, 'dormitory')) {
+                    continue;
                 }
 
                 $sheets->push([
@@ -644,12 +693,8 @@ class LembarSetoranKolektif extends Component
  
         foreach ($kelasList as $k) {
             foreach ($madrasahConfigs as $config) {
-                // Verify if class is targeted
-                if (!empty($config->target_filters)) {
-                    $filters = collect($config->target_filters)->flatten()->toArray();
-                    if (!in_array($k->id, $filters)) {
-                        continue;
-                    }
+                if (!$this->isTargetMatched($config, $k->id, 'kelas')) {
+                    continue;
                 }
 
                 $sheets->push([
@@ -785,8 +830,18 @@ class LembarSetoranKolektif extends Component
 
             $lunasDiMukaLabel = null;
             if ($furthestPaidBill) {
-                if ($interval === 'semester') {
-                    $lunasDiMukaLabel = "Sem {$furthestPaidBill->period_month} / {$furthestPaidBill->period_year}";
+                if (in_array($interval, ['semester', '2x_yearly'])) {
+                    $semNum = ($furthestPaidBill->period_month >= 7) ? 2 : 1;
+                    $lunasDiMukaLabel = "Sem {$semNum} / {$furthestPaidBill->period_year}";
+                } elseif (in_array($interval, ['caturwulan', '3x_yearly'])) {
+                    $cwNum = (int)ceil($furthestPaidBill->period_month / 4);
+                    $lunasDiMukaLabel = "Caturwulan {$cwNum} / {$furthestPaidBill->period_year}";
+                } elseif (in_array($interval, ['triwulan', '4x_yearly'])) {
+                    $twNum = (int)ceil($furthestPaidBill->period_month / 3);
+                    $lunasDiMukaLabel = "Triwulan {$twNum} / {$furthestPaidBill->period_year}";
+                } elseif (in_array($interval, ['bimulanan', '6x_yearly'])) {
+                    $bmNum = (int)ceil($furthestPaidBill->period_month / 2);
+                    $lunasDiMukaLabel = "Bimulanan {$bmNum} / {$furthestPaidBill->period_year}";
                 } elseif (in_array($interval, ['once', 'insidental', 'event', 'sekali'])) {
                     $lunasDiMukaLabel = "Tahun {$furthestPaidBill->period_year}";
                 } else {

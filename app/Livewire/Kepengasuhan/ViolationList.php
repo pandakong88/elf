@@ -7,15 +7,14 @@ use App\Modules\Core\Models\Organization;
 use App\Modules\Core\Models\Person;
 use App\Modules\Kepengasuhan\Models\Violation;
 use App\Modules\Kepengasuhan\Services\ViolationService;
+use App\Traits\HasGenderScope;
 use Livewire\Component;
 use App\Livewire\Concerns\SendsToast;
 use Livewire\WithPagination;
 
 class ViolationList extends Component
 {
-    use SendsToast;
-
-    use WithPagination;
+    use SendsToast, WithPagination, HasGenderScope;
 
     public $search = '';
     public $severityFilter = '';
@@ -210,6 +209,11 @@ class ViolationList extends Component
             }
         }
 
+        // Gender scope: filter violations berdasarkan gender santri
+        if ($this->genderScope()) {
+            $query->whereHas('person', fn($q) => $q->where('gender', $this->genderScope()));
+        }
+
         // Search query
         if ($this->search) {
             $query->whereHas('person', function($q) {
@@ -246,11 +250,16 @@ class ViolationList extends Component
                 }
             }
 
+            // Gender scope: santri modal hanya muncul sesuai gender user
+            if ($this->genderScope()) {
+                $santriQuery->where('gender', $this->genderScope());
+            }
+
             $modalSantriList = $santriQuery->limit(5)->get();
         }
 
         // Top 5 highest accumulated points santri (unresolved)
-        $topViolators = Person::query()
+        $topViolatorsQuery = Person::query()
             ->byRole('santri')
             ->whereHas('roles', function($q) use ($user) {
                 if (!$user->hasRole('super-admin') && !$user->hasRole('pengasuh')) {
@@ -259,7 +268,14 @@ class ViolationList extends Component
                         $q->whereIn('organization_id', $orgIds);
                     }
                 }
-            })
+            });
+
+        // Gender scope: top violators hanya dari gender yang sesuai
+        if ($this->genderScope()) {
+            $topViolatorsQuery->where('gender', $this->genderScope());
+        }
+
+        $topViolators = $topViolatorsQuery
             ->withSum(['roles as unresolved_points' => function($q) {
                 // Sum from violations table
             }], 'points') // We can query database directly or do a select raw

@@ -19,11 +19,13 @@
 
         {{-- Action Buttons --}}
         <div class="flex flex-wrap items-center gap-2">
+            @can('create-person')
             <button type="button" wire:click="openNewSantriModal"
                 class="inline-flex items-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white font-bold rounded-xl shadow-md transition-all text-sm">
                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/></svg>
                 <span>Daftarkan Santri Baru</span>
             </button>
+            @endcan
 
             <a href="{{ route('setup.santri') }}"
                 class="inline-flex items-center gap-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl shadow-md transition-all text-sm">
@@ -32,23 +34,29 @@
             </a>
 
             @if($activeTab === 'komplek')
+                @can('manage-asrama')
                 <button type="button" wire:click="openCreateDormitoryModal"
                     class="inline-flex items-center gap-2 px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-white font-bold rounded-xl shadow-md transition-all text-sm">
                     <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
                     <span>Tambah Komplek</span>
                 </button>
+                @endcan
             @elseif($activeTab === 'kamar')
+                @can('manage-kamar')
                 <button type="button" wire:click="openCreateRoomModal"
                     class="inline-flex items-center gap-2 px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-white font-bold rounded-xl shadow-md transition-all text-sm">
                     <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
                     <span>Tambah Kamar</span>
                 </button>
+                @endcan
             @elseif($activeTab === 'kelas')
+                @can('manage-kelas')
                 <button type="button" wire:click="openCreateKelasModal"
                     class="inline-flex items-center gap-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl shadow-md transition-all text-sm">
                     <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
                     <span>Tambah Kelas</span>
                 </button>
+                @endcan
             @endif
         </div>
     </div>
@@ -174,12 +182,16 @@
                             </td>
                             <td class="py-3 px-4 text-center">
                                 <div class="flex items-center justify-center gap-1">
+                                    @can('manage-asrama')
                                     <button type="button" wire:click="openEditDormitoryModal('{{ $dorm->id }}')" class="p-1 text-slate-500 hover:text-slate-800">
                                         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
                                     </button>
                                     <button type="button" wire:click="toggleDormitoryStatus('{{ $dorm->id }}')" class="p-1 text-amber-500 hover:text-amber-700">
                                         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/></svg>
                                     </button>
+                                    @else
+                                    <span class="text-xs text-slate-300 italic">—</span>
+                                    @endcan
                                 </div>
                             </td>
                         </tr>
@@ -227,12 +239,16 @@
                             </td>
                             <td class="py-3 px-4 text-center">
                                 <div class="flex items-center justify-center gap-1">
+                                    @can('manage-kamar')
                                     <button type="button" wire:click="openEditRoomModal('{{ $roomItem->id }}')" class="p-1 text-slate-500 hover:text-slate-800">
                                         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
                                     </button>
                                     <button type="button" wire:click="toggleRoomStatus('{{ $roomItem->id }}')" class="p-1 text-amber-500 hover:text-amber-700">
                                         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/></svg>
                                     </button>
+                                    @else
+                                    <span class="text-xs text-slate-300 italic">—</span>
+                                    @endcan
                                 </div>
                             </td>
                         </tr>
@@ -275,12 +291,16 @@
                             <td class="py-3 px-4 text-center font-bold text-slate-800 dark:text-slate-200">{{ $kItem->enrollments_count }} Santri</td>
                             <td class="py-3 px-4 text-center">
                                 <div class="flex items-center justify-center gap-1">
+                                    @can('manage-kelas')
                                     <button type="button" wire:click="openEditKelasModal('{{ $kItem->id }}')" class="p-1 text-slate-500 hover:text-slate-800">
                                         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
                                     </button>
                                     <button type="button" wire:click="deleteKelas('{{ $kItem->id }}')" class="p-1 text-rose-500 hover:text-rose-700">
                                         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
                                     </button>
+                                    @else
+                                    <span class="text-xs text-slate-300 italic">—</span>
+                                    @endcan
                                 </div>
                             </td>
                         </tr>
@@ -344,14 +364,18 @@
                                                 </div>
                                             </div>
                                             <div class="flex items-center gap-1">
+                                                @canany(['change-enrollment-status', 'change-presence-status'])
                                                 <button type="button" wire:click="openStatusModal('{{ $sPerson->id }}')" title="Ubah Status (Mukim/Laju/Boyong)"
                                                     class="px-2 py-1 bg-amber-50 hover:bg-amber-100 text-amber-600 dark:bg-amber-950 dark:text-amber-400 text-[10px] font-bold rounded-lg transition-colors">
                                                     Status
                                                 </button>
+                                                @endcanany
+                                                @can('manage-kamar')
                                                 <button type="button" wire:click="openTransferRoomModal('{{ $sPerson->id }}')" title="Pindah Kamar Instan"
                                                     class="px-2 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-600 dark:bg-emerald-950 dark:text-emerald-400 text-[10px] font-bold rounded-lg transition-colors">
                                                     Pindah
                                                 </button>
+                                                @endcan
                                             </div>
                                         </div>
                                     @empty
@@ -404,14 +428,18 @@
                                     </div>
                                 </div>
                                 <div class="flex items-center gap-1">
+                                    @canany(['change-enrollment-status', 'change-presence-status'])
                                     <button type="button" wire:click="openStatusModal('{{ $kPerson->id }}')" title="Ubah Status (Mukim/Laju/Boyong)"
                                         class="px-2 py-1 bg-amber-50 hover:bg-amber-100 text-amber-600 dark:bg-amber-950 dark:text-amber-400 text-[10px] font-bold rounded-lg transition-colors">
                                         Status
                                     </button>
+                                    @endcanany
+                                    @can('manage-kelas')
                                     <button type="button" wire:click="openTransferKelasModal('{{ $kPerson->id }}')" title="Pindah Kelas Instan"
                                         class="px-2 py-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-600 dark:bg-indigo-950 dark:text-indigo-400 text-[10px] font-bold rounded-lg transition-colors">
                                         Pindah
                                     </button>
+                                    @endcan
                                 </div>
                             </div>
                         @empty
@@ -425,8 +453,9 @@
         </div>
     @endif
 
-    {{-- FLOATING SELECTION BAR --}}
+    {{-- FLOATING SELECTION BAR — hanya tampil jika user punya permission transfer --}}
     @if(count($selectedSantriIds) > 0)
+        @canany(['manage-kamar', 'manage-kelas'])
         <div class="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 bg-slate-900 text-white px-6 py-3.5 rounded-2xl shadow-2xl border border-slate-700 flex items-center gap-4">
             <div class="flex items-center gap-2">
                 <span class="w-6 h-6 rounded-full bg-emerald-500 text-white flex items-center justify-center font-extrabold text-xs">
@@ -439,15 +468,19 @@
 
             <div class="flex items-center gap-2">
                 @if($activeTab === 'bagan-komplek')
+                    @can('manage-kamar')
                     <button type="button" wire:click="openBulkTransferRoomModal"
                         class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl shadow transition-all">
                         Pindahkan Sekaligus ke Kamar Lain
                     </button>
+                    @endcan
                 @elseif($activeTab === 'bagan-kelas')
+                    @can('manage-kelas')
                     <button type="button" wire:click="openBulkTransferKelasModal"
                         class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs rounded-xl shadow transition-all">
                         Pindahkan Sekaligus ke Kelas Lain
                     </button>
+                    @endcan
                 @endif
 
                 <button type="button" wire:click="clearSelection" class="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs rounded-xl">
@@ -455,6 +488,7 @@
                 </button>
             </div>
         </div>
+        @endcanany
     @endif
 
     {{-- MODAL UBAH STATUS SANTRI (MUKIM / LAJU / BOYONG) --}}

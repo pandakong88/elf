@@ -390,6 +390,11 @@ class PusatKendaliAsramaKelas extends Component
 
     public function registerNewSantri(): void
     {
+        if (!auth()->user()->can('create-person')) {
+            $this->toastError('Akses ditolak: Anda tidak memiliki izin untuk mendaftarkan santri baru.');
+            return;
+        }
+
         $this->validate([
             'newSantriName'   => 'required|string|min:3|max:255',
             'newSantriGender' => 'required|in:L,P',
@@ -603,6 +608,11 @@ class PusatKendaliAsramaKelas extends Component
 
     public function executeStatusChange(): void
     {
+        if (!auth()->user()->can('change-enrollment-status') && !auth()->user()->can('change-presence-status')) {
+            $this->toastError('Akses ditolak: Anda tidak memiliki izin untuk mengubah status santri.');
+            return;
+        }
+
         if (!$this->statusSantriRoleId) return;
 
         try {
@@ -677,6 +687,11 @@ class PusatKendaliAsramaKelas extends Component
 
     public function executeBulkTransferRoom(): void
     {
+        if (!auth()->user()->can('manage-kamar')) {
+            $this->toastError('Akses ditolak: Anda tidak memiliki izin untuk memindahkan santri antar kamar.');
+            return;
+        }
+
         $this->validate([
             'bulkTargetRoomId' => 'required|uuid|exists:rooms,id',
         ]);
@@ -725,6 +740,11 @@ class PusatKendaliAsramaKelas extends Component
 
     public function executeBulkTransferKelas(): void
     {
+        if (!auth()->user()->can('manage-kelas')) {
+            $this->toastError('Akses ditolak: Anda tidak memiliki izin untuk memindahkan santri antar kelas.');
+            return;
+        }
+
         $this->validate([
             'bulkTargetKelasId' => 'required|uuid|exists:madrasah_kelas,id',
         ]);
@@ -783,6 +803,11 @@ class PusatKendaliAsramaKelas extends Component
 
     public function saveDormitory(): void
     {
+        if (!auth()->user()->can('manage-asrama')) {
+            $this->toastError('Akses ditolak: Anda tidak memiliki izin untuk mengelola data komplek/asrama.');
+            return;
+        }
+
         $this->validate([
             'dormitoryName'      => 'required|string|max:100',
             'dormitoryGender'    => 'required|in:L,P',
@@ -817,6 +842,11 @@ class PusatKendaliAsramaKelas extends Component
 
     public function toggleDormitoryStatus(string $id): void
     {
+        if (!auth()->user()->can('manage-asrama')) {
+            $this->toastError('Akses ditolak: Anda tidak memiliki izin untuk mengelola data komplek/asrama.');
+            return;
+        }
+
         app(DormitoryService::class)->toggleDormitoryStatus($id);
         $this->toastSuccess('Status komplek berhasil diperbarui.');
     }
@@ -846,6 +876,11 @@ class PusatKendaliAsramaKelas extends Component
 
     public function saveRoom(): void
     {
+        if (!auth()->user()->can('manage-kamar')) {
+            $this->toastError('Akses ditolak: Anda tidak memiliki izin untuk mengelola data kamar.');
+            return;
+        }
+
         $this->validate([
             'targetDormitoryId' => 'required|uuid|exists:dormitories,id',
             'roomName'          => 'required|string|max:100',
@@ -880,6 +915,11 @@ class PusatKendaliAsramaKelas extends Component
 
     public function toggleRoomStatus(string $id): void
     {
+        if (!auth()->user()->can('manage-kamar')) {
+            $this->toastError('Akses ditolak: Anda tidak memiliki izin untuk mengelola data kamar.');
+            return;
+        }
+
         app(DormitoryService::class)->toggleRoomStatus($id);
         $this->toastSuccess('Status kamar berhasil diperbarui.');
     }
@@ -910,6 +950,11 @@ class PusatKendaliAsramaKelas extends Component
 
     public function saveKelas(): void
     {
+        if (!auth()->user()->can('manage-kelas')) {
+            $this->toastError('Akses ditolak: Anda tidak memiliki izin untuk mengelola data kelas.');
+            return;
+        }
+
         $this->validate([
             'formName'         => 'required|string|max:100',
             'formJenjang'      => 'required|in:ula,wustho,ulya',
@@ -938,6 +983,11 @@ class PusatKendaliAsramaKelas extends Component
 
     public function deleteKelas(string $id): void
     {
+        if (!auth()->user()->can('manage-kelas')) {
+            $this->toastError('Akses ditolak: Anda tidak memiliki izin untuk menghapus kelas.');
+            return;
+        }
+
         $kelas = MadrasahKelas::findOrFail($id);
         if ($kelas->enrollments()->exists()) {
             $this->toastError('Kelas tidak bisa dihapus karena masih ada santri terdaftar.');
@@ -962,6 +1012,11 @@ class PusatKendaliAsramaKelas extends Component
 
     public function executeTransferRoom(): void
     {
+        if (!auth()->user()->can('manage-kamar')) {
+            $this->toastError('Akses ditolak: Anda tidak memiliki izin untuk memindahkan santri antar kamar.');
+            return;
+        }
+
         $this->validate([
             'targetRoomId' => 'required|uuid|exists:rooms,id',
         ]);
@@ -990,6 +1045,11 @@ class PusatKendaliAsramaKelas extends Component
 
     public function executeTransferKelas(): void
     {
+        if (!auth()->user()->can('manage-kelas')) {
+            $this->toastError('Akses ditolak: Anda tidak memiliki izin untuk memindahkan santri antar kelas.');
+            return;
+        }
+
         $this->validate([
             'targetKelasId' => 'required|uuid|exists:madrasah_kelas,id',
         ]);

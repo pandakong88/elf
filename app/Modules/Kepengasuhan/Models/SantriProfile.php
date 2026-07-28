@@ -139,11 +139,17 @@ class SantriProfile extends Model
             'father_name', 'mother_name',
             'blood_type', 'medical_history', 'allergies', 'special_conditions',
             'school_status', 'school_name', 'school_type', 'major', 'school_year',
-            'birth_city', 'hobby', 'achievement',
+            'birth_city', 'hobby', 'achievement', 'has_active_sibling',
         ];
 
         foreach ($updates as $key => $value) {
             if ($value === null || $value === '') continue;
+
+            if ($key === 'sibling_in_pesantren') {
+                $boolVal = is_bool($value) ? $value : (in_array(strtolower((string)$value), ['1', 'true', 'ya', 'yes']));
+                $this->has_active_sibling = $boolVal;
+                continue;
+            }
 
             if (in_array($key, $directFields)) {
                 $this->$key = $value;

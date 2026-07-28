@@ -9,15 +9,14 @@ use App\Modules\Core\Models\WorkflowTemplate;
 use App\Modules\Kepengasuhan\Models\Perizinan;
 use App\Modules\Kepengasuhan\Services\PerizinanService;
 use App\Modules\Shared\Workflow\WorkflowEngine;
+use App\Traits\HasGenderScope;
 use Livewire\Component;
 use App\Livewire\Concerns\SendsToast;
 use Livewire\WithPagination;
 
 class PerizinanList extends Component
 {
-    use SendsToast;
-
-    use WithPagination;
+    use SendsToast, WithPagination, HasGenderScope;
 
     public $activeTab = 'persetujuan'; // 'persetujuan', 'keluar', 'riwayat'
     public $search = '';
@@ -226,6 +225,15 @@ class PerizinanList extends Component
     // Checkout/Checkin
     public function checkoutLeave($perizinanId)
     {
+        // Guard: pastikan santri sesuai gender scope user
+        if ($this->genderScope()) {
+            $perizinan = Perizinan::with('person')->find($perizinanId);
+            if ($perizinan && $perizinan->person && $perizinan->person->gender !== $this->genderScope()) {
+                $this->toastError('Akses ditolak: santri tidak sesuai scope gender Anda.');
+                return;
+            }
+        }
+
         $service = app(PerizinanService::class);
         try {
             $service->checkout($perizinanId);
@@ -237,6 +245,14 @@ class PerizinanList extends Component
 
     public function checkinLeave($perizinanId)
     {
+        // Guard: pastikan santri sesuai gender scope user
+        if ($this->genderScope()) {
+            $perizinan = Perizinan::with('person')->find($perizinanId);
+            if ($perizinan && $perizinan->person && $perizinan->person->gender !== $this->genderScope()) {
+                $this->toastError('Akses ditolak: santri tidak sesuai scope gender Anda.');
+                return;
+            }
+        }
         $service = app(PerizinanService::class);
         try {
             $service->checkin($perizinanId);
@@ -270,6 +286,11 @@ class PerizinanList extends Component
             }
         }
 
+        // Gender scope: filter perizinan berdasarkan gender santri
+        if ($this->genderScope()) {
+            $query->whereHas('person', fn($q) => $q->where('gender', $this->genderScope()));
+        }
+
         // Search query
         if ($this->search) {
             $query->whereHas('person', function($q) {
@@ -300,6 +321,11 @@ class PerizinanList extends Component
                         $q->whereIn('organization_id', $orgIds)->where('role_type', 'santri')->where('is_active', true);
                     });
                 }
+            }
+
+            // Gender scope: santri modal hanya muncul sesuai gender user
+            if ($this->genderScope()) {
+                $santriQuery->where('gender', $this->genderScope());
             }
 
             $modalSantriList = $santriQuery->limit(5)->get();

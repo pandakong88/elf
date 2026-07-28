@@ -414,11 +414,17 @@ class BillingService
     }
 
     /**
-     * Generate bills dynamically from a config for a specific period (month/semester/year).
+     * Generate bills dynamically from a config for a specific period (month/semester/year/sub-period).
      */
-    public function generateBillsFromConfig(string $configId, int $periodMonth, int $periodYear, string $createdByUserId): array
-    {
-        return DB::transaction(function () use ($configId, $periodMonth, $periodYear, $createdByUserId) {
+    public function generateBillsFromConfig(
+        string $configId,
+        int $periodMonth,
+        int $periodYear,
+        string $createdByUserId,
+        ?int $periodSub = null,
+        ?string $targetPersonId = null
+    ): array {
+        return DB::transaction(function () use ($configId, $periodMonth, $periodYear, $createdByUserId, $periodSub, $targetPersonId) {
             $config = BillingConfiguration::findOrFail($configId);
             $generatedCount = 0;
             $skippedCount = 0;
@@ -428,6 +434,10 @@ class BillingService
                 $q->where('role_type', 'santri')
                   ->where('enrollment_status', 'aktif');
             });
+
+            if ($targetPersonId) {
+                $santriQuery->where('id', $targetPersonId);
+            }
 
             // Gender scoping by logged-in user role
             $user = auth()->user();
@@ -512,6 +522,20 @@ class BillingService
 
             $santriList = $santriQuery->get();
 
+            // Calculate due date based on config
+            $dueDate = null;
+            $dueDayType = $config->due_day_type ?? 'fixed_day';
+            $dueDayValue = $config->due_day_value ?? 10;
+
+            if ($dueDayType === 'fixed_date' && $config->due_date_specific) {
+                $dueDate = $config->due_date_specific->toDateString();
+            } elseif ($dueDayType === 'days_after') {
+                $dueDate = now()->addDays($dueDayValue)->toDateString();
+            } elseif ($dueDayType === 'fixed_day') {
+                $day = min(max((int)$dueDayValue, 1), 28);
+                $dueDate = now()->setDate($periodYear, min(max($periodMonth, 1), 12), $day)->toDateString();
+            }
+
             foreach ($santriList as $santri) {
                 $isEventInterval = in_array($config->interval, ['once', 'insidental', 'event', 'sekali']);
 
@@ -521,6 +545,10 @@ class BillingService
 
                 if (!$isEventInterval) {
                     $existsQuery->where('period_month', $periodMonth);
+                }
+
+                if ($periodSub !== null) {
+                    $existsQuery->where('period_sub', $periodSub);
                 }
 
                 $exists = $existsQuery->exists();
@@ -536,10 +564,11 @@ class BillingService
                         'billing_config_id' => $config->id,
                         'period_month' => $periodMonth,
                         'period_year' => $periodYear,
+                        'period_sub' => $periodSub,
                         'amount' => $amount,
                         'amount_paid' => 0.00,
                         'status' => $amount == 0.00 ? 'paid' : 'unpaid',
-                        'due_date' => $config->interval === 'monthly' ? now()->setDate($periodYear, $periodMonth, 10)->toDateString() : null,
+                        'due_date' => $dueDate,
                         'created_by' => $createdByUserId,
                     ]);
                     $generatedCount++;
@@ -553,6 +582,97 @@ class BillingService
                 'skipped' => $skippedCount,
             ];
         });
+    }
+
+    public function getTargetPersonsForConfig(BillingConfiguration $config, ?string $targetPersonId = null): \Illuminate\Support\Collection
+    {
+        $santriQuery = Person::whereHas('activeRoles', function ($q) {
+            $q->where('role_type', 'santri')
+              ->where('enrollment_status', 'aktif');
+        });
+
+        if ($targetPersonId) {
+            $santriQuery->where('id', $targetPersonId);
+        }
+
+        $user = auth()->user();
+        if ($user && !$user->hasRole('admin') && !$user->hasRole('super-admin') && !$user->hasRole('manajemen') && !$user->hasRole('bendahara-pondok') && !$user->hasRole('bendahara-pusat')) {
+            if ($user->hasRole('bendahara-putra')) {
+                $santriQuery->where('gender', 'L');
+            } elseif ($user->hasRole('bendahara-putri')) {
+                $santriQuery->where('gender', 'P');
+            }
+        }
+
+        $targetGenders = [];
+        $targetIds = [];
+        $residenceTargets = [];
+
+        if (is_array($config->target_filters)) {
+            if (isset($config->target_filters['genders'])) {
+                $targetGenders = (array)$config->target_filters['genders'];
+            } elseif ($config->target_type === 'all') {
+                $targetGenders = array_values(array_intersect(['L', 'P'], $config->target_filters));
+            }
+
+            if (isset($config->target_filters['residence'])) {
+                $residenceTargets = (array)$config->target_filters['residence'];
+            }
+
+            if (isset($config->target_filters['ids'])) {
+                $targetIds = (array)$config->target_filters['ids'];
+            } elseif ($config->target_type !== 'all') {
+                $targetIds = (array)$config->target_filters;
+            }
+        }
+
+        if (!empty($residenceTargets) && count($residenceTargets) < 2) {
+            if (in_array('mukim', $residenceTargets)) {
+                $santriQuery->where(function($rq) {
+                    $rq->whereHas('activeRoles', fn($q) => $q->where('presence_status', 'mukim'))
+                      ->orWhereHas('roomAssignments', fn($q) => $q->where('is_active', true));
+                });
+            } elseif (in_array('laju', $residenceTargets)) {
+                $santriQuery->where(function($rq) {
+                    $rq->whereHas('activeRoles', fn($q) => $q->where('presence_status', 'laju'))
+                      ->whereDoesntHave('roomAssignments', fn($q) => $q->where('is_active', true));
+                });
+            }
+        }
+
+        if ($config->target_type === 'all') {
+            if (!empty($targetGenders) && count($targetGenders) < 2) {
+                $santriQuery->whereIn('gender', $targetGenders);
+            }
+        } elseif ($config->target_type === 'dormitory') {
+            $dormIds = !empty($targetIds) ? $targetIds : ($config->target_filters ?? []);
+            if (!empty($dormIds)) {
+                $santriQuery->whereIn('id', function($q) use ($dormIds) {
+                    $q->select('person_id')
+                      ->from('room_assignments')
+                      ->join('rooms', 'rooms.id', '=', 'room_assignments.room_id')
+                      ->whereIn('rooms.dormitory_id', $dormIds)
+                      ->where('room_assignments.is_active', true);
+                });
+            }
+        } elseif ($config->target_type === 'kelas') {
+            $kelasIds = !empty($targetIds) ? $targetIds : ($config->target_filters ?? []);
+            if (!empty($kelasIds)) {
+                $santriQuery->whereIn('id', function($q) use ($kelasIds) {
+                    $q->select('person_id')
+                      ->from('madrasah_enrollments')
+                      ->whereIn('kelas_id', $kelasIds)
+                      ->where('is_active', true);
+                });
+            }
+        } elseif ($config->target_type === 'individual') {
+            $santriIds = !empty($targetIds) ? $targetIds : ($config->target_filters ?? []);
+            if (!empty($santriIds)) {
+                $santriQuery->whereIn('id', $santriIds);
+            }
+        }
+
+        return $santriQuery->get();
     }
 
     /**
@@ -633,5 +753,172 @@ class BillingService
             ]),
             'created_by'     => $createdByUserId ?? auth()->id(),
         ]);
+    }
+
+    /**
+     * Check whether a specific santri (person) is in the target group of a BillingConfiguration.
+     * Returns true if they are, false if they are not (but it's still allowed — just a warning).
+     */
+    public function isSantriInTargetForConfig(BillingConfiguration $config, string $personId): bool
+    {
+        $person = Person::find($personId);
+        if (!$person) return false;
+
+        // Extract target parameters
+        $targetGenders     = [];
+        $targetIds         = [];
+        $residenceTargets  = [];
+
+        if (is_array($config->target_filters)) {
+            $targetGenders    = (array)($config->target_filters['genders'] ?? []);
+            $residenceTargets = (array)($config->target_filters['residence'] ?? []);
+
+            if (isset($config->target_filters['ids'])) {
+                $targetIds = (array)$config->target_filters['ids'];
+            } elseif ($config->target_type !== 'all') {
+                $targetIds = (array)$config->target_filters;
+            }
+        }
+
+        // Gender check
+        if (!empty($targetGenders) && count($targetGenders) < 2) {
+            if (!in_array($person->gender, $targetGenders)) return false;
+        }
+
+        // Residence check (mukim vs laju)
+        if (!empty($residenceTargets) && count($residenceTargets) < 2) {
+            $isMukim = $person->roomAssignments()->where('is_active', true)->exists();
+            if (in_array('mukim', $residenceTargets) && !$isMukim) return false;
+            if (in_array('laju', $residenceTargets) && $isMukim) return false;
+        }
+
+        // Dormitory check
+        if ($config->target_type === 'dormitory') {
+            $dormIds = !empty($targetIds) ? $targetIds : ($config->target_filters ?? []);
+            if (!empty($dormIds)) {
+                $inDorm = $person->roomAssignments()
+                    ->join('rooms', 'rooms.id', '=', 'room_assignments.room_id')
+                    ->whereIn('rooms.dormitory_id', $dormIds)
+                    ->where('room_assignments.is_active', true)
+                    ->exists();
+                if (!$inDorm) return false;
+            }
+        }
+
+        // Kelas check
+        if ($config->target_type === 'kelas') {
+            $kelasIds = !empty($targetIds) ? $targetIds : ($config->target_filters ?? []);
+            if (!empty($kelasIds)) {
+                $inKelas = $person->madrasahEnrollments()
+                    ->whereIn('kelas_id', $kelasIds)
+                    ->where('is_active', true)
+                    ->exists();
+                if (!$inKelas) return false;
+            }
+        }
+
+        // Individual whitelist check
+        if ($config->target_type === 'individual') {
+            $santriIds = !empty($targetIds) ? $targetIds : ($config->target_filters ?? []);
+            if (!empty($santriIds) && !in_array($personId, $santriIds)) return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Get available (not-yet-billed) periods for a specific santri and config.
+     * Returns an array of periods, each with: label, month, year, sub, exists (bool).
+     * Always covers 2 full years (tahun ini + tahun depan) regardless of interval.
+     */
+    public function getAvailablePeriodsForSantri(BillingConfiguration $config, string $personId, int $lookahead = 0): array
+    {
+        $nowMonth = (int) now()->format('n');
+        $nowYear  = (int) now()->format('Y');
+
+        // Auto-calculate lookahead to always cover 2 full years based on interval
+        if ($lookahead <= 0) {
+            $lookahead = match(true) {
+                in_array($config->interval, ['semester', '2x_yearly'])           => 4,  // 4 semester = 2 tahun
+                in_array($config->interval, ['caturwulan', '3x_yearly'])         => 6,  // 6 caturwulan = 2 tahun
+                in_array($config->interval, ['triwulan', '4x_yearly'])           => 8,  // 8 triwulan = 2 tahun
+                in_array($config->interval, ['bimulanan', '6x_yearly'])         => 12, // 12 dwibulanan = 2 tahun
+                in_array($config->interval, ['once', 'insidental', 'event', 'sekali']) => 2, // 2 tahun
+                default                                                           => 24, // 24 bulan = 2 tahun
+            };
+        }
+
+        $rawPeriods = [];
+
+        $isEventInterval = in_array($config->interval, ['once', 'insidental', 'event', 'sekali']);
+
+        if ($isEventInterval) {
+            // For one-off tariffs: show current year and next year
+            for ($offset = 0; $offset <= 1; $offset++) {
+                $y = $nowYear + $offset;
+                $rawPeriods[] = ['month' => 1, 'year' => $y, 'sub' => null, 'label' => "Tahun {$y}"];
+            }
+
+        } elseif (in_array($config->interval, ['semester', '2x_yearly'])) {
+            // Mulai dari Semester 1 tahun ini, tampilkan $lookahead semester
+            for ($i = 0; $i < $lookahead; $i++) {
+                $s = ($i % 2) + 1;
+                $y = $nowYear + (int)floor($i / 2);
+                $startM = ($s - 1) * 6 + 1;
+                $rawPeriods[] = ['month' => $startM, 'year' => $y, 'sub' => $s, 'label' => "Semester {$s} / {$y}"];
+            }
+
+        } elseif (in_array($config->interval, ['caturwulan', '3x_yearly'])) {
+            // Mulai dari Caturwulan 1 tahun ini
+            for ($i = 0; $i < $lookahead; $i++) {
+                $cw = ($i % 3) + 1;
+                $y  = $nowYear + (int)floor($i / 3);
+                $startM = ($cw - 1) * 4 + 1;
+                $rawPeriods[] = ['month' => $startM, 'year' => $y, 'sub' => $cw, 'label' => "Caturwulan {$cw} / {$y}"];
+            }
+
+        } elseif (in_array($config->interval, ['triwulan', '4x_yearly'])) {
+            // Mulai dari Triwulan 1 tahun ini
+            for ($i = 0; $i < $lookahead; $i++) {
+                $tw = ($i % 4) + 1;
+                $y  = $nowYear + (int)floor($i / 4);
+                $startM = ($tw - 1) * 3 + 1;
+                $rawPeriods[] = ['month' => $startM, 'year' => $y, 'sub' => $tw, 'label' => "Triwulan {$tw} / {$y}"];
+            }
+
+        } elseif (in_array($config->interval, ['bimulanan', '6x_yearly'])) {
+            // Mulai dari Dwibulanan 1 (Jan–Feb) tahun ini
+            for ($i = 0; $i < $lookahead; $i++) {
+                $b = ($i % 6) + 1;
+                $y = $nowYear + (int)floor($i / 6);
+                $startM = ($b - 1) * 2 + 1;
+                $rawPeriods[] = ['month' => $startM, 'year' => $y, 'sub' => $b, 'label' => "Dwibulanan {$b} / {$y}"];
+            }
+
+        } else {
+            // Monthly: Mulai Januari tahun ini, tampilkan $lookahead bulan ke depan
+            for ($i = 0; $i < $lookahead; $i++) {
+                $m = ($i % 12) + 1;
+                $y = $nowYear + (int)floor($i / 12);
+                $monthName = date('F', mktime(0, 0, 0, $m, 1));
+                $rawPeriods[] = ['month' => $m, 'year' => $y, 'sub' => null, 'label' => "{$monthName} {$y}"];
+            }
+        }
+
+        // Check existence for each period
+        foreach ($rawPeriods as &$p) {
+            $query = Bill::where('person_id', $personId)
+                ->where('billing_config_id', $config->id)
+                ->where('period_year', $p['year']);
+
+            if (!$isEventInterval) {
+                $query->where('period_month', $p['month']);
+            }
+
+            $p['exists'] = $query->exists();
+        }
+        unset($p);
+
+        return $rawPeriods;
     }
 }

@@ -194,12 +194,12 @@
         </div>
     </div>
 
-    <!-- SEKSI 1: TAGIHAN BULAN INI -->
+    <!-- SEKSI 1: TAGIHAN PERIODE INI -->
     <div class="space-y-3">
         <div class="flex items-center justify-between px-1">
             <h3 class="text-xs font-black text-slate-700 dark:text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
                 <svg class="w-4 h-4 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-                <span>Tagihan Bulan Ini ({{ $currentMonthName }} {{ $currentYear }})</span>
+                <span>Tagihan Periode Ini ({{ $currentMonthName }})</span>
             </h3>
         </div>
 
@@ -213,10 +213,10 @@
                         <div class="flex items-start justify-between gap-2">
                             <div>
                                 <span class="inline-block text-[10px] font-extrabold uppercase px-2.5 py-0.5 rounded-md bg-emerald-100 dark:bg-emerald-500/10 text-emerald-800 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/20">
-                                    {{ $this->getBillTypeLabel($bill->bill_type) }}
+                                    {{ $this->getBillTypeLabel($bill->bill_type) }} • {{ $this->getBillPeriodLabel($bill) }}
                                 </span>
                                 <h4 class="text-sm font-extrabold text-slate-900 dark:text-slate-100 mt-1">
-                                    {{ $bill->notes ?? $this->getBillTypeLabel($bill->bill_type) }}
+                                    {{ $this->getBillDisplayName($bill) }}
                                 </h4>
                             </div>
 
@@ -261,12 +261,71 @@
         @endif
     </div>
 
+    {{-- SEKSI TAGIHAN KHUSUS & KEGIATAN (EVENT / INSIDENTAL) --}}
+    @if(isset($eventBills) && $eventBills->count() > 0)
+        <div class="space-y-3">
+            <div class="flex items-center justify-between px-1">
+                <h3 class="text-xs font-black text-slate-700 dark:text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
+                    <svg class="w-4 h-4 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                    <span>Tagihan Khusus & Kegiatan</span>
+                </h3>
+            </div>
+
+            <div class="space-y-2.5">
+                @foreach($eventBills as $bill)
+                    @php
+                        $sisa = max(0, $bill->amount - $bill->amount_paid);
+                    @endphp
+                    <div class="bg-purple-50/60 dark:bg-slate-900 border-2 border-purple-200 dark:border-purple-500/30 rounded-2xl p-3.5 shadow-sm space-y-2.5 transition-colors">
+                        <div class="flex items-start justify-between gap-2">
+                            <div>
+                                <span class="inline-block text-[10px] font-extrabold uppercase px-2.5 py-0.5 rounded-md bg-purple-100 dark:bg-purple-500/20 text-purple-800 dark:text-purple-300 border border-purple-200 dark:border-purple-500/30">
+                                    ⚡ {{ $this->getBillTypeLabel($bill->bill_type) }}
+                                </span>
+                                <h4 class="text-sm font-extrabold text-slate-900 dark:text-slate-100 mt-1">
+                                    {{ $this->getBillDisplayName($bill) }}
+                                </h4>
+                                @if($bill->due_date)
+                                    <span class="block text-[10px] text-slate-500 dark:text-slate-400 font-medium mt-0.5">
+                                        ⏰ Jatuh Tempo: {{ $bill->due_date->format('d M Y') }}
+                                    </span>
+                                @endif
+                            </div>
+
+                            @if($bill->status === 'partial')
+                                <span class="px-2.5 py-1 text-[10px] font-black uppercase text-amber-700 dark:text-amber-400 bg-amber-100 dark:bg-amber-500/10 border border-amber-300 dark:border-amber-500/20 rounded-full shrink-0">
+                                    DICICIL
+                                </span>
+                            @else
+                                <span class="px-2.5 py-1 text-[10px] font-black uppercase text-rose-700 dark:text-rose-400 bg-rose-100 dark:bg-rose-500/10 border border-rose-300 dark:border-rose-500/20 rounded-full shrink-0">
+                                    BELUM DIBAYAR
+                                </span>
+                            @endif
+                        </div>
+
+                        <!-- Nominal Rincian -->
+                        <div class="bg-white dark:bg-slate-950 rounded-xl p-2.5 border border-purple-200/80 dark:border-slate-800 flex items-center justify-between text-xs">
+                            <div>
+                                <span class="text-[10px] text-slate-500 dark:text-slate-400 font-bold block uppercase">Total Tagihan</span>
+                                <strong class="text-slate-800 dark:text-slate-200">Rp {{ number_format($bill->amount, 0, ',', '.') }}</strong>
+                            </div>
+                            <div class="text-right">
+                                <span class="text-[10px] text-rose-600 dark:text-rose-400 font-bold block uppercase">Sisa Kekurangan</span>
+                                <strong class="text-rose-700 dark:text-rose-400 font-black text-sm">Rp {{ number_format($sisa, 0, ',', '.') }}</strong>
+                            </div>
+                        </div>
+                    </div>
+                @endforeach
+            </div>
+        </div>
+    @endif
+
     <!-- SEKSI 2: TUNGGAKAN BULAN LALU -->
     <div class="space-y-3">
         <div class="flex items-center justify-between px-1">
             <h3 class="text-xs font-black text-slate-700 dark:text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
                 <svg class="w-4 h-4 text-amber-600 dark:text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
-                <span>Tunggakan Bulan-Bulan Lalu</span>
+                <span>Tunggakan Periode Lalu</span>
             </h3>
         </div>
 
@@ -280,10 +339,10 @@
                         <div class="flex items-start justify-between gap-2">
                             <div>
                                 <span class="inline-block text-[10px] font-extrabold uppercase px-2.5 py-0.5 rounded-md bg-amber-200/80 dark:bg-amber-500/20 text-amber-900 dark:text-amber-300 border border-amber-300 dark:border-amber-500/30">
-                                    Tunggakan {{ $this->getMonthName($bill->period_month) }} {{ $bill->period_year }}
+                                    Tunggakan {{ $this->getBillPeriodLabel($bill) }}
                                 </span>
                                 <h4 class="text-sm font-extrabold text-slate-900 dark:text-slate-100 mt-1">
-                                    {{ $bill->notes ?? $this->getBillTypeLabel($bill->bill_type) }}
+                                    {{ $this->getBillDisplayName($bill) }}
                                 </h4>
                             </div>
 
@@ -336,10 +395,10 @@
                         <div class="flex items-start justify-between gap-2">
                             <div>
                                 <span class="text-[10px] font-extrabold text-slate-500 dark:text-slate-400 uppercase block">
-                                    Periode: {{ $this->getMonthName($bill->period_month) }} {{ $bill->period_year }}
+                                    Periode: {{ $this->getBillPeriodLabel($bill) }}
                                 </span>
                                 <h4 class="text-xs font-bold text-slate-900 dark:text-slate-100 mt-0.5">
-                                    {{ $bill->notes ?? $this->getBillTypeLabel($bill->bill_type) }}
+                                    {{ $this->getBillDisplayName($bill) }}
                                 </h4>
                             </div>
 

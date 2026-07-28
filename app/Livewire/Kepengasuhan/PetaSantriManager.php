@@ -191,6 +191,11 @@ class PetaSantriManager extends Component
 
     public function executeTransferRoom(): void
     {
+        if (!auth()->user()->can('manage-kamar')) {
+            $this->toastError('Akses ditolak: Anda tidak memiliki izin untuk memindahkan santri antar kamar.');
+            return;
+        }
+
         $this->validate([
             'targetRoomId' => 'required|uuid|exists:rooms,id',
         ]);
@@ -231,6 +236,11 @@ class PetaSantriManager extends Component
 
     public function executeTransferKelas(): void
     {
+        if (!auth()->user()->can('manage-kelas')) {
+            $this->toastError('Akses ditolak: Anda tidak memiliki izin untuk memindahkan santri antar kelas.');
+            return;
+        }
+
         $this->validate([
             'targetKelasId' => 'required|uuid|exists:madrasah_kelas,id',
         ]);

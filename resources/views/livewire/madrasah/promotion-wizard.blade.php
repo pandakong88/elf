@@ -23,13 +23,15 @@
                 <span>Lihat Riwayat &amp; Log Kenaikan Kelas</span>
             </button>
 
-            @if($lastPromotionBatch)
-                <button type="button" wire:click="openUndoConfirmModal"
-                    class="inline-flex items-center gap-2 px-4 py-2.5 bg-rose-600 hover:bg-rose-500 active:bg-rose-700 text-white font-extrabold rounded-xl shadow-md transition-all text-xs">
-                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"/></svg>
-                    <span>Batalkan (Undo) Kenaikan Kelas Terakhir</span>
-                </button>
-            @endif
+            @can('execute-kenaikan-kelas')
+                @if($lastPromotionBatch)
+                    <button type="button" wire:click="openUndoConfirmModal"
+                        class="inline-flex items-center gap-2 px-4 py-2.5 bg-rose-600 hover:bg-rose-500 active:bg-rose-700 text-white font-extrabold rounded-xl shadow-md transition-all text-xs">
+                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"/></svg>
+                        <span>Batalkan (Undo) Kenaikan Kelas Terakhir</span>
+                    </button>
+                @endif
+            @endcan
 
             <button type="button" wire:click="loadPromotionData"
                 class="inline-flex items-center gap-2 px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-white font-bold rounded-xl shadow transition-all text-xs">
@@ -40,28 +42,30 @@
     </div>
 
     {{-- Undo Banner Notification (If last execution batch exists) --}}
-    @if($lastPromotionBatch)
-        <div class="bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/50 p-4 rounded-2xl flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-xl bg-amber-500 text-white flex items-center justify-center font-bold">
-                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
-                </div>
-                <div class="text-xs">
-                    <div class="font-extrabold text-amber-900 dark:text-amber-200">
-                        Kenaikan Kelas Massal Baru Saja Di-eksekusi pada {{ $lastPromotionBatch['executed_at'] }}
+    @can('execute-kenaikan-kelas')
+        @if($lastPromotionBatch)
+            <div class="bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/50 p-4 rounded-2xl flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-amber-500 text-white flex items-center justify-center font-bold">
+                        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
                     </div>
-                    <div class="text-amber-700 dark:text-amber-400 mt-0.5">
-                        Memproses {{ $lastPromotionBatch['total_students'] }} santri dari TA {{ $lastPromotionBatch['from_academic_year'] }} ke TA {{ $lastPromotionBatch['to_academic_year'] }}. Salah input data? Anda bisa membatalkannya sekarang.
+                    <div class="text-xs">
+                        <div class="font-extrabold text-amber-900 dark:text-amber-200">
+                            Kenaikan Kelas Massal Berhasil Di-eksekusi pada {{ $lastPromotionBatch->executed_at ? $lastPromotionBatch->executed_at->format('d M Y H:i') : '-' }} oleh {{ $lastPromotionBatch->executed_by_name ?? 'Admin' }}
+                        </div>
+                        <div class="text-amber-700 dark:text-amber-400 mt-0.5">
+                            Memproses {{ $lastPromotionBatch->total_students }} santri dari TA {{ $lastPromotionBatch->from_academic_year }} ke TA {{ $lastPromotionBatch->to_academic_year }}. Salah input data? Anda dapat membatalkannya secara permanen kapan saja.
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            <button type="button" wire:click="openUndoConfirmModal"
-                class="px-4 py-2 bg-amber-600 hover:bg-amber-500 text-white font-extrabold text-xs rounded-xl shadow transition-all">
-                Batalkan (Undo) Eksekusi Ini
-            </button>
-        </div>
-    @endif
+                <button type="button" wire:click="openUndoConfirmModal"
+                    class="px-4 py-2 bg-amber-600 hover:bg-amber-500 text-white font-extrabold text-xs rounded-xl shadow transition-all">
+                    Batalkan (Undo) Eksekusi Ini
+                </button>
+            </div>
+        @endif
+    @endcan
 
     {{-- Academic Year Config Bar --}}
     <div class="bg-white dark:bg-slate-900 p-5 border border-slate-200/80 dark:border-slate-800 rounded-2xl shadow-sm space-y-4">
@@ -101,86 +105,95 @@
                 </div>
             </div>
 
-            {{-- Card 2: Akan Naik Kelas --}}
+            {{-- Card 2: Promoted --}}
             <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-4 shadow-sm flex items-center gap-4">
                 <div class="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 dark:bg-emerald-950/60 dark:text-emerald-400 flex items-center justify-center font-bold flex-shrink-0">
                     <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
                 </div>
                 <div>
-                    <span class="text-xs text-emerald-600 dark:text-emerald-400 font-bold block">Akan Naik Kelas</span>
+                    <span class="text-xs text-slate-400 font-bold block">Diproyeksikan Naik</span>
                     <span class="text-2xl font-black text-emerald-600 dark:text-emerald-400 font-mono">{{ $this->summaryStats['promoted'] }}</span>
-                    <span class="text-[10px] text-slate-400 block font-medium">Santri Lanjut Kelas</span>
+                    <span class="text-[10px] text-emerald-600/70 block font-medium">Lanjut ke jenjang berikutnya</span>
                 </div>
             </div>
 
-            {{-- Card 3: Akan Tinggal Kelas --}}
+            {{-- Card 3: Retained --}}
             <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-4 shadow-sm flex items-center gap-4">
                 <div class="w-12 h-12 rounded-2xl bg-rose-50 text-rose-600 dark:bg-rose-950/60 dark:text-rose-400 flex items-center justify-center font-bold flex-shrink-0">
                     <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
                 </div>
                 <div>
-                    <span class="text-xs text-rose-600 dark:text-rose-400 font-bold block">Akan Tinggal Kelas</span>
+                    <span class="text-xs text-slate-400 font-bold block">Tinggal Kelas</span>
                     <span class="text-2xl font-black text-rose-600 dark:text-rose-400 font-mono">{{ $this->summaryStats['retained'] }}</span>
-                    <span class="text-[10px] text-slate-400 block font-medium">Santri Mengulang</span>
+                    <span class="text-[10px] text-rose-600/70 block font-medium">Mengulang di kelas sama</span>
                 </div>
             </div>
 
-            {{-- Card 4: Akan Lulus --}}
+            {{-- Card 4: Graduated --}}
             <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-4 shadow-sm flex items-center gap-4">
                 <div class="w-12 h-12 rounded-2xl bg-purple-50 text-purple-600 dark:bg-purple-950/60 dark:text-purple-400 flex items-center justify-center font-bold flex-shrink-0">
-                    <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l9-5-9-5-9 5 9 5z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0112 20.055a11.952 11.952 0 01-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z"/></svg>
+                    <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l9-5-9-5-9 5 9 5z"/></svg>
                 </div>
                 <div>
-                    <span class="text-xs text-purple-600 dark:text-purple-400 font-bold block">Akan Lulus Madrasah</span>
+                    <span class="text-xs text-slate-400 font-bold block">Lulus Madrasah</span>
                     <span class="text-2xl font-black text-purple-600 dark:text-purple-400 font-mono">{{ $this->summaryStats['graduated'] }}</span>
-                    <span class="text-[10px] text-slate-400 block font-medium">Santri Alumni Madrasah</span>
+                    <span class="text-[10px] text-purple-600/70 block font-medium">Lulus &amp; Status Alumni</span>
                 </div>
             </div>
         </div>
     @endif
 
-    {{-- Class Promotion Mapping Grid --}}
+    {{-- Main Promotion Mapping Content --}}
     <div class="space-y-6">
         @forelse($promotionMap as $classId => $classData)
             <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-6 shadow-sm space-y-4">
-                {{-- Class Header & Target Selection --}}
                 <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-slate-100 dark:border-slate-800">
                     <div class="flex items-center gap-3">
                         <span class="px-2.5 py-1 text-xs font-extrabold uppercase rounded bg-indigo-100 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300">
                             {{ $classData['jenjang'] }}
                         </span>
-                        <div>
-                            <h3 class="font-extrabold text-base text-slate-900 dark:text-slate-100">{{ $classData['class_name'] }}</h3>
-                            <span class="text-xs text-slate-400">Jumlah Santri: {{ count($classData['students']) }} Santri</span>
-                        </div>
+                        <h3 class="font-extrabold text-slate-900 dark:text-slate-100 text-lg">{{ $classData['class_name'] }}</h3>
+                        <span class="text-xs text-slate-400 font-bold">({{ count($classData['students']) }} Santri)</span>
                     </div>
 
                     {{-- Target Class Selector --}}
                     <div class="flex items-center gap-3 bg-slate-50 dark:bg-slate-800/60 p-2.5 rounded-xl border border-slate-200/60 dark:border-slate-700/60">
                         <span class="text-xs font-bold text-slate-500">Target Kenaikan:</span>
-                        <select wire:change="updateTargetClass('{{ $classId }}', $event.target.value)"
-                            class="px-3 py-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-bold text-slate-800 dark:text-slate-100 focus:outline-none">
-                            <option value="lulus" {{ $classData['target_class_id'] === 'lulus' ? 'selected' : '' }}>[ LULUS MADRASAH ]</option>
-                            @foreach($allClasses as $optClass)
-                                <option value="{{ $optClass->id }}" {{ $classData['target_class_id'] === $optClass->id ? 'selected' : '' }}>
-                                    {{ strtoupper($optClass->jenjang) }} — {{ $optClass->name }}
-                                </option>
-                            @endforeach
-                        </select>
+                        @canany(['manage-kelas', 'execute-kenaikan-kelas'])
+                            <select wire:change="updateTargetClass('{{ $classId }}', $event.target.value)"
+                                class="px-3 py-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-bold text-slate-800 dark:text-slate-100 focus:outline-none">
+                                <option value="lulus" {{ $classData['target_class_id'] === 'lulus' ? 'selected' : '' }}>[ LULUS MADRASAH ]</option>
+                                @foreach($allClasses as $optClass)
+                                    <option value="{{ $optClass->id }}" {{ $classData['target_class_id'] === $optClass->id ? 'selected' : '' }}>
+                                        {{ strtoupper($optClass->jenjang) }} — {{ $optClass->name }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        @else
+                            <span class="px-3 py-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-bold text-slate-800 dark:text-slate-100">
+                                @if($classData['target_class_id'] === 'lulus')
+                                    [ LULUS MADRASAH ]
+                                @else
+                                    {{ strtoupper($allClasses->firstWhere('id', $classData['target_class_id'])?->jenjang ?? '') }} — {{ $allClasses->firstWhere('id', $classData['target_class_id'])?->name ?? '-' }}
+                                @endif
+                            </span>
+                        @endcanany
                     </div>
                 </div>
 
                 {{-- Quick Batch Actions per Class --}}
-                <div class="flex items-center justify-between text-xs">
-                    <div class="flex items-center gap-2">
-                        <button type="button" wire:click="setAllStudentsStatusInClass('{{ $classId }}', 'promoted')" class="px-2.5 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300 font-bold rounded-lg transition-colors">
-                            Semua Naik
-                        </button>
-                        <button type="button" wire:click="setAllStudentsStatusInClass('{{ $classId }}', 'retained')" class="px-2.5 py-1 bg-rose-50 hover:bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-300 font-bold rounded-lg transition-colors">
-                            Semua Tinggal Kelas
-                        </button>
+                @canany(['manage-kelas', 'execute-kenaikan-kelas'])
+                    <div class="flex items-center justify-between text-xs">
+                        <div class="flex items-center gap-2">
+                            <button type="button" wire:click="setAllStudentsStatusInClass('{{ $classId }}', 'promoted')" class="px-2.5 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300 font-bold rounded-lg transition-colors">
+                                Semua Naik
+                            </button>
+                            <button type="button" wire:click="setAllStudentsStatusInClass('{{ $classId }}', 'retained')" class="px-2.5 py-1 bg-rose-50 hover:bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-300 font-bold rounded-lg transition-colors">
+                                Semua Tinggal Kelas
+                            </button>
+                        </div>
                     </div>
-                </div>
+                @endcanany
 
                 {{-- Student Table --}}
                 <div class="overflow-x-auto">
@@ -206,20 +219,26 @@
                                         </span>
                                     </td>
                                     <td class="py-2.5 px-3 text-center">
-                                        <div class="inline-flex p-0.5 bg-slate-100 dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700">
-                                            <button type="button" wire:click="toggleStudentStatus('{{ $classId }}', '{{ $st['person_id'] }}', 'promoted')"
-                                                class="px-2.5 py-1 rounded-md font-bold text-[10px] transition-all {{ $st['status'] === 'promoted' ? 'bg-emerald-600 text-white shadow' : 'text-slate-500 hover:text-slate-800' }}">
-                                                Naik Kelas
-                                            </button>
-                                            <button type="button" wire:click="toggleStudentStatus('{{ $classId }}', '{{ $st['person_id'] }}', 'retained')"
-                                                class="px-2.5 py-1 rounded-md font-bold text-[10px] transition-all {{ $st['status'] === 'retained' ? 'bg-rose-600 text-white shadow' : 'text-slate-500 hover:text-slate-800' }}">
-                                                Tinggal Kelas
-                                            </button>
-                                            <button type="button" wire:click="toggleStudentStatus('{{ $classId }}', '{{ $st['person_id'] }}', 'graduated')"
-                                                class="px-2.5 py-1 rounded-md font-bold text-[10px] transition-all {{ $st['status'] === 'graduated' ? 'bg-indigo-600 text-white shadow' : 'text-slate-500 hover:text-slate-800' }}">
-                                                Lulus
-                                            </button>
-                                        </div>
+                                        @canany(['manage-kelas', 'execute-kenaikan-kelas'])
+                                            <div class="inline-flex p-0.5 bg-slate-100 dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700">
+                                                <button type="button" wire:click="toggleStudentStatus('{{ $classId }}', '{{ $st['person_id'] }}', 'promoted')"
+                                                    class="px-2.5 py-1 rounded-md font-bold text-[10px] transition-all {{ $st['status'] === 'promoted' ? 'bg-emerald-600 text-white shadow' : 'text-slate-500 hover:text-slate-800' }}">
+                                                    Naik Kelas
+                                                </button>
+                                                <button type="button" wire:click="toggleStudentStatus('{{ $classId }}', '{{ $st['person_id'] }}', 'retained')"
+                                                    class="px-2.5 py-1 rounded-md font-bold text-[10px] transition-all {{ $st['status'] === 'retained' ? 'bg-rose-600 text-white shadow' : 'text-slate-500 hover:text-slate-800' }}">
+                                                    Tinggal Kelas
+                                                </button>
+                                                <button type="button" wire:click="toggleStudentStatus('{{ $classId }}', '{{ $st['person_id'] }}', 'graduated')"
+                                                    class="px-2.5 py-1 rounded-md font-bold text-[10px] transition-all {{ $st['status'] === 'graduated' ? 'bg-indigo-600 text-white shadow' : 'text-slate-500 hover:text-slate-800' }}">
+                                                    Lulus
+                                                </button>
+                                            </div>
+                                        @else
+                                            <span class="px-2.5 py-1 rounded-md font-bold text-[10px] {{ $st['status'] === 'promoted' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300' : ($st['status'] === 'retained' ? 'bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-300' : 'bg-indigo-100 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300') }}">
+                                                {{ $st['status'] === 'promoted' ? 'Naik Kelas' : ($st['status'] === 'retained' ? 'Tinggal Kelas' : 'Lulus') }}
+                                            </span>
+                                        @endcanany
                                     </td>
                                 </tr>
                             @endforeach
@@ -236,21 +255,23 @@
 
     {{-- Floating Execution Bottom Bar --}}
     @if(!empty($promotionMap))
-        <div class="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 bg-slate-900 text-white px-6 py-4 rounded-2xl shadow-2xl border border-slate-700 flex items-center gap-6">
-            <div>
-                <div class="font-extrabold text-sm text-white">Eksekusi Kenaikan Kelas Serentak</div>
-                <div class="text-xs text-slate-400">Memproses seluruh santri dari TA {{ $fromAcademicYear }} ke TA {{ $toAcademicYear }}</div>
-            </div>
+        @can('execute-kenaikan-kelas')
+            <div class="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 bg-slate-900 text-white px-6 py-4 rounded-2xl shadow-2xl border border-slate-700 flex items-center gap-6">
+                <div>
+                    <div class="font-extrabold text-sm text-white">Eksekusi Kenaikan Kelas Serentak</div>
+                    <div class="text-xs text-slate-400">Memproses seluruh santri dari TA {{ $fromAcademicYear }} ke TA {{ $toAcademicYear }}</div>
+                </div>
 
-            <button type="button" wire:click="requestMassPromotionConfirm"
-                class="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white font-extrabold text-xs rounded-xl shadow-lg transition-all flex items-center gap-2">
-                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
-                <span>Eksekusi Kenaikan &amp; Kelulusan Massal</span>
-            </button>
-        </div>
+                <button type="button" wire:click="requestMassPromotionConfirm"
+                    class="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white font-extrabold text-xs rounded-xl shadow-lg transition-all flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+                    <span>Eksekusi Kenaikan &amp; Kelulusan Massal</span>
+                </button>
+            </div>
+        @endcan
     @endif
 
-    {{-- MODAL KONFIRMASI UNDO / ROLLBACK --}}
+    {{-- MODAL KONFIRMASI UNDO / ROLLBACK (WITH PASSWORD GATE) --}}
     @if($showUndoConfirmModal && $lastPromotionBatch)
         <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
             <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4">
@@ -261,12 +282,23 @@
                 <div>
                     <h3 class="font-extrabold text-base text-slate-900 dark:text-slate-100">Batalkan (Undo) Kenaikan Kelas Massal?</h3>
                     <p class="text-xs text-slate-500 mt-1">
-                        Tindakan ini akan mengembalikan pendaftaran kelas <strong>{{ $lastPromotionBatch['total_students'] }} santri</strong> dari TA {{ $lastPromotionBatch['to_academic_year'] }} kembali ke kelas awal mereka di TA {{ $lastPromotionBatch['from_academic_year'] }}.
+                        Tindakan ini akan mengembalikan pendaftaran kelas <strong>{{ $lastPromotionBatch->total_students }} santri</strong> dari TA {{ $lastPromotionBatch->to_academic_year }} kembali ke kelas asal mereka di TA {{ $lastPromotionBatch->from_academic_year }}.
                     </p>
                 </div>
 
-                <div class="bg-rose-50 dark:bg-rose-950/40 p-3 rounded-xl border border-rose-200/50 dark:border-rose-800/40 text-[11px] text-rose-800 dark:text-rose-300 font-semibold">
-                    Waktu Eksekusi Terakhir: {{ $lastPromotionBatch['executed_at'] }}
+                <div class="bg-rose-50 dark:bg-rose-950/40 p-3 rounded-xl border border-rose-200/50 dark:border-rose-800/40 text-[11px] text-rose-800 dark:text-rose-300 font-semibold space-y-1">
+                    <div>Waktu Eksekusi: {{ $lastPromotionBatch->executed_at ? $lastPromotionBatch->executed_at->format('d M Y H:i:s') : '-' }}</div>
+                    <div>Eksekutor: {{ $lastPromotionBatch->executed_by_name ?? 'Admin' }}</div>
+                </div>
+
+                {{-- PASSWORD GATE INPUT --}}
+                <div class="space-y-1 text-left pt-2 border-t border-slate-100 dark:border-slate-800">
+                    <label class="block text-xs font-bold text-slate-700 dark:text-slate-300">
+                        Konfirmasi Password Akun Anda <span class="text-rose-500">*</span>
+                    </label>
+                    <input type="password" wire:model="confirmPassword" placeholder="Masukkan password Anda..."
+                        class="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl text-xs focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 text-slate-800 dark:text-slate-100">
+                    @error('confirmPassword') <span class="text-rose-500 text-[11px] font-bold block mt-1">{{ $message }}</span> @enderror
                 </div>
 
                 <div class="flex items-center justify-end gap-2 pt-3">
@@ -277,7 +309,7 @@
         </div>
     @endif
 
-    {{-- MODAL KONFIRMASI KOSTUM ELEGAN (NO BROWSER ALERT) --}}
+    {{-- MODAL KONFIRMASI EKSEKUSI MASSAL (WITH PASSWORD GATE) --}}
     @if($showConfirmModal)
         <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md">
             <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4">
@@ -287,12 +319,22 @@
                     </div>
                     <div>
                         <h3 class="font-extrabold text-base text-slate-900 dark:text-slate-100">{{ $confirmTitle }}</h3>
-                        <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Konfirmasi Eksekusi Massal</p>
+                        <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Verifikasi Keamanan Password Gate</p>
                     </div>
                 </div>
 
                 <div class="bg-slate-50 dark:bg-slate-800/60 p-4 rounded-2xl border border-slate-200/60 dark:border-slate-700/60 text-xs text-slate-700 dark:text-slate-300 leading-relaxed font-medium">
                     {{ $confirmMessage }}
+                </div>
+
+                {{-- PASSWORD GATE INPUT --}}
+                <div class="space-y-1 text-left pt-2 border-t border-slate-100 dark:border-slate-800">
+                    <label class="block text-xs font-bold text-slate-700 dark:text-slate-300">
+                        Konfirmasi Password Akun Anda <span class="text-emerald-600">*</span>
+                    </label>
+                    <input type="password" wire:model="confirmPassword" placeholder="Masukkan password Anda untuk mengonfirmasi..."
+                        class="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl text-xs focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 text-slate-800 dark:text-slate-100">
+                    @error('confirmPassword') <span class="text-rose-500 text-[11px] font-bold block mt-1">{{ $message }}</span> @enderror
                 </div>
 
                 <div class="flex items-center justify-end gap-2 pt-2">
@@ -351,7 +393,7 @@
                         </button>
                         <button type="button" wire:click="$set('logFilter', 'batches')"
                             class="px-3 py-1.5 font-bold rounded-lg transition-all {{ $logFilter === 'batches' ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200' }}">
-                            Riwayat Batch
+                            Riwayat Batch (Permanen DB)
                         </button>
                     </div>
 
@@ -383,26 +425,28 @@
                             <tbody class="divide-y divide-slate-100 dark:divide-slate-800 font-medium">
                                 @forelse($this->batchHistory as $batch)
                                     <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/40">
-                                        <td class="p-3 font-mono text-slate-700 dark:text-slate-300">{{ $batch['executed_at'] }}</td>
-                                        <td class="p-3 font-bold text-slate-800 dark:text-slate-100">{{ $batch['from_academic_year'] }} &rarr; {{ $batch['to_academic_year'] }}</td>
-                                        <td class="p-3 text-center font-bold font-mono">{{ $batch['total_students'] }}</td>
-                                        <td class="p-3 text-center">
-                                            <span class="text-emerald-600 font-bold">{{ $batch['total_promoted'] ?? 0 }} Naik</span> •
-                                            <span class="text-rose-600 font-bold">{{ $batch['total_retained'] ?? 0 }} Ulang</span> •
-                                            <span class="text-purple-600 font-bold">{{ $batch['total_graduated'] ?? 0 }} Lulus</span>
+                                        <td class="p-3 font-mono text-slate-700 dark:text-slate-300">
+                                            {{ $batch->executed_at ? $batch->executed_at->format('d M Y H:i:s') : '-' }}
                                         </td>
-                                        <td class="p-3 text-slate-600 dark:text-slate-300">{{ $batch['executed_by'] ?? 'Admin' }}</td>
+                                        <td class="p-3 font-bold text-slate-800 dark:text-slate-100">{{ $batch->from_academic_year }} &rarr; {{ $batch->to_academic_year }}</td>
+                                        <td class="p-3 text-center font-bold font-mono">{{ $batch->total_students }}</td>
                                         <td class="p-3 text-center">
-                                            @if(($batch['status'] ?? 'sukses') === 'sukses')
-                                                <span class="px-2 py-0.5 text-[10px] font-extrabold rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300">SUKSES</span>
+                                            <span class="text-emerald-600 font-bold">{{ $batch->total_promoted }} Naik</span> •
+                                            <span class="text-rose-600 font-bold">{{ $batch->total_retained }} Ulang</span> •
+                                            <span class="text-purple-600 font-bold">{{ $batch->total_graduated }} Lulus</span>
+                                        </td>
+                                        <td class="p-3 text-slate-600 dark:text-slate-300">{{ $batch->executed_by_name ?? 'Admin' }}</td>
+                                        <td class="p-3 text-center">
+                                            @if($batch->status === 'sukses')
+                                                <span class="px-2.5 py-1 text-[10px] font-extrabold rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300">SUKSES</span>
                                             @else
-                                                <span class="px-2 py-0.5 text-[10px] font-extrabold rounded-full bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-300">DI-UNDO</span>
+                                                <span class="px-2.5 py-1 text-[10px] font-extrabold rounded-full bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-300" title="Di-undo oleh {{ $batch->undone_by_name ?? 'Admin' }} pada {{ $batch->undone_at ? $batch->undone_at->format('d M Y H:i') : '' }}">DI-UNDO</span>
                                             @endif
                                         </td>
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="6" class="p-8 text-center text-slate-400">Belum ada riwayat eksekusi batch kenaikan kelas.</td>
+                                        <td colspan="6" class="p-8 text-center text-slate-400">Belum ada riwayat eksekusi batch kenaikan kelas di database.</td>
                                     </tr>
                                 @endforelse
                             </tbody>
@@ -455,7 +499,7 @@
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="6" class="p-8 text-center text-slate-400">Tidak ada data log yang sesuai dengan filter.</td>
+                                        <td colspan="6" class="p-8 text-center text-slate-400 font-medium">Belum ada riwayat log catatan santri.</td>
                                     </tr>
                                 @endforelse
                             </tbody>
@@ -464,7 +508,7 @@
                 </div>
 
                 {{-- Footer --}}
-                <div class="flex items-center justify-end pt-2 border-t border-slate-100 dark:border-slate-800">
+                <div class="flex justify-end pt-2">
                     <button type="button" wire:click="closeLogModal" class="px-5 py-2 bg-slate-800 hover:bg-slate-700 text-white font-bold rounded-xl text-xs">Tutup Log</button>
                 </div>
             </div>
