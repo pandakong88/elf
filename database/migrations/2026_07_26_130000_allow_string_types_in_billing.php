@@ -9,8 +9,11 @@ return new class extends Migration
 {
     public function up(): void
     {
-        DB::statement("ALTER TABLE billing_configurations MODIFY COLUMN type VARCHAR(50) NOT NULL");
-        DB::statement("ALTER TABLE bills MODIFY COLUMN bill_type VARCHAR(50) NOT NULL");
+        $driver = DB::getDriverName();
+        if ($driver === 'mysql' || $driver === 'mariadb') {
+            DB::statement("ALTER TABLE billing_configurations MODIFY COLUMN type VARCHAR(50) NOT NULL");
+            DB::statement("ALTER TABLE bills MODIFY COLUMN bill_type VARCHAR(50) NOT NULL");
+        }
     }
 
     public function down(): void
