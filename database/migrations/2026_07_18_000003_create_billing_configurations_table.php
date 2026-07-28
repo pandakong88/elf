@@ -10,7 +10,7 @@ return new class extends Migration
     {
         Schema::create('billing_configurations', function (Blueprint $table) {
             $table->uuid('id')->primary();
-            $table->enum('type', ['syahriah_pondok', 'kas_komplek', 'majek_pagi', 'majek_sore', 'syahriah_madrasah', 'kebersihan', 'kitab', 'pendaftaran']);
+            $table->string('type', 50);
             $table->string('label');
             $table->decimal('amount', 10, 2);
             $table->foreignUuid('dormitory_id')->nullable()->constrained('dormitories')->nullOnDelete();

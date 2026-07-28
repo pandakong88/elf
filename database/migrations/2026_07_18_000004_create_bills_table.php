@@ -11,7 +11,7 @@ return new class extends Migration
         Schema::create('bills', function (Blueprint $table) {
             $table->uuid('id')->primary();
             $table->foreignUuid('person_id')->constrained('persons')->cascadeOnDelete();
-            $table->enum('bill_type', ['syahriah_pondok', 'kas_komplek', 'majek_pagi', 'majek_sore', 'syahriah_madrasah', 'kebersihan', 'kitab', 'pendaftaran', 'event_iuran']);
+            $table->string('bill_type', 50);
             $table->foreignUuid('billing_config_id')->nullable()->constrained('billing_configurations')->nullOnDelete();
             $table->uuid('reference_id')->nullable();
             $table->unsignedTinyInteger('period_month')->nullable();
