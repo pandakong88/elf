@@ -495,16 +495,28 @@
                             </div>
 
                             @if(!empty($tempValidSantri))
-                                <div class="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-xl max-h-48 overflow-y-auto space-y-1 text-xs">
+                                <div class="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-xl max-h-64 overflow-y-auto space-y-2 text-xs">
                                     <span class="font-bold text-slate-700 dark:text-slate-300 block mb-2">Pratinjau Data Valid (Siap Disimpan):</span>
                                     @foreach($tempValidSantri as $vs)
-                                        <div class="flex items-center justify-between text-slate-600 dark:text-slate-300 py-1 border-b border-slate-200/50 dark:border-slate-700/50 last:border-0">
-                                            <span>Baris {{ $vs['row'] }}: <strong>{{ $vs['name'] }}</strong> ({{ $vs['gender'] }}) - {{ ucfirst($vs['presence_status']) }}</span>
-                                            <span class="font-mono text-emerald-600 dark:text-emerald-400">{{ $vs['dorm_name'] ? $vs['dorm_name'].' / '.$vs['room_name'] : '-' }}</span>
+                                        <div class="p-2 rounded-lg bg-white dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600/50">
+                                            <div class="flex items-center justify-between">
+                                                <span>Baris {{ $vs['row'] }}: <strong>{{ $vs['name'] }}</strong> ({{ $vs['gender'] === 'L' ? 'Putra' : 'Putri' }}) — {{ ucfirst($vs['presence_status']) }}</span>
+                                                <span class="font-mono text-emerald-600 dark:text-emerald-400">{{ $vs['dorm_name'] ? $vs['dorm_name'].' / '.$vs['room_name'] : 'Laju' }}</span>
+                                            </div>
+                                            <div class="flex flex-wrap gap-x-4 gap-y-0.5 mt-1 text-slate-500 dark:text-slate-400">
+                                                <span>👤 Wali: <span class="font-medium text-slate-700 dark:text-slate-200">{{ $vs['parent_name'] ?: '-' }}</span> ({{ $vs['parent_rel'] ?: '-' }}) · {{ $vs['parent_phone'] ?: '-' }}</span>
+                                                @if($vs['kelas_name'])
+                                                    <span>🏫 Kelas: <span class="font-medium text-slate-700 dark:text-slate-200">{{ $vs['kelas_name'] }}</span></span>
+                                                @endif
+                                                @if($vs['school_name'])
+                                                    <span>🎓 Sekolah: <span class="font-medium text-slate-700 dark:text-slate-200">{{ $vs['school_name'] }}</span></span>
+                                                @endif
+                                            </div>
                                         </div>
                                     @endforeach
                                 </div>
                             @endif
+
 
                             @if(!empty($tempInvalidSantri))
                                 <div class="bg-rose-50 dark:bg-rose-950/30 p-4 rounded-xl max-h-48 overflow-y-auto space-y-2 text-xs border border-rose-200 dark:border-rose-800/50">
