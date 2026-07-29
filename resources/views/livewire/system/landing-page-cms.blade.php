@@ -529,27 +529,23 @@
                             <span>Mengunggah pratinjau foto ke server...</span>
                         </div>
 
-                        <!-- Instant Temporary Upload Previews -->
+                        <!-- Instant Temporary Upload Previews (Base64 Streamed) -->
                         @if ($new_photos)
+                            @php
+                                $previews = $this->getNewPhotoPreviews();
+                            @endphp
                             <div class="space-y-2 pt-2 border-t border-slate-200 dark:border-slate-800">
                                 <span class="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 block">✔ {{ count($new_photos) }} Foto Dipilih & Siap Diunggah:</span>
                                 <div class="grid grid-cols-4 sm:grid-cols-6 gap-2">
                                     @foreach($new_photos as $idx => $photo)
-                                        @php $tempUrl = ''; try { $tempUrl = $photo->temporaryUrl(); } catch(\Exception $e) {} @endphp
+                                        @php $pUrl = $previews[$idx] ?? ''; @endphp
                                         <div class="relative group aspect-square rounded-xl overflow-hidden border border-emerald-300 dark:border-emerald-700 bg-slate-900">
-                                            <template x-if="localPreviews[{{ $idx }}]">
-                                                <img :src="localPreviews[{{ $idx }}]" class="w-full h-full object-cover">
-                                            </template>
-                                            <template x-if="!localPreviews[{{ $idx }}]">
-                                                <div>
-                                                    @if($tempUrl)
-                                                        <img src="{{ $tempUrl }}" class="w-full h-full object-cover">
-                                                    @else
-                                                        <div class="w-full h-full flex items-center justify-center text-[10px] text-emerald-400 font-bold p-1 text-center">Foto {{ $idx + 1 }}</div>
-                                                    @endif
-                                                </div>
-                                            </template>
-                                            <button type="button" wire:click="removeNewPhoto({{ $idx }})" @click="localPreviews.splice({{ $idx }}, 1)"
+                                            @if($pUrl)
+                                                <img src="{{ $pUrl }}" class="w-full h-full object-cover">
+                                            @else
+                                                <div class="w-full h-full flex items-center justify-center text-[10px] text-emerald-400 font-bold p-1 text-center">Foto {{ $idx + 1 }}</div>
+                                            @endif
+                                            <button type="button" wire:click="removeNewPhoto({{ $idx }})"
                                                     class="absolute top-1 right-1 w-5 h-5 rounded-full bg-rose-500 text-white flex items-center justify-center text-[10px] font-bold shadow-md hover:bg-rose-600 z-10">
                                                 ✕
                                             </button>

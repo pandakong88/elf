@@ -368,6 +368,40 @@ class LandingPageCMS extends Component
         }
     }
 
+    public function getNewPhotoPreviews(): array
+    {
+        $previews = [];
+        if (empty($this->new_photos)) {
+            return $previews;
+        }
+
+        foreach ($this->new_photos as $photo) {
+            $previews[] = $this->getTempBase64($photo);
+        }
+
+        return $previews;
+    }
+
+    public function getTempBase64($file): ?string
+    {
+        if (!$file) return null;
+        try {
+            if (is_object($file) && method_exists($file, 'getRealPath') && file_exists($file->getRealPath())) {
+                $mime = method_exists($file, 'getMimeType') ? ($file->getMimeType() ?: 'image/jpeg') : 'image/jpeg';
+                $contents = file_get_contents($file->getRealPath());
+                if ($contents !== false) {
+                    return 'data:' . $mime . ';base64,' . base64_encode($contents);
+                }
+            }
+            if (is_object($file) && method_exists($file, 'temporaryUrl')) {
+                return $file->temporaryUrl();
+            }
+        } catch (\Throwable $e) {
+            return null;
+        }
+        return null;
+    }
+
     public function deleteActivity($id)
     {
         $activity = Activity::findOrFail($id);
