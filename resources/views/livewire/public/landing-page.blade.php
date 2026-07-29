@@ -293,8 +293,11 @@
         @endif
 
         {{-- Tombol Lihat Semua Kegiatan --}}
+        @php
+            $cleanIg = ltrim($data['ig_username'] ?? 'alfithroh.jejeran', '@');
+        @endphp
         <div class="mt-10 text-center">
-            <a href="https://www.instagram.com/alfithroh.jejeran" target="_blank" rel="noopener noreferrer"
+            <a href="https://www.instagram.com/{{ $cleanIg }}" target="_blank" rel="noopener noreferrer"
                class="inline-flex items-center gap-2.5 px-6 py-3.5 border-2 border-slate-200 dark:border-slate-700 hover:border-emerald-400 dark:hover:border-emerald-600 hover:bg-emerald-50/50 dark:hover:bg-emerald-950/30 text-slate-700 dark:text-slate-300 hover:text-emerald-700 dark:hover:text-emerald-400 rounded-2xl text-sm font-bold transition-all duration-200 group">
                 {{-- Instagram Icon --}}
                 <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
