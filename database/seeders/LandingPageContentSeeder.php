@@ -41,10 +41,16 @@ class LandingPageContentSeeder extends Seeder
                 'title' => 'Misi Pondok'
             ],
             'contact_address' => [
-                'value' => 'Jejeran, Wonokromo, Pleret, Bantul, Yogyakarta, 55791',
+                'value' => 'Pesantren AL-FITHROH Jejeran, 49MP+MMX, Jl. Imogiri Timur, Wonokromo, Pleret, Bantul, DIY 55791',
                 'type' => 'text',
                 'section' => 'contact',
                 'title' => 'Alamat Sekretariat'
+            ],
+            'gmaps_url' => [
+                'value' => 'https://maps.app.goo.gl/KTznYAfUtWU2B2hz7',
+                'type' => 'text',
+                'section' => 'contact',
+                'title' => 'Link Google Maps'
             ],
             'contact_phone' => [
                 'value' => '0898-6626-009 (Humas Putra) / 0857-1328-5438 (Humas Putri)',

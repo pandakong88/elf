@@ -575,7 +575,7 @@
                         <span class="w-2.5 h-2.5 rounded-full bg-blue-500 animate-pulse"></span>
                         <span class="text-xs font-bold text-slate-800 dark:text-slate-200">Peta Lokasi Pesantren</span>
                     </div>
-                    <a href="{{ $data['gmaps_url'] ?? '#' }}" target="_blank" rel="noopener noreferrer"
+                    <a href="{{ !empty($data['gmaps_url']) ? $data['gmaps_url'] : 'https://maps.app.goo.gl/KTznYAfUtWU2B2hz7' }}" target="_blank" rel="noopener noreferrer"
                        class="text-[10px] font-bold text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1">
                         <span>Buka Aplikasi GMaps</span>
                         <span>↗</span>
@@ -585,18 +585,18 @@
                 {{-- Embedded Interactive Google Map Iframe --}}
                 <div class="relative w-full h-[340px] rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-950">
                     <iframe 
-                        src="https://maps.google.com/maps?q={{ urlencode($data['contact_address'] ?? 'Pondok Pesantren Al-Fithroh Jejeran Bantul') }}&t=&z=16&ie=UTF8&iwloc=&output=embed" 
+                        src="https://maps.google.com/maps?q={{ urlencode('Pesantren AL-FITHROH Jejeran, 49MP+MMX, Jl. Imogiri Timur, Wonokromo, Pleret, Bantul') }}&t=&z=17&ie=UTF8&iwloc=&output=embed" 
                         class="w-full h-full border-0" 
                         allowfullscreen="" 
                         loading="lazy" 
                         referrerpolicy="no-referrer-when-downgrade"
-                        title="Peta Lokasi Pondok Pesantren Al-Fithroh">
+                        title="Peta Lokasi Pesantren AL-FITHROH Jejeran">
                     </iframe>
                 </div>
 
                 {{-- Subtext / Hint --}}
                 <p class="text-[10px] text-slate-400 text-center pb-1">
-                    📍 Jejeran, Wonokromo, Pleret, Bantul, DIY — Petunjuk arah presisi dapat diklik langsung pada peta.
+                    📍 Pesantren AL-FITHROH Jejeran, 49MP+MMX, Jl. Imogiri Timur — Petunjuk arah presisi dapat diklik langsung pada peta.
                 </p>
 
             </div>
