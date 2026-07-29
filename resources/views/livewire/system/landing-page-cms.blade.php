@@ -330,7 +330,7 @@
                                                 <div class="flex flex-wrap gap-2">
                                                     @foreach($act->getMedia('photos') as $media)
                                                         <div class="relative group w-12 h-12 rounded-lg overflow-hidden border border-slate-200 dark:border-slate-700">
-                                                            <img src="{{ parse_url($media->getUrl(), PHP_URL_PATH) }}" class="w-full h-full object-cover">
+                                                            <img src="{{ route('media.stream', $media->id) }}" class="w-full h-full object-cover">
                                                             <button type="button" wire:click="deletePhoto('{{ $act->id }}', '{{ $media->id }}')"
                                                                     wire:confirm="Yakin ingin menghapus foto dokumentasi ini?"
                                                                     class="absolute inset-0 bg-rose-600/80 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity text-xs font-bold">

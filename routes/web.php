@@ -4,10 +4,12 @@ use Illuminate\Support\Facades\Route;
 
 use App\Http\Controllers\WebAuthController;
 use App\Http\Controllers\PedomanController;
+use App\Http\Controllers\MediaStreamController;
 
 Route::get('/', \App\Livewire\Public\LandingPage::class)->name('landing-page');
 Route::get('/pedoman-santri/stream', [PedomanController::class, 'stream'])->name('pedoman.stream');
 Route::get('/pedoman-santri/download', [PedomanController::class, 'download'])->name('pedoman.download');
+Route::get('/media-stream/{id}', [MediaStreamController::class, 'stream'])->name('media.stream');
 
 Route::get('/login',  [WebAuthController::class, 'showLogin'])->name('login');
 Route::post('/login', [WebAuthController::class, 'login']);

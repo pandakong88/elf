@@ -55,8 +55,7 @@ class Activity extends Model implements HasMedia
     public function getPhotoUrls(): array
     {
         return $this->getMedia('photos')->map(function ($media) {
-            $url = $media->getUrl();
-            return parse_url($url, PHP_URL_PATH) ?: $url;
+            return route('media.stream', $media->id);
         })->toArray();
     }
 
