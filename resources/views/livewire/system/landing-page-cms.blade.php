@@ -65,28 +65,42 @@
                 <div class="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl shadow-sm overflow-hidden p-6 space-y-4">
                     <h3 class="text-sm font-bold text-slate-800 dark:text-slate-200 border-b border-slate-100 dark:border-slate-800 pb-2 uppercase tracking-wider">Identitas Pondok (Logo)</h3>
                     
-                    <div class="p-4 border border-dashed border-slate-200 dark:border-slate-800 rounded-2xl flex flex-col sm:flex-row items-center gap-4">
+                    <div x-data="{ localLogoUrl: null }" class="p-4 border border-dashed border-slate-200 dark:border-slate-800 rounded-2xl flex flex-col sm:flex-row items-center gap-4">
                         <div class="flex-1 space-y-1 text-center sm:text-left">
                             <span class="text-xs font-bold text-slate-800 dark:text-slate-200 block">Upload Logo Pondok</span>
                             <span class="text-[10px] text-slate-400 block">Format PNG, JPG, JPEG, WEBP, atau SVG (maks 5MB).</span>
-                            @if ($logo_file)
+                            <template x-if="localLogoUrl">
                                 <div class="mt-2 flex items-center gap-2.5 p-2.5 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 rounded-xl">
-                                    <img src="{{ $logo_file->temporaryUrl() }}" class="h-10 w-10 object-contain rounded-lg border border-emerald-300 p-1 bg-white">
+                                    <img :src="localLogoUrl" class="h-10 w-10 object-contain rounded-lg border border-emerald-300 p-1 bg-white">
                                     <div>
                                         <span class="text-[10px] text-emerald-700 dark:text-emerald-300 font-bold block">✔ Logo Baru Dipilih!</span>
                                         <span class="text-[9px] text-slate-500 dark:text-slate-400 block">Klik <strong>Simpan & Update</strong> untuk menyimpan.</span>
                                     </div>
                                 </div>
-                            @elseif ($existing_logo_url)
-                                <div class="mt-2 flex items-center gap-2 text-xs text-slate-500">
-                                    <img src="{{ $existing_logo_url }}" class="h-8 w-8 object-contain rounded border p-0.5 bg-white">
-                                    <span>Logo saat ini aktif.</span>
+                            </template>
+                            <template x-if="!localLogoUrl">
+                                <div>
+                                    @if ($logo_file)
+                                        @php $lUrl = ''; try { $lUrl = $logo_file->temporaryUrl(); } catch(\Exception $e){} @endphp
+                                        @if($lUrl)
+                                            <div class="mt-2 flex items-center gap-2.5 p-2.5 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 rounded-xl">
+                                                <img src="{{ $lUrl }}" class="h-10 w-10 object-contain rounded-lg border border-emerald-300 p-1 bg-white">
+                                                <span class="text-[10px] text-emerald-700 dark:text-emerald-300 font-bold">✔ Logo Baru Dipilih!</span>
+                                            </div>
+                                        @endif
+                                    @elseif ($existing_logo_url)
+                                        <div class="mt-2 flex items-center gap-2 text-xs text-slate-500">
+                                            <img src="{{ $existing_logo_url }}" class="h-8 w-8 object-contain rounded border p-0.5 bg-white">
+                                            <span>Logo saat ini aktif.</span>
+                                        </div>
+                                    @endif
                                 </div>
-                            @endif
+                            </template>
                         </div>
                         <label class="cursor-pointer px-4 py-2.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-700 dark:text-slate-200 rounded-xl text-xs font-bold transition-all whitespace-nowrap">
                             <span>Pilih File...</span>
-                            <input type="file" wire:model="logo_file" accept="image/png,image/jpeg,image/webp,image/svg+xml" class="hidden">
+                            <input type="file" wire:model="logo_file" accept="image/png,image/jpeg,image/webp,image/svg+xml"
+                                   @change="if ($event.target.files[0]) localLogoUrl = URL.createObjectURL($event.target.files[0])" class="hidden">
                         </label>
                     </div>
                 </div>
@@ -108,25 +122,39 @@
                             @error('hero_subtitle') <span class="text-[10px] text-rose-500 mt-1 block">{{ $message }}</span> @enderror
                         </div>
 
-                        <div class="p-4 border border-dashed border-slate-200 dark:border-slate-800 rounded-2xl flex flex-col sm:flex-row items-center gap-4">
+                        <div x-data="{ localHeroUrl: null }" class="p-4 border border-dashed border-slate-200 dark:border-slate-800 rounded-2xl flex flex-col sm:flex-row items-center gap-4">
                             <div class="flex-1 space-y-1 text-center sm:text-left">
                                 <span class="text-xs font-bold text-slate-800 dark:text-slate-200 block">Upload Banner / Kaligrafi Arab Hero</span>
                                 <span class="text-[10px] text-slate-400 block">Gambar kaligrafi transparan (maks 5MB).</span>
-                                @if ($hero_image_file)
+                                <template x-if="localHeroUrl">
                                     <div class="mt-2 flex items-center gap-2.5 p-2.5 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 rounded-xl">
-                                        <img src="{{ $hero_image_file->temporaryUrl() }}" class="h-10 w-auto object-contain rounded border p-1 bg-white">
+                                        <img :src="localHeroUrl" class="h-10 w-auto object-contain rounded border p-1 bg-white">
                                         <span class="text-[10px] text-emerald-700 dark:text-emerald-300 font-bold">✔ Banner Baru Dipilih!</span>
                                     </div>
-                                @elseif ($existing_hero_image_url)
-                                    <div class="mt-2 flex items-center gap-2 text-xs text-slate-500">
-                                        <img src="{{ $existing_hero_image_url }}" class="h-8 w-auto object-contain rounded border p-1 bg-white">
-                                        <span>Banner saat ini aktif.</span>
+                                </template>
+                                <template x-if="!localHeroUrl">
+                                    <div>
+                                        @if ($hero_image_file)
+                                            @php $hUrl = ''; try { $hUrl = $hero_image_file->temporaryUrl(); } catch(\Exception $e){} @endphp
+                                            @if($hUrl)
+                                                <div class="mt-2 flex items-center gap-2.5 p-2.5 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 rounded-xl">
+                                                    <img src="{{ $hUrl }}" class="h-10 w-auto object-contain rounded border p-1 bg-white">
+                                                    <span class="text-[10px] text-emerald-700 dark:text-emerald-300 font-bold">✔ Banner Baru Dipilih!</span>
+                                                </div>
+                                            @endif
+                                        @elseif ($existing_hero_image_url)
+                                            <div class="mt-2 flex items-center gap-2 text-xs text-slate-500">
+                                                <img src="{{ $existing_hero_image_url }}" class="h-8 w-auto object-contain rounded border p-1 bg-white">
+                                                <span>Banner saat ini aktif.</span>
+                                            </div>
+                                        @endif
                                     </div>
-                                @endif
+                                </template>
                             </div>
                             <label class="cursor-pointer px-4 py-2.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-700 dark:text-slate-200 rounded-xl text-xs font-bold transition-all whitespace-nowrap">
                                 <span>Pilih Banner...</span>
-                                <input type="file" wire:model="hero_image_file" accept="image/*" class="hidden">
+                                <input type="file" wire:model="hero_image_file" accept="image/*"
+                                       @change="if ($event.target.files[0]) localHeroUrl = URL.createObjectURL($event.target.files[0])" class="hidden">
                             </label>
                         </div>
                     </div>
@@ -153,26 +181,41 @@
                         </div>
 
                         <!-- Foto Profil Gedung -->
-                        <div class="p-4 border border-dashed border-slate-200 dark:border-slate-800 rounded-2xl flex flex-col sm:flex-row items-center gap-4">
+                        <div x-data="{ localAboutUrl: null }" class="p-4 border border-dashed border-slate-200 dark:border-slate-800 rounded-2xl flex flex-col sm:flex-row items-center gap-4">
                             <div class="flex-1 space-y-1 text-center sm:text-left">
                                 <span class="text-xs font-bold text-slate-800 dark:text-slate-200 block">Foto Profil Gedung Pondok</span>
                                 <span class="text-[10px] text-slate-400 block">Foto utama gedung pondok di section profil (maks 5MB).</span>
-                                @if ($about_image_file)
+                                <template x-if="localAboutUrl">
                                     <div class="mt-2 flex items-center gap-2.5 p-2.5 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 rounded-xl">
-                                        <img src="{{ $about_image_file->temporaryUrl() }}" class="h-10 w-10 object-cover rounded-lg border p-0.5">
+                                        <img :src="localAboutUrl" class="h-10 w-10 object-cover rounded-lg border p-0.5">
                                         <span class="text-[10px] text-emerald-700 dark:text-emerald-300 font-bold">✔ Foto Gedung Dipilih!</span>
                                     </div>
-                                @elseif ($existing_about_image_url)
-                                    <div class="mt-2 flex items-center gap-2 text-xs text-slate-500">
-                                        <img src="{{ $existing_about_image_url }}" class="h-8 w-8 object-cover rounded border p-0.5">
-                                        <span>Foto gedung aktif saat ini.</span>
+                                </template>
+                                <template x-if="!localAboutUrl">
+                                    <div>
+                                        @if ($about_image_file)
+                                            @php $aUrl = ''; try { $aUrl = $about_image_file->temporaryUrl(); } catch(\Exception $e){} @endphp
+                                            @if($aUrl)
+                                                <div class="mt-2 flex items-center gap-2.5 p-2.5 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 rounded-xl">
+                                                    <img src="{{ $aUrl }}" class="h-10 w-10 object-cover rounded-lg border p-0.5">
+                                                    <span class="text-[10px] text-emerald-700 dark:text-emerald-300 font-bold">✔ Foto Gedung Dipilih!</span>
+                                                </div>
+                                            @endif
+                                        @elseif ($existing_about_image_url)
+                                            <div class="mt-2 flex items-center gap-2 text-xs text-slate-500">
+                                                <img src="{{ $existing_about_image_url }}" class="h-8 w-8 object-cover rounded border p-0.5">
+                                                <span>Foto gedung aktif saat ini.</span>
+                                            </div>
+                                        @endif
                                     </div>
-                                @endif
+                                </template>
                             </div>
                             <label class="cursor-pointer px-4 py-2.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-700 dark:text-slate-200 rounded-xl text-xs font-bold transition-all whitespace-nowrap">
                                 <span>Pilih Foto Gedung...</span>
-                                <input type="file" wire:model="about_image_file" accept="image/*" class="hidden">
+                                <input type="file" wire:model="about_image_file" accept="image/*"
+                                       @change="if ($event.target.files[0]) localAboutUrl = URL.createObjectURL($event.target.files[0])" class="hidden">
                             </label>
+                        </div>
                         </div>
                     </div>
                 </div>
@@ -467,7 +510,7 @@
                     </div>
 
                     <!-- Multi-Photo Upload Field -->
-                    <div class="p-4 border border-dashed border-slate-300 dark:border-slate-700 rounded-2xl space-y-3 bg-slate-50/50 dark:bg-slate-950/30">
+                    <div x-data="{ localPreviews: [] }" class="p-4 border border-dashed border-slate-300 dark:border-slate-700 rounded-2xl space-y-3 bg-slate-50/50 dark:bg-slate-950/30">
                         <div class="flex items-center justify-between">
                             <div>
                                 <span class="text-xs font-bold text-slate-800 dark:text-slate-200 block">Upload Foto Dokumentasi (Multi-Select)</span>
@@ -475,8 +518,15 @@
                             </div>
                             <label class="cursor-pointer px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl text-xs font-bold transition-all shadow-sm whitespace-nowrap">
                                 <span>Pilih Foto...</span>
-                                <input type="file" wire:model="new_photos" multiple accept="image/png,image/jpeg,image/webp" class="hidden">
+                                <input type="file" wire:model="new_photos" multiple accept="image/png,image/jpeg,image/webp" 
+                                       @change="localPreviews = Array.from($event.target.files).map(f => URL.createObjectURL(f))" class="hidden">
                             </label>
+                        </div>
+
+                        <!-- Loading Indicator while uploading to server -->
+                        <div wire:loading wire:target="new_photos" class="text-xs font-bold text-amber-500 flex items-center gap-2">
+                            <span class="inline-block animate-spin rounded-full h-3.5 w-3.5 border-2 border-amber-500 border-t-transparent"></span>
+                            <span>Mengunggah pratinjau foto ke server...</span>
                         </div>
 
                         <!-- Instant Temporary Upload Previews -->
@@ -485,10 +535,22 @@
                                 <span class="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 block">✔ {{ count($new_photos) }} Foto Dipilih & Siap Diunggah:</span>
                                 <div class="grid grid-cols-4 sm:grid-cols-6 gap-2">
                                     @foreach($new_photos as $idx => $photo)
-                                        <div class="relative group aspect-square rounded-xl overflow-hidden border border-emerald-300 dark:border-emerald-700">
-                                            <img src="{{ $photo->temporaryUrl() }}" class="w-full h-full object-cover">
-                                            <button type="button" wire:click="removeNewPhoto({{ $idx }})"
-                                                    class="absolute top-1 right-1 w-5 h-5 rounded-full bg-rose-500 text-white flex items-center justify-center text-[10px] font-bold shadow-md hover:bg-rose-600">
+                                        @php $tempUrl = ''; try { $tempUrl = $photo->temporaryUrl(); } catch(\Exception $e) {} @endphp
+                                        <div class="relative group aspect-square rounded-xl overflow-hidden border border-emerald-300 dark:border-emerald-700 bg-slate-900">
+                                            <template x-if="localPreviews[{{ $idx }}]">
+                                                <img :src="localPreviews[{{ $idx }}]" class="w-full h-full object-cover">
+                                            </template>
+                                            <template x-if="!localPreviews[{{ $idx }}]">
+                                                <div>
+                                                    @if($tempUrl)
+                                                        <img src="{{ $tempUrl }}" class="w-full h-full object-cover">
+                                                    @else
+                                                        <div class="w-full h-full flex items-center justify-center text-[10px] text-emerald-400 font-bold p-1 text-center">Foto {{ $idx + 1 }}</div>
+                                                    @endif
+                                                </div>
+                                            </template>
+                                            <button type="button" wire:click="removeNewPhoto({{ $idx }})" @click="localPreviews.splice({{ $idx }}, 1)"
+                                                    class="absolute top-1 right-1 w-5 h-5 rounded-full bg-rose-500 text-white flex items-center justify-center text-[10px] font-bold shadow-md hover:bg-rose-600 z-10">
                                                 ✕
                                             </button>
                                         </div>
