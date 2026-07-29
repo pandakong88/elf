@@ -85,7 +85,7 @@
                         {{-- Floating Glass Subtitle Badge --}}
                         <div class="mt-4 px-5 py-2.5 rounded-2xl bg-white/10 dark:bg-slate-900/60 backdrop-blur-md border border-white/15 dark:border-slate-800/80 shadow-xl flex items-center gap-3 group-hover:border-emerald-500/40 transition-colors">
                             @if(!empty($data['logo_url']))
-                                <img src="{{ $data['logo_url'] }}" alt="Logo" class="h-6 w-auto object-contain">
+                                <img src="{{ $data['logo_url'] }}" alt="Logo" class="h-6 max-h-6 w-auto object-contain flex-shrink-0" style="max-height: 24px; width: auto;">
                             @endif
                             <div class="text-left">
                                 <h4 class="text-xs font-bold text-white tracking-tight leading-none">Pondok Pesantren Al-Fithroh</h4>

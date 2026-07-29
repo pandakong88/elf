@@ -39,7 +39,7 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
             <a href="/" class="flex items-center gap-3 group">
                 @if($logoUrl)
-                    <img src="{{ $logoUrl }}" alt="Logo Pondok Pesantren Al-Fithroh" class="h-11 sm:h-12 w-auto object-contain group-hover:scale-105 transition-transform duration-300 drop-shadow-sm">
+                    <img src="{{ $logoUrl }}" alt="Logo Pondok Pesantren Al-Fithroh" class="h-11 sm:h-12 max-h-12 w-auto object-contain group-hover:scale-105 transition-transform duration-300 drop-shadow-sm flex-shrink-0" style="max-height: 48px; width: auto;">
                 @else
                     <span class="w-11 h-11 rounded-2xl bg-emerald-600 flex items-center justify-center text-white font-extrabold text-xl shadow-md shadow-emerald-500/20">F</span>
                 @endif
