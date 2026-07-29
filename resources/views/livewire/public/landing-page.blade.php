@@ -12,8 +12,6 @@
         {{-- Animated glow blobs --}}
         <div class="absolute top-1/4 left-10 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl animate-pulse pointer-events-none"></div>
         <div class="absolute bottom-10 right-10 w-80 h-80 bg-amber-500/8 rounded-full blur-3xl pointer-events-none"></div>
-        {{-- Subtle dot grid pattern --}}
-        <div class="absolute inset-0 opacity-[0.03]" style="background-image: radial-gradient(circle, #ffffff 1px, transparent 1px); background-size: 32px 32px;"></div>
 
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
             <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
