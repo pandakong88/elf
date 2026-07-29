@@ -1,100 +1,139 @@
-<div class="space-y-32 pb-32 bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 transition-colors">
-    <!-- Hero Section -->
+<div class="bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 transition-colors" x-data="{ showPedomanModal: false, showGalleryModal: false, activeActivity: null, activePhotoIdx: 0 }">
+
+    {{-- ============================================================ --}}
+    {{-- HERO SECTION                                                  --}}
+    {{-- ============================================================ --}}
     <section class="relative overflow-hidden bg-gradient-to-br from-slate-950 via-emerald-950 to-slate-950 pt-24 pb-36 text-white">
-        <!-- High-quality professional background overlay -->
-        <div class="absolute inset-0 bg-cover bg-center opacity-15 mix-blend-overlay" style="background-image: url('https://images.unsplash.com/photo-1564507592333-c60657eea523?auto=format&fit=crop&q=80&w=1600')"></div>
-        
-        <!-- Animated background glow blobs -->
-        <div class="absolute top-1/4 left-10 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl animate-pulse"></div>
-        <div class="absolute bottom-10 right-10 w-80 h-80 bg-amber-500/10 rounded-full blur-3xl"></div>
-        
+        {{-- Background overlay dari CMS --}}
+        @if(!empty($data['hero_image_url']))
+            <div class="absolute inset-0 bg-cover bg-center opacity-20 mix-blend-overlay" style="background-image: url('{{ $data['hero_image_url'] }}')"></div>
+        @endif
+
+        {{-- Animated glow blobs --}}
+        <div class="absolute top-1/4 left-10 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl animate-pulse pointer-events-none"></div>
+        <div class="absolute bottom-10 right-10 w-80 h-80 bg-amber-500/8 rounded-full blur-3xl pointer-events-none"></div>
+        {{-- Subtle dot grid pattern --}}
+        <div class="absolute inset-0 opacity-[0.03]" style="background-image: radial-gradient(circle, #ffffff 1px, transparent 1px); background-size: 32px 32px;"></div>
+
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
             <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
-                <!-- Left Content -->
+
+                {{-- Left Content --}}
                 <div class="lg:col-span-7 space-y-8 text-center lg:text-left">
                     <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-extrabold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 uppercase tracking-widest">
+                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse inline-block"></span>
                         Portal Resmi Al-Fithroh
                     </span>
+
                     <h1 class="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight leading-[1.1] font-serif-display text-white">
                         {{ $data['hero_title'] }}
                     </h1>
+
                     <p class="text-sm sm:text-base text-slate-300 leading-relaxed max-w-2xl mx-auto lg:mx-0">
                         {{ $data['hero_subtitle'] }}
                     </p>
+
                     <div class="flex flex-wrap items-center justify-center lg:justify-start gap-4 pt-2">
                         @auth
-                            <a href="/dashboard" class="px-6 py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl text-xs font-bold transition-all shadow-lg shadow-emerald-500/20 hover:scale-[1.02] flex items-center gap-2">
+                            <a href="/dashboard" class="px-6 py-3.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-2xl text-sm font-bold transition-all shadow-lg shadow-emerald-500/20 hover:scale-[1.02] flex items-center gap-2">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2h-2a2 2 0 01-2-2V6z"/></svg>
                                 <span>Masuk Dashboard</span>
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
                             </a>
                         @else
-                            <a href="/portal-wali" class="px-6 py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl text-xs font-bold transition-all shadow-lg shadow-emerald-500/20 hover:scale-[1.02] flex items-center gap-2">
+                            {{-- Tombol 1: Portal Wali Santri --}}
+                            <a href="/portal-wali"
+                               class="px-7 py-3.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-2xl text-sm font-bold transition-all shadow-lg shadow-emerald-500/25 hover:scale-[1.02] flex items-center gap-2 group">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
                                 <span>Portal Wali Santri</span>
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+                                <svg class="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
                             </a>
-                            <a href="/login" class="px-6 py-3.5 border border-slate-700 hover:bg-slate-900 text-slate-200 rounded-2xl text-xs font-bold transition-all">Login Pengurus</a>
+
+                            {{-- Tombol 2: Login Pengurus --}}
+                            <a href="/login"
+                               class="px-7 py-3.5 border border-slate-600 hover:border-slate-400 hover:bg-slate-800/60 text-slate-200 hover:text-white rounded-2xl text-sm font-bold transition-all backdrop-blur-sm flex items-center gap-2">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+                                <span>Login Pengurus</span>
+                            </a>
                         @endauth
                     </div>
                 </div>
 
-                <!-- Right Visual Element (Modern Framed Photography) -->
-                <div class="lg:col-span-5 relative hidden lg:block">
-                    <div class="w-full aspect-square relative flex items-center justify-center">
-                        <!-- Main Card with Premium Unsplash Image -->
-                        <div class="w-80 h-96 rounded-[2.5rem] bg-gradient-to-tr from-slate-900 via-emerald-950 to-slate-900 border border-emerald-500/20 p-2 shadow-2xl relative overflow-hidden group">
-                            <img src="https://images.unsplash.com/photo-1506880018603-83d5b814b5a6?auto=format&fit=crop&q=80&w=800" alt="Islamic Study" class="w-full h-full object-cover rounded-[2.2rem] group-hover:scale-105 transition-transform duration-500">
-                            <div class="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent rounded-[2.2rem]"></div>
-                            
-                            <div class="absolute bottom-6 left-6 right-6 text-white space-y-1">
-                                <span class="text-[9px] uppercase tracking-wider font-extrabold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20 inline-block">Masyayikh Mandate</span>
-                                <h3 class="text-lg font-bold font-serif-display mt-1">Sanad Keilmuan Mutawatir</h3>
-                                <p class="text-[10px] text-slate-300">Menjaga kemurnian ajaran Ahlussunnah wal Jama'ah sejak 1970.</p>
+                {{-- Right Visual — Grand Floating Banner/Calligraphy --}}
+                <div class="lg:col-span-5 relative flex items-center justify-center pt-8 lg:pt-0">
+                    <div class="relative w-full max-w-md lg:max-w-none flex flex-col items-center justify-center group">
+                        
+                        {{-- Aura Glow Radial Background --}}
+                        <div class="absolute w-72 h-72 sm:w-96 sm:h-96 bg-gradient-to-tr from-emerald-500/25 via-teal-400/20 to-amber-500/15 rounded-full blur-3xl -z-10 group-hover:scale-110 transition-transform duration-700"></div>
+                        <div class="absolute w-64 h-64 bg-emerald-600/10 rounded-full blur-2xl -z-10 animate-pulse"></div>
+
+                        {{-- Main Image Visual: Kaligrafi Arab --}}
+                        @if(!empty($data['hero_image_url']))
+                            <div class="relative z-10 flex flex-col items-center justify-center p-4">
+                                <img src="{{ $data['hero_image_url'] }}" 
+                                     alt="Banner Kaligrafi Al-Fithroh" 
+                                     class="max-h-[380px] sm:max-h-[440px] lg:max-h-[480px] w-auto object-contain drop-shadow-[0_20px_40px_rgba(16,185,129,0.35)] group-hover:scale-105 transition-all duration-500 hover:drop-shadow-[0_25px_50px_rgba(16,185,129,0.45)]">
+                            </div>
+                        @else
+                            {{-- Fallback: Large HD Logo --}}
+                            @if(!empty($data['logo_url']))
+                                <img src="{{ $data['logo_url'] }}" 
+                                     alt="Logo Al-Fithroh" 
+                                     class="max-h-[320px] w-auto object-contain drop-shadow-[0_20px_40px_rgba(16,185,129,0.35)] group-hover:scale-105 transition-transform duration-500">
+                            @endif
+                        @endif
+
+                        {{-- Floating Glass Subtitle Badge --}}
+                        <div class="mt-4 px-5 py-2.5 rounded-2xl bg-white/10 dark:bg-slate-900/60 backdrop-blur-md border border-white/15 dark:border-slate-800/80 shadow-xl flex items-center gap-3 group-hover:border-emerald-500/40 transition-colors">
+                            @if(!empty($data['logo_url']))
+                                <img src="{{ $data['logo_url'] }}" alt="Logo" class="h-6 w-auto object-contain">
+                            @endif
+                            <div class="text-left">
+                                <h4 class="text-xs font-bold text-white tracking-tight leading-none">Pondok Pesantren Al-Fithroh</h4>
+                                <p class="text-[10px] text-emerald-300 font-medium mt-0.5">Jejeran, Pleret, Bantul — Est. 1970</p>
                             </div>
                         </div>
+
                     </div>
                 </div>
+
             </div>
         </div>
     </section>
 
-    <!-- Minimalist Stats Section (Overlapping) -->
-    <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-20 relative z-20">
-        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-            <div class="bg-white/90 dark:bg-slate-900/90 border border-slate-200/50 dark:border-slate-800/60 p-6 sm:p-8 rounded-3xl shadow-xl backdrop-blur-md hover:translate-y-[-2px] transition-all text-center space-y-1">
-                <span class="text-3xl sm:text-4xl font-extrabold text-emerald-600 dark:text-emerald-400 block tracking-tight">1.200+</span>
-                <span class="text-[10px] font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-wider block">Santri Aktif</span>
-            </div>
-            
-            <div class="bg-white/90 dark:bg-slate-900/90 border border-slate-200/50 dark:border-slate-800/60 p-6 sm:p-8 rounded-3xl shadow-xl backdrop-blur-md hover:translate-y-[-2px] transition-all text-center space-y-1">
-                <span class="text-3xl sm:text-4xl font-extrabold text-emerald-600 dark:text-emerald-400 block tracking-tight">80+</span>
-                <span class="text-[10px] font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-wider block">Ustaz & Pembimbing</span>
-            </div>
-
-            <div class="bg-white/90 dark:bg-slate-900/90 border border-slate-200/50 dark:border-slate-800/60 p-6 sm:p-8 rounded-3xl shadow-xl backdrop-blur-md hover:translate-y-[-2px] transition-all text-center space-y-1">
-                <span class="text-3xl sm:text-4xl font-extrabold text-emerald-600 dark:text-emerald-400 block tracking-tight">25+</span>
-                <span class="text-[10px] font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-wider block">Tahun Mengabdi</span>
-            </div>
-
-            <div class="bg-white/90 dark:bg-slate-900/90 border border-slate-200/50 dark:border-slate-800/60 p-6 sm:p-8 rounded-3xl shadow-xl backdrop-blur-md hover:translate-y-[-2px] transition-all text-center space-y-1">
-                <span class="text-3xl sm:text-4xl font-extrabold text-emerald-600 dark:text-emerald-400 block tracking-tight">12</span>
-                <span class="text-[10px] font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-wider block">Asrama Komplek</span>
-            </div>
-        </div>
-    </section>
-
-    <!-- Profil Pondok Section -->
-    <section id="profil" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 scroll-mt-24">
+    {{-- ============================================================ --}}
+    {{-- PROFIL PONDOK                                                 --}}
+    {{-- ============================================================ --}}
+    <section id="profil" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-28 scroll-mt-24">
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
-            <!-- Left Side: Image with elegant border grid -->
+            {{-- Gambar Kiri --}}
             <div class="lg:col-span-5 relative">
-                <div class="w-full aspect-[4/3] rounded-[2.5rem] overflow-hidden shadow-2xl border border-slate-200/40 dark:border-slate-800/60 group">
-                    <img src="https://images.unsplash.com/photo-1584551246679-0daf3d275d0f?auto=format&fit=crop&q=80&w=800" alt="Pesantren Atmosphere" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
-                </div>
-                <!-- Accent background element -->
-                <div class="absolute -bottom-6 -right-6 w-24 h-24 bg-amber-500/10 rounded-full blur-2xl"></div>
+                @if(!empty($data['about_image_url']))
+                    <div class="w-full aspect-[4/5] max-h-[520px] rounded-[2.5rem] overflow-hidden shadow-2xl border border-slate-200/40 dark:border-slate-800/60 group relative">
+                        <img src="{{ $data['about_image_url'] }}" alt="Gedung Utama Pondok Pesantren Al-Fithroh Jejeran Bantul" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700">
+                        <div class="absolute inset-0 bg-gradient-to-t from-slate-950/40 via-transparent to-transparent opacity-60"></div>
+                        <div class="absolute bottom-5 left-5 right-5 p-4 rounded-2xl bg-white/10 dark:bg-slate-900/60 backdrop-blur-md border border-white/20 dark:border-slate-700/50 text-white shadow-lg">
+                            <h4 class="text-xs font-bold font-serif-display">Gedung Utama Al-Fithroh</h4>
+                            <p class="text-[10px] text-emerald-300 font-medium">Jejeran, Wonokromo, Pleret, Bantul</p>
+                        </div>
+                    </div>
+                @else
+                    {{-- Placeholder gambar pondok --}}
+                    <div class="w-full aspect-[4/3] rounded-[2.5rem] bg-gradient-to-br from-emerald-900 via-slate-800 to-slate-900 shadow-2xl border border-emerald-500/10 overflow-hidden relative flex items-center justify-center group">
+                        <div class="absolute inset-0 opacity-5" style="background-image: radial-gradient(circle, #10b981 1px, transparent 1px); background-size: 24px 24px;"></div>
+                        <div class="text-center space-y-3 relative z-10 p-8">
+                            <div class="w-20 h-20 rounded-[1.5rem] bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center mx-auto">
+                                <svg class="w-10 h-10 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+                            </div>
+                            <p class="text-xs text-slate-400 font-medium">Foto Pondok Pesantren</p>
+                            <p class="text-[10px] text-slate-500">Dapat diupload via CMS</p>
+                        </div>
+                        <div class="absolute bottom-0 left-0 right-0 h-1/3 bg-gradient-to-t from-slate-900/60 to-transparent"></div>
+                    </div>
+                @endif
+                <div class="absolute -bottom-6 -right-6 w-24 h-24 bg-amber-500/10 rounded-full blur-2xl pointer-events-none"></div>
             </div>
-            
-            <!-- Right Side: Content -->
+
+            {{-- Konten Kanan --}}
             <div class="lg:col-span-7 space-y-6">
                 <div class="space-y-2">
                     <span class="text-xs font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider block">Tentang Pesantren</span>
@@ -103,123 +142,82 @@
                 <p class="text-slate-600 dark:text-slate-300 leading-relaxed text-sm sm:text-base">
                     {{ $data['about_profile'] }}
                 </p>
+                <div class="flex flex-wrap gap-3 pt-2">
+                    <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400 text-xs font-semibold border border-emerald-100 dark:border-emerald-900/50">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+                        Kajian Kitab Kuning
+                    </span>
+                    <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-50 dark:bg-amber-950/30 text-amber-700 dark:text-amber-400 text-xs font-semibold border border-amber-100 dark:border-amber-900/50">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+                        Tahfidzul Qur'an
+                    </span>
+                    <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-teal-50 dark:bg-teal-950/30 text-teal-700 dark:text-teal-400 text-xs font-semibold border border-teal-100 dark:border-teal-900/50">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l9-5-9-5-9 5 9 5zm0 0l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0112 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z"/></svg>
+                        Madrasah Diniyah
+                    </span>
+
+                </div>
             </div>
         </div>
     </section>
 
-    <!-- Kenapa Memilih Kami Section (Value Proposition) -->
-    <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="space-y-2 text-center mb-16">
-            <span class="text-xs font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider block">Keunggulan Kami</span>
-            <h2 class="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white font-serif-display">Pilar Utama Pendidikan</h2>
-            <p class="text-slate-500 dark:text-slate-400 text-xs sm:text-sm max-w-lg mx-auto">Kami menyinergikan pendidikan salafiyah dengan pendidikan formal modern guna melahirkan santri paripurna.</p>
-        </div>
+    {{-- ============================================================ --}}
+    {{-- QUOTE SPOTLIGHT — VISI UTAMA                                  --}}
+    {{-- ============================================================ --}}
+    <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-28">
+        <div class="relative rounded-[2.5rem] bg-gradient-to-br from-emerald-950 to-slate-950 border border-emerald-500/20 p-10 sm:p-16 text-white shadow-2xl overflow-hidden">
+            <div class="absolute -left-16 -top-16 w-56 h-56 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none"></div>
+            <div class="absolute -right-16 -bottom-16 w-56 h-56 bg-amber-500/8 rounded-full blur-3xl pointer-events-none"></div>
+            <div class="absolute inset-0 opacity-[0.02]" style="background-image: radial-gradient(circle, #ffffff 1px, transparent 1px); background-size: 28px 28px;"></div>
 
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <!-- Card 1 -->
-            <div class="bg-white dark:bg-slate-900 p-8 rounded-[2rem] border border-slate-100 dark:border-slate-800 shadow-sm hover:shadow-md hover:scale-[1.01] transition-all space-y-4 relative group overflow-hidden">
-                <div class="absolute top-0 left-0 w-full h-1 bg-emerald-500"></div>
-                <div class="w-12 h-12 rounded-2xl bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
-                    <!-- Custom SVG Icon: Book Open -->
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
-                </div>
-                <h3 class="text-base font-bold text-slate-900 dark:text-white group-hover:text-emerald-500 transition-colors">Kajian Kitab Kuning</h3>
-                <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-                    Kurikulum salafiyah terstruktur dengan sanad keilmuan yang bersambung langsung ke muassis pesantren.
-                </p>
-            </div>
-
-            <!-- Card 2 -->
-            <div class="bg-white dark:bg-slate-900 p-8 rounded-[2rem] border border-slate-100 dark:border-slate-800 shadow-sm hover:shadow-md hover:scale-[1.01] transition-all space-y-4 relative group overflow-hidden">
-                <div class="absolute top-0 left-0 w-full h-1 bg-amber-500"></div>
-                <div class="w-12 h-12 rounded-2xl bg-amber-50 dark:bg-amber-950/30 text-amber-500 dark:text-amber-400 flex items-center justify-center">
-                    <!-- Custom SVG Icon: Shield Check -->
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
-                </div>
-                <h3 class="text-base font-bold text-slate-900 dark:text-white group-hover:text-amber-500 transition-colors">Program Tahfidzul Qur'an</h3>
-                <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-                    Program menghafal Al-Qur'an secara intensif dengan metode tahsin yang tepat dibimbing oleh pengajar berpengalaman.
-                </p>
-            </div>
-
-            <!-- Card 3 -->
-            <div class="bg-white dark:bg-slate-900 p-8 rounded-[2rem] border border-slate-100 dark:border-slate-800 shadow-sm hover:shadow-md hover:scale-[1.01] transition-all space-y-4 relative group overflow-hidden">
-                <div class="absolute top-0 left-0 w-full h-1 bg-teal-500"></div>
-                <div class="w-12 h-12 rounded-2xl bg-teal-50 dark:bg-teal-950/30 text-teal-600 dark:text-teal-400 flex items-center justify-center">
-                    <!-- Custom SVG Icon: Academic Cap -->
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l9-5-9-5-9 5 9 5zm0 0l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14zm-4 6v-7.5l4-2.222"/> </svg>
-                </div>
-                <h3 class="text-base font-bold text-slate-900 dark:text-white group-hover:text-teal-500 transition-colors">Pendidikan Formal</h3>
-                <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-                    Sekolah formal terakreditasi guna mempersiapkan santri unggul dalam ilmu sains dan teknologi masa kini.
-                </p>
-            </div>
-        </div>
-    </section>
-
-    <!-- Dawuh Pengasuh (Premium Quote Spotlight) -->
-    <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="relative rounded-[2.5rem] bg-gradient-to-br from-emerald-950 to-slate-950 border border-emerald-500/20 p-8 sm:p-16 text-white shadow-2xl overflow-hidden">
-            <div class="absolute -left-16 -top-16 w-48 h-48 bg-emerald-500/10 rounded-full blur-2xl"></div>
-            <div class="absolute -right-16 -bottom-16 w-48 h-48 bg-amber-500/10 rounded-full blur-2xl"></div>
-            
             <div class="relative z-10 text-center space-y-6 max-w-3xl mx-auto">
-                <span class="text-5xl text-amber-500 font-serif-display leading-none block">“</span>
-                <h3 class="text-xl sm:text-2xl font-serif-display text-emerald-100 leading-relaxed italic">
+                <span class="text-6xl text-amber-400/70 font-serif-display leading-none block">"</span>
+                <h3 class="text-xl sm:text-2xl font-serif-display text-emerald-100 leading-relaxed italic -mt-4">
                     {{ $data['about_vision'] }}
                 </h3>
                 <div class="w-12 h-0.5 bg-amber-500/50 mx-auto"></div>
                 <div class="space-y-1">
-                    <span class="text-xs uppercase tracking-wider font-extrabold text-amber-500 block">Visi & Tujuan Utama</span>
-                    <span class="text-[11px] text-slate-400 block">Pondok Pesantren Al-Fithroh</span>
+                    <span class="text-xs uppercase tracking-widest font-extrabold text-amber-400 block">Visi & Tujuan Utama</span>
+                    <span class="text-[11px] text-slate-400 block">Pondok Pesantren Al-Fithroh Jejeran Bantul</span>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- Visi & Misi Detail Section -->
-    <section id="visi-misi" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 scroll-mt-24">
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-12">
-            <!-- Left Side: Vision Statement -->
-            <div class="space-y-6 bg-white dark:bg-slate-900 p-8 sm:p-10 rounded-[2rem] border border-slate-100 dark:border-slate-800 shadow-sm flex flex-col justify-between">
-                <div class="space-y-4">
-                    <div class="w-12 h-12 rounded-2xl bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                    </div>
-                    <h3 class="text-xl font-bold text-slate-900 dark:text-white font-serif-display">Arah & Haluan Pesantren</h3>
-                    <p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400 leading-relaxed">
-                        Kami merumuskan arah pembinaan santri agar tidak hanya pandai secara keilmuan akademis, tetapi juga memiliki adab yang luhur serta kesetiaan yang utuh terhadap manhaj Ahlussunnah wal Jama'ah.
-                    </p>
-                </div>
-                <div class="pt-6 border-t border-slate-50 dark:border-slate-800/50 text-[10px] sm:text-xs text-slate-400">
-                    Sistem evaluasi berkala menjamin mutu kualitas pengajaran.
-                </div>
-            </div>
+    {{-- ============================================================ --}}
+    {{-- MISI PENGABDIAN — full width                                  --}}
+    {{-- ============================================================ --}}
+    <section id="visi-misi" class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pb-28 scroll-mt-24">
+        <div class="space-y-2 text-center mb-12">
+            <span class="text-xs font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider block">Komitmen Pondok</span>
+            <h2 class="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white font-serif-display">Misi Pengabdian</h2>
+        </div>
 
-            <!-- Right Side: Misi List -->
-            <div class="bg-white dark:bg-slate-900 p-8 sm:p-10 rounded-[2rem] border border-slate-100 dark:border-slate-800 shadow-sm space-y-6">
-                <div class="space-y-2">
-                    <h3 class="text-xl font-bold text-slate-900 dark:text-white font-serif-display">Misi Pengabdian</h3>
-                </div>
-                
-                <ul class="space-y-4 text-xs sm:text-sm text-slate-600 dark:text-slate-300">
-                    @foreach(explode("\n", $data['about_mission']) as $index => $missionLine)
-                        @if(trim($missionLine) !== '')
-                            <li class="flex items-start gap-4 p-3 bg-slate-50 dark:bg-slate-950/40 rounded-2xl border border-slate-100 dark:border-slate-800/60 hover:translate-x-1 transition-transform">
-                                <span class="w-6 h-6 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-bold text-xs flex-shrink-0">
-                                    {{ $index + 1 }}
-                                </span>
-                                <span>{{ preg_replace('/^\d+\.\s*/', '', $missionLine) }}</span>
-                            </li>
-                        @endif
-                    @endforeach
-                </ul>
-            </div>
+        <div class="bg-white dark:bg-slate-900 p-8 sm:p-12 rounded-[2rem] border border-slate-100 dark:border-slate-800 shadow-sm">
+            <ul class="space-y-4 text-sm sm:text-base text-slate-600 dark:text-slate-300">
+                @php
+                    $rawMisi = $data['about_mission'] ?? '';
+                    $misiList = array_values(array_filter(
+                        array_map('trim', explode("\n", $rawMisi)),
+                        fn($line) => !empty($line)
+                    ));
+                @endphp
+                @foreach($misiList as $i => $misi)
+                    <li class="flex items-start gap-5 p-4 sm:p-5 bg-slate-50 dark:bg-slate-950/40 rounded-2xl border border-slate-100 dark:border-slate-800/60 hover:translate-x-1 hover:border-emerald-100 dark:hover:border-emerald-900/40 transition-all duration-200 group">
+                        <span class="w-8 h-8 rounded-xl bg-emerald-500 text-white flex items-center justify-center font-bold text-sm flex-shrink-0 shadow-md shadow-emerald-500/20 group-hover:scale-110 transition-transform">
+                            {{ $i + 1 }}
+                        </span>
+                        <span class="leading-relaxed">{{ preg_replace('/^\d+[\.\)]\s*/', '', $misi) }}</span>
+                    </li>
+                @endforeach
+            </ul>
         </div>
     </section>
 
-    <!-- Galeri Kegiatan Publik Section -->
-    <section id="kegiatan" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 scroll-mt-24">
+    {{-- ============================================================ --}}
+    {{-- GALERI KEGIATAN                                               --}}
+    {{-- ============================================================ --}}
+    <section id="kegiatan" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-28 scroll-mt-24">
         <div class="space-y-2 mb-12 text-center">
             <span class="text-xs font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider block">Kilas Kegiatan</span>
             <h2 class="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white font-serif-display">Aktivitas & Galeri Santri</h2>
@@ -227,163 +225,547 @@
         </div>
 
         @if($activities->isEmpty())
-            <div class="p-16 text-center border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-[2rem] text-slate-400 dark:text-slate-600 text-xs sm:text-sm font-semibold bg-white dark:bg-slate-900">
-                Belum ada dokumentasi kegiatan publik terbaru saat ini.
+            {{-- Empty state --}}
+            <div class="p-16 text-center border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-[2rem] bg-white dark:bg-slate-900 space-y-3">
+                <div class="w-14 h-14 rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center mx-auto">
+                    <svg class="w-7 h-7 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                </div>
+                <p class="text-slate-400 dark:text-slate-600 text-sm font-semibold">Belum ada dokumentasi kegiatan publik terbaru saat ini.</p>
+                <p class="text-slate-400 dark:text-slate-600 text-xs">Ikuti kegiatan kami di media sosial</p>
             </div>
         @else
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
                 @foreach($activities as $activity)
-                    <div class="bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-100 dark:border-slate-800 shadow-sm overflow-hidden flex flex-col justify-between hover:scale-[1.01] hover:shadow-md transition-all group">
-                        <div>
-                            <!-- Photo / Thumbnail -->
-                            @if($activity->hasMedia('photos'))
-                                <div class="overflow-hidden">
-                                    <img src="{{ $activity->getFirstMediaUrl('photos') }}" alt="{{ $activity->name }}" class="w-full aspect-[16/10] object-cover group-hover:scale-105 transition-transform duration-300">
-                                </div>
+                    @php
+                        $photoUrls = $activity->getPhotoUrls();
+                        $coverUrl  = $activity->getFirstPhotoUrl();
+                        $actPayload = json_encode([
+                            'title' => $activity->name,
+                            'category' => $activity->activityType->name ?? 'Kegiatan',
+                            'date' => $activity->date ? $activity->date->format('d M Y') : '',
+                            'org' => $activity->organization->name ?? 'Pondok Pesantren Al-Fithroh',
+                            'description' => $activity->description,
+                            'photos' => $photoUrls,
+                        ]);
+                    @endphp
+
+                    <div @click='activeActivity = {{ $actPayload }}; activePhotoIdx = 0; showGalleryModal = true'
+                         class="bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-100 dark:border-slate-800 shadow-sm overflow-hidden flex flex-col hover:shadow-xl hover:scale-[1.01] transition-all duration-300 group cursor-pointer">
+                        
+                        {{-- Photo / Thumbnail --}}
+                        <div class="relative overflow-hidden aspect-[16/10] bg-slate-950">
+                            @if($coverUrl)
+                                <img src="{{ $coverUrl }}" alt="{{ $activity->name }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
                             @else
-                                <div class="w-full aspect-[16/10] bg-slate-50 dark:bg-slate-950 flex items-center justify-center text-slate-400">
-                                    <span class="text-xs font-semibold">Dokumentasi Kegiatan</span>
+                                <div class="w-full h-full bg-gradient-to-br from-emerald-950 to-slate-900 flex items-center justify-center relative overflow-hidden">
+                                    <div class="absolute inset-0 opacity-10" style="background-image: radial-gradient(circle, #10b981 1px, transparent 1px); background-size: 18px 18px;"></div>
+                                    <svg class="w-10 h-10 text-emerald-400/40 relative z-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
                                 </div>
                             @endif
-                            
-                            <div class="p-6 space-y-3">
-                                <span class="px-2.5 py-1 bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400 rounded-md text-[9px] font-extrabold uppercase tracking-wider inline-block">
-                                    {{ $activity->activityType->name ?? 'Kegiatan' }}
-                                </span>
-                                <h3 class="text-sm sm:text-base font-bold text-slate-900 dark:text-white tracking-tight leading-snug">
-                                    {{ $activity->name }}
-                                </h3>
-                                <p class="text-xs text-slate-500 dark:text-slate-400 line-clamp-3 leading-relaxed">
-                                    {{ $activity->description }}
-                                </p>
-                            </div>
+
+                            {{-- Photo Count Badge --}}
+                            @if(count($photoUrls) > 0)
+                                <div class="absolute top-3 right-3">
+                                    <span class="px-2.5 py-1 rounded-xl bg-slate-950/70 backdrop-blur-md text-amber-300 text-[10px] font-extrabold flex items-center gap-1.5 border border-white/10 shadow-md">
+                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/></svg>
+                                        <span>{{ count($photoUrls) }} Foto</span>
+                                    </span>
+                                </div>
+                            @endif
                         </div>
 
-                        <div class="p-6 pt-0 border-t border-slate-50 dark:border-slate-800/50 flex items-center justify-between text-[10px] text-slate-400 font-medium">
-                            <span>Oleh: {{ $activity->organization->name ?? 'Pondok' }}</span>
-                            <span>{{ $activity->date->format('d M Y') }}</span>
+                        <div class="flex-1 flex flex-col p-6 space-y-3">
+                            <span class="px-2.5 py-1 bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400 rounded-md text-[9px] font-extrabold uppercase tracking-wider inline-block w-fit">
+                                {{ $activity->activityType->name ?? 'Kegiatan' }}
+                            </span>
+                            <h3 class="text-sm sm:text-base font-bold text-slate-900 dark:text-white tracking-tight leading-snug group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
+                                {{ $activity->name }}
+                            </h3>
+                            <p class="text-xs text-slate-500 dark:text-slate-400 line-clamp-3 leading-relaxed flex-1">
+                                {{ $activity->description }}
+                            </p>
+                            <div class="pt-4 border-t border-slate-50 dark:border-slate-800/50 flex items-center justify-between text-[10px] text-slate-400 font-medium">
+                                <span>{{ $activity->organization->name ?? 'Pondok' }}</span>
+                                <span>{{ $activity->date->format('d M Y') }}</span>
+                            </div>
                         </div>
                     </div>
                 @endforeach
             </div>
         @endif
-    </section>
 
-    <!-- Alur Pendaftaran Santri (Interactive Timeline) -->
-    <section id="pendaftaran" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 scroll-mt-24">
-        <div class="space-y-2 text-center mb-16">
-            <span class="text-xs font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider block">Prosedur PSB</span>
-            <h2 class="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white font-serif-display">Langkah Pendaftaran Santri</h2>
-            <p class="text-slate-500 dark:text-slate-400 text-xs sm:text-sm max-w-lg mx-auto">Panduan langkah mudah mendaftarkan putra-putri Anda ke Pondok Pesantren Al-Fithroh.</p>
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-8 relative">
-            <!-- Step 1 -->
-            <div class="bg-white dark:bg-slate-900 p-8 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm text-center space-y-4 relative group">
-                <span class="w-10 h-10 rounded-full bg-emerald-500 text-white flex items-center justify-center font-bold text-sm mx-auto shadow-md shadow-emerald-500/20">1</span>
-                <h3 class="text-base font-bold text-slate-900 dark:text-white font-serif-display">Lengkapi Berkas</h3>
-                <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-                    Siapkan FC KK, Akta Kelahiran, Surat Keterangan Sehat, serta Pas Foto santri terbaru sebelum mendaftar.
-                </p>
-            </div>
-
-            <!-- Step 2 -->
-            <div class="bg-white dark:bg-slate-900 p-8 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm text-center space-y-4 relative group">
-                <span class="w-10 h-10 rounded-full bg-emerald-500 text-white flex items-center justify-center font-bold text-sm mx-auto shadow-md shadow-emerald-500/20">2</span>
-                <h3 class="text-base font-bold text-slate-900 dark:text-white font-serif-display">Pendaftaran & Tes</h3>
-                <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-                    Kunjungi kantor sekretariat pondok untuk menyerahkan berkas dan melaksanakan tes lisan dasar santri.
-                </p>
-            </div>
-
-            <!-- Step 3 -->
-            <div class="bg-white dark:bg-slate-900 p-8 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm text-center space-y-4 relative group">
-                <span class="w-10 h-10 rounded-full bg-emerald-500 text-white flex items-center justify-center font-bold text-sm mx-auto shadow-md shadow-emerald-500/20">3</span>
-                <h3 class="text-base font-bold text-slate-900 dark:text-white font-serif-display">Mulai Mukim</h3>
-                <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-                    Setelah dinyatakan lolos, lakukan registrasi ulang dan penempatan kamar asrama untuk mulai mukim/belajar.
-                </p>
-            </div>
+        {{-- Tombol Lihat Semua Kegiatan --}}
+        <div class="mt-10 text-center">
+            <a href="https://www.instagram.com/alfithroh.jejeran" target="_blank" rel="noopener noreferrer"
+               class="inline-flex items-center gap-2.5 px-6 py-3.5 border-2 border-slate-200 dark:border-slate-700 hover:border-emerald-400 dark:hover:border-emerald-600 hover:bg-emerald-50/50 dark:hover:bg-emerald-950/30 text-slate-700 dark:text-slate-300 hover:text-emerald-700 dark:hover:text-emerald-400 rounded-2xl text-sm font-bold transition-all duration-200 group">
+                {{-- Instagram Icon --}}
+                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
+                </svg>
+                <span>Lihat Semua Kegiatan di Instagram</span>
+                <svg class="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+            </a>
         </div>
     </section>
 
-    <!-- Buku Pedoman Santri Section -->
-    <section class="max-w-5xl mx-auto px-4 sm:px-6">
-        <div class="p-8 sm:p-16 bg-gradient-to-br from-emerald-800 to-emerald-950 rounded-[2rem] text-white shadow-2xl relative overflow-hidden flex flex-col sm:flex-row items-center justify-between gap-8 group">
-            <div class="absolute -right-8 -top-8 w-32 h-32 bg-white/5 rounded-full blur-xl group-hover:scale-110 transition-transform"></div>
-            
-            <div class="space-y-3 text-center sm:text-left max-w-xl relative z-10">
-                <h3 class="text-xl sm:text-2xl font-bold font-serif-display tracking-tight">{{ $data['pedoman_title'] }}</h3>
-                <p class="text-xs text-emerald-100 leading-relaxed max-w-md">
-                    {{ $data['pedoman_description'] }}
+    {{-- ============================================================ --}}
+    {{-- LANGKAH PENDAFTARAN PSB                                       --}}
+    {{-- ============================================================ --}}
+    <section id="pendaftaran" class="bg-slate-100/70 dark:bg-slate-900/40 py-28 scroll-mt-24">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="space-y-2 text-center mb-16">
+                <span class="text-xs font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider block">Prosedur PSB</span>
+                <h2 class="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white font-serif-display">Langkah Pendaftaran Santri</h2>
+                <p class="text-slate-500 dark:text-slate-400 text-xs sm:text-sm max-w-lg mx-auto">
+                    Penerimaan Santri Baru (PSB) Pondok Pesantren Al-Fithroh Bantul — panduan lengkap pendaftaran putra-putri Anda.
                 </p>
             </div>
-            
-            <div class="relative z-10">
-                @if(!empty($data['pedoman_file_url']))
-                    <a href="{{ $data['pedoman_file_url'] }}" target="_blank" class="px-6 py-3.5 bg-white text-emerald-900 hover:bg-emerald-50 rounded-2xl text-xs font-bold transition-all shadow-md inline-block whitespace-nowrap hover:scale-105">
-                        Unduh Buku Pedoman
-                    </a>
-                @else
-                    <button disabled class="px-6 py-3.5 bg-white/10 text-white/50 rounded-2xl text-xs font-bold cursor-not-allowed whitespace-nowrap border border-white/10">
-                        Segera Hadir
-                    </button>
-                @endif
+
+            @php
+                $psbSteps = [
+                    [
+                        'no'    => '1',
+                        'color' => 'emerald',
+                        'icon'  => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>',
+                        'title' => 'Sowan kepada Pengasuh',
+                        'desc'  => 'Orang tua/wali santri sowan (menghadap) langsung kepada Pengasuh Pondok sebagai langkah pertama dan paling utama dalam proses pendaftaran.',
+                    ],
+                    [
+                        'no'    => '2',
+                        'color' => 'amber',
+                        'icon'  => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>',
+                        'title' => 'Masa Training (Ta\'aruf)',
+                        'desc'  => 'Santri baru mengikuti masa training atau ta\'aruf di pondok dengan durasi maksimal 10 hari untuk pengenalan lingkungan dan penilaian awal.',
+                    ],
+                    [
+                        'no'    => '3',
+                        'color' => 'teal',
+                        'icon'  => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>',
+                        'title' => 'Melengkapi Berkas',
+                        'desc'  => 'Siapkan dan serahkan fotokopi Kartu Keluarga (KK) serta pas foto formal berwarna terbaru santri kepada pihak sekretariat pondok.',
+                    ],
+                    [
+                        'no'    => '4',
+                        'color' => 'blue',
+                        'icon'  => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/>',
+                        'title' => 'Administrasi Masuk',
+                        'desc'  => 'Melunasi biaya administrasi pendaftaran sesuai ketentuan yang berlaku. Dapat diangsur selama 3 bulan pertama sejak santri mulai mukim.',
+                    ],
+                    [
+                        'no'    => '5',
+                        'color' => 'rose',
+                        'icon'  => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>',
+                        'title' => 'Mulai Mukim',
+                        'desc'  => 'Santri baru wajib menetap di asrama selama minimal 40 hari pertama sejak dinyatakan diterima, sebagai masa adaptasi penuh di lingkungan pondok.',
+                    ],
+                ];
+            @endphp
+
+            {{-- Grid 2 + 3 --}}
+            <div class="space-y-4 sm:space-y-6">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+                    @foreach(array_slice($psbSteps, 0, 2) as $step)
+                        <div class="bg-white dark:bg-slate-900 p-6 sm:p-8 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm space-y-4 group hover:shadow-md transition-all relative overflow-hidden">
+                            <div class="absolute top-0 left-0 h-1 w-full bg-{{ $step['color'] }}-500 opacity-70 rounded-t-3xl"></div>
+                            <div class="flex items-start gap-4">
+                                <span class="w-10 h-10 rounded-full bg-{{ $step['color'] }}-500 text-white flex items-center justify-center font-bold text-sm flex-shrink-0 shadow-md shadow-{{ $step['color'] }}-500/20">{{ $step['no'] }}</span>
+                                <div>
+                                    <h3 class="text-base font-bold text-slate-900 dark:text-white font-serif-display">{{ $step['title'] }}</h3>
+                                    <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed mt-1">{{ $step['desc'] }}</p>
+                                </div>
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
+                    @foreach(array_slice($psbSteps, 2) as $step)
+                        <div class="bg-white dark:bg-slate-900 p-6 sm:p-8 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm space-y-4 group hover:shadow-md transition-all relative overflow-hidden">
+                            <div class="absolute top-0 left-0 h-1 w-full bg-{{ $step['color'] }}-500 opacity-70 rounded-t-3xl"></div>
+                            <span class="w-10 h-10 rounded-full bg-{{ $step['color'] }}-500 text-white flex items-center justify-center font-bold text-sm shadow-md shadow-{{ $step['color'] }}-500/20 mx-auto sm:mx-0">{{ $step['no'] }}</span>
+                            <div>
+                                <h3 class="text-base font-bold text-slate-900 dark:text-white font-serif-display text-center sm:text-left">{{ $step['title'] }}</h3>
+                                <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed mt-1 text-center sm:text-left">{{ $step['desc'] }}</p>
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
             </div>
         </div>
     </section>
 
-    <!-- Informasi Pendaftaran & Kontak Section -->
-    <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-12">
-            <!-- Informasi Pendaftaran -->
-            <div class="p-8 sm:p-10 bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-100 dark:border-slate-800 shadow-sm space-y-6 flex flex-col justify-between">
-                <div class="space-y-4">
-                    <div class="w-12 h-12 rounded-2xl bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+    {{-- ============================================================ --}}
+    {{-- BUKU PEDOMAN SANTRI                                           --}}
+    {{-- ============================================================ --}}
+    <section class="max-w-5xl mx-auto px-4 sm:px-6 py-28">
+        <div class="p-8 sm:p-14 bg-gradient-to-br from-emerald-800 via-emerald-900 to-emerald-950 rounded-[2rem] text-white shadow-2xl relative overflow-hidden">
+            <div class="absolute -right-8 -top-8 w-40 h-40 bg-white/5 rounded-full blur-2xl pointer-events-none"></div>
+            <div class="absolute -left-8 -bottom-8 w-40 h-40 bg-amber-400/5 rounded-full blur-2xl pointer-events-none"></div>
+            <div class="absolute inset-0 opacity-[0.03]" style="background-image: radial-gradient(circle, #ffffff 1px, transparent 1px); background-size: 24px 24px;"></div>
+
+            <div class="relative z-10 flex flex-col sm:flex-row items-center justify-between gap-8">
+                {{-- Kiri: Teks --}}
+                <div class="space-y-3 text-center sm:text-left max-w-xl">
+                    <div class="flex items-center gap-2 justify-center sm:justify-start">
+                        <svg class="w-5 h-5 text-amber-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+                        <span class="text-[10px] font-extrabold uppercase tracking-widest text-amber-300">Dokumen Resmi</span>
                     </div>
-                    <h3 class="text-xl font-bold text-slate-900 dark:text-white font-serif-display">Ketentuan Pendaftaran</h3>
-                    <p class="text-xs sm:text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
-                        {{ $data['registration_info'] }}
+                    <h3 class="text-xl sm:text-2xl font-bold font-serif-display tracking-tight">{{ $data['pedoman_title'] }}</h3>
+                    <p class="text-xs text-emerald-100 leading-relaxed max-w-md">
+                        {{ $data['pedoman_description'] }}
                     </p>
                 </div>
-                <div class="p-4 bg-amber-500/5 border border-amber-500/10 rounded-2xl text-[10px] text-amber-600 dark:text-amber-400 leading-relaxed font-semibold">
-                    💡 Catatan: Administrasi keuangan pendaftaran bagi santri baru dapat diangsur selama 3 bulan pertama sejak santri mulai mukim di asrama.
+
+                {{-- Kanan: Tombol --}}
+                <div class="flex flex-col sm:flex-row gap-3 flex-shrink-0">
+                    @if(!empty($data['pedoman_file_url']))
+                        {{-- Tombol Baca Online (Trigger Modal) --}}
+                        <button type="button" @click="showPedomanModal = true"
+                                class="inline-flex items-center justify-center gap-2 px-5 py-3.5 bg-white/10 hover:bg-white/20 border border-white/20 hover:border-white/40 text-white rounded-2xl text-xs font-bold transition-all backdrop-blur-sm whitespace-nowrap cursor-pointer hover:scale-105">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                            Baca Online
+                        </button>
+                        {{-- Tombol Unduh PDF --}}
+                        <a href="{{ $data['pedoman_file_url'] }}" download
+                           class="inline-flex items-center justify-center gap-2 px-5 py-3.5 bg-white hover:bg-emerald-50 text-emerald-900 rounded-2xl text-xs font-bold transition-all shadow-md whitespace-nowrap hover:scale-105">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                            Unduh PDF
+                        </a>
+                    @else
+                        <button disabled class="inline-flex items-center justify-center gap-2 px-5 py-3.5 bg-white/10 border border-white/10 text-white/40 rounded-2xl text-xs font-bold cursor-not-allowed whitespace-nowrap">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                            Baca Online
+                        </button>
+                        <button disabled class="inline-flex items-center justify-center gap-2 px-5 py-3.5 bg-white/10 border border-white/10 text-white/40 rounded-2xl text-xs font-bold cursor-not-allowed whitespace-nowrap">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                            Unduh PDF
+                        </button>
+                    @endif
                 </div>
             </div>
 
-            <!-- Kontak Pondok -->
-            <div class="p-8 sm:p-10 bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-100 dark:border-slate-800 shadow-sm space-y-8 flex flex-col justify-between">
-                <div class="space-y-6">
-                    <h3 class="text-xl font-bold text-slate-900 dark:text-white font-serif-display">Hubungi Humas</h3>
-                    
-                    <div class="space-y-4 text-xs sm:text-sm text-slate-600 dark:text-slate-400">
-                        <div class="flex items-start gap-4">
-                            <span class="text-lg text-emerald-600 dark:text-emerald-400">
-                                <svg class="w-5 h-5 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-                            </span>
-                            <span>{{ $data['contact_address'] }}</span>
+            @if(empty($data['pedoman_file_url']))
+                <div class="relative z-10 mt-6 pt-4 border-t border-white/10 text-center">
+                    <span class="text-[10px] text-emerald-300/60 font-medium">📋 Buku pedoman sedang dalam proses penerbitan — segera hadir</span>
+                </div>
+            @endif
+        </div>
+    </section>
+
+    {{-- ============================================================ --}}
+    {{-- KONTAK & LOKASI — 2 Column Layout with Embedded Google Map     --}}
+    {{-- ============================================================ --}}
+    <section id="kontak" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-28 scroll-mt-24">
+        <div class="space-y-2 mb-10 text-center">
+            <span class="text-xs font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider block">Hubungi Kami</span>
+            <h2 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white font-serif-display">Kontak Sekretariat & Peta Lokasi</h2>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
+            
+            {{-- Kolom Kiri: Info Kontak & WA (7 cols) --}}
+            <div class="lg:col-span-7 bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-100 dark:border-slate-800 shadow-sm p-6 sm:p-8 flex flex-col justify-between space-y-6">
+                
+                <div class="space-y-4">
+                    <h3 class="text-base font-bold text-slate-900 dark:text-white font-serif-display border-b border-slate-100 dark:border-slate-800 pb-3 flex items-center gap-2">
+                        <svg class="w-4 h-4 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+                        <span>Informasi Sekretariat Pusat</span>
+                    </h3>
+
+                    {{-- Alamat --}}
+                    <div class="flex items-start gap-3.5 p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-950/40 border border-slate-100 dark:border-slate-800/80">
+                        <span class="w-8 h-8 rounded-xl bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center flex-shrink-0 mt-0.5">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                        </span>
+                        <div>
+                            <span class="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">Alamat Pesantren</span>
+                            <span class="text-xs sm:text-sm text-slate-700 dark:text-slate-200 font-medium leading-relaxed block mt-0.5">{{ $data['contact_address'] }}</span>
                         </div>
-                        <div class="flex items-start gap-4">
-                            <span class="text-lg text-emerald-600 dark:text-emerald-400">
-                                <svg class="w-5 h-5 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.94.725l.548 2.2a1 1 0 01-.321.988l-1.305.98a10.582 10.582 0 004.872 4.872l.98-1.305a1 1 0 01.988-.321l2.2.548a1 1 0 01.725.94V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        {{-- Email --}}
+                        <a href="mailto:{{ $data['contact_email'] }}"
+                           class="flex items-center gap-3 p-3 rounded-2xl bg-slate-50 dark:bg-slate-950/40 border border-slate-100 dark:border-slate-800/80 hover:border-amber-400 transition-all group">
+                            <span class="w-8 h-8 rounded-xl bg-amber-100 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 flex items-center justify-center flex-shrink-0">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
                             </span>
-                            <span>{{ $data['contact_phone'] }}</span>
-                        </div>
-                        <div class="flex items-start gap-4">
-                            <span class="text-lg text-emerald-600 dark:text-emerald-400">
-                                <svg class="w-5 h-5 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                            <div class="min-w-0">
+                                <span class="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">Email Resmi</span>
+                                <span class="text-xs text-slate-700 dark:text-slate-200 font-medium truncate block group-hover:text-amber-600 transition-colors">{{ $data['contact_email'] }}</span>
+                            </div>
+                        </a>
+
+                        {{-- Instagram --}}
+                        @php
+                            $cleanIg = ltrim($data['ig_username'] ?? 'alfithroh.jejeran', '@');
+                        @endphp
+                        <a href="https://www.instagram.com/{{ $cleanIg }}" target="_blank" rel="noopener noreferrer"
+                           class="flex items-center gap-3 p-3 rounded-2xl bg-slate-50 dark:bg-slate-950/40 border border-slate-100 dark:border-slate-800/80 hover:border-pink-400 transition-all group">
+                            <span class="w-8 h-8 rounded-xl bg-pink-100 dark:bg-pink-950/60 text-pink-600 dark:text-pink-400 flex items-center justify-center flex-shrink-0">
+                                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
                             </span>
-                            <span>{{ $data['contact_email'] }}</span>
-                        </div>
+                            <div class="min-w-0">
+                                <span class="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">Instagram</span>
+                                <span class="text-xs text-pink-600 dark:text-pink-400 font-medium group-hover:underline truncate block">&#64;{{ $cleanIg }}</span>
+                            </div>
+                        </a>
                     </div>
                 </div>
 
-                <div class="pt-6 border-t border-slate-50 dark:border-slate-800/50 flex items-center justify-between text-[11px] font-semibold">
-                    <span class="text-slate-400">Sekretariat Al-Fithroh</span>
-                    <a href="/login" class="text-emerald-600 dark:text-emerald-400 hover:underline flex items-center gap-1">Akses Portal Wali &rarr;</a>
+                {{-- WhatsApp Admins --}}
+                <div class="space-y-3 pt-2">
+                    <span class="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest block">Layanan WhatsApp Fast Response</span>
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        {{-- WA Putra 1 --}}
+                        @php
+                            $numWa1 = '62' . ltrim(preg_replace('/[^0-9]/', '', $data['wa_putra1'] ?? '08123456789'), '0');
+                        @endphp
+                        <a href="https://wa.me/{{ $numWa1 }}?text=Assalamualaikum%2C%20saya%20ingin%20bertanya%20mengenai%20pendaftaran%20santri%20putra."
+                           target="_blank" rel="noopener noreferrer"
+                           class="flex items-center gap-2.5 p-3 rounded-2xl bg-green-50/50 dark:bg-green-950/20 border border-green-200/60 dark:border-green-900/40 hover:bg-green-100/60 transition-all group">
+                            <span class="w-7 h-7 rounded-xl bg-green-500 text-white flex items-center justify-center flex-shrink-0 shadow-sm">
+                                <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+                            </span>
+                            <div class="min-w-0">
+                                <p class="text-[9px] text-green-700 dark:text-green-400 font-bold leading-none mb-0.5">WA Putra 1</p>
+                                <p class="text-xs text-slate-800 dark:text-slate-100 font-semibold truncate">{{ $data['wa_putra1'] }}</p>
+                            </div>
+                        </a>
+
+                        {{-- WA Putra 2 --}}
+                        @php
+                            $numWa2 = '62' . ltrim(preg_replace('/[^0-9]/', '', $data['wa_putra2'] ?? '08129876543'), '0');
+                        @endphp
+                        <a href="https://wa.me/{{ $numWa2 }}?text=Assalamualaikum%2C%20saya%20ingin%20bertanya%20mengenai%20pendaftaran%20santri%20putra."
+                           target="_blank" rel="noopener noreferrer"
+                           class="flex items-center gap-2.5 p-3 rounded-2xl bg-green-50/50 dark:bg-green-950/20 border border-green-200/60 dark:border-green-900/40 hover:bg-green-100/60 transition-all group">
+                            <span class="w-7 h-7 rounded-xl bg-green-500 text-white flex items-center justify-center flex-shrink-0 shadow-sm">
+                                <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+                            </span>
+                            <div class="min-w-0">
+                                <p class="text-[9px] text-green-700 dark:text-green-400 font-bold leading-none mb-0.5">WA Putra 2</p>
+                                <p class="text-xs text-slate-800 dark:text-slate-100 font-semibold truncate">{{ $data['wa_putra2'] }}</p>
+                            </div>
+                        </a>
+
+                        {{-- WA Putri --}}
+                        @php
+                            $numWaPutri = '62' . ltrim(preg_replace('/[^0-9]/', '', $data['wa_putri'] ?? '08111222333'), '0');
+                        @endphp
+                        <a href="https://wa.me/{{ $numWaPutri }}?text=Assalamualaikum%2C%20saya%20ingin%20bertanya%20mengenai%20pendaftaran%20santri%20putri."
+                           target="_blank" rel="noopener noreferrer"
+                           class="flex items-center gap-2.5 p-3 rounded-2xl bg-rose-50/50 dark:bg-rose-950/20 border border-rose-200/60 dark:border-rose-900/40 hover:bg-rose-100/60 transition-all group">
+                            <span class="w-7 h-7 rounded-xl bg-rose-500 text-white flex items-center justify-center flex-shrink-0 shadow-sm">
+                                <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+                            </span>
+                            <div class="min-w-0">
+                                <p class="text-[9px] text-rose-700 dark:text-rose-400 font-bold leading-none mb-0.5">WA Putri</p>
+                                <p class="text-xs text-slate-800 dark:text-slate-100 font-semibold truncate">{{ $data['wa_putri'] }}</p>
+                            </div>
+                        </a>
+                    </div>
                 </div>
+
             </div>
+
+            {{-- Kolom Kanan: Embedded Google Maps Interactive (5 cols) --}}
+            <div class="lg:col-span-5 bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-100 dark:border-slate-800 shadow-sm p-4 flex flex-col space-y-3 justify-between">
+                
+                {{-- Header Maps --}}
+                <div class="px-2 pt-1 flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                        <span class="w-2.5 h-2.5 rounded-full bg-blue-500 animate-pulse"></span>
+                        <span class="text-xs font-bold text-slate-800 dark:text-slate-200">Peta Lokasi Pesantren</span>
+                    </div>
+                    <a href="{{ $data['gmaps_url'] ?? '#' }}" target="_blank" rel="noopener noreferrer"
+                       class="text-[10px] font-bold text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1">
+                        <span>Buka Aplikasi GMaps</span>
+                        <span>↗</span>
+                    </a>
+                </div>
+
+                {{-- Embedded Interactive Google Map Iframe --}}
+                <div class="relative w-full h-[340px] rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-950">
+                    <iframe 
+                        src="https://maps.google.com/maps?q={{ urlencode($data['contact_address'] ?? 'Pondok Pesantren Al-Fithroh Jejeran Bantul') }}&t=&z=16&ie=UTF8&iwloc=&output=embed" 
+                        class="w-full h-full border-0" 
+                        allowfullscreen="" 
+                        loading="lazy" 
+                        referrerpolicy="no-referrer-when-downgrade"
+                        title="Peta Lokasi Pondok Pesantren Al-Fithroh">
+                    </iframe>
+                </div>
+
+                {{-- Subtext / Hint --}}
+                <p class="text-[10px] text-slate-400 text-center pb-1">
+                    📍 Jejeran, Wonokromo, Pleret, Bantul, DIY — Petunjuk arah presisi dapat diklik langsung pada peta.
+                </p>
+
+            </div>
+
         </div>
     </section>
+
+    {{-- ============================================================ --}}
+    {{-- MODAL BACA ONLINE BUKU PEDOMAN (PDF VIEWER)                   --}}
+    {{-- ============================================================ --}}
+    @if(!empty($data['pedoman_file_url']))
+        <div x-show="showPedomanModal" 
+             x-cloak
+             x-transition:enter="transition ease-out duration-300"
+             x-transition:enter-start="opacity-0"
+             x-transition:enter-end="opacity-100"
+             x-transition:leave="transition ease-in duration-200"
+             x-transition:leave-start="opacity-100"
+             x-transition:leave-end="opacity-0"
+             @keydown.escape.window="showPedomanModal = false"
+             class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 lg:p-8">
+            
+            {{-- Backdrop --}}
+            <div class="fixed inset-0 bg-slate-950/80 backdrop-blur-md" @click="showPedomanModal = false"></div>
+
+            {{-- Modal Dialog --}}
+            <div class="relative w-full max-w-5xl h-[85vh] sm:h-[90vh] bg-white dark:bg-slate-900 rounded-[2rem] shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col z-10"
+                 x-transition:enter="transition ease-out duration-300"
+                 x-transition:enter-start="opacity-0 scale-95"
+                 x-transition:enter-end="opacity-100 scale-100"
+                 x-transition:leave="transition ease-in duration-200"
+                 x-transition:leave-start="opacity-100 scale-100"
+                 x-transition:leave-end="opacity-0 scale-95">
+                
+                {{-- Header Modal --}}
+                <div class="px-6 py-4 bg-slate-900 text-white flex items-center justify-between border-b border-slate-800">
+                    <div class="flex items-center gap-3">
+                        <div class="w-9 h-9 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center border border-emerald-500/30">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+                        </div>
+                        <div>
+                            <h3 class="text-sm font-bold font-serif-display text-white">{{ $data['pedoman_title'] }}</h3>
+                            <p class="text-[10px] text-slate-400">Dokumen Resmi Pondok Pesantren Al-Fithroh Jejeran Bantul</p>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center gap-3">
+                        <a href="{{ $data['pedoman_file_url'] }}" download
+                           class="px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl text-xs font-bold transition-all shadow-md flex items-center gap-1.5">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                            <span>Unduh PDF</span>
+                        </a>
+                        <button type="button" @click="showPedomanModal = false"
+                                class="w-8 h-8 rounded-xl bg-white/10 hover:bg-white/20 text-slate-300 hover:text-white flex items-center justify-center transition-colors">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                        </button>
+                    </div>
+                </div>
+
+                {{-- Modal Body: Embedded PDF Viewer --}}
+                <div class="flex-1 w-full bg-slate-950 relative overflow-hidden">
+                    <iframe src="{{ $data['pedoman_file_url'] }}#toolbar=1" 
+                            class="w-full h-full border-0" 
+                            title="Buku Pedoman Santri Viewer">
+                    </iframe>
+                </div>
+
+            </div>
+        </div>
+    @endif
+
+    {{-- ============================================================ --}}
+    {{-- MODAL LIGHTBOX GALERI MULTI-FOTO KEGIATAN                     --}}
+    {{-- ============================================================ --}}
+    <div x-show="showGalleryModal" 
+         x-cloak
+         x-transition:enter="transition ease-out duration-300"
+         x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100"
+         x-transition:leave="transition ease-in duration-200"
+         x-transition:leave-start="opacity-100"
+         x-transition:leave-end="opacity-0"
+         @keydown.escape.window="showGalleryModal = false"
+         class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 lg:p-8">
+        
+        {{-- Backdrop --}}
+        <div class="fixed inset-0 bg-slate-950/85 backdrop-blur-md" @click="showGalleryModal = false"></div>
+
+        {{-- Modal Dialog --}}
+        <div class="relative w-full max-w-4xl bg-white dark:bg-slate-900 rounded-[2rem] shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col z-10 max-h-[90vh]"
+             x-transition:enter="transition ease-out duration-300"
+             x-transition:enter-start="opacity-0 scale-95"
+             x-transition:enter-end="opacity-100 scale-100"
+             x-transition:leave="transition ease-in duration-200"
+             x-transition:leave-start="opacity-100 scale-100"
+             x-transition:leave-end="opacity-0 scale-95">
+            
+            {{-- Header Modal --}}
+            <div class="px-6 py-4 bg-slate-900 text-white flex items-center justify-between border-b border-slate-800 gap-4">
+                <div class="flex items-center gap-3 min-w-0">
+                    <span class="px-2.5 py-1 rounded-full bg-emerald-500/20 text-emerald-400 text-[10px] font-extrabold uppercase flex-shrink-0" x-text="activeActivity?.category || 'Kegiatan'"></span>
+                    <div class="min-w-0">
+                        <h3 class="text-sm sm:text-base font-bold font-serif-display text-white truncate" x-text="activeActivity?.title"></h3>
+                        <p class="text-[10px] text-slate-400 truncate" x-text="(activeActivity?.date || '') + ' — ' + (activeActivity?.org || '')"></p>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-2 flex-shrink-0">
+                    {{-- Tombol Download Foto Aktif --}}
+                    <template x-if="activeActivity?.photos && activeActivity.photos[activePhotoIdx]">
+                        <a :href="activeActivity.photos[activePhotoIdx]" download
+                           class="px-3.5 py-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl text-xs font-bold transition-all shadow-md shadow-emerald-500/20 flex items-center gap-1.5 hover:scale-105">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                            <span>Unduh Foto</span>
+                        </a>
+                    </template>
+
+                    <button type="button" @click="showGalleryModal = false" class="w-8 h-8 rounded-xl bg-white/10 hover:bg-white/20 text-slate-300 hover:text-white flex items-center justify-center transition-colors">✕</button>
+                </div>
+            </div>
+
+            {{-- Body: Main Photo Display --}}
+            <div class="relative flex-1 bg-slate-950 flex items-center justify-center min-h-[320px] max-h-[480px] overflow-hidden group">
+                <template x-if="activeActivity?.photos && activeActivity.photos.length > 0">
+                    <img :src="activeActivity.photos[activePhotoIdx]" class="max-h-[460px] w-auto max-w-full object-contain transition-all duration-300">
+                </template>
+
+                <template x-if="!activeActivity?.photos || activeActivity.photos.length === 0">
+                    <div class="text-slate-500 text-xs text-center p-8">Belum ada foto dokumentasi diunggah.</div>
+                </template>
+
+                {{-- Previous / Next Navigation Arrows --}}
+                <template x-if="activeActivity?.photos && activeActivity.photos.length > 1">
+                    <div class="absolute inset-y-0 inset-x-3 flex items-center justify-between pointer-events-none">
+                        <button type="button" 
+                                @click="activePhotoIdx = (activePhotoIdx > 0) ? activePhotoIdx - 1 : activeActivity.photos.length - 1"
+                                class="pointer-events-auto w-10 h-10 rounded-full bg-slate-900/80 hover:bg-emerald-500 text-white flex items-center justify-center backdrop-blur-md transition-colors shadow-lg border border-white/10">
+                            ❮
+                        </button>
+                        <button type="button" 
+                                @click="activePhotoIdx = (activePhotoIdx < activeActivity.photos.length - 1) ? activePhotoIdx + 1 : 0"
+                                class="pointer-events-auto w-10 h-10 rounded-full bg-slate-900/80 hover:bg-emerald-500 text-white flex items-center justify-center backdrop-blur-md transition-colors shadow-lg border border-white/10">
+                            ❯
+                        </button>
+                    </div>
+                </template>
+            </div>
+
+            {{-- Footer: Thumbnail Strip & Description --}}
+            <div class="p-6 space-y-4 bg-white dark:bg-slate-900 border-t border-slate-100 dark:border-slate-800">
+                {{-- Thumbnails Strip --}}
+                <template x-if="activeActivity?.photos && activeActivity.photos.length > 1">
+                    <div class="flex items-center gap-2 overflow-x-auto pb-2">
+                        <template x-for="(photo, idx) in activeActivity.photos" :key="idx">
+                            <button type="button" @click="activePhotoIdx = idx" 
+                                    class="w-14 h-14 rounded-xl overflow-hidden border-2 transition-all flex-shrink-0"
+                                    :class="activePhotoIdx === idx ? 'border-emerald-500 scale-105 shadow-md' : 'border-transparent opacity-50 hover:opacity-100'">
+                                <img :src="photo" class="w-full h-full object-cover">
+                            </button>
+                        </template>
+                    </div>
+                </template>
+
+                <p class="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed font-normal" x-text="activeActivity?.description"></p>
+            </div>
+
+        </div>
+    </div>
+
 </div>

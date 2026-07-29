@@ -51,4 +51,18 @@ class Activity extends Model implements HasMedia
     {
         return $this->hasMany(ActivityAttendance::class, 'activity_id');
     }
+
+    public function getPhotoUrls(): array
+    {
+        return $this->getMedia('photos')->map(function ($media) {
+            $url = $media->getUrl();
+            return parse_url($url, PHP_URL_PATH) ?: $url;
+        })->toArray();
+    }
+
+    public function getFirstPhotoUrl(): ?string
+    {
+        $urls = $this->getPhotoUrls();
+        return $urls[0] ?? null;
+    }
 }

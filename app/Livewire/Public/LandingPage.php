@@ -15,19 +15,25 @@ class LandingPage extends Component
 
         // Get general defaults if keys are empty
         $defaults = [
-            'pondok_name' => 'Pondok Pesantren Al-Fithroh',
-            'hero_title' => 'Membentuk Generasi Berakhlakul Karimah & Unggul',
-            'hero_subtitle' => 'Pondok Pesantren Al-Fithroh membimbing santri dengan kurikulum salafiyah, tahfidzul qur\'an, dan pendidikan formal modern.',
-            'about_profile' => 'Pondok Pesantren Al-Fithroh didirikan dengan komitmen untuk melahirkan generasi yang bertakwa, berwawasan luas, beradab mulia, dan siap berkontribusi positif bagi masyarakat. Kami menyinergikan pendidikan pesantren tradisional (kitab kuning) dengan sistem madrasah formal.',
-            'about_vision' => 'Menjadi pusat pendidikan Islam yang unggul dalam mencetak ulama dan cendekiawan muslim yang berakhlak mulia, berpegang teguh pada nilai-nilai ahlussunnah wal jama\'ah.',
-            'about_mission' => "1. Menyelenggarakan pendidikan kepesantrenan tradisional dan formal secara terpadu.\n2. Menanamkan adab, kemandirian, dan kedisiplinan berlandaskan akhlak mulia.\n3. Menyelenggarakan program Tahfidzul Qur'an yang terstruktur.\n4. Mendidik santri agar mampu menghadapi tantangan global tanpa kehilangan jati diri muslim.",
-            'contact_address' => 'Jl. Kedinding Lor No.99, Kenjeran, Surabaya, Jawa Timur 60129',
-            'contact_phone' => '0812-3456-7890 (Humas Putra) / 0812-3456-7891 (Humas Putri)',
-            'contact_email' => 'info@elvith.id',
-            'pedoman_title' => 'Buku Pedoman Santri 2026/2027',
-            'pedoman_description' => 'Unduh buku pedoman resmi untuk mengetahui tata tertib, hak & kewajiban, serta informasi penting lainnya selama mukim di pondok.',
-            'pedoman_file_url' => '',
-            'registration_info' => 'Penerimaan Santri Baru (PSB) Tahun Ajaran 2026/2027 telah dibuka. Pendaftaran dapat dilakukan langsung di kantor sekretariat pusat Al-Fithroh.',
+            'pondok_name'        => 'Pondok Pesantren Al-Fithroh',
+            'hero_title'         => 'Mencetak Generasi Agamis, Beradab Luhur & Berkualitas',
+            'hero_subtitle'      => 'Pondok Pesantren Al-Fithroh Jejeran Bantul membimbing santri dengan tradisi keilmuan Ahlussunnah wal Jama\'ah sejak tahun 1970, memadukan ketulusan salafiyah dengan kedisiplinan diniyah.',
+            'about_profile'      => 'Pondok Pesantren Al-Fithroh Jejeran Bantul membimbing santri dengan tradisi keilmuan Ahlussunnah wal Jama\'ah sejak tahun 1970, memadukan ketulusan salafiyah dengan kedisiplinan diniyah. Kami hadir sebagai lembaga pendidikan Islam yang berkomitmen mencetak generasi berakhlakul karimah, berpengetahuan luas, dan siap berkontribusi positif bagi umat.',
+            'about_vision'       => 'Mencetak generasi Islam yang agamis, beradab luhur, dan berkualitas — berpegang teguh pada manhaj Ahlussunnah wal Jama\'ah, siap menghadapi tantangan zaman tanpa kehilangan jati diri.',
+            'about_mission'      => "1. Memberikan wadah atau media bagi anak-anak atau generasi muda maupun masyarakat umum yang memerlukan kajian, bertukar pikiran dalam bidang agama maupun keadaan masa kini (teknologi informasi).\n2. Meningkatkan kualitas dan membentuk generasi Islam yang memiliki keimanan dan ketaqwaan kepada Allah SWT.\n3. Menciptakan lulusan yang berkualitas serta dapat memperluas dan mengembangkan syiar Islam dimanapun.",
+            'contact_address'    => 'Jejeran, Wonokromo, Pleret, Bantul, Daerah Istimewa Yogyakarta 55791',
+            'contact_email'      => 'info@alfithroh.ac.id',
+            'ig_username'        => 'alfithroh.jejeran',
+            'gmaps_url'          => 'https://maps.google.com/?q=Pondok+Pesantren+Al-Fithroh+Jejeran+Bantul',
+            'wa_putra1'          => '0812-3456-789',
+            'wa_putra2'          => '0812-9876-543',
+            'wa_putri'           => '0811-1222-333',
+            'pedoman_title'      => 'Buku Pedoman Santri 2025/2026',
+            'pedoman_description'=> 'Dokumen resmi berisi tata tertib, hak & kewajiban santri, serta informasi penting lainnya selama mukim di Pondok Pesantren Al-Fithroh.',
+            'pedoman_file_url'   => '',
+            'registration_info'  => 'Penerimaan Santri Baru (PSB) dibuka setiap tahun. Syarat pendaftaran meliputi sowan kepada Pengasuh oleh orang tua/wali, masa training maksimal 10 hari, melengkapi berkas fotokopi KK & pas foto formal berwarna, serta melunasi biaya administrasi masuk.',
+            'hero_image_url'     => '',
+            'about_image_url'    => '',
         ];
 
         // Merge defaults with DB contents
