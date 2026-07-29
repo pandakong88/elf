@@ -162,18 +162,32 @@
 
     @php
         $contents = \App\Modules\Core\Models\LandingPageContent::all()->pluck('value', 'key')->toArray();
-        $drawerBank1Name = $bank1Name ?? ($contents['wali_bank1_name_putra'] ?? 'Bank Syariah Indonesia (BSI)');
-        $drawerBsiRek    = $bsiRekening ?? ($contents['wali_bsi_putra'] ?? '7123456789');
-        $drawerBsiAn     = $bsiAn ?? ($contents['wali_bsi_putra_an'] ?? 'Pesantren Al-Fithroh Putra');
 
-        $drawerBank2Name = $bank2Name ?? ($contents['wali_bank2_name_putra'] ?? 'Bank BRI');
-        $drawerBriRek    = $briRekening ?? ($contents['wali_bri_putra'] ?? '001201009876504');
-        $drawerBriAn     = $briAn ?? ($contents['wali_bri_putra_an'] ?? 'Yayasan Al-Fithroh Putra');
+        $drawerPutra = [
+            'bank1_name' => $contents['wali_bank1_name_putra'] ?? 'Bank Syariah Indonesia (BSI)',
+            'bsi'        => $contents['wali_bsi_putra'] ?? '7123456789',
+            'bsi_an'     => $contents['wali_bsi_putra_an'] ?? 'Pesantren Al-Fithroh Putra',
+            'bank2_name' => $contents['wali_bank2_name_putra'] ?? 'Bank BRI',
+            'bri'        => $contents['wali_bri_putra'] ?? '001201009876504',
+            'bri_an'     => $contents['wali_bri_putra_an'] ?? 'Yayasan Al-Fithroh Putra',
+            'wa'         => $contents['wali_wa_putra'] ?? '6281234567890',
+            'wa_name'    => $contents['wali_wa_putra_name'] ?? 'Bendahara Putra Al-Fithroh',
+            'wa_url'     => 'https://wa.me/' . preg_replace('/[^0-9]/', '', $contents['wali_wa_putra'] ?? '6281234567890') . '?text=' . urlencode("Assalamu'alaikum Bendahara Putra Al-Fithroh, saya Wali Santri ingin konfirmasi pembayaran."),
+        ];
 
-        $drawerWa        = $waBendahara ?? ($contents['wali_wa_putra'] ?? '6281234567890');
-        $drawerWaName    = $waName ?? ($contents['wali_wa_putra_name'] ?? 'Bendahara Putra Al-Fithroh');
-        $cleanWaNumber   = preg_replace('/[^0-9]/', '', $drawerWa);
-        $drawerWaUrl     = "https://wa.me/{$cleanWaNumber}?text=" . urlencode("Assalamu'alaikum {$drawerWaName}, saya Wali Santri ingin konfirmasi pembayaran.");
+        $drawerPutri = [
+            'bank1_name' => $contents['wali_bank1_name_putri'] ?? 'Bank Syariah Indonesia (BSI)',
+            'bsi'        => $contents['wali_bsi_putri'] ?? '',
+            'bsi_an'     => $contents['wali_bsi_putri_an'] ?? 'Pesantren Al-Fithroh Putri',
+            'bank2_name' => $contents['wali_bank2_name_putri'] ?? 'Bank BRI',
+            'bri'        => $contents['wali_bri_putri'] ?? '',
+            'bri_an'     => $contents['wali_bri_putri_an'] ?? 'Yayasan Al-Fithroh Putri',
+            'wa'         => $contents['wali_wa_putri'] ?? '6285713285438',
+            'wa_name'    => $contents['wali_wa_putri_name'] ?? 'Bendahara Putri Al-Fithroh',
+            'wa_url'     => 'https://wa.me/' . preg_replace('/[^0-9]/', '', $contents['wali_wa_putri'] ?? '6285713285438') . '?text=' . urlencode("Assalamu'alaikum Bendahara Putri Al-Fithroh, saya Wali Santri ingin konfirmasi pembayaran."),
+        ];
+
+        $initialTab = isset($isPutri) && $isPutri ? 'putri' : 'putra';
     @endphp
 
     <!-- Header Ramah Wali -->
@@ -250,68 +264,118 @@
                 </div>
 
                 <!-- Drawer Scrollable Content -->
-                <div class="flex-1 overflow-y-auto p-4 space-y-5 text-xs text-slate-700 dark:text-slate-300">
+                <div x-data="{ activeTab: '{{ $initialTab }}' }" class="flex-1 overflow-y-auto p-4 space-y-4 text-xs text-slate-700 dark:text-slate-300">
                     
-                    <!-- 1. Rekening Pembayaran Resmi (Dinamis dari CMS) -->
-                    <div class="space-y-3">
-                        <h3 class="text-xs font-black uppercase text-slate-800 dark:text-slate-200 tracking-wider flex items-center gap-1.5">
-                            <svg class="w-4 h-4 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
-                            <span>Rekening Pembayaran Bank</span>
-                        </h3>
-
-                        <!-- Card Bank 1 -->
-                        @if(!empty($drawerBsiRek))
-                            <div class="bg-slate-50 dark:bg-slate-950 p-3 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-2">
-                                <div class="flex items-center justify-between">
-                                    <span class="font-extrabold text-emerald-700 dark:text-emerald-400">{{ $drawerBank1Name }}</span>
-                                    <span class="text-[9px] font-bold bg-emerald-100 dark:bg-emerald-500/10 text-emerald-800 dark:text-emerald-300 px-2 py-0.5 rounded-md">Utama</span>
-                                </div>
-                                <div class="flex items-center justify-between font-mono bg-white dark:bg-slate-900 p-2 rounded-xl border border-slate-200 dark:border-slate-800">
-                                    <span class="font-black text-sm text-slate-900 dark:text-slate-100">{{ $drawerBsiRek }}</span>
-                                    <button type="button" 
-                                            onclick="copyToClipboard('{{ $drawerBsiRek }}')"
-                                            class="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white font-sans text-[11px] font-bold rounded-lg transition-all flex items-center gap-1 shadow-xs active:scale-95">
-                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
-                                        <span>Salin</span>
-                                    </button>
-                                </div>
-                                <p class="text-[10px] text-slate-500 dark:text-slate-400">a.n. {{ $drawerBsiAn }}</p>
-                            </div>
-                        @endif
-
-                        <!-- Card Bank 2 (Hanya tampil jika diisi di CMS) -->
-                        @if(!empty($drawerBriRek))
-                            <div class="bg-slate-50 dark:bg-slate-950 p-3 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-2">
-                                <div class="flex items-center justify-between">
-                                    <span class="font-extrabold text-blue-700 dark:text-blue-400">{{ $drawerBank2Name }}</span>
-                                    <span class="text-[9px] font-bold bg-blue-100 dark:bg-blue-500/10 text-blue-800 dark:text-blue-300 px-2 py-0.5 rounded-md">Alternatif</span>
-                                </div>
-                                <div class="flex items-center justify-between font-mono bg-white dark:bg-slate-900 p-2 rounded-xl border border-slate-200 dark:border-slate-800">
-                                    <span class="font-black text-sm text-slate-900 dark:text-slate-100">{{ $drawerBriRek }}</span>
-                                    <button type="button" 
-                                            onclick="copyToClipboard('{{ $drawerBriRek }}')"
-                                            class="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white font-sans text-[11px] font-bold rounded-lg transition-all flex items-center gap-1 shadow-xs active:scale-95">
-                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
-                                        <span>Salin</span>
-                                    </button>
-                                </div>
-                                <p class="text-[10px] text-slate-500 dark:text-slate-400">a.n. {{ $drawerBriAn }}</p>
-                            </div>
-                        @endif
+                    {{-- Tab Switcher Putra / Putri (Professional SVG Icons) --}}
+                    <div class="grid grid-cols-2 gap-1.5 bg-slate-100 dark:bg-slate-950 p-1 rounded-2xl border border-slate-200 dark:border-slate-800">
+                        <button type="button" @click="activeTab = 'putra'" 
+                                class="py-2 px-2.5 rounded-xl text-[11px] font-bold transition-all flex items-center justify-center gap-1.5"
+                                :class="activeTab === 'putra' ? 'bg-white dark:bg-slate-800 text-emerald-600 dark:text-emerald-400 shadow-sm border border-slate-200 dark:border-slate-700' : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'">
+                            <svg class="w-3.5 h-3.5 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5m3 0h4"/></svg>
+                            <span>Komplek Putra</span>
+                        </button>
+                        <button type="button" @click="activeTab = 'putri'" 
+                                class="py-2 px-2.5 rounded-xl text-[11px] font-bold transition-all flex items-center justify-center gap-1.5"
+                                :class="activeTab === 'putri' ? 'bg-white dark:bg-slate-800 text-pink-600 dark:text-pink-400 shadow-sm border border-slate-200 dark:border-slate-700' : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'">
+                            <svg class="w-3.5 h-3.5 text-pink-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+                            <span>Komplek Putri</span>
+                        </button>
                     </div>
 
-                    <!-- 2. Chat WhatsApp Bendahara Dinamis -->
-                    <div class="space-y-2 pt-2 border-t border-slate-200 dark:border-slate-800">
-                        <h3 class="text-xs font-black uppercase text-slate-800 dark:text-slate-200 tracking-wider flex items-center gap-1.5">
-                            <svg class="w-4 h-4 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
-                            <span>Konfirmasi / Tanya Bendahara</span>
-                        </h3>
-                        <a href="{{ $drawerWaUrl }}" 
-                           target="_blank" 
-                           class="w-full py-3 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white font-extrabold rounded-2xl transition-all shadow-md flex items-center justify-center gap-2 text-xs tracking-wide">
-                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981z"/></svg>
-                            <span>Chat WhatsApp {{ $drawerWaName }}</span>
-                        </a>
+                    {{-- Tab Content: Putra --}}
+                    <div x-show="activeTab === 'putra'" class="space-y-4">
+                        <div class="space-y-2.5">
+                            <h3 class="text-xs font-black uppercase text-slate-800 dark:text-slate-200 tracking-wider flex items-center gap-1.5">
+                                <svg class="w-4 h-4 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
+                                <span>Rekening Bank Putra</span>
+                            </h3>
+
+                            @if(!empty($drawerPutra['bsi']))
+                                <div class="bg-slate-50 dark:bg-slate-950 p-3 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-1.5">
+                                    <div class="flex items-center justify-between">
+                                        <span class="font-extrabold text-emerald-700 dark:text-emerald-400 text-[11px]">{{ $drawerPutra['bank1_name'] }}</span>
+                                        <span class="text-[9px] font-bold bg-emerald-100 dark:bg-emerald-500/10 text-emerald-800 dark:text-emerald-300 px-2 py-0.5 rounded-md">Utama</span>
+                                    </div>
+                                    <div class="flex items-center justify-between font-mono bg-white dark:bg-slate-900 p-2 rounded-xl border border-slate-200 dark:border-slate-800">
+                                        <span class="font-black text-sm text-slate-900 dark:text-slate-100">{{ $drawerPutra['bsi'] }}</span>
+                                        <button type="button" onclick="copyToClipboard('{{ $drawerPutra['bsi'] }}')" class="px-2.5 py-1 bg-emerald-600 text-white font-sans text-[11px] font-bold rounded-lg hover:bg-emerald-700 transition-all active:scale-95">Salin</button>
+                                    </div>
+                                    <p class="text-[10px] text-slate-500 dark:text-slate-400">a.n. {{ $drawerPutra['bsi_an'] }}</p>
+                                </div>
+                            @endif
+
+                            @if(!empty($drawerPutra['bri']))
+                                <div class="bg-slate-50 dark:bg-slate-950 p-3 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-1.5">
+                                    <div class="flex items-center justify-between">
+                                        <span class="font-extrabold text-blue-700 dark:text-blue-400 text-[11px]">{{ $drawerPutra['bank2_name'] }}</span>
+                                        <span class="text-[9px] font-bold bg-blue-100 dark:bg-blue-500/10 text-blue-800 dark:text-blue-300 px-2 py-0.5 rounded-md">Alternatif</span>
+                                    </div>
+                                    <div class="flex items-center justify-between font-mono bg-white dark:bg-slate-900 p-2 rounded-xl border border-slate-200 dark:border-slate-800">
+                                        <span class="font-black text-sm text-slate-900 dark:text-slate-100">{{ $drawerPutra['bri'] }}</span>
+                                        <button type="button" onclick="copyToClipboard('{{ $drawerPutra['bri'] }}')" class="px-2.5 py-1 bg-emerald-600 text-white font-sans text-[11px] font-bold rounded-lg hover:bg-emerald-700 transition-all active:scale-95">Salin</button>
+                                    </div>
+                                    <p class="text-[10px] text-slate-500 dark:text-slate-400">a.n. {{ $drawerPutra['bri_an'] }}</p>
+                                </div>
+                            @endif
+                        </div>
+
+                        <div class="space-y-2 pt-2 border-t border-slate-200 dark:border-slate-800">
+                            <h3 class="text-xs font-black uppercase text-slate-800 dark:text-slate-200 tracking-wider flex items-center gap-1.5">
+                                <svg class="w-4 h-4 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+                                <span>Konfirmasi Bendahara Putra</span>
+                            </h3>
+                            <a href="{{ $drawerPutra['wa_url'] }}" target="_blank" class="w-full py-3 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white font-extrabold rounded-2xl transition-all shadow-md flex items-center justify-center gap-2 text-xs">
+                                <span>Chat {{ $drawerPutra['wa_name'] }}</span>
+                            </a>
+                        </div>
+                    </div>
+
+                    {{-- Tab Content: Putri --}}
+                    <div x-show="activeTab === 'putri'" class="space-y-4" style="display: none;">
+                        <div class="space-y-2.5">
+                            <h3 class="text-xs font-black uppercase text-slate-800 dark:text-slate-200 tracking-wider flex items-center gap-1.5">
+                                <svg class="w-4 h-4 text-pink-600 dark:text-pink-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
+                                <span>Rekening Bank Putri</span>
+                            </h3>
+
+                            @if(!empty($drawerPutri['bsi']))
+                                <div class="bg-slate-50 dark:bg-slate-950 p-3 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-1.5">
+                                    <div class="flex items-center justify-between">
+                                        <span class="font-extrabold text-pink-700 dark:text-pink-400 text-[11px]">{{ $drawerPutri['bank1_name'] }}</span>
+                                        <span class="text-[9px] font-bold bg-pink-100 dark:bg-pink-500/10 text-pink-800 dark:text-pink-300 px-2 py-0.5 rounded-md">Utama</span>
+                                    </div>
+                                    <div class="flex items-center justify-between font-mono bg-white dark:bg-slate-900 p-2 rounded-xl border border-slate-200 dark:border-slate-800">
+                                        <span class="font-black text-sm text-slate-900 dark:text-slate-100">{{ $drawerPutri['bsi'] }}</span>
+                                        <button type="button" onclick="copyToClipboard('{{ $drawerPutri['bsi'] }}')" class="px-2.5 py-1 bg-pink-600 text-white font-sans text-[11px] font-bold rounded-lg hover:bg-pink-700 transition-all active:scale-95">Salin</button>
+                                    </div>
+                                    <p class="text-[10px] text-slate-500 dark:text-slate-400">a.n. {{ $drawerPutri['bsi_an'] }}</p>
+                                </div>
+                            @endif
+
+                            @if(!empty($drawerPutri['bri']))
+                                <div class="bg-slate-50 dark:bg-slate-950 p-3 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-1.5">
+                                    <div class="flex items-center justify-between">
+                                        <span class="font-extrabold text-blue-700 dark:text-blue-400 text-[11px]">{{ $drawerPutri['bank2_name'] }}</span>
+                                        <span class="text-[9px] font-bold bg-blue-100 dark:bg-blue-500/10 text-blue-800 dark:text-blue-300 px-2 py-0.5 rounded-md">Alternatif</span>
+                                    </div>
+                                    <div class="flex items-center justify-between font-mono bg-white dark:bg-slate-900 p-2 rounded-xl border border-slate-200 dark:border-slate-800">
+                                        <span class="font-black text-sm text-slate-900 dark:text-slate-100">{{ $drawerPutri['bri'] }}</span>
+                                        <button type="button" onclick="copyToClipboard('{{ $drawerPutri['bri'] }}')" class="px-2.5 py-1 bg-pink-600 text-white font-sans text-[11px] font-bold rounded-lg hover:bg-pink-700 transition-all active:scale-95">Salin</button>
+                                    </div>
+                                    <p class="text-[10px] text-slate-500 dark:text-slate-400">a.n. {{ $drawerPutri['bri_an'] }}</p>
+                                </div>
+                            @endif
+                        </div>
+
+                        <div class="space-y-2 pt-2 border-t border-slate-200 dark:border-slate-800">
+                            <h3 class="text-xs font-black uppercase text-slate-800 dark:text-slate-200 tracking-wider flex items-center gap-1.5">
+                                <svg class="w-4 h-4 text-pink-600 dark:text-pink-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+                                <span>Konfirmasi Bendahara Putri</span>
+                            </h3>
+                            <a href="{{ $drawerPutri['wa_url'] }}" target="_blank" class="w-full py-3 bg-pink-600 hover:bg-pink-700 active:bg-pink-800 text-white font-extrabold rounded-2xl transition-all shadow-md flex items-center justify-center gap-2 text-xs">
+                                <span>Chat {{ $drawerPutri['wa_name'] }}</span>
+                            </a>
+                        </div>
                     </div>
 
                     <!-- 3. FAQ / Pertanyaan Umum -->
