@@ -428,15 +428,22 @@
         </div>
     </div>
 
-    <!-- KOTAK PETUNJUK PEMBAYARAN DINAMIS (BERDASARKAN CMS PUTRA / PUTRI) -->
-    <div class="bg-emerald-800 dark:bg-slate-900 text-white rounded-3xl p-5 shadow-lg border border-emerald-700/80 dark:border-slate-800 space-y-3 transition-colors">
-        <div class="flex items-center justify-between">
+    <!-- KOTAK PETUNJUK PEMBAYARAN DINAMIS (TAB SWITCHER PUTRA & PUTRI) -->
+    <div x-data="{ activeTab: '{{ $isPutri ? 'putri' : 'putra' }}' }" class="bg-emerald-950 dark:bg-slate-900 text-white rounded-3xl p-5 shadow-lg border border-emerald-700/80 dark:border-slate-800 space-y-4 transition-colors">
+        
+        <div class="flex items-center justify-between border-b border-emerald-800/80 dark:border-slate-800 pb-3">
             <div class="flex items-center gap-2">
-                <svg class="w-5 h-5 text-emerald-300 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                <h4 class="text-sm font-extrabold text-white">Petunjuk Pembayaran (Unit {{ $isPutri ? 'Putri' : 'Putra' }})</h4>
+                <span class="w-8 h-8 rounded-xl bg-emerald-800/80 text-emerald-300 flex items-center justify-center border border-emerald-700/60">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+                </span>
+                <div>
+                    <h4 class="text-sm font-extrabold text-white leading-tight">Rekening & Konfirmasi Pembayaran</h4>
+                    <p class="text-[10px] text-emerald-300/80 dark:text-slate-400">Otomatis disesuaikan dengan unit santri: <strong class="text-white">{{ $santri->name }}</strong></p>
+                </div>
             </div>
-            <span class="text-[10px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-md bg-emerald-700 dark:bg-slate-800 border border-emerald-600 dark:border-slate-700 text-emerald-100">
-                {{ $isPutri ? '🧕 Unit Putri' : '👳‍♂️ Unit Putra' }}
+            <span class="text-[10px] font-bold px-2.5 py-1 rounded-xl border"
+                  :class="activeTab === 'putri' ? 'bg-pink-950/80 text-pink-300 border-pink-700/50' : 'bg-emerald-900/80 text-emerald-300 border-emerald-700/50'">
+                <span x-text="activeTab === 'putri' ? 'Unit Putri' : 'Unit Putra'"></span>
             </span>
         </div>
 
@@ -446,40 +453,92 @@
             </div>
         @endif
 
-        <div class="space-y-2">
-            <!-- Bank 1 -->
-            @if(!empty($bsiRekening))
-                <div class="bg-emerald-900/80 dark:bg-slate-950 p-3 rounded-2xl border border-emerald-700/60 dark:border-slate-800 text-xs font-mono flex items-center justify-between">
-                    <div>
-                        <span class="text-[10px] text-emerald-300 dark:text-slate-400 font-sans block font-semibold uppercase">{{ $bank1Name }} ({{ $isPutri ? 'Putri' : 'Putra' }}):</span>
-                        <div class="text-emerald-50 dark:text-emerald-400 font-bold text-sm">{{ $bsiRekening }}</div>
-                        <div class="text-[10px] text-emerald-200 dark:text-slate-400 font-sans">a.n. {{ $bsiAn }}</div>
-                    </div>
-                    <button type="button" onclick="copyToClipboard('{{ $bsiRekening }}')" class="px-2.5 py-1 bg-emerald-700 hover:bg-emerald-600 text-white font-sans text-[11px] font-bold rounded-lg border border-emerald-600 transition-all flex items-center gap-1 active:scale-95">
-                        <span>Salin</span>
-                    </button>
-                </div>
-            @endif
-
-            <!-- Bank 2 (Hanya tampil jika diisi di CMS) -->
-            @if(!empty($briRekening))
-                <div class="bg-emerald-900/80 dark:bg-slate-950 p-3 rounded-2xl border border-emerald-700/60 dark:border-slate-800 text-xs font-mono flex items-center justify-between">
-                    <div>
-                        <span class="text-[10px] text-emerald-300 dark:text-slate-400 font-sans block font-semibold uppercase">{{ $bank2Name }} ({{ $isPutri ? 'Putri' : 'Putra' }}):</span>
-                        <div class="text-emerald-50 dark:text-emerald-400 font-bold text-sm">{{ $briRekening }}</div>
-                        <div class="text-[10px] text-emerald-200 dark:text-slate-400 font-sans">a.n. {{ $briAn }}</div>
-                    </div>
-                    <button type="button" onclick="copyToClipboard('{{ $briRekening }}')" class="px-2.5 py-1 bg-emerald-700 hover:bg-emerald-600 text-white font-sans text-[11px] font-bold rounded-lg border border-emerald-600 transition-all flex items-center gap-1 active:scale-95">
-                        <span>Salin</span>
-                    </button>
-                </div>
-            @endif
+        {{-- Professional Tab Switcher --}}
+        <div class="grid grid-cols-2 gap-2 bg-emerald-900/50 dark:bg-slate-950 p-1.5 rounded-2xl border border-emerald-800/80 dark:border-slate-800">
+            <button type="button" @click="activeTab = 'putra'" 
+                    class="py-2.5 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2"
+                    :class="activeTab === 'putra' ? 'bg-emerald-600 dark:bg-slate-800 text-white shadow-md border border-emerald-500/50 dark:border-slate-700' : 'text-emerald-300/70 hover:text-white dark:text-slate-400'">
+                <svg class="w-4 h-4 text-emerald-300" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5m3 0h4"/></svg>
+                <span>Komplek Putra</span>
+            </button>
+            <button type="button" @click="activeTab = 'putri'" 
+                    class="py-2.5 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2"
+                    :class="activeTab === 'putri' ? 'bg-pink-600 dark:bg-slate-800 text-white shadow-md border border-pink-500/50 dark:border-slate-700' : 'text-emerald-300/70 hover:text-white dark:text-slate-400'">
+                <svg class="w-4 h-4 text-pink-300" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+                <span>Komplek Putri</span>
+            </button>
         </div>
 
-        <!-- WA Bendahara Button -->
-        <a href="{{ $directWaUrl }}" target="_blank" class="w-full py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold rounded-2xl transition-all shadow-md flex items-center justify-center gap-2 text-xs tracking-wide">
-            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981z"/></svg>
-            <span>Hubungi {{ $waName }} via WA</span>
-        </a>
+        {{-- Tab Content: Putra --}}
+        <div x-show="activeTab === 'putra'" class="space-y-3">
+            <div class="space-y-2">
+                @if(!empty($putraData['bsi']))
+                    <div class="bg-emerald-900/80 dark:bg-slate-950 p-3 rounded-2xl border border-emerald-700/60 dark:border-slate-800 text-xs font-mono flex items-center justify-between">
+                        <div>
+                            <span class="text-[10px] text-emerald-300 dark:text-slate-400 font-sans block font-semibold uppercase">{{ $putraData['bank1_name'] }} (Putra):</span>
+                            <div class="text-emerald-50 dark:text-emerald-400 font-bold text-sm">{{ $putraData['bsi'] }}</div>
+                            <div class="text-[10px] text-emerald-200 dark:text-slate-400 font-sans">a.n. {{ $putraData['bsi_an'] }}</div>
+                        </div>
+                        <button type="button" onclick="copyToClipboard('{{ $putraData['bsi'] }}')" class="px-2.5 py-1 bg-emerald-700 hover:bg-emerald-600 text-white font-sans text-[11px] font-bold rounded-lg border border-emerald-600 transition-all flex items-center gap-1 active:scale-95">
+                            <span>Salin</span>
+                        </button>
+                    </div>
+                @endif
+
+                @if(!empty($putraData['bri']))
+                    <div class="bg-emerald-900/80 dark:bg-slate-950 p-3 rounded-2xl border border-emerald-700/60 dark:border-slate-800 text-xs font-mono flex items-center justify-between">
+                        <div>
+                            <span class="text-[10px] text-emerald-300 dark:text-slate-400 font-sans block font-semibold uppercase">{{ $putraData['bank2_name'] }} (Putra):</span>
+                            <div class="text-emerald-50 dark:text-emerald-400 font-bold text-sm">{{ $putraData['bri'] }}</div>
+                            <div class="text-[10px] text-emerald-200 dark:text-slate-400 font-sans">a.n. {{ $putraData['bri_an'] }}</div>
+                        </div>
+                        <button type="button" onclick="copyToClipboard('{{ $putraData['bri'] }}')" class="px-2.5 py-1 bg-emerald-700 hover:bg-emerald-600 text-white font-sans text-[11px] font-bold rounded-lg border border-emerald-600 transition-all flex items-center gap-1 active:scale-95">
+                            <span>Salin</span>
+                        </button>
+                    </div>
+                @endif
+            </div>
+
+            <a href="{{ $putraData['wa_url'] }}" target="_blank" class="w-full py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold rounded-2xl transition-all shadow-md flex items-center justify-center gap-2 text-xs tracking-wide">
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+                <span>Hubungi {{ $putraData['wa_name'] }} via WA</span>
+            </a>
+        </div>
+
+        {{-- Tab Content: Putri --}}
+        <div x-show="activeTab === 'putri'" class="space-y-3" style="display: none;">
+            <div class="space-y-2">
+                @if(!empty($putriData['bsi']))
+                    <div class="bg-pink-950/80 dark:bg-slate-950 p-3 rounded-2xl border border-pink-700/60 dark:border-slate-800 text-xs font-mono flex items-center justify-between">
+                        <div>
+                            <span class="text-[10px] text-pink-300 dark:text-slate-400 font-sans block font-semibold uppercase">{{ $putriData['bank1_name'] }} (Putri):</span>
+                            <div class="text-pink-50 dark:text-pink-400 font-bold text-sm">{{ $putriData['bsi'] }}</div>
+                            <div class="text-[10px] text-pink-200 dark:text-slate-400 font-sans">a.n. {{ $putriData['bsi_an'] }}</div>
+                        </div>
+                        <button type="button" onclick="copyToClipboard('{{ $putriData['bsi'] }}')" class="px-2.5 py-1 bg-pink-700 hover:bg-pink-600 text-white font-sans text-[11px] font-bold rounded-lg border border-pink-600 transition-all flex items-center gap-1 active:scale-95">
+                            <span>Salin</span>
+                        </button>
+                    </div>
+                @endif
+
+                @if(!empty($putriData['bri']))
+                    <div class="bg-pink-950/80 dark:bg-slate-950 p-3 rounded-2xl border border-pink-700/60 dark:border-slate-800 text-xs font-mono flex items-center justify-between">
+                        <div>
+                            <span class="text-[10px] text-pink-300 dark:text-slate-400 font-sans block font-semibold uppercase">{{ $putriData['bank2_name'] }} (Putri):</span>
+                            <div class="text-pink-50 dark:text-pink-400 font-bold text-sm">{{ $putriData['bri'] }}</div>
+                            <div class="text-[10px] text-pink-200 dark:text-slate-400 font-sans">a.n. {{ $putriData['bri_an'] }}</div>
+                        </div>
+                        <button type="button" onclick="copyToClipboard('{{ $putriData['bri'] }}')" class="px-2.5 py-1 bg-pink-700 hover:bg-pink-600 text-white font-sans text-[11px] font-bold rounded-lg border border-pink-600 transition-all flex items-center gap-1 active:scale-95">
+                            <span>Salin</span>
+                        </button>
+                    </div>
+                @endif
+            </div>
+
+            <a href="{{ $putriData['wa_url'] }}" target="_blank" class="w-full py-3 bg-pink-600 hover:bg-pink-500 text-white font-extrabold rounded-2xl transition-all shadow-md flex items-center justify-center gap-2 text-xs tracking-wide">
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+                <span>Hubungi {{ $putriData['wa_name'] }} via WA</span>
+            </a>
+        </div>
     </div>
 </div>
