@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Modules\Core\Models\LandingPageContent;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\ValidationException;
@@ -84,7 +85,10 @@ class WebAuthController extends Controller
             ],
         ];
 
-        return view('auth.login', compact('devUsers', 'roleGroups'));
+        $devModeEnabled = (string)(LandingPageContent::where('key', 'dev_quick_switcher_enabled')->value('value') ?? '1');
+        $devPassword    = (string)(LandingPageContent::where('key', 'dev_quick_switcher_password')->value('value') ?? 'rahasia123');
+
+        return view('auth.login', compact('devUsers', 'roleGroups', 'devModeEnabled', 'devPassword'));
     }
 
     /**

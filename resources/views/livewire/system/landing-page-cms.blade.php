@@ -258,6 +258,36 @@
                     </div>
                 </div>
 
+                <!-- Section 5: Developer & Testing Mode Settings -->
+                <div class="bg-slate-900 text-white border border-emerald-500/30 rounded-2xl shadow-xl overflow-hidden p-6 space-y-4">
+                    <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                        <div class="flex items-center gap-2">
+                            <span class="px-2.5 py-1 rounded-full bg-emerald-500/20 text-emerald-400 text-[10px] font-extrabold uppercase border border-emerald-500/30">DEV & TESTING</span>
+                            <h3 class="text-sm font-bold text-white uppercase tracking-wider">Pengaturan Quick Switcher (Mode Penguji)</h3>
+                        </div>
+                        <span class="text-[10px] text-slate-400 font-medium">Khusus Super Admin / Developer</span>
+                    </div>
+
+                    <div class="space-y-4">
+                        <div class="flex items-center justify-between p-4 bg-slate-950/80 border border-slate-800 rounded-xl">
+                            <div>
+                                <span class="text-xs font-bold text-slate-200 block">Tampilkan Quick Switcher di Halaman Login</span>
+                                <span class="text-[10px] text-slate-400 block mt-0.5">Jika AKTIF, panel penguji dev mode akan tampil di /login. Jika NONAKTIF (Produksi), panel akan tersembunyi total.</span>
+                            </div>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" wire:model.defer="dev_quick_switcher_enabled" class="sr-only peer">
+                                <div class="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500"></div>
+                            </label>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold text-slate-300 mb-1">Kata Sandi Penguji (Dev Password)</label>
+                            <input type="text" wire:model.defer="dev_quick_switcher_password" placeholder="rahasia123" class="w-full text-xs rounded-xl border-slate-800 bg-slate-950 text-emerald-400 font-mono p-3 focus:ring-emerald-500 focus:border-emerald-500">
+                            <span class="text-[10px] text-slate-500 block mt-1">Kata sandi seragam yang digunakan untuk fitur 1-klik masuk dev mode saat testing.</span>
+                        </div>
+                    </div>
+                </div>
+
             @else
                 {{-- TAB 2: KELOLA GALERI & DOKUMENTASI KEGIATAN --}}
                 <div class="space-y-6">

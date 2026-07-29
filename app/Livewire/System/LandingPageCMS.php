@@ -34,6 +34,10 @@ class LandingPageCMS extends Component
     public $pedoman_description = '';
     public $registration_info = '';
     
+    // Developer & Testing Mode Settings
+    public $dev_quick_switcher_enabled = true;
+    public $dev_quick_switcher_password = 'rahasia123';
+    
     // File uploads for static content
     public $pedoman_file;
     public $existing_pedoman_url = '';
@@ -89,6 +93,9 @@ class LandingPageCMS extends Component
         $this->existing_logo_url        = $contents['logo_url']            ?? '';
         $this->existing_hero_image_url  = $contents['hero_image_url']      ?? '';
         $this->existing_about_image_url = $contents['about_image_url']     ?? '';
+
+        $this->dev_quick_switcher_enabled  = ($contents['dev_quick_switcher_enabled'] ?? '1') === '1';
+        $this->dev_quick_switcher_password = $contents['dev_quick_switcher_password'] ?? 'rahasia123';
 
         $this->act_date = date('Y-m-d');
     }
@@ -164,6 +171,27 @@ class LandingPageCMS extends Component
                 ]
             );
         }
+
+        // Save Developer Settings
+        LandingPageContent::updateOrCreate(
+            ['key' => 'dev_quick_switcher_enabled'],
+            [
+                'value'   => $this->dev_quick_switcher_enabled ? '1' : '0',
+                'type'    => 'text',
+                'section' => 'general',
+                'title'   => 'Aktifkan Quick Switcher Mode Login',
+            ]
+        );
+
+        LandingPageContent::updateOrCreate(
+            ['key' => 'dev_quick_switcher_password'],
+            [
+                'value'   => $this->dev_quick_switcher_password ?: 'rahasia123',
+                'type'    => 'text',
+                'section' => 'general',
+                'title'   => 'Kata Sandi Dev Quick Switcher',
+            ]
+        );
 
         // Handle pedoman file upload
         if ($this->pedoman_file) {

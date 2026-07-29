@@ -104,15 +104,16 @@
                 </button>
             </form>
 
-            <!-- Developer Quick Login Panel -->
-            <div class="mt-5 sm:mt-6 pt-4 sm:pt-5 border-t border-slate-800/80">
-                <div class="flex items-center justify-between mb-2.5">
-                    <div class="flex items-center gap-2">
-                        <span class="px-2 py-0.5 text-[10px] font-extrabold tracking-wider text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 rounded-md uppercase">DEV MODE</span>
-                        <h4 class="text-xs font-bold text-slate-300 uppercase tracking-wider">Quick Switcher</h4>
+            @if($devModeEnabled === '1')
+                <!-- Developer Quick Login Panel -->
+                <div class="mt-5 sm:mt-6 pt-4 sm:pt-5 border-t border-slate-800/80">
+                    <div class="flex items-center justify-between mb-2.5">
+                        <div class="flex items-center gap-2">
+                            <span class="px-2 py-0.5 text-[10px] font-extrabold tracking-wider text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 rounded-md uppercase">DEV MODE</span>
+                            <h4 class="text-xs font-bold text-slate-300 uppercase tracking-wider">Quick Switcher</h4>
+                        </div>
+                        <span class="text-[10px] text-slate-500 font-medium">Password dev: <code class="text-emerald-400 font-mono">{{ $devPassword }}</code></span>
                     </div>
-                    <span class="text-[10px] text-slate-500 font-medium">Password dev: <code class="text-emerald-400 font-mono">rahasia123</code></span>
-                </div>
 
                 <!-- Brief Explanation Box -->
                 <div class="mb-3 p-2.5 sm:p-3 bg-slate-900/60 border border-slate-800/80 rounded-2xl flex items-start gap-2">
@@ -179,6 +180,7 @@
                     </div>
                 @endif
             </div>
+            @endif
         </div>
     </div>
 
@@ -206,8 +208,7 @@
             </div>
 
             <!-- Modal Footer -->
-            <div class="mt-4 pt-3 border-t border-slate-800/80 flex items-center justify-between text-[11px] text-slate-500">
-                <span>Password diisi otomatis: <code class="text-emerald-400 font-mono">rahasia123</code></span>
+            <div class="mt-4 pt-3 border-t border-slate-800/80 flex items-center justify-end text-[11px] text-slate-500">
                 <button type="button" onclick="closeRoleUsersModal()" class="px-4 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold rounded-xl transition-all">
                     Batal
                 </button>
@@ -217,6 +218,7 @@
 
     <script>
         const roleGroupsData = @json($roleGroups ?? []);
+        const devPassword = @json($devPassword ?? '');
 
         function openRoleUsersModal(groupKey) {
             const group = roleGroupsData[groupKey];
@@ -248,7 +250,7 @@
                                 <div class="text-[10px] text-slate-400 font-mono mt-0.5 truncate">${u.email}</div>
                             </div>
                         </div>
-                        <button type="button" onclick="quickLogin('${u.email}', 'rahasia123')"
+                        <button type="button" onclick="quickLogin('${u.email}', '${devPassword}')"
                                 class="px-3.5 py-2 bg-emerald-500 hover:bg-emerald-600 active:bg-emerald-700 text-white font-bold text-xs rounded-xl transition-all shadow-md shadow-emerald-500/20 flex items-center gap-1.5 shrink-0">
                             <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"/></svg>
                             <span>Masuk</span>
@@ -269,7 +271,7 @@
 
         function quickLogin(email, password) {
             document.getElementById('email').value = email;
-            document.getElementById('password').value = password;
+            document.getElementById('password').value = password || devPassword;
             document.getElementById('loginForm').submit();
         }
 
@@ -280,7 +282,7 @@
                 alert('Silakan pilih salah satu musyrif/pengurus dari daftar terlebih dahulu.');
                 return;
             }
-            quickLogin(email, 'rahasia123');
+            quickLogin(email, devPassword);
         }
     </script>
 </body>
