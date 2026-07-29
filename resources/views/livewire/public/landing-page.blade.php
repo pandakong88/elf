@@ -423,7 +423,7 @@
                             Baca Online
                         </button>
                         {{-- Tombol Unduh PDF --}}
-                        <a href="{{ $data['pedoman_file_url'] }}" download
+                        <a href="{{ route('pedoman.download') }}" download
                            class="inline-flex items-center justify-center gap-2 px-5 py-3.5 bg-white hover:bg-emerald-50 text-emerald-900 rounded-2xl text-xs font-bold transition-all shadow-md whitespace-nowrap hover:scale-105">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
                             Unduh PDF
@@ -644,7 +644,7 @@
                     </div>
 
                     <div class="flex items-center gap-3">
-                        <a href="{{ $data['pedoman_file_url'] }}" download
+                        <a href="{{ route('pedoman.download') }}" download
                            class="px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl text-xs font-bold transition-all shadow-md flex items-center gap-1.5">
                             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
                             <span>Unduh PDF</span>
@@ -658,7 +658,7 @@
 
                 {{-- Modal Body: Embedded PDF Viewer --}}
                 <div class="flex-1 w-full bg-slate-950 relative overflow-hidden">
-                    <iframe src="{{ $data['pedoman_file_url'] }}#toolbar=1" 
+                    <iframe src="{{ route('pedoman.stream') }}#toolbar=1" 
                             class="w-full h-full border-0" 
                             title="Buku Pedoman Santri Viewer">
                     </iframe>
