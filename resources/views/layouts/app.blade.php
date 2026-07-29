@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ELF — Educational & Lodge Framework</title>
+    <title>Elvith.id — Sistem Informasi Pesantren Al-Fithroh</title>
     <!-- Tailwind CSS (via Vite) & Livewire Styles -->
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @livewireStyles

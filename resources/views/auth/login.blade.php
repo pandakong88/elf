@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login — ELF System</title>
+    <title>Login — Elvith.id</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <style>
         body {
@@ -13,33 +13,47 @@
 </head>
 <body class="bg-slate-900 text-slate-100 antialiased min-h-screen flex items-center justify-center p-3 sm:p-4 md:p-6">
 
-    <div class="w-full max-w-5xl grid grid-cols-1 md:grid-cols-12 gap-6 md:gap-8 bg-slate-950/60 border border-slate-800 rounded-2xl sm:rounded-3xl p-4 sm:p-6 md:p-8 backdrop-blur-xl shadow-2xl my-auto">
+    <div class="w-full max-w-5xl grid grid-cols-1 md:grid-cols-12 gap-6 md:gap-8 bg-slate-950/80 border border-slate-800/80 rounded-2xl sm:rounded-3xl p-4 sm:p-6 md:p-8 backdrop-blur-xl shadow-2xl my-auto">
         
         <!-- Brand & Info Panel (Left) -->
-        <div class="md:col-span-5 flex flex-col justify-between p-5 sm:p-6 md:p-8 rounded-2xl bg-gradient-to-br from-emerald-600 to-teal-700 text-white shadow-xl overflow-hidden relative group">
+        <div class="md:col-span-5 flex flex-col justify-between p-6 sm:p-8 rounded-2xl bg-gradient-to-br from-slate-950 via-emerald-950 to-slate-950 text-white shadow-xl border border-emerald-500/20 overflow-hidden relative group">
             <!-- Decorative blur shapes -->
-            <div class="absolute -top-12 -right-12 w-36 sm:w-40 h-36 sm:h-40 bg-white/10 rounded-full blur-2xl group-hover:scale-125 transition-transform duration-700"></div>
-            <div class="absolute -bottom-16 -left-16 w-48 sm:w-52 h-48 sm:h-52 bg-emerald-600/30 rounded-full blur-3xl group-hover:scale-125 transition-transform duration-700"></div>
+            <div class="absolute -top-12 -right-12 w-36 sm:w-40 h-36 sm:h-40 bg-emerald-500/15 rounded-full blur-2xl group-hover:scale-125 transition-transform duration-700"></div>
+            <div class="absolute -bottom-16 -left-16 w-48 sm:w-52 h-48 sm:h-52 bg-teal-500/15 rounded-full blur-3xl group-hover:scale-125 transition-transform duration-700"></div>
             
-            <div class="relative z-10">
-                <div class="flex items-center justify-between mb-4 md:mb-6">
-                    <div class="w-10 h-10 sm:w-12 sm:h-12 bg-white/10 backdrop-blur-md rounded-2xl flex items-center justify-center font-extrabold text-white shadow-inner text-lg sm:text-xl">E</div>
-                    <a href="{{ url('/portal-wali') }}" 
-                       class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white/15 hover:bg-white/25 active:bg-white/30 backdrop-blur-md text-white text-xs font-bold rounded-xl transition-all border border-white/20 shadow-sm">
-                        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
-                        <span>Portal Wali</span>
+            <div class="relative z-10 space-y-4">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-2.5">
+                        <img src="/images/logo-alfithroh.png" alt="Logo Al-Fithroh" class="h-10 w-auto object-contain drop-shadow">
+                        <div class="flex flex-col">
+                            <span class="font-extrabold text-sm tracking-tight text-white uppercase leading-none font-serif-display">Al-Fithroh</span>
+                            <span class="text-[9px] font-bold text-emerald-400 tracking-wider uppercase mt-0.5">Jejeran Bantul</span>
+                        </div>
+                    </div>
+                    <a href="{{ url('/') }}" 
+                       class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white/10 hover:bg-white/20 active:bg-white/30 backdrop-blur-md text-white text-xs font-bold rounded-xl transition-all border border-white/20 shadow-sm">
+                        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+                        <span>Landing Page</span>
                     </a>
                 </div>
-                <h2 class="text-2xl sm:text-3xl font-extrabold tracking-tight leading-tight">Educational & Lodge Framework</h2>
-                <p class="text-emerald-100/90 text-xs sm:text-sm mt-2 sm:mt-3 font-light leading-relaxed">
-                    Sistem informasi terintegrasi untuk asrama, kepengurusan, perizinan, dan tata tertib santri di Pondok Pesantren Al-Fithroh.
-                </p>
+
+                {{-- Banner Kaligrafi Arab --}}
+                <div class="py-3 flex flex-col items-center justify-center">
+                    <img src="/images/calligraphy-alfithroh.png" alt="Kaligrafi Al-Fithroh" class="max-h-36 sm:max-h-40 w-auto object-contain drop-shadow-[0_10px_25px_rgba(16,185,129,0.3)] hover:scale-105 transition-transform duration-500">
+                </div>
+
+                <div class="space-y-1 text-center sm:text-left">
+                    <h2 class="text-2xl sm:text-3xl font-extrabold tracking-tight leading-tight text-white font-serif-display">Elvith.id</h2>
+                    <p class="text-slate-300 text-xs sm:text-sm font-light leading-relaxed">
+                        Sistem informasi terintegrasi untuk asrama, kepengurusan, perizinan, dan tata tertib santri Pondok Pesantren Al-Fithroh Jejeran Bantul.
+                    </p>
+                </div>
             </div>
 
-            <div class="relative z-10 mt-6 sm:mt-10 md:mt-12 pt-4 sm:pt-6 border-t border-white/10 flex items-center justify-between">
-                <div class="flex items-center gap-2 sm:gap-3">
-                    <span class="w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full bg-white animate-pulse"></span>
-                    <span class="text-[11px] sm:text-xs text-emerald-100 font-medium">Versi 1.0.0 (Foundation UI)</span>
+            <div class="relative z-10 mt-6 pt-4 border-t border-slate-800/80 flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                    <span class="text-[11px] text-slate-400 font-medium">Elvith.id v1.0 — System Ready</span>
                 </div>
             </div>
         </div>
