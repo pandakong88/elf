@@ -25,6 +25,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/system/roles-permissions', \App\Livewire\System\RolePermissionManager::class)->name('system.roles-permissions');
     Route::get('/system/cms', \App\Livewire\System\LandingPageCMS::class)->name('system.cms');
     Route::get('/system/wali-cms', \App\Livewire\System\WaliPortalCMS::class)->name('system.wali-cms');
+    Route::get('/system/dev-settings', \App\Livewire\System\DeveloperSettings::class)->name('system.dev-settings');
     Route::get('/system/santri/import', \App\Livewire\System\SantriImportManager::class)->name('system.santri.import');
     Route::get('/setup/santri', \App\Livewire\System\SantriImportManager::class)->name('setup.santri');
     Route::get('/system/users/download-template', [\App\Http\Controllers\SystemController::class, 'downloadUserImportTemplate'])->name('system.users.download-template');

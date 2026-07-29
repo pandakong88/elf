@@ -281,6 +281,17 @@
                         <span>Manajemen Hak Akses</span>
                     </a>
                 @endif
+
+                @if(auth()->user()->hasRole('super-admin'))
+                    <div class="pt-4 pb-2 px-4 text-xs font-semibold text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
+                        <span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></span>
+                        <span>Developer Zone</span>
+                    </div>
+                    <a href="{{ route('system.dev-settings') }}" class="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-slate-800 transition-all {{ request()->routeIs('system.dev-settings') ? 'bg-slate-800 text-amber-400 font-medium border border-amber-500/30' : 'text-amber-200/80 hover:text-amber-300' }}">
+                        <svg class="w-5 h-5 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                        <span>Pengaturan Developer Mode</span>
+                    </a>
+                @endif
             </nav>
 
             <!-- User Session Profile -->
