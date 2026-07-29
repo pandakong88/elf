@@ -83,16 +83,22 @@ class LandingPageContentSeeder extends Seeder
                 'title' => 'Link File Buku Pedoman PDF'
             ],
             'logo_url' => [
-                'value' => '',
+                'value' => '/images/logo-alfithroh.png',
                 'type' => 'image_url',
                 'section' => 'general',
                 'title' => 'Logo Pondok Pesantren'
             ],
             'hero_image_url' => [
-                'value' => '',
+                'value' => '/images/calligraphy-alfithroh.png',
                 'type' => 'image_url',
                 'section' => 'hero',
                 'title' => 'Gambar Latar/Banner Hero'
+            ],
+            'about_image_url' => [
+                'value' => '/images/foto-pesantren-alfithroh.jpg',
+                'type' => 'image_url',
+                'section' => 'about',
+                'title' => 'Foto Profil Pondok'
             ],
         ];
 
