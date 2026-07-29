@@ -216,7 +216,6 @@
                                        @change="if ($event.target.files[0]) localAboutUrl = URL.createObjectURL($event.target.files[0])" class="hidden">
                             </label>
                         </div>
-                        </div>
                     </div>
                 </div>
 
