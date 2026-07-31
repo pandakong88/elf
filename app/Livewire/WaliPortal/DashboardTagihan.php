@@ -197,6 +197,9 @@ class DashboardTagihan extends Component
             $waName      = $contents['wali_wa_putra_name'] ?? 'Bendahara Putra Al-Fithroh';
         }
 
+        $cleanWa     = preg_replace('/[^0-9]/', '', $waBendahara);
+        $directWaUrl = 'https://wa.me/' . $cleanWa . '?text=' . urlencode("Assalamu'alaikum {$waName}, saya Wali Santri dari {$santri->name} ingin konfirmasi pembayaran.");
+
         $waliAnnouncement = $contents['wali_announcement'] ?? 'Pembayaran tagihan santri dilakukan sebelum tanggal 10 setiap bulannya.';
 
         $now = now();
