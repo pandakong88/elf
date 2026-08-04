@@ -35,7 +35,7 @@ class BillingConfigurationCreate extends Component
     public string $newConfigFilterKelasId = '';
     public string $newConfigFilterSearch = '';
 
-    public function mount(): void
+    public function mount(?string $copy_from = null): void
     {
         $this->newConfigEffectiveFrom = now()->toDateString();
         $this->newConfigResidenceTargets = ['mukim', 'laju'];
@@ -49,6 +49,39 @@ class BillingConfigurationCreate extends Component
         }
 
         $this->autoSelectMyRole();
+
+        $copyId = $copy_from ?: request()->query('copy_from');
+        if ($copyId) {
+            $source = BillingConfiguration::find($copyId);
+            if ($source) {
+                $labelBase = $source->label ?: str_replace('_', ' ', $source->type);
+                $this->newConfigName = $labelBase . ' (Salinan)';
+                $this->newConfigType = $source->type;
+                $this->newConfigAmount = (float)$source->amount;
+                $this->newConfigInterval = $source->interval ?: 'monthly';
+                $this->newConfigDueDayType = $source->due_day_type ?: 'fixed_day';
+                $this->newConfigDueDayValue = $source->due_day_value ?: 10;
+                $this->newConfigDueDateSpecific = $source->due_date_specific?->format('Y-m-d');
+                $this->newConfigTargetType = $source->target_type ?: 'all';
+                $this->newConfigCanBeInstallment = (bool) $source->can_be_installment;
+
+                $roles = is_array($source->manager_role) ? $source->manager_role : (json_decode($source->manager_role, true) ?: []);
+                if (!empty($roles)) {
+                    $this->newConfigManagerRoles = $roles;
+                }
+
+                $filters = is_array($source->target_filters) ? $source->target_filters : (json_decode($source->target_filters, true) ?: []);
+                if (!empty($filters)) {
+                    $this->newConfigTargetFilters = $filters['ids'] ?? [];
+                    if (!empty($filters['genders'])) {
+                        $this->newConfigGenderTargets = $filters['genders'];
+                    }
+                    if (!empty($filters['residence'])) {
+                        $this->newConfigResidenceTargets = $filters['residence'];
+                    }
+                }
+            }
+        }
     }
 
     public function autoSelectMyRole(): void

@@ -20,7 +20,7 @@ class DatabaseSeeder extends Seeder
             CensusTemplateSeeder::class,     // 6. Template sensus default
             LandingPageContentSeeder::class, // 7. Landing Page CMS Content
             ActivitySeeder::class,           // 8. Activities with Images
-            // BillingConfigurationSeeder (Dikosongkan agar tarif, tagihan & dispensasi disetup manual dari nol)
+            BillingConfigurationSeeder::class, // 9. Tarif resmi pedoman santri (Syahriah, Registrasi & Kitab)
         ]);
     }
 }

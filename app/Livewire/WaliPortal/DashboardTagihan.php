@@ -10,10 +10,11 @@ use App\Modules\Keuangan\Models\Bill;
 class DashboardTagihan extends Component
 {
     public string $personId;
-    public string $activeSection = 'ringkasan'; // 'ringkasan' | 'semua'
+    public string $activeSection = 'ringkasan';
 
-    // Simulasi Pembayaran
-    public ?float $simulasiInput = null;
+    // Simulasi Checklist — array of bill IDs yang dipilih wali
+    public array $selectedBillIds = [];
+    public bool $isInitialized = false;
 
     // Public properties untuk mencegah undefined variable di Livewire hydration
     public float $totalTunggakan = 0;
@@ -23,6 +24,7 @@ class DashboardTagihan extends Component
     public float $totalHarusDibayarNow = 0;
     public float $totalFuturePaid = 0;
     public float $totalAllPaid = 0;
+    public float $simulasiTotal = 0;
 
     public function mount(string $personId)
     {
@@ -201,6 +203,7 @@ class DashboardTagihan extends Component
         $directWaUrl = 'https://wa.me/' . $cleanWa . '?text=' . urlencode("Assalamu'alaikum {$waName}, saya Wali Santri dari {$santri->name} ingin konfirmasi pembayaran.");
 
         $waliAnnouncement = $contents['wali_announcement'] ?? 'Pembayaran tagihan santri dilakukan sebelum tanggal 10 setiap bulannya.';
+        $waliRekapInfo    = $contents['wali_rekap_info'] ?? 'Data tagihan diperbarui oleh bendahara setiap Tanggal 1 dan 15 setiap bulannya. Jika Bapak/Ibu sudah melakukan transfer namun status tagihan belum berubah, mohon bersabar hingga tanggal pembaruan berikutnya. Untuk konfirmasi lebih lanjut, silakan hubungi bendahara melalui tombol WhatsApp di bawah.';
 
         $now = now();
         $currentMonth = (int) $now->format('m');
@@ -296,6 +299,13 @@ class DashboardTagihan extends Component
             return $prioA <=> $prioB;
         })->values();
 
+        // Sort pastPaidBills: terbaru di atas
+        $pastPaidBills = $pastPaidBills->sort(function($a, $b) {
+            $periodA = ($a->period_year ?? 2000) * 100 + ($a->period_month ?? 0);
+            $periodB = ($b->period_year ?? 2000) * 100 + ($b->period_month ?? 0);
+            return $periodB <=> $periodA; // DESC — terbaru dulu
+        })->values();
+
         // Kalkulasi Total
         $totalEventUnpaid              = $eventBills->whereIn('status', ['unpaid', 'partial'])->sum(fn($b) => max(0, $b->amount - $b->amount_paid));
         $this->totalCurrentMonthUnpaid = $currentMonthBills->whereIn('status', ['unpaid', 'partial'])->sum(fn($b) => max(0, $b->amount - $b->amount_paid));
@@ -307,21 +317,61 @@ class DashboardTagihan extends Component
         $this->totalAllPaid            = $allBills->sum('amount_paid');
         $this->totalSudahDibayar       = $this->totalAllPaid;
 
-        // KALKULATOR SIMULASI PEMBAYARAN
-        $simulasiHasil = [];
-        $simulasiSisaUang = (float) ($this->simulasiInput ?? 0);
-        $simulasiWaUrl = '';
+        // =========================================================
+        // KALKULATOR SIMULASI — BERBASIS CHECKLIST PILIHAN WALI
+        // =========================================================
+        // Tandai kategori untuk masing-masing item
+        $pastUnpaidBills->transform(function($b) { $b->simulasi_cat = 'past'; return $b; });
+        $eventUnpaid = $eventBills->whereIn('status', ['unpaid', 'partial'])->transform(function($b) { $b->simulasi_cat = 'event'; return $b; });
+        $currentUnpaid = $currentMonthBills->whereIn('status', ['unpaid', 'partial'])->transform(function($b) { $b->simulasi_cat = 'current'; return $b; });
+        $futureUnpaid = $futureBills->whereIn('status', ['unpaid', 'partial'])->transform(function($b) { $b->simulasi_cat = 'future'; return $b; });
 
-        if ($simulasiSisaUang > 0) {
-            // Urutkan tagihan belum lunas dari past -> event -> current -> future
-            $unpaidQueue = collect()
-                ->merge($pastUnpaidBills)
-                ->merge($eventBills->whereIn('status', ['unpaid', 'partial']))
-                ->merge($currentMonthBills->whereIn('status', ['unpaid', 'partial']))
-                ->merge($futureBills->whereIn('status', ['unpaid', 'partial']));
+        $unpaidQueue = collect()
+            ->merge($pastUnpaidBills)
+            ->merge($eventUnpaid)
+            ->merge($currentUnpaid)
+            ->merge($futureUnpaid)
+            ->sort(function($a, $b) use ($typePriority) {
+                // 1. Urutkan berdasarkan jenis tagihan/nama (SPP Pondok -> Syahriah Madrasah -> dst)
+                $nameA = $this->getBillDisplayName($a);
+                $nameB = $this->getBillDisplayName($b);
 
+                $prioA = $typePriority[$a->bill_type] ?? 99;
+                $prioB = $typePriority[$b->bill_type] ?? 99;
+
+                if ($prioA !== $prioB) return $prioA <=> $prioB;
+
+                $cmpName = strcmp($nameA, $nameB);
+                if ($cmpName !== 0) return $cmpName;
+
+                // 2. Urutkan berdasarkan periode bulan & tahun (Terkecil/Terlama -> Terbaru)
+                $periodA = ($a->period_year ?? 2000) * 100 + ($a->period_month ?? 1);
+                $periodB = ($b->period_year ?? 2000) * 100 + ($b->period_month ?? 1);
+                if ($periodA !== $periodB) return $periodA <=> $periodB;
+
+                return $a->created_at <=> $b->created_at;
+            })->values();
+
+        // Smart Default: Auto-select Tunggakan + Bulan Ini + Kegiatan pada render pertama
+        $mandatoryBillIds = collect()
+            ->merge($pastUnpaidBills)
+            ->merge($eventUnpaid)
+            ->merge($currentUnpaid)
+            ->pluck('id')
+            ->toArray();
+
+        if (!$this->isInitialized) {
+            $this->selectedBillIds = $mandatoryBillIds;
+            $this->isInitialized = true;
+        }
+
+        $simulasiHasil    = [];
+        $simulasiTotal    = 0.0;
+        $simulasiWaUrl    = '';
+
+        if (!empty($this->selectedBillIds)) {
             foreach ($unpaidQueue as $bill) {
-                if ($simulasiSisaUang <= 0) break;
+                if (!in_array($bill->id, $this->selectedBillIds)) continue;
 
                 $kekurangan = max(0, $bill->amount - $bill->amount_paid);
                 if ($kekurangan <= 0) continue;
@@ -329,49 +379,37 @@ class DashboardTagihan extends Component
                 $bMonthName = $this->getMonthName($bill->period_month);
                 $label = $this->getBillDisplayName($bill) . ($bMonthName ? " ($bMonthName {$bill->period_year})" : "");
 
-                if ($simulasiSisaUang >= $kekurangan) {
-                    $simulasiHasil[] = [
-                        'label'     => $label,
-                        'terbayar'  => $kekurangan,
-                        'status'    => 'LUNAS',
-                        'sisa_bill' => 0,
-                    ];
-                    $simulasiSisaUang -= $kekurangan;
-                } else {
-                    $sisaBill = $kekurangan - $simulasiSisaUang;
-                    $simulasiHasil[] = [
-                        'label'     => $label,
-                        'terbayar'  => $simulasiSisaUang,
-                        'status'    => 'DICICIL (Sisa Rp ' . number_format($sisaBill, 0, ',', '.') . ')',
-                        'sisa_bill' => $sisaBill,
-                    ];
-                    $simulasiSisaUang = 0;
+                $simulasiHasil[] = [
+                    'bill_id'   => $bill->id,
+                    'label'     => $label,
+                    'terbayar'  => $kekurangan,
+                    'status'    => 'LUNAS',
+                    'sisa_bill' => 0,
+                ];
+                $simulasiTotal += $kekurangan;
+            }
+
+            $this->simulasiTotal = $simulasiTotal;
+
+            if ($simulasiTotal > 0) {
+                $waText  = "Assalamu'alaikum $waName,\n\n";
+                $waText .= "Saya Wali Santri dari:\n";
+                $waText .= "• Nama: {$santri->name}\n";
+                if ($santri->nis) { $waText .= "• NIS: {$santri->nis}\n"; }
+                $waText .= "\nSaya bermaksud mengonfirmasi pembayaran sebesar *Rp " . number_format($simulasiTotal, 0, ',', '.') . "* dengan rincian:\n";
+                foreach ($simulasiHasil as $idx => $item) {
+                    $num = $idx + 1;
+                    $waText .= "{$num}. {$item['label']} = Rp " . number_format($item['terbayar'], 0, ',', '.') . "\n";
                 }
+                $waText .= "\nMohon info petunjuk konfirmasi selanjutnya. Terima kasih.";
+
+                $cleanWa = preg_replace('/[^0-9]/', '', $waBendahara);
+                $simulasiWaUrl = "https://wa.me/{$cleanWa}?text=" . urlencode($waText);
             }
-
-            // Generate Pesan WhatsApp Otomatis dengan Nomor Bendahara Dinamis
-            $waText = "Assalamu'alaikum $waName,\n\n";
-            $waText .= "Saya Wali Santri dari:\n";
-            $waText .= "• Nama: {$santri->name}\n";
-            if ($santri->nis) {
-                $waText .= "• NIS: {$santri->nis}\n";
-            }
-            $waText .= "\nSaya bermaksud mengonfirmasi alokasi pembayaran sebesar Rp " . number_format($this->simulasiInput, 0, ',', '.') . " dengan rincian:\n";
-
-            foreach ($simulasiHasil as $idx => $item) {
-                $num = $idx + 1;
-                $waText .= "{$num}. {$item['label']} = Rp " . number_format($item['terbayar'], 0, ',', '.') . " [{$item['status']}]\n";
-            }
-
-            if ($simulasiSisaUang > 0) {
-                $waText .= "\nSisa Kelebihan: Rp " . number_format($simulasiSisaUang, 0, ',', '.') . "\n";
-            }
-
-            $waText .= "\nMohon info petunjuk konfirmasi selanjutnya. Terima kasih.";
-
-            $cleanWa = preg_replace('/[^0-9]/', '', $waBendahara);
-            $simulasiWaUrl = "https://wa.me/{$cleanWa}?text=" . urlencode($waText);
         }
+
+        $simulasiBillOptions = $unpaidQueue->values();
+        $pastBillIdsOnly = $pastUnpaidBills->pluck('id')->toArray();
 
         $putraData = [
             'bank1_name' => $contents['wali_bank1_name_putra'] ?? 'Bank Syariah Indonesia (BSI)',
@@ -412,6 +450,7 @@ class DashboardTagihan extends Component
             'waName'                  => $waName,
             'directWaUrl'             => $directWaUrl,
             'waliAnnouncement'        => $waliAnnouncement,
+            'waliRekapInfo'           => $waliRekapInfo,
             'currentMonth'            => $currentMonth,
             'currentYear'             => $currentYear,
             'currentMonthName'        => $this->getMonthName($currentMonth),
@@ -428,8 +467,11 @@ class DashboardTagihan extends Component
             'totalAllPaid'            => $this->totalAllPaid,
             'totalSudahDibayar'       => $this->totalSudahDibayar,
             'simulasiHasil'           => $simulasiHasil,
-            'simulasiSisaUang'        => $simulasiSisaUang,
+            'simulasiTotal'           => $simulasiTotal,
             'simulasiWaUrl'           => $simulasiWaUrl,
+            'simulasiBillOptions'     => $simulasiBillOptions,
+            'mandatoryBillIds'        => $mandatoryBillIds,
+            'pastBillIdsOnly'         => $pastBillIdsOnly,
         ])->layout('layouts.wali-portal', ['title' => 'Dashboard Tagihan — ' . $santri->name]);
     }
 }

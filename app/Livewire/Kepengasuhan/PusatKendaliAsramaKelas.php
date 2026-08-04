@@ -52,16 +52,19 @@ class PusatKendaliAsramaKelas extends Component
     public string  $newSantriFormalGrade   = ''; // Contoh: Kelas 7 / 1 SMP
 
     // Data Orang Tua / Wali Kandung
-    public string  $newSantriFatherName    = '';
-    public string  $newSantriFatherPhone   = '';
-    public string  $newSantriFatherJob     = '';
-    public string  $newSantriFatherAddress = '';
-    public string  $newSantriMotherName    = '';
-    public string  $newSantriMotherPhone   = '';
-    public string  $newSantriMotherJob     = '';
-    public string  $newSantriMotherAddress = '';
-    public bool    $sameMotherAddress      = true;
-    public string  $newSantriParentAddress = '';
+    public string  $newSantriFatherName           = '';
+    public string  $newSantriFatherPhone          = '';
+    public string  $newSantriFatherJob            = '';
+    public string  $newSantriFatherAddress        = '';
+    public string  $newSantriMotherName           = '';
+    public string  $newSantriMotherPhone          = '';
+    public string  $newSantriMotherJob            = '';
+    public string  $newSantriMotherAddress        = '';
+    public bool    $sameMotherAddress             = true;
+    public string  $newSantriParentAddress        = '';
+    public string  $newSantriGuardianName         = '';
+    public string  $newSantriGuardianPhone        = '';
+    public string  $newSantriGuardianRelationship = '';
 
     // Alokasi Penempatan
     public string  $newSantriPresence      = 'mukim'; // 'mukim', 'laju'
@@ -376,13 +379,16 @@ class PusatKendaliAsramaKelas extends Component
         $this->newSantriMotherName    = '';
         $this->newSantriMotherPhone   = '';
         $this->newSantriMotherJob     = '';
-        $this->newSantriMotherAddress = '';
-        $this->sameMotherAddress      = true;
-        $this->newSantriParentAddress = '';
-        $this->newSantriPresence      = 'mukim';
-        $this->newSantriRoomId        = null;
-        $this->newSantriKelasId       = null;
-        $this->generateBillPackage    = true;
+        $this->newSantriMotherAddress        = '';
+        $this->sameMotherAddress             = true;
+        $this->newSantriParentAddress        = '';
+        $this->newSantriGuardianName         = '';
+        $this->newSantriGuardianPhone        = '';
+        $this->newSantriGuardianRelationship = '';
+        $this->newSantriPresence             = 'mukim';
+        $this->newSantriRoomId               = null;
+        $this->newSantriKelasId              = null;
+        $this->generateBillPackage           = true;
 
         $this->refreshBillingChecklist();
         $this->showNewSantriModal = true;
@@ -433,12 +439,15 @@ class PusatKendaliAsramaKelas extends Component
                     'school_name'       => $this->newSantriFormalSchool ?: null,
                     'school_year'       => $this->newSantriFormalGrade ?: null,
                     'additional_info'   => [
-                        'nis'              => $autoNis,
-                        'father_address'   => $this->newSantriFatherAddress ?: null,
-                        'mother_job'       => $this->newSantriMotherJob ?: null,
-                        'mother_address'   => $this->newSantriMotherAddress ?: null,
-                        'address'          => $mainAddress ?: null,
-                        'entry_path'       => $this->newSantriEntryPath ?: 'reguler',
+                        'nis'                   => $autoNis,
+                        'father_address'        => $this->newSantriFatherAddress ?: null,
+                        'mother_job'            => $this->newSantriMotherJob ?: null,
+                        'mother_address'        => $this->newSantriMotherAddress ?: null,
+                        'guardian_name'         => $this->newSantriGuardianName ?: null,
+                        'guardian_phone'        => $this->newSantriGuardianPhone ?: null,
+                        'guardian_relationship' => $this->newSantriGuardianRelationship ?: null,
+                        'address'               => $mainAddress ?: null,
+                        'entry_path'            => $this->newSantriEntryPath ?: 'reguler',
                     ],
                 ]);
 
@@ -533,6 +542,10 @@ class PusatKendaliAsramaKelas extends Component
     public string $confirmButtonText    = 'Ya, Lanjutkan';
     public string $confirmButtonColor   = 'emerald';
 
+    // Delete Target IDs
+    public ?string $deletingDormitoryId = null;
+    public ?string $deletingRoomId      = null;
+
     public function requestStatusChangeConfirm(): void
     {
         $this->confirmAction      = 'executeStatusChange';
@@ -603,6 +616,10 @@ class PusatKendaliAsramaKelas extends Component
             $this->executeTransferRoom();
         } elseif ($this->confirmAction === 'executeTransferKelas') {
             $this->executeTransferKelas();
+        } elseif ($this->confirmAction === 'executeDeleteDormitory') {
+            $this->executeDeleteDormitory();
+        } elseif ($this->confirmAction === 'executeDeleteRoom') {
+            $this->executeDeleteRoom();
         }
     }
 
@@ -851,6 +868,44 @@ class PusatKendaliAsramaKelas extends Component
         $this->toastSuccess('Status komplek berhasil diperbarui.');
     }
 
+    public function requestDeleteDormitoryConfirm(string $id): void
+    {
+        $dormitory = Dormitory::withCount('rooms')->findOrFail($id);
+
+        if ($dormitory->rooms_count > 0) {
+            $this->toastError("Komplek \"{$dormitory->name}\" tidak bisa dihapus karena masih memiliki {$dormitory->rooms_count} kamar. Hapus semua kamar terlebih dahulu.");
+            return;
+        }
+
+        $this->deletingDormitoryId = $id;
+        $this->confirmAction       = 'executeDeleteDormitory';
+        $this->confirmTitle        = 'Hapus Komplek Asrama';
+        $this->confirmMessage      = "Anda akan menghapus komplek \"{$dormitory->name}\" secara permanen. Tindakan ini tidak dapat dibatalkan.";
+        $this->confirmButtonText   = 'Ya, Hapus Permanen';
+        $this->confirmButtonColor  = 'rose';
+        $this->showConfirmModal    = true;
+    }
+
+    public function executeDeleteDormitory(): void
+    {
+        if (!auth()->user()->can('manage-asrama')) {
+            $this->toastError('Akses ditolak: Anda tidak memiliki izin untuk menghapus komplek.');
+            return;
+        }
+
+        $dormitory = Dormitory::withCount('rooms')->findOrFail($this->deletingDormitoryId);
+
+        if ($dormitory->rooms_count > 0) {
+            $this->toastError("Komplek \"{$dormitory->name}\" tidak bisa dihapus karena masih memiliki {$dormitory->rooms_count} kamar.");
+            return;
+        }
+
+        $name = $dormitory->name;
+        $dormitory->delete();
+        $this->deletingDormitoryId = null;
+        $this->toastSuccess("Komplek \"{$name}\" berhasil dihapus.");
+    }
+
     // =========================================================================
     // CRUD Kamar Methods
     // =========================================================================
@@ -922,6 +977,46 @@ class PusatKendaliAsramaKelas extends Component
 
         app(DormitoryService::class)->toggleRoomStatus($id);
         $this->toastSuccess('Status kamar berhasil diperbarui.');
+    }
+
+    public function requestDeleteRoomConfirm(string $id): void
+    {
+        $room      = Room::with(['currentAssignments', 'dormitory'])->findOrFail($id);
+        $occupants = $room->currentAssignments->count();
+
+        if ($occupants > 0) {
+            $this->toastError("Kamar \"{$room->name}\" tidak bisa dihapus karena masih dihuni oleh {$occupants} santri aktif.");
+            return;
+        }
+
+        $this->deletingRoomId     = $id;
+        $this->confirmAction      = 'executeDeleteRoom';
+        $this->confirmTitle       = 'Hapus Kamar';
+        $this->confirmMessage     = "Anda akan menghapus kamar \"{$room->name}\" di komplek {$room->dormitory->name} secara permanen. Tindakan ini tidak dapat dibatalkan.";
+        $this->confirmButtonText  = 'Ya, Hapus Permanen';
+        $this->confirmButtonColor = 'rose';
+        $this->showConfirmModal   = true;
+    }
+
+    public function executeDeleteRoom(): void
+    {
+        if (!auth()->user()->can('manage-kamar')) {
+            $this->toastError('Akses ditolak: Anda tidak memiliki izin untuk menghapus kamar.');
+            return;
+        }
+
+        $room      = Room::with('currentAssignments')->findOrFail($this->deletingRoomId);
+        $occupants = $room->currentAssignments->count();
+
+        if ($occupants > 0) {
+            $this->toastError("Kamar \"{$room->name}\" tidak bisa dihapus karena masih dihuni oleh {$occupants} santri aktif.");
+            return;
+        }
+
+        $name = $room->name;
+        $room->delete();
+        $this->deletingRoomId = null;
+        $this->toastSuccess("Kamar \"{$name}\" berhasil dihapus.");
     }
 
     // =========================================================================

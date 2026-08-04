@@ -202,7 +202,41 @@
             </div>
         </div>
 
-        <!-- Save Action -->
+        <!-- INFO JADWAL REKAP BENDAHARA -->
+        <div class="bg-white dark:bg-slate-900 border border-blue-200 dark:border-blue-900/50 rounded-3xl p-6 shadow-sm space-y-4">
+            <div class="flex items-start gap-3">
+                <div class="w-10 h-10 rounded-2xl bg-blue-100 dark:bg-blue-500/10 text-blue-700 dark:text-blue-400 flex items-center justify-center shrink-0">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                </div>
+                <div>
+                    <h3 class="text-sm font-extrabold text-slate-900 dark:text-slate-100">Info Jadwal Rekap Bendahara</h3>
+                    <p class="text-xs text-slate-400 mt-0.5 leading-relaxed">
+                        Teks ini ditampilkan sebagai <strong class="text-blue-600 dark:text-blue-400">banner biru</strong> di halaman tagihan wali — tepat di bawah ringkasan total tagihan. Gunakan untuk menjelaskan kapan data tagihan diperbarui bendahara.
+                    </p>
+                </div>
+            </div>
+
+            <div class="bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800/50 rounded-2xl p-3.5 flex items-start gap-2.5 text-xs text-blue-700 dark:text-blue-400">
+                <svg class="w-4 h-4 shrink-0 mt-0.5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                <span>Banner ini berbeda dengan <strong>Pengumuman Umum</strong> di atas. Pengumuman umum muncul di bagian rekening/kontak. Banner rekap ini muncul di posisi strategis — langsung setelah wali melihat total tagihan.</span>
+            </div>
+
+            <div>
+                <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
+                    Teks Pesan Banner Jadwal Rekap
+                    <span class="font-normal text-slate-400 ml-1">(Maks. 800 karakter)</span>
+                </label>
+                <textarea wire:model.defer="wali_rekap_info" rows="4"
+                          placeholder="Contoh: Data tagihan diperbarui oleh bendahara setiap Tanggal 1 dan 15. Jika sudah transfer namun belum berubah, mohon bersabar..."
+                          class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl px-4 py-3 text-xs text-slate-900 dark:text-slate-100 font-medium focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none leading-relaxed"></textarea>
+                <div class="flex items-center justify-between mt-1.5">
+                    <span class="text-[10px] text-slate-400">Kosongkan field ini jika tidak ingin menampilkan banner rekap di portal wali.</span>
+                    <span class="text-[10px] text-slate-400" x-data x-text="'{{ strlen($wali_rekap_info) }} / 800 karakter'"></span>
+                </div>
+            </div>
+        </div>
+
+
         <div class="flex justify-end pt-4">
             <button type="submit" 
                     class="px-8 py-3.5 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white font-extrabold rounded-2xl shadow-xl transition-all flex items-center gap-2 text-xs uppercase tracking-wider">

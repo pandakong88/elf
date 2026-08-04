@@ -10,14 +10,29 @@ use App\Modules\Kepengasuhan\Models\RoomAssignment;
 use App\Modules\Kepengasuhan\Services\DormitoryService;
 use App\Modules\Madrasah\Models\MadrasahEnrollment;
 use App\Modules\Madrasah\Models\MadrasahKelas;
+use App\Modules\Kepengasuhan\Services\SantriStatusService;
+use App\Modules\Core\Models\PersonRole;
 use App\Traits\HasGenderScope;
 use Illuminate\Database\Eloquent\Builder;
 use Livewire\Component;
 use Livewire\WithPagination;
+use Livewire\WithFileUploads;
+use App\Exports\SantriExport;
+use App\Imports\SantriUpdateImport;
+use Maatwebsite\Excel\Facades\Excel;
+use Illuminate\Support\Facades\DB;
 
 class PetaSantriManager extends Component
 {
-    use SendsToast, WithPagination, HasGenderScope;
+    use SendsToast, WithPagination, HasGenderScope, WithFileUploads;
+
+    // Export & Import Excel
+    public $importFile             = null;
+    public bool  $showImportModal   = false;
+    public bool  $showExportConfirmModal = false;
+    public array $importResults    = [];
+    public int   $importStep       = 1; // 1: Choose File, 2: Preview Diff Table
+    public array $importPreviewData = [];
 
     // Navigation & View Mode
     public string $activeTab = 'komplek'; // 'komplek' | 'kelas'
@@ -49,6 +64,15 @@ class PetaSantriManager extends Component
     public string  $transferKelasSantriName= '';
     public ?string $targetKelasId          = null;
     public string  $academicYear           = '';
+
+    // Modal: Ubah Status Santri
+    public bool    $showStatusModal        = false;
+    public ?string $statusSantriId         = null;
+    public string  $statusSantriName       = '';
+    public ?string $statusSantriRoleId     = null;
+    public string  $targetPresenceStatus   = 'mukim';
+    public string  $targetEnrollmentStatus = 'aktif';
+    public string  $statusChangeNotes      = '';
 
     protected $queryString = [
         'activeTab'        => ['except' => 'komplek'],
@@ -161,14 +185,90 @@ class PetaSantriManager extends Component
         $this->showConfirmModal   = true;
     }
 
+    public ?string $deletingSantriId   = null;
+    public string  $deletingSantriName = '';
+
     public function processConfirmedAction(): void
     {
         $this->showConfirmModal = false;
 
-        if ($this->confirmAction === 'executeTransferRoom') {
+        if ($this->confirmAction === 'executeStatusChange') {
+            $this->executeStatusChange();
+        } elseif ($this->confirmAction === 'executeTransferRoom') {
             $this->executeTransferRoom();
         } elseif ($this->confirmAction === 'executeTransferKelas') {
             $this->executeTransferKelas();
+        } elseif ($this->confirmAction === 'executeDeleteSantri') {
+            $this->executeDeleteSantri();
+        }
+    }
+
+    public function openDeleteSantriModal(string $personId): void
+    {
+        if (!auth()->user()->can('delete-person')) {
+            $this->toastError('Akses ditolak: Anda tidak memiliki izin untuk menghapus data santri.');
+            return;
+        }
+
+        $person = Person::withCount([
+            'bills as paid_bills_count' => fn($q) => $q->where(fn($sq) => $sq->where('amount_paid', '>', 0)->orWhereIn('status', ['paid', 'partial'])->orWhereHas('payments'))
+        ])->find($personId);
+
+        if (!$person) {
+            $this->toastError('Data santri tidak ditemukan.');
+            return;
+        }
+
+        // Syarat Mutlak: Hanya blokir jika SUDAH PERNAH ADA PEMBAYARAN DI KASIR (kuitansi lunas/cicilan)
+        if ($person->paid_bills_count > 0) {
+            $this->toastError("Santri '{$person->name}' tidak dapat dihapus karena sudah memiliki {$person->paid_bills_count} kuitansi/transaksi pembayaran lunas di kasir. Gunakan tombol 'Ubah Status' (Boyong/Alumni) untuk menonaktifkan.");
+            return;
+        }
+
+        $this->deletingSantriId   = $personId;
+        $this->deletingSantriName = $person->name;
+
+        $this->confirmAction      = 'executeDeleteSantri';
+        $this->confirmTitle       = 'Konfirmasi Hapus Data Santri';
+        $this->confirmMessage     = "Apakah Anda YAKIN ingin menghapus data santri {$person->name}? Tagihan belum lunas & penempatan kamar/kelas akan dibersihkan otomatis oleh sistem.";
+        $this->confirmButtonText  = 'Ya, Hapus Data Santri';
+        $this->confirmButtonColor = 'rose';
+        $this->showConfirmModal   = true;
+    }
+
+    public function executeDeleteSantri(): void
+    {
+        if (!auth()->user()->can('delete-person')) {
+            $this->toastError('Akses ditolak: Anda tidak memiliki izin untuk menghapus data santri.');
+            return;
+        }
+
+        if (!$this->deletingSantriId) return;
+
+        try {
+            DB::transaction(function () {
+                $person = Person::findOrFail($this->deletingSantriId);
+
+                // Bersihkan tagihan belum lunas, kamar, dan kelas secara otomatis
+                $person->bills()->where('status', 'unpaid')->where(fn($q) => $q->whereNull('amount_paid')->orWhere('amount_paid', 0))->delete();
+                $person->roomAssignments()->delete();
+                $person->madrasahEnrollments()->delete();
+                $person->roles()->delete();
+                if ($person->santriProfile) {
+                    $person->santriProfile()->delete();
+                }
+                $person->delete();
+
+                activity()
+                    ->performedOn($person)
+                    ->causedBy(auth()->user())
+                    ->log("Hapus data santri '{$this->deletingSantriName}' (tagihan belum lunas, kamar & kelas dibersihkan)");
+            });
+
+            $this->toastSuccess("Data santri '{$this->deletingSantriName}' berhasil dihapus dari sistem.");
+            $this->deletingSantriId = null;
+        } catch (\Exception $e) {
+            $this->toastError('Gagal menghapus: ' . $e->getMessage());
         }
     }
 
@@ -236,6 +336,79 @@ class PetaSantriManager extends Component
         $this->targetKelasId           = null;
     }
 
+    // =========================================================================
+    // Ubah Status Santri Methods
+    // =========================================================================
+
+    public function openStatusModal(string $santriId): void
+    {
+        $person = Person::with('activeRoles')->findOrFail($santriId);
+        $role   = $person->activeRoles->firstWhere('role_type', 'santri');
+
+        if (!$role) {
+            $this->toastError('Role santri tidak ditemukan untuk santri ini.');
+            return;
+        }
+
+        $this->statusSantriId         = $santriId;
+        $this->statusSantriName       = $person->name;
+        $this->statusSantriRoleId     = $role->id;
+        $this->targetPresenceStatus   = $role->presence_status ?? 'mukim';
+        $this->targetEnrollmentStatus = $role->enrollment_status ?? 'aktif';
+        $this->statusChangeNotes      = '';
+        $this->showStatusModal        = true;
+    }
+
+    public function requestStatusChangeConfirm(): void
+    {
+        $this->confirmAction      = 'executeStatusChange';
+        $this->confirmTitle       = 'Konfirmasi Perubahan Status Santri';
+        $this->confirmMessage     = "Apakah Anda YAKIN ingin mengubah status santri {$this->statusSantriName}? Perubahan ini akan memengaruhi alokasi kamar & kelas aktif santri.";
+        $this->confirmButtonText  = 'Ya, Ubah Status';
+        $this->confirmButtonColor = 'amber';
+        $this->showConfirmModal   = true;
+    }
+
+    public function executeStatusChange(): void
+    {
+        if (!auth()->user()->can('change-enrollment-status') && !auth()->user()->can('change-presence-status')) {
+            $this->toastError('Akses ditolak: Anda tidak memiliki izin untuk mengubah status santri.');
+            return;
+        }
+
+        if (!$this->statusSantriRoleId) return;
+
+        try {
+            $statusService = app(\App\Modules\Kepengasuhan\Services\SantriStatusService::class);
+
+            $role = \App\Modules\Core\Models\PersonRole::find($this->statusSantriRoleId);
+            if ($role && $role->enrollment_status !== $this->targetEnrollmentStatus) {
+                $statusService->changeEnrollmentStatus(
+                    $this->statusSantriRoleId,
+                    $this->targetEnrollmentStatus,
+                    auth()->id(),
+                    $this->statusChangeNotes ?: 'Perubahan status via Data Santri Master'
+                );
+            }
+
+            $role = \App\Modules\Core\Models\PersonRole::find($this->statusSantriRoleId);
+            if ($role && $role->isActiveEnrollment() && $role->presence_status !== $this->targetPresenceStatus) {
+                $statusService->changePresenceStatus(
+                    $this->statusSantriRoleId,
+                    $this->targetPresenceStatus,
+                    auth()->id(),
+                    null,
+                    $this->statusChangeNotes ?: 'Perubahan status via Data Santri Master'
+                );
+            }
+
+            $this->toastSuccess("Status santri {$this->statusSantriName} berhasil diperbarui.");
+            $this->showStatusModal = false;
+        } catch (\Exception $e) {
+            $this->toastError($e->getMessage());
+        }
+    }
+
     public function executeTransferKelas(): void
     {
         if (!auth()->user()->can('manage-kelas')) {
@@ -277,14 +450,13 @@ class PetaSantriManager extends Component
     }
 
     // =========================================================================
-    // Render Method
+    // Query Builder Helper
     // =========================================================================
 
-    public function render()
+    private function getSantriBaseQuery(): Builder
     {
         $user = auth()->user();
 
-        // 1. Base Query Santri dengan Eager Loading & Combined Roles Filter
         $santriQuery = Person::query()
             ->whereHas('roles', function (Builder $rq) {
                 $rq->where('role_type', 'santri');
@@ -321,7 +493,7 @@ class PetaSantriManager extends Component
         }
 
         // Filter Organization Scope
-        if (!$user->hasRole('super-admin') && !$user->hasRole('pengasuh') && !$user->hasRole('manajemen')) {
+        if ($user && !$user->hasRole('super-admin') && !$user->hasRole('pengasuh') && !$user->hasRole('manajemen')) {
             $orgIds = $user->getOrganizationIds();
             if (!empty($orgIds)) {
                 $santriQuery->byOrganization($orgIds[0]);
@@ -353,6 +525,172 @@ class PetaSantriManager extends Component
                 $meq->where('is_active', true)->where('kelas_id', $this->kelasFilter);
             });
         }
+
+        return $santriQuery;
+    }
+
+    // =========================================================================
+    // Export & Import Actions
+    // =========================================================================
+
+    public function openExportConfirmModal(): void
+    {
+        $this->showExportConfirmModal = true;
+    }
+
+    public function getExportSummaryProperty(): array
+    {
+        $dormName = 'Semua Komplek';
+        if ($this->activeTab === 'komplek' && $this->dormitoryFilter) {
+            $dorm = Dormitory::find($this->dormitoryFilter);
+            $dormName = $dorm ? 'Komplek ' . $dorm->name : 'Komplek Custom';
+        }
+
+        $kelasName = 'Semua Kelas';
+        if ($this->activeTab === 'kelas' && $this->kelasFilter) {
+            $kelas = MadrasahKelas::find($this->kelasFilter);
+            $kelasName = $kelas ? 'Kelas ' . $kelas->name : 'Kelas Custom';
+        }
+
+        $enrollmentLabel = match ($this->enrollmentFilter) {
+            'aktif'  => 'Aktif (Mukim & Laju)',
+            'boyong' => 'Boyong / Keluar',
+            'alumni' => 'Alumni / Lulus',
+            default  => 'Semua Status Keanggotaan',
+        };
+
+        $presenceLabel = match ($this->presenceFilter) {
+            'mukim'        => 'Mukim (Tinggal di Asrama)',
+            'laju'         => 'Laju (Non-Asrama)',
+            'izin', 'pulang' => 'Izin / Pulang Sementara',
+            default        => 'Semua Status Keberadaan',
+        };
+
+        $genderLabel = match ($this->genderFilter) {
+            'L'     => 'Putra (L)',
+            'P'     => 'Putri (P)',
+            default => 'Semua Gender',
+        };
+
+        $totalCount = $this->getSantriBaseQuery()->count();
+        $filename   = $this->generateExportFilename($dormName, $kelasName);
+
+        return [
+            'total_count'      => $totalCount,
+            'enrollment_label' => $enrollmentLabel,
+            'presence_label'   => $presenceLabel,
+            'gender_label'     => $genderLabel,
+            'location_label'   => $this->activeTab === 'komplek' ? $dormName : $kelasName,
+            'search_label'     => $this->search ? '"' . trim($this->search) . '"' : 'Tidak Ada (Semua Data)',
+            'filename'         => $filename,
+        ];
+    }
+
+    private function generateExportFilename(string $dormName, string $kelasName): string
+    {
+        $parts = ['Data-Santri'];
+
+        if ($this->enrollmentFilter) {
+            $parts[] = ucfirst($this->enrollmentFilter);
+        }
+
+        if ($this->genderFilter === 'L') {
+            $parts[] = 'Putra';
+        } elseif ($this->genderFilter === 'P') {
+            $parts[] = 'Putri';
+        }
+
+        if ($this->activeTab === 'komplek' && $this->dormitoryFilter) {
+            $parts[] = \Illuminate\Support\Str::slug($dormName);
+        } elseif ($this->activeTab === 'kelas' && $this->kelasFilter) {
+            $parts[] = \Illuminate\Support\Str::slug($kelasName);
+        }
+
+        if ($this->presenceFilter) {
+            $parts[] = ucfirst($this->presenceFilter);
+        }
+
+        $parts[] = now()->format('Y-m-d_His');
+
+        return implode('_', $parts) . '.xlsx';
+    }
+
+    public function exportSantri(): mixed
+    {
+        $this->showExportConfirmModal = false;
+
+        $summary    = $this->exportSummary;
+        $collection = $this->getSantriBaseQuery()->orderBy('name')->get();
+        $filename   = $summary['filename'];
+
+        return response()->streamDownload(function () use ($collection) {
+            echo Excel::raw(new SantriExport($collection), \Maatwebsite\Excel\Excel::XLSX);
+        }, $filename);
+    }
+
+    public function generateImportPreview(): void
+    {
+        $this->validate(['importFile' => 'required|file|mimes:xlsx,xls|max:10240']);
+
+        try {
+            $path = $this->importFile->getRealPath();
+            $this->importPreviewData = SantriUpdateImport::parsePreview($path);
+            $this->importStep = 2;
+        } catch (\Exception $e) {
+            $this->toastError('Gagal membaca file Excel: ' . $e->getMessage());
+        }
+    }
+
+    public function resetImportModal(): void
+    {
+        $this->importFile          = null;
+        $this->showImportModal     = false;
+        $this->importStep          = 1;
+        $this->importPreviewData   = [];
+    }
+
+    public function processImport(): void
+    {
+        if (!$this->importFile) {
+            $this->toastError('File Excel belum dipilih.');
+            return;
+        }
+
+        try {
+            $import = new SantriUpdateImport();
+            Excel::import($import, $this->importFile->getRealPath());
+
+            $this->importResults  = $import->results;
+            $updated = $this->importResults['updated'];
+            $skipped = count($this->importResults['skipped']);
+
+            $this->resetImportModal();
+            $this->toastSuccess("Berhasil! {$updated} data santri telah diperbarui" . ($skipped > 0 ? ", {$skipped} baris dilewati." : '.'));
+        } catch (\Exception $e) {
+            $this->toastError('Gagal memproses update: ' . $e->getMessage());
+        }
+    }
+
+    // =========================================================================
+    // Render Method
+    // =========================================================================
+
+    public function render()
+    {
+        $user = auth()->user();
+
+        // 1. Base Query Santri dengan Eager Loading & Combined Roles Filter
+        $santriQuery = $this->getSantriBaseQuery();
+
+        // Hitung statistik berdasarkan filter aktif saat ini
+        $statsQuery = clone $santriQuery;
+        $stats = [
+            'total'   => (clone $statsQuery)->count(),
+            'mukim'   => (clone $statsQuery)->whereHas('roles', fn($q) => $q->where('role_type','santri')->where('presence_status','mukim'))->count(),
+            'laju'    => (clone $statsQuery)->whereHas('roles', fn($q) => $q->where('role_type','santri')->where('presence_status','laju'))->count(),
+            'izin'    => (clone $statsQuery)->whereHas('roles', fn($q) => $q->where('role_type','santri')->whereIn('presence_status',['izin','pulang']))->count(),
+            'boyong'  => (clone $statsQuery)->whereHas('roles', fn($q) => $q->where('role_type','santri')->whereIn('enrollment_status',['boyong','keluar_resmi','dikeluarkan','alumni','tanpa_keterangan']))->count(),
+        ];
 
         // Output untuk Mode Tabel (Paginated)
         $santriList = (clone $santriQuery)->orderBy('name')->paginate(15);
@@ -415,6 +753,7 @@ class PetaSantriManager extends Component
 
         return view('livewire.kepengasuhan.peta-santri-manager', [
             'santriList'       => $santriList,
+            'stats'            => $stats,
             'dormitoriesData'  => $dormitoriesData,
             'kelasListData'    => $kelasListData,
             'dormitoryOptions' => $dormitoryOptions,

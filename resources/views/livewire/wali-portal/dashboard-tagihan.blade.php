@@ -44,7 +44,7 @@
             </div>
         </div>
 
-        <!-- Detail Lokasi -->
+        <!-- Detail Lokasi & Alamat -->
         <div class="grid grid-cols-2 gap-2 pt-2.5 border-t border-slate-100 dark:border-slate-800 text-xs">
             <div class="bg-slate-50 dark:bg-slate-950 p-2 rounded-xl border border-slate-200/80 dark:border-slate-800">
                 <span class="block text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase">Komplek / Asrama</span>
@@ -58,6 +58,14 @@
                     {{ $activeKelas ? $activeKelas->name : '-' }}
                 </strong>
             </div>
+            @if(!empty($santri->address))
+                <div class="col-span-2 bg-slate-50 dark:bg-slate-950 p-2 rounded-xl border border-slate-200/80 dark:border-slate-800">
+                    <span class="block text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase">Alamat Asal Santri</span>
+                    <strong class="text-slate-800 dark:text-slate-200 text-[11px] block truncate">
+                        📍 {{ $santri->address }}
+                    </strong>
+                </div>
+            @endif
         </div>
     </div>
 
@@ -103,92 +111,188 @@
         </div>
     @endif
 
-    <!-- KALKULATOR SIMULASI PEMBAYARAN -->
+    {{-- ============================================================ --}}
+    {{-- BANNER INFO: JADWAL REKAP BENDAHARA (Dinamis dari CMS)       --}}
+    {{-- ============================================================ --}}
+    @if($waliRekapInfo)
+    <div class="flex items-start gap-3 bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800/50 rounded-2xl p-4 shadow-sm transition-colors">
+        {{-- Icon --}}
+        <div class="shrink-0 w-9 h-9 rounded-xl bg-blue-100 dark:bg-blue-900/60 border border-blue-200 dark:border-blue-700/50 flex items-center justify-center mt-0.5">
+            <svg class="w-4.5 h-4.5 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+        </div>
+
+        {{-- Content --}}
+        <div class="flex-1 min-w-0 space-y-1">
+            <p class="text-xs font-black text-blue-800 dark:text-blue-300 uppercase tracking-wide">
+                📅 Informasi Pembaruan Data Tagihan
+            </p>
+            <p class="text-xs text-blue-700 dark:text-blue-400 leading-relaxed">
+                {{ $waliRekapInfo }}
+            </p>
+        </div>
+    </div>
+    @endif
+
+    <!-- KALKULATOR SIMULASI PEMBAYARAN — CHECKLIST PILIH TAGIHAN (ACCORDION) -->
     <div x-data="{ openSimulasi: false }" class="bg-white dark:bg-slate-900 border-2 border-emerald-600/30 dark:border-slate-800 rounded-3xl p-4 shadow-md space-y-3 transition-colors">
         <button type="button" @click="openSimulasi = !openSimulasi" class="w-full flex items-center justify-between text-xs font-black text-slate-800 dark:text-slate-200 uppercase tracking-wider py-1">
-            <span class="flex items-center gap-1.5 text-emerald-700 dark:text-emerald-400">
+            <span class="flex items-center gap-2 text-emerald-700 dark:text-emerald-400">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
-                <span>Simulasi Pembayaran (Kalkulator Cicilan)</span>
+                <span>Simulasi Pembayaran (Hitung Cicilan / Pilihan Tagihan)</span>
+                @if(count($selectedBillIds) > 0)
+                    <span class="bg-emerald-100 dark:bg-emerald-500/20 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-500/30 px-2 py-0.5 rounded-full text-[10px] font-black">
+                        {{ count($selectedBillIds) }} Dipilih (Rp {{ number_format($simulasiTotal, 0, ',', '.') }})
+                    </span>
+                @endif
             </span>
             <svg class="w-4 h-4 text-slate-500 transition-transform duration-200" :class="{ 'rotate-180': openSimulasi }" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/></svg>
         </button>
 
-        <div x-show="openSimulasi" x-collapse class="pt-2 border-t border-slate-100 dark:border-slate-800 space-y-3">
+        <div x-show="openSimulasi" x-collapse class="pt-2 border-t border-slate-100 dark:border-slate-800 space-y-4">
             <p class="text-xs text-slate-500 dark:text-slate-400">
-                Masukkan nominal uang yang ingin Bapak/Ibu bayarkan hari ini untuk melihat tagihan mana saja yang terbayar.
+                Centang tagihan di bawah ini yang ingin Bapak/Ibu bayar — total otomatis dihitung dan rinciannya bisa langsung dikirim ke WA Bendahara:
             </p>
 
-            <div>
-                <label class="block text-[11px] font-bold text-slate-600 dark:text-slate-400 uppercase mb-1">Nominal Uang Pembayaran (Rp)</label>
-                <input type="number" 
-                       wire:model.live.debounce.300ms="simulasiInput" 
-                       placeholder="Contoh: 300000" 
-                       class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-2xl text-sm font-bold text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-emerald-500">
-            </div>
-
-            <!-- Tombol Preset Cepat -->
-            <div class="flex flex-wrap gap-1.5">
-                <button type="button" wire:click="$set('simulasiInput', 100000)" class="px-2.5 py-1 text-[11px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-lg hover:bg-emerald-100 hover:text-emerald-800">Rp 100.000</button>
-                <button type="button" wire:click="$set('simulasiInput', 200000)" class="px-2.5 py-1 text-[11px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-lg hover:bg-emerald-100 hover:text-emerald-800">Rp 200.000</button>
-                <button type="button" wire:click="$set('simulasiInput', 500000)" class="px-2.5 py-1 text-[11px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-lg hover:bg-emerald-100 hover:text-emerald-800">Rp 500.000</button>
-                @if($totalHarusDibayarNow > 0)
-                    <button type="button" wire:click="$set('simulasiInput', {{ $totalHarusDibayarNow }})" class="px-2.5 py-1 text-[11px] font-bold bg-emerald-100 dark:bg-emerald-500/20 text-emerald-800 dark:text-emerald-300 rounded-lg hover:bg-emerald-200">Pas Total (Rp {{ number_format($totalHarusDibayarNow, 0, ',', '.') }})</button>
-                @endif
-            </div>
-
-            <!-- Hasil Simulasi -->
-            @if(count($simulasiHasil) > 0)
-                <div id="simulasiCardBox" class="bg-slate-50 dark:bg-slate-950 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-3 text-xs">
-                    <div class="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-2">
-                        <div>
-                            <span class="block text-[10px] font-extrabold uppercase text-slate-500 dark:text-slate-400">Rincian Simulasi Pembayaran</span>
-                            <strong class="text-slate-900 dark:text-slate-100 font-extrabold text-sm">{{ $santri->name }}</strong>
-                        </div>
-                        <span class="text-xs font-black text-emerald-700 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-500/10 px-2.5 py-1 rounded-lg">
-                            Rp {{ number_format($simulasiInput, 0, ',', '.') }}
-                        </span>
-                    </div>
-
-                    <ul class="space-y-2">
-                        @foreach($simulasiHasil as $item)
-                            <li class="flex items-center justify-between p-2.5 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800">
-                                <div>
-                                    <strong class="text-slate-900 dark:text-slate-100 block text-xs">{{ $item['label'] }}</strong>
-                                    <span class="text-[10px] text-emerald-700 dark:text-emerald-400 font-bold">Teralokasi: Rp {{ number_format($item['terbayar'], 0, ',', '.') }}</span>
-                                </div>
-                                <span class="text-[10px] font-extrabold px-2 py-0.5 rounded-md shrink-0 {{ $item['sisa_bill'] == 0 ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-500/20 dark:text-emerald-300' : 'bg-amber-100 text-amber-800 dark:bg-amber-500/20 dark:text-amber-300' }}">
-                                    {{ $item['status'] }}
-                                </span>
-                            </li>
-                        @endforeach
-                    </ul>
-
-                    @if($simulasiSisaUang > 0)
-                        <div class="pt-1.5 text-right font-extrabold text-emerald-700 dark:text-emerald-400 text-xs">
-                            Sisa Kelebihan Uang: Rp {{ number_format($simulasiSisaUang, 0, ',', '.') }}
-                        </div>
-                    @endif
-
-                    <!-- Tombol Aksi: Simpan Gambar PNG & Kirim WA -->
-                    <div class="pt-3 border-t border-slate-200 dark:border-slate-800 grid grid-cols-1 sm:grid-cols-2 gap-2">
-                        <!-- Simpan Gambar PNG (Native Canvas Engine) -->
-                        <button type="button" 
-                                onclick='generateAndDownloadSimulasiImage({{ json_encode($santri->name) }}, {{ (float) $simulasiInput }}, {{ json_encode($simulasiHasil) }})' 
-                                class="w-full py-2.5 px-3 bg-slate-800 dark:bg-slate-800 hover:bg-slate-900 dark:hover:bg-slate-700 text-white font-extrabold rounded-xl transition-all shadow-xs flex items-center justify-center gap-1.5 text-xs active:scale-95">
-                            <svg class="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-                            <span>Simpan Gambar PNG</span>
+            @if($simulasiBillOptions->count() > 0)
+                {{-- Quick Shortcut Buttons --}}
+                <div class="flex flex-wrap gap-1.5 pb-1">
+                    @if(count($mandatoryBillIds) > 0)
+                        <button type="button"
+                                wire:click="$set('selectedBillIds', {{ json_encode($mandatoryBillIds) }})"
+                                class="px-2.5 py-1 text-[11px] font-extrabold bg-emerald-100 dark:bg-emerald-500/20 text-emerald-800 dark:text-emerald-300 rounded-xl hover:bg-emerald-200 transition-all border border-emerald-300 dark:border-emerald-500/30">
+                            ✨ Centang Tagihan Wajib
                         </button>
+                    @endif
+                    @if(count($pastBillIdsOnly) > 0)
+                        <button type="button"
+                                wire:click="$set('selectedBillIds', {{ json_encode($pastBillIdsOnly) }})"
+                                class="px-2.5 py-1 text-[11px] font-extrabold bg-rose-100 dark:bg-rose-500/20 text-rose-800 dark:text-rose-300 rounded-xl hover:bg-rose-200 transition-all border border-rose-300 dark:border-rose-500/30">
+                            🔴 Tunggakan Saja
+                        </button>
+                    @endif
+                    <button type="button"
+                            wire:click="$set('selectedBillIds', {{ json_encode($simulasiBillOptions->pluck('id')->toArray()) }})"
+                            class="px-2.5 py-1 text-[11px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-xl hover:bg-slate-200 transition-all border border-slate-200 dark:border-slate-700">
+                        ☑️ Pilih Semua
+                    </button>
+                    <button type="button"
+                            wire:click="$set('selectedBillIds', [])"
+                            class="px-2.5 py-1 text-[11px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-xl hover:bg-slate-200 transition-all border border-slate-200 dark:border-slate-700">
+                        ✕ Batal Semua
+                    </button>
+                </div>
 
-                        <!-- Kirim Rincian via WA Bendahara -->
-                        @if($simulasiWaUrl)
-                            <a href="{{ $simulasiWaUrl }}" 
-                               target="_blank" 
-                               class="w-full py-2.5 px-3 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold rounded-xl transition-all shadow-xs flex items-center justify-center gap-1.5 text-xs">
-                                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981z"/></svg>
-                                <span>Kirim Rincian via WA</span>
-                            </a>
-                        @endif
+                {{-- Daftar Checklist dengan Badge Kategori --}}
+                <div class="space-y-2">
+                    @foreach($simulasiBillOptions as $bill)
+                        @php
+                            $kekurangan = max(0, $bill->amount - $bill->amount_paid);
+                            $cat = $bill->simulasi_cat ?? 'current';
+                        @endphp
+                        <label for="cb_{{ $bill->id }}"
+                               class="flex items-center gap-3 p-3 rounded-2xl border-2 cursor-pointer transition-all
+                                      {{ in_array($bill->id, $selectedBillIds)
+                                          ? 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-400 dark:border-emerald-600'
+                                          : 'bg-slate-50 dark:bg-slate-950 border-slate-200 dark:border-slate-800 hover:border-emerald-300 dark:hover:border-emerald-700' }}">
+
+                            {{-- Checkbox --}}
+                            <input type="checkbox"
+                                   id="cb_{{ $bill->id }}"
+                                   wire:model.live="selectedBillIds"
+                                   value="{{ $bill->id }}"
+                                   class="w-4 h-4 rounded text-emerald-600 border-slate-300 dark:border-slate-700 focus:ring-emerald-500 shrink-0">
+
+                            {{-- Label Tagihan --}}
+                            <div class="flex-1 min-w-0 space-y-0.5">
+                                <div class="flex items-center gap-1.5 flex-wrap">
+                                    @if($cat === 'past')
+                                        <span class="px-2 py-0.5 rounded-md text-[10px] font-black uppercase bg-rose-100 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300 border border-rose-200 dark:border-rose-800">🔴 Tunggakan Lalu</span>
+                                    @elseif($cat === 'current')
+                                        <span class="px-2 py-0.5 rounded-md text-[10px] font-black uppercase bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300 border border-amber-200 dark:border-amber-800">🟡 Tagihan Bulan Ini</span>
+                                    @elseif($cat === 'event')
+                                        <span class="px-2 py-0.5 rounded-md text-[10px] font-black uppercase bg-purple-100 text-purple-800 dark:bg-purple-950/60 dark:text-purple-300 border border-purple-200 dark:border-purple-800">⚡ Kegiatan / Kitab</span>
+                                    @elseif($cat === 'future')
+                                        <span class="px-2 py-0.5 rounded-md text-[10px] font-black uppercase bg-blue-100 text-blue-800 dark:bg-blue-950/60 dark:text-blue-300 border border-blue-200 dark:border-blue-800">🔵 Bayar Di Awal</span>
+                                    @endif
+
+                                    @if($bill->status === 'partial')
+                                        <span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-200/80 text-amber-900 dark:bg-amber-900/60 dark:text-amber-300">Dicicil</span>
+                                    @endif
+                                </div>
+                                <span class="block text-xs font-extrabold text-slate-800 dark:text-slate-200 truncate">
+                                    {{ $this->getBillDisplayName($bill) }}
+                                </span>
+                                <span class="text-[10px] text-slate-500 dark:text-slate-400">
+                                    Periode: {{ $this->getBillPeriodLabel($bill) }}
+                                </span>
+                            </div>
+
+                            {{-- Nominal sisa --}}
+                            <div class="text-right shrink-0">
+                                <span class="block text-xs font-black text-slate-900 dark:text-slate-100">
+                                    Rp {{ number_format($kekurangan, 0, ',', '.') }}
+                                </span>
+                                @if($bill->status === 'partial')
+                                    <span class="text-[10px] text-amber-600 dark:text-amber-400">sisa kekurangan</span>
+                                @endif
+                            </div>
+                        </label>
+                    @endforeach
+                </div>
+
+                {{-- Hasil Total & Aksi (muncul jika ada yang dicentang) --}}
+                @if(!empty($selectedBillIds) && $simulasiTotal > 0)
+                    <div id="simulasiCardBox" class="bg-emerald-950 dark:bg-slate-950 rounded-2xl p-4 space-y-3 border border-emerald-700/60">
+
+                        {{-- Rincian Terpilih --}}
+                        <div class="space-y-1.5">
+                            <span class="text-[10px] font-black text-emerald-300 uppercase tracking-wider block">Rincian Tagihan yang Dipilih</span>
+                            @foreach($simulasiHasil as $item)
+                                <div class="flex items-center justify-between text-xs">
+                                    <span class="text-emerald-100 dark:text-slate-300 font-medium truncate flex-1 mr-2">{{ $item['label'] }}</span>
+                                    <span class="font-black text-white shrink-0">Rp {{ number_format($item['terbayar'], 0, ',', '.') }}</span>
+                                </div>
+                            @endforeach
+                        </div>
+
+                        {{-- Total --}}
+                        <div class="flex items-center justify-between pt-2 border-t border-emerald-700/60">
+                            <span class="text-xs font-bold text-emerald-300">Total yang Perlu Ditransfer</span>
+                            <span class="text-xl font-black text-white">Rp {{ number_format($simulasiTotal, 0, ',', '.') }}</span>
+                        </div>
+
+                        {{-- Tombol Aksi --}}
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
+                            <button type="button"
+                                    onclick='generateAndDownloadSimulasiImage({{ json_encode($santri->name) }}, {{ (float) $simulasiTotal }}, {{ json_encode($simulasiHasil) }})'
+                                    class="w-full py-2.5 px-3 bg-slate-800 hover:bg-slate-700 text-white font-extrabold rounded-xl transition-all flex items-center justify-center gap-1.5 text-xs active:scale-95 border border-slate-700">
+                                <svg class="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                                <span>Simpan PNG</span>
+                            </button>
+
+                            @if($simulasiWaUrl)
+                                <a href="{{ $simulasiWaUrl }}" target="_blank"
+                                   class="w-full py-2.5 px-3 bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold rounded-xl transition-all flex items-center justify-center gap-1.5 text-xs">
+                                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981z"/></svg>
+                                    <span>Kirim ke WA Bendahara</span>
+                                </a>
+                            @endif
+                        </div>
                     </div>
+                @elseif(!empty($selectedBillIds))
+                    <div class="text-center text-xs text-slate-400 py-2">Menghitung...</div>
+                @else
+                    <div class="bg-slate-50 dark:bg-slate-950 rounded-2xl p-3 text-center text-xs text-slate-400 dark:text-slate-500 border border-slate-200 dark:border-slate-800">
+                        ☝️ Centang tagihan di atas untuk melihat simulasi total pembayaran.
+                    </div>
+                @endif
+
+            @else
+                <div class="bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-800/40 rounded-2xl p-4 text-center text-xs text-emerald-700 dark:text-emerald-400 font-semibold flex items-center justify-center gap-1.5">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                    <span>Tidak ada tagihan yang belum terbayar — Alhamdulillah!</span>
                 </div>
             @endif
         </div>
@@ -261,17 +365,21 @@
         @endif
     </div>
 
-    {{-- SEKSI TAGIHAN KHUSUS & KEGIATAN (EVENT / INSIDENTAL) --}}
+    {{-- SEKSI TAGIHAN KHUSUS & KEGIATAN (EVENT / INSIDENTAL - ACCORDION) --}}
     @if(isset($eventBills) && $eventBills->count() > 0)
-        <div class="space-y-3">
-            <div class="flex items-center justify-between px-1">
-                <h3 class="text-xs font-black text-slate-700 dark:text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
-                    <svg class="w-4 h-4 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+        <div x-data="{ openEvent: false }" class="bg-white dark:bg-slate-900 border-2 border-purple-200 dark:border-purple-500/30 rounded-3xl p-4 shadow-sm space-y-3 transition-colors">
+            <button type="button" @click="openEvent = !openEvent" class="w-full flex items-center justify-between text-xs font-black text-slate-800 dark:text-slate-200 uppercase tracking-wider py-1">
+                <span class="flex items-center gap-1.5 text-purple-700 dark:text-purple-400">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
                     <span>Tagihan Khusus & Kegiatan</span>
-                </h3>
-            </div>
+                    <span class="bg-purple-100 dark:bg-purple-500/20 text-purple-800 dark:text-purple-300 border border-purple-200 dark:border-purple-500/30 px-2.5 py-0.5 rounded-full text-[10px] font-black">
+                        {{ $eventBills->count() }} Tagihan
+                    </span>
+                </span>
+                <svg class="w-4 h-4 text-slate-500 transition-transform duration-200" :class="{ 'rotate-180': openEvent }" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/></svg>
+            </button>
 
-            <div class="space-y-2.5">
+            <div x-show="openEvent" x-collapse class="pt-2 border-t border-slate-100 dark:border-slate-800 space-y-2.5">
                 @foreach($eventBills as $bill)
                     @php
                         $sisa = max(0, $bill->amount - $bill->amount_paid);
@@ -320,17 +428,27 @@
         </div>
     @endif
 
-    <!-- SEKSI 2: TUNGGAKAN BULAN LALU -->
-    <div class="space-y-3">
-        <div class="flex items-center justify-between px-1">
-            <h3 class="text-xs font-black text-slate-700 dark:text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
-                <svg class="w-4 h-4 text-amber-600 dark:text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+    <!-- SEKSI 2: TUNGGAKAN BULAN LALU (ACCORDION) -->
+    <div x-data="{ openPast: false }" class="bg-white dark:bg-slate-900 border-2 border-amber-200 dark:border-amber-500/30 rounded-3xl p-4 shadow-sm space-y-3 transition-colors">
+        <button type="button" @click="openPast = !openPast" class="w-full flex items-center justify-between text-xs font-black text-slate-800 dark:text-slate-200 uppercase tracking-wider py-1">
+            <span class="flex items-center gap-1.5 text-amber-700 dark:text-amber-400">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
                 <span>Tunggakan Periode Lalu</span>
-            </h3>
-        </div>
+                @if($pastUnpaidBills->count() > 0)
+                    <span class="bg-amber-100 dark:bg-amber-500/20 text-amber-900 dark:text-amber-300 border border-amber-300 dark:border-amber-500/30 px-2.5 py-0.5 rounded-full text-[10px] font-black">
+                        {{ $pastUnpaidBills->count() }} Tunggakan (Rp {{ number_format($totalPastTunggakan, 0, ',', '.') }})
+                    </span>
+                @else
+                    <span class="bg-emerald-100 dark:bg-emerald-500/10 text-emerald-800 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/20 px-2 py-0.5 rounded-full text-[10px] font-black">
+                        Nihil
+                    </span>
+                @endif
+            </span>
+            <svg class="w-4 h-4 text-slate-500 transition-transform duration-200" :class="{ 'rotate-180': openPast }" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/></svg>
+        </button>
 
-        @if($pastUnpaidBills->count() > 0)
-            <div class="space-y-2.5">
+        <div x-show="openPast" x-collapse class="pt-2 border-t border-slate-100 dark:border-slate-800 space-y-2.5">
+            @if($pastUnpaidBills->count() > 0)
                 @foreach($pastUnpaidBills as $bill)
                     @php
                         $sisa = max(0, $bill->amount - $bill->amount_paid);
@@ -364,13 +482,13 @@
                         </div>
                     </div>
                 @endforeach
-            </div>
-        @else
-            <div class="bg-emerald-50/60 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-800/40 rounded-2xl p-3.5 text-center text-xs text-emerald-800 dark:text-emerald-400 font-semibold flex items-center justify-center gap-1.5 transition-colors">
-                <svg class="w-4 h-4 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-                <span>Tidak ada sisa tunggakan dari bulan-bulan sebelumnya.</span>
-            </div>
-        @endif
+            @else
+                <div class="bg-emerald-50/60 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-800/40 rounded-2xl p-3.5 text-center text-xs text-emerald-800 dark:text-emerald-400 font-semibold flex items-center justify-center gap-1.5 transition-colors">
+                    <svg class="w-4 h-4 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                    <span>Tidak ada sisa tunggakan dari bulan-bulan sebelumnya.</span>
+                </div>
+            @endif
+        </div>
     </div>
 
     <!-- SEKSI 3: TAGIHAN MENDATANG & BAYAR DI AWAL -->
@@ -428,7 +546,84 @@
         </div>
     </div>
 
-    <!-- KOTAK PETUNJUK PEMBAYARAN DINAMIS (TAB SWITCHER PUTRA & PUTRI) -->
+    <!-- SEKSI: RIWAYAT TAGIHAN LUNAS (ACCORDION) -->
+    <div x-data="{ openLunas: false }" class="bg-white dark:bg-slate-900 border-2 border-emerald-200 dark:border-emerald-800/40 rounded-3xl p-4 shadow-sm space-y-3 transition-colors">
+        <button type="button" @click="openLunas = !openLunas" class="w-full flex items-center justify-between text-xs font-black text-slate-800 dark:text-slate-200 uppercase tracking-wider py-1">
+            <span class="flex items-center gap-1.5 text-emerald-700 dark:text-emerald-400">
+                <svg class="w-4 h-4 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                <span>Riwayat Tagihan Lunas</span>
+                @if($pastPaidBills->count() > 0)
+                    <span class="bg-emerald-100 dark:bg-emerald-500/10 text-emerald-800 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/20 px-2.5 py-0.5 rounded-full text-[10px] font-black">
+                        {{ $pastPaidBills->count() }} Tagihan
+                    </span>
+                @endif
+            </span>
+            <svg class="w-4 h-4 text-slate-500 transition-transform duration-200" :class="{ 'rotate-180': openLunas }" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/></svg>
+        </button>
+
+        <div x-show="openLunas" x-collapse class="pt-2 border-t border-slate-100 dark:border-slate-800 space-y-2.5">
+            @if($pastPaidBills->count() > 0)
+                @foreach($pastPaidBills as $bill)
+                    @php
+                        $isPaidFull    = $bill->status === 'paid';
+                        $isPartial     = $bill->status === 'partial';
+                        $paidAt        = $bill->updated_at ?? $bill->created_at;
+                    @endphp
+                    <div class="bg-emerald-50/60 dark:bg-slate-900 border-2
+                                {{ $isPaidFull ? 'border-emerald-200 dark:border-emerald-800/40' : 'border-amber-200 dark:border-amber-700/30' }}
+                                rounded-2xl p-3.5 shadow-sm space-y-2 transition-colors">
+                        <div class="flex items-start justify-between gap-2">
+                            <div class="flex-1 min-w-0">
+                                <span class="inline-block text-[10px] font-extrabold uppercase px-2.5 py-0.5 rounded-md mb-1
+                                             {{ $isPaidFull ? 'bg-emerald-100 dark:bg-emerald-500/10 text-emerald-800 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/20'
+                                                            : 'bg-amber-100 dark:bg-amber-500/10 text-amber-800 dark:text-amber-400 border border-amber-200 dark:border-amber-500/20' }}">
+                                    {{ $this->getBillPeriodLabel($bill) }}
+                                </span>
+                                <h4 class="text-sm font-extrabold text-slate-900 dark:text-slate-100 truncate">
+                                    {{ $this->getBillDisplayName($bill) }}
+                                </h4>
+                            </div>
+
+                            {{-- Badge Status --}}
+                            @if($isPaidFull)
+                                <span class="px-2.5 py-1 text-[10px] font-black uppercase text-emerald-700 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-500/10 border border-emerald-300 dark:border-emerald-500/20 rounded-full shrink-0 flex items-center gap-1">
+                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+                                    LUNAS
+                                </span>
+                            @else
+                                <span class="px-2.5 py-1 text-[10px] font-black uppercase text-amber-700 dark:text-amber-400 bg-amber-100 dark:bg-amber-500/10 border border-amber-300 dark:border-amber-500/20 rounded-full shrink-0">
+                                    SEBAGIAN
+                                </span>
+                            @endif
+                        </div>
+
+                        {{-- Detail Nominal --}}
+                        <div class="bg-white dark:bg-slate-950 rounded-xl p-2.5 border border-emerald-100 dark:border-slate-800 grid grid-cols-2 gap-2 text-xs">
+                            <div>
+                                <span class="text-[10px] text-slate-500 dark:text-slate-400 font-bold block uppercase">Total Tagihan</span>
+                                <strong class="text-slate-800 dark:text-slate-200">Rp {{ number_format($bill->amount, 0, ',', '.') }}</strong>
+                            </div>
+                            <div class="text-right">
+                                <span class="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold block uppercase">Sudah Dibayar</span>
+                                <strong class="text-emerald-700 dark:text-emerald-400">Rp {{ number_format($bill->amount_paid, 0, ',', '.') }}</strong>
+                            </div>
+                        </div>
+
+                        {{-- Timestamp dicatat --}}
+                        <div class="flex items-center gap-1.5 text-[10px] text-slate-400 dark:text-slate-500 font-medium">
+                            <svg class="w-3 h-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                            <span>Terakhir diperbarui: {{ $paidAt->translatedFormat('d M Y') }}</span>
+                        </div>
+                    </div>
+                @endforeach
+            </div>
+        @else
+            <div class="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 text-center text-xs text-slate-400 dark:text-slate-500 transition-colors">
+                Belum ada riwayat tagihan yang lunas tercatat.
+            </div>
+        @endif
+    </div>
+
     <div x-data="{ activeTab: '{{ $isPutri ? 'putri' : 'putra' }}' }" class="bg-emerald-950 dark:bg-slate-900 text-white rounded-3xl p-5 shadow-lg border border-emerald-700/80 dark:border-slate-800 space-y-4 transition-colors">
         
         <div class="flex items-center justify-between border-b border-emerald-800/80 dark:border-slate-800 pb-3">

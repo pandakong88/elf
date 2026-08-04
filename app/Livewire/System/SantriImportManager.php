@@ -107,6 +107,15 @@ class SantriImportManager extends Component
             $dormitories = Dormitory::where('is_active', true)->get()->keyBy(fn($d) => strtolower(trim($d->name)));
             $kelasList = MadrasahKelas::where('is_active', true)->get()->keyBy(fn($k) => strtolower(trim($k->name)));
 
+            // Muat data existing untuk deteksi duplikat santri
+            $existingNiks       = Person::whereNotNull('nik')->pluck('nik')->map(fn($n) => trim($n))->flip()->toArray();
+            $existingByNameDate = Person::whereNotNull('birth_date')
+                ->get(['name', 'birth_date'])
+                ->mapWithKeys(fn($p) => [
+                    strtolower(trim($p->name)) . '|' . $p->birth_date->format('Y-m-d') => true,
+                ])->toArray();
+            $seenNiksInFile = []; // Deteksi duplikat NIK dalam satu file Excel
+
             foreach ($rows as $index => $row) {
                 $rowNum = $index + 2;
 
@@ -135,6 +144,21 @@ class SantriImportManager extends Component
 
                 $errors   = [];
                 $warnings = [];
+
+                // --- Cek Duplikat Santri ---
+                if (!empty($nik)) {
+                    if (isset($existingNiks[$nik])) {
+                        $warnings[] = "NIK {$nik} sudah terdaftar di sistem — kemungkinan data duplikat.";
+                    } elseif (isset($seenNiksInFile[$nik])) {
+                        $warnings[] = "NIK {$nik} muncul lebih dari satu kali dalam file Excel ini.";
+                    }
+                    $seenNiksInFile[$nik] = true;
+                } elseif (!empty($name) && !empty($birthDate) && strtotime($birthDate)) {
+                    $nameDate = strtolower(trim($name)) . '|' . date('Y-m-d', strtotime($birthDate));
+                    if (isset($existingByNameDate[$nameDate])) {
+                        $warnings[] = 'Nama & tanggal lahir yang sama sudah ada di sistem — periksa kemungkinan duplikat.';
+                    }
+                }
 
                 if (empty($name)) {
                     $errors[] = 'Nama Lengkap Santri wajib diisi.';
@@ -257,12 +281,20 @@ class SantriImportManager extends Component
             $currentYear   = (int)now()->format('Y');
             $guardianCache = []; // Cache deduplikasi guardian by name+phone
 
+            // Hitung NIS sequential: cari NIS terbesar tahun ini → lanjut dari sana
+            $yearPrefix = (string)$currentYear;
+            $maxNisVal  = SantriProfile::pluck('additional_info')
+                ->map(fn($info) => (int)($info['nis'] ?? 0))
+                ->filter(fn($n) => $n > 0 && str_starts_with((string)$n, $yearPrefix))
+                ->max() ?? 0;
+            $nisCounter = (int)max($maxNisVal + 1, (int)($yearPrefix . '0001'));
+
             // Ambil organisasi berdasarkan gender
             $rootOrg  = Organization::where('slug', 'ponpes-al-fithroh')->first() ?? Organization::first();
             $putraOrg = Organization::where('slug', 'kepengasuhan-putra')->first() ?? $rootOrg;
             $putriOrg = Organization::where('slug', 'kepengasuhan-putri')->first() ?? $rootOrg;
 
-            DB::transaction(function () use (&$savedCount, &$guardianCache, $currentYear, $rootOrg, $putraOrg, $putriOrg) {
+            DB::transaction(function () use (&$savedCount, &$guardianCache, &$nisCounter, $currentYear, $rootOrg, $putraOrg, $putriOrg) {
                 foreach ($this->tempValidSantri as $vs) {
 
                     // 1. Buat data Person (tanpa phone — phone adalah milik wali)
@@ -276,10 +308,10 @@ class SantriImportManager extends Component
                         'address'     => $vs['address'],
                     ]);
 
-                    // 2. Buat NIS otomatis jika kosong
+                    // 2. Buat NIS otomatis jika kosong (sequential, bukan random)
                     $nisNumber = $vs['nis'];
                     if (empty($nisNumber)) {
-                        $nisNumber = $currentYear . sprintf('%04d', rand(1000, 9999));
+                        $nisNumber = (string)$nisCounter++;
                     }
 
                     // 3. Map hubungan wali ke format sistem
@@ -300,7 +332,9 @@ class SantriImportManager extends Component
                         'id'                 => Str::uuid()->toString(),
                         'person_id'          => $person->id,
                         'father_name'        => $relMapped === 'ayah_kandung' ? $vs['parent_name'] : null,
+                        'father_phone'       => $relMapped === 'ayah_kandung' ? ($vs['parent_phone'] ?: null) : null,
                         'mother_name'        => $relMapped === 'ibu_kandung'  ? $vs['parent_name'] : null,
+                        'mother_phone'       => $relMapped === 'ibu_kandung'  ? ($vs['parent_phone'] ?: null) : null,
                         'school_name'        => $vs['school_name'],
                         'has_active_sibling' => $vs['has_active_sibling'] ?? false,
                         'additional_info'    => ['nis' => $nisNumber],

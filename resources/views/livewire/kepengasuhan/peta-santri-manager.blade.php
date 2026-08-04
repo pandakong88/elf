@@ -14,6 +14,20 @@
                 Peta penempatan dan direktori lengkap santri (Mukim, Laju, Boyong, dan Alumni) seluruh pesantren.
             </p>
         </div>
+        <div class="flex items-center gap-2 flex-shrink-0">
+            <button type="button" wire:click="openExportConfirmModal"
+                class="inline-flex items-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl text-xs shadow-sm transition-all">
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                Unduh Excel
+            </button>
+            @can('update-person')
+            <button type="button" wire:click="$set('showImportModal', true)"
+                class="inline-flex items-center gap-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl text-xs shadow-sm transition-all">
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l4-4m0 0l4 4m-4-4v12"/></svg>
+                Update via Excel
+            </button>
+            @endcan
+        </div>
     </div>
 
     {{-- Main Control Card: Tabs & Search/Filters --}}
@@ -122,6 +136,32 @@
                     <option value="izin">Izin / Pulang Sementara</option>
                 </select>
             </div>
+        </div>
+    </div>
+
+    {{-- ============================================================ --}}
+    {{-- Statistik Ringkas (Ikut Filter Aktif)                        --}}
+    {{-- ============================================================ --}}
+    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+        <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-4 shadow-sm">
+            <div class="text-2xl font-black text-slate-900 dark:text-slate-100">{{ number_format($stats['total']) }}</div>
+            <div class="text-[11px] font-bold text-slate-500 uppercase tracking-wide mt-0.5">Total Santri</div>
+        </div>
+        <div class="bg-white dark:bg-slate-900 border border-indigo-200/60 dark:border-indigo-800/30 rounded-2xl p-4 shadow-sm">
+            <div class="text-2xl font-black text-indigo-600 dark:text-indigo-400">{{ number_format($stats['mukim']) }}</div>
+            <div class="text-[11px] font-bold text-indigo-500 uppercase tracking-wide mt-0.5">Mukim</div>
+        </div>
+        <div class="bg-white dark:bg-slate-900 border border-amber-200/60 dark:border-amber-800/30 rounded-2xl p-4 shadow-sm">
+            <div class="text-2xl font-black text-amber-600 dark:text-amber-400">{{ number_format($stats['laju']) }}</div>
+            <div class="text-[11px] font-bold text-amber-500 uppercase tracking-wide mt-0.5">Laju (Non-Asrama)</div>
+        </div>
+        <div class="bg-white dark:bg-slate-900 border border-orange-200/60 dark:border-orange-800/30 rounded-2xl p-4 shadow-sm">
+            <div class="text-2xl font-black text-orange-600 dark:text-orange-400">{{ number_format($stats['izin']) }}</div>
+            <div class="text-[11px] font-bold text-orange-500 uppercase tracking-wide mt-0.5">Izin / Pulang</div>
+        </div>
+        <div class="bg-white dark:bg-slate-900 border border-rose-200/60 dark:border-rose-800/30 rounded-2xl p-4 shadow-sm">
+            <div class="text-2xl font-black text-rose-600 dark:text-rose-400">{{ number_format($stats['boyong']) }}</div>
+            <div class="text-[11px] font-bold text-rose-500 uppercase tracking-wide mt-0.5">Boyong / Alumni</div>
         </div>
     </div>
 
@@ -266,6 +306,14 @@
                                             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
                                         </button>
 
+                                        @can('change-enrollment-status')
+                                        <button type="button" wire:click="openStatusModal('{{ $santri->id }}')"
+                                            class="p-1.5 bg-amber-50 hover:bg-amber-100 dark:bg-amber-950/60 dark:hover:bg-amber-900 text-amber-600 dark:text-amber-300 rounded-lg transition-colors"
+                                            title="Ubah Status Santri">
+                                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                                        </button>
+                                        @endcan
+
                                         @can('manage-kamar')
                                         <button type="button" wire:click="openTransferRoomModal('{{ $santri->id }}')"
                                             class="p-1.5 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/60 dark:hover:bg-emerald-900 text-emerald-600 dark:text-emerald-300 rounded-lg transition-colors"
@@ -279,6 +327,14 @@
                                             class="p-1.5 bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-950/60 dark:hover:bg-indigo-900 text-indigo-600 dark:text-indigo-300 rounded-lg transition-colors"
                                             title="Pindah Kelas">
                                             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+                                        </button>
+                                        @endcan
+
+                                        @can('delete-person')
+                                        <button type="button" wire:click="openDeleteSantriModal('{{ $santri->id }}')"
+                                            class="p-1.5 bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/60 dark:hover:bg-rose-900 text-rose-600 dark:text-rose-300 rounded-lg transition-colors"
+                                            title="Hapus Data Santri">
+                                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
                                         </button>
                                         @endcan
                                     </div>
@@ -438,6 +494,198 @@
         @endif
     @endif
 
+        {{-- MODAL IMPORT EXCEL UPDATE DENGAN INTERACTIVE PREVIEW --}}
+        @if($showImportModal)
+            <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+                <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl {{ $importStep === 2 ? 'max-w-4xl' : 'max-w-lg' }} w-full p-6 shadow-2xl space-y-5 transition-all">
+                    
+                    {{-- Header Modal --}}
+                    <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-xl bg-indigo-100 dark:bg-indigo-950/60 flex items-center justify-center text-indigo-600 dark:text-indigo-400 font-bold">
+                                @if($importStep === 1)
+                                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l4-4m0 0l4 4m-4-4v12"/></svg>
+                                @else
+                                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
+                                @endif
+                            </div>
+                            <div>
+                                <h3 class="font-extrabold text-base text-slate-900 dark:text-slate-100">
+                                    {{ $importStep === 1 ? 'Update Data via Excel' : 'Pratinjau Perubahan Data Excel' }}
+                                </h3>
+                                <p class="text-xs text-slate-500 mt-0.5">
+                                    {{ $importStep === 1 ? 'Langkah 1: Pilih & Upload file Excel hasil edit' : 'Langkah 2: Periksa daftar perubahan sebelum mengeksekusi update' }}
+                                </p>
+                            </div>
+                        </div>
+
+                        <button type="button" wire:click="resetImportModal" class="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-xl transition-colors">
+                            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                        </button>
+                    </div>
+
+                    @if($importStep === 1)
+                        {{-- LANGKAH 1: UPLOAD FILE & PERATURAN --}}
+                        <div class="bg-amber-50 dark:bg-amber-950/30 border border-amber-200/60 dark:border-amber-800/40 rounded-2xl p-4 text-xs text-amber-800 dark:text-amber-300 space-y-1.5">
+                            <div class="font-extrabold">⚠️ Ketentuan Update via Excel:</div>
+                            <ul class="space-y-1 text-amber-700 dark:text-amber-300/80 list-disc list-inside">
+                                <li>Kolom <strong>NIS tidak boleh diubah</strong> (digunakan sebagai kunci pencocok data santri)</li>
+                                <li>Seluruh <strong>16 kolom</strong> (Nama, NIK, Gender, Tempat/Tgl Lahir, Status, Komplek, Kamar, Kelas, Wali, Alamat, Sekolah) akan di-detect perubahannya</li>
+                                <li>Anda akan melihat **pratinjau perbedaan data (Before ➔ After)** sebelum data benar-benar disimpan</li>
+                            </ul>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Pilih File Excel (.xlsx)</label>
+                            <input type="file" wire:model="importFile" accept=".xlsx,.xls"
+                                class="w-full text-sm text-slate-700 dark:text-slate-300 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-indigo-50 file:text-indigo-700 dark:file:bg-indigo-950/60 dark:file:text-indigo-300 hover:file:bg-indigo-100">
+                            @error('importFile') <p class="text-rose-500 text-xs mt-1">{{ $message }}</p> @enderror
+                        </div>
+
+                        <div class="flex items-center justify-end gap-2 pt-1">
+                            <button type="button" wire:click="resetImportModal"
+                                class="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold rounded-xl text-xs">Batal</button>
+                            <button type="button" wire:click="generateImportPreview" wire:loading.attr="disabled"
+                                class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-extrabold rounded-xl text-xs shadow-md transition-all flex items-center gap-2">
+                                <span wire:loading wire:target="generateImportPreview" class="inline-block w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+                                <span>Pratinjau Perubahan Data ➔</span>
+                            </button>
+                        </div>
+                    @else
+                        {{-- LANGKAH 2: TABEL PRATINJAU PERUBAHAN (DIFF PREVIEW) --}}
+                        @php $stats = $importPreviewData['stats'] ?? ['total' => 0, 'changed' => 0, 'unchanged' => 0, 'skipped' => 0]; @endphp
+                        
+                        {{-- Rangkuman Statistik Preview --}}
+                        <div class="grid grid-cols-4 gap-3">
+                            <div class="p-3 bg-slate-100 dark:bg-slate-800 rounded-2xl text-center">
+                                <div class="text-lg font-black text-slate-800 dark:text-slate-200">{{ $stats['total'] }}</div>
+                                <div class="text-[10px] font-bold text-slate-400 uppercase">Total Baris</div>
+                            </div>
+                            <div class="p-3 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200/60 dark:border-emerald-800/40 rounded-2xl text-center">
+                                <div class="text-lg font-black text-emerald-600 dark:text-emerald-400">{{ $stats['changed'] }}</div>
+                                <div class="text-[10px] font-bold text-emerald-500 uppercase">Akan Di-update</div>
+                            </div>
+                            <div class="p-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200/60 dark:border-slate-700/60 rounded-2xl text-center">
+                                <div class="text-lg font-black text-slate-500">{{ $stats['unchanged'] }}</div>
+                                <div class="text-[10px] font-bold text-slate-400 uppercase">Tanpa Perubahan</div>
+                            </div>
+                            <div class="p-3 bg-rose-50 dark:bg-rose-950/40 border border-rose-200/60 dark:border-rose-800/40 rounded-2xl text-center">
+                                <div class="text-lg font-black text-rose-600 dark:text-rose-400">{{ $stats['skipped'] }}</div>
+                                <div class="text-[10px] font-bold text-rose-500 uppercase">NIS Dilewati</div>
+                            </div>
+                        </div>
+
+                        {{-- Tabel Rincian Perubahan --}}
+                        <div class="border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden max-h-80 overflow-y-auto">
+                            <table class="w-full text-left text-xs border-collapse">
+                                <thead>
+                                    <tr class="bg-slate-100 dark:bg-slate-800 text-[10px] font-extrabold uppercase text-slate-500 border-b border-slate-200 dark:border-slate-700">
+                                        <th class="py-2.5 px-3 w-10 text-center">No</th>
+                                        <th class="py-2.5 px-3">Santri &amp; NIS</th>
+                                        <th class="py-2.5 px-3 text-center">Status</th>
+                                        <th class="py-2.5 px-3">Perincian Perubahan Data (Sebelum ➔ Sesudah)</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+                                    @forelse($importPreviewData['rows'] ?? [] as $pRow)
+                                        <tr class="hover:bg-slate-50/60 dark:hover:bg-slate-800/40">
+                                            <td class="py-2.5 px-3 text-center font-bold text-slate-400">{{ $pRow['row_num'] }}</td>
+                                            <td class="py-2.5 px-3 font-bold text-slate-800 dark:text-slate-200">
+                                                <div>{{ $pRow['name'] }}</div>
+                                                <div class="text-[10px] font-mono text-slate-400">NIS: {{ $pRow['nis'] }}</div>
+                                            </td>
+                                            <td class="py-2.5 px-3 text-center">
+                                                @if($pRow['status'] === 'changed')
+                                                    <span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300">
+                                                        🟢 Perubahan
+                                                    </span>
+                                                @elseif($pRow['status'] === 'unchanged')
+                                                    <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400">
+                                                        ⚪ Sama
+                                                    </span>
+                                                @else
+                                                    <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-300">
+                                                        🔴 Dilewati
+                                                    </span>
+                                                @endif
+                                            </td>
+                                            <td class="py-2.5 px-3">
+                                                @if($pRow['status'] === 'changed')
+                                                    <div class="space-y-1">
+                                                        @foreach($pRow['diffs'] as $diff)
+                                                            <div class="inline-flex items-center gap-1.5 px-2 py-1 rounded-lg bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-200/50 dark:border-indigo-800/40 text-[11px]">
+                                                                <span class="font-bold text-indigo-700 dark:text-indigo-300">{{ $diff['field'] }}:</span>
+                                                                <span class="line-through text-slate-400">{{ $diff['old'] }}</span>
+                                                                <span class="text-indigo-600 dark:text-indigo-400 font-extrabold">➔ {{ $diff['new'] }}</span>
+                                                            </div>
+                                                        @endforeach
+                                                    </div>
+                                                @elseif($pRow['status'] === 'unchanged')
+                                                    <span class="text-slate-400 italic">Data Excel identik dengan database (tidak ada perubahan).</span>
+                                                @else
+                                                    <span class="text-rose-500 font-medium">{{ $pRow['reason'] ?? 'Dilewati' }}</span>
+                                                @endif
+                                            </td>
+                                        </tr>
+                                    @empty
+                                        <tr>
+                                            <td colspan="4" class="p-6 text-center text-slate-400">Tidak ada baris data untuk dipratinjau.</td>
+                                        </tr>
+                                    @endforelse
+                                </tbody>
+                            </table>
+                        </div>
+
+                        {{-- Action Buttons Step 2 --}}
+                        <div class="flex items-center justify-between pt-2">
+                            <button type="button" wire:click="$set('importStep', 1)"
+                                class="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold rounded-xl text-xs flex items-center gap-1.5">
+                                <span>⏮️ Upload File Lain</span>
+                            </button>
+                            <div class="flex items-center gap-2">
+                                <button type="button" wire:click="resetImportModal"
+                                    class="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold rounded-xl text-xs">Batal</button>
+                                <button type="button" wire:click="processImport" wire:loading.attr="disabled"
+                                    class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold rounded-xl text-xs shadow-lg transition-all flex items-center gap-2">
+                                    <span wire:loading wire:target="processImport" class="inline-block w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+                                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                                    <span>Konfirmasi &amp; Eksekusi Update ({{ $stats['changed'] }} Data)</span>
+                                </button>
+                            </div>
+                        </div>
+                    @endif
+                </div>
+            </div>
+        @endif
+
+        {{-- Hasil Import (jika ada) --}}
+        @if(!empty($importResults))
+            <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-5 shadow-sm space-y-3 mb-6">
+                <div class="flex items-center gap-2">
+                    <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                    <h3 class="font-extrabold text-sm text-slate-900 dark:text-slate-100">Hasil Import Excel</h3>
+                </div>
+                <div class="flex items-center gap-4 text-sm">
+                    <span class="px-3 py-1.5 bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 font-bold rounded-xl text-xs">
+                        ✅ {{ $importResults['updated'] }} data diperbarui
+                    </span>
+                    @if(!empty($importResults['skipped']))
+                        <span class="px-3 py-1.5 bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 font-bold rounded-xl text-xs">
+                            ⚠️ {{ count($importResults['skipped']) }} baris dilewati
+                        </span>
+                    @endif
+                </div>
+                @if(!empty($importResults['skipped']))
+                    <div class="bg-slate-50 dark:bg-slate-800/50 rounded-xl p-3 space-y-1 max-h-40 overflow-y-auto">
+                        @foreach($importResults['skipped'] as $skipMsg)
+                            <div class="text-xs text-amber-700 dark:text-amber-400">• {{ $skipMsg }}</div>
+                        @endforeach
+                    </div>
+                @endif
+                <button type="button" wire:click="$set('importResults', [])" class="text-xs text-slate-400 hover:text-slate-600 transition-colors">Tutup laporan</button>
+            </div>
+        @endif
+
         {{-- ============================================================ --}}
         {{-- MODAL 1: Quick Profile Santri                                --}}
         {{-- ============================================================ --}}
@@ -576,6 +824,19 @@
                                         <span class="text-slate-400">Alamat:</span> <span class="font-medium text-slate-900 dark:text-slate-100">{{ $motherAddr }}</span>
                                     </div>
                                 </div>
+
+                                @if($prof->getAdditional('guardian_name') || $prof->getAdditional('guardian_phone'))
+                                    <div class="bg-white dark:bg-slate-900/80 p-3 rounded-xl border border-amber-200/80 dark:border-amber-700/80 space-y-1.5">
+                                        <div class="flex items-center justify-between">
+                                            <span class="text-[11px] font-extrabold text-amber-600 dark:text-amber-400 uppercase">👤 Wali Santri ({{ $prof->getAdditional('guardian_relationship') ?: 'Wali' }})</span>
+                                            <span class="font-bold text-slate-900 dark:text-slate-100">{{ $prof->getAdditional('guardian_name') ?? '-' }}</span>
+                                        </div>
+                                        <div class="grid grid-cols-2 gap-2 text-[11px] text-slate-600 dark:text-slate-300 pt-0.5">
+                                            <div>No. HP: <strong class="font-mono font-bold text-slate-900 dark:text-slate-100">{{ $prof->getAdditional('guardian_phone') ?? '-' }}</strong></div>
+                                            <div>Hubungan: <strong class="font-bold text-slate-900 dark:text-slate-100">{{ $prof->getAdditional('guardian_relationship') ?: 'Wali' }}</strong></div>
+                                        </div>
+                                    </div>
+                                @endif
                             </div>
                         </div>
 
@@ -597,10 +858,6 @@
                                 <div class="flex items-center justify-between">
                                     <span class="text-slate-500 font-medium">No. HP / WA Santri:</span>
                                     <span class="font-mono font-bold text-slate-900 dark:text-slate-100">{{ $selectedSantri->phone ?? '-' }}</span>
-                                </div>
-                                <div class="flex items-center justify-between">
-                                    <span class="text-slate-500 font-medium">Kota Kelahiran:</span>
-                                    <span class="font-bold text-slate-900 dark:text-slate-100">{{ $prof->birth_city ?? '-' }}</span>
                                 </div>
                                 <div class="pt-1">
                                     <span class="text-slate-500 font-medium block mb-0.5">Alamat Lengkap Santri:</span>
@@ -642,22 +899,17 @@
                         </div>
                     </div>
 
-                    {{-- Status Tagihan Keuangan (If Any Unpaid Bills) --}}
-                    @if($selectedSantri->bills && $selectedSantri->bills->count() > 0)
-                        <div class="bg-rose-50 dark:bg-rose-950/30 p-4 rounded-2xl border border-rose-200/60 dark:border-rose-800/40 space-y-2">
-                            <div class="flex items-center justify-between">
-                                <h4 class="font-extrabold text-xs text-rose-800 dark:text-rose-300 uppercase tracking-wider flex items-center gap-2">
-                                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
-                                    <span>Tagihan Belum Lunas ({{ $selectedSantri->bills->count() }} Tagihan)</span>
-                                </h4>
-                                <span class="font-mono font-extrabold text-xs text-rose-700 dark:text-rose-300">
-                                    Total: Rp {{ number_format($selectedSantri->bills->sum('remaining_amount'), 0, ',', '.') }}
-                                </span>
-                            </div>
-                        </div>
-                    @endif
+                    {{-- Action Buttons --}}
 
                     <div class="flex flex-wrap items-center justify-end gap-3 border-t border-slate-100 dark:border-slate-800 pt-4">
+                        @can('update-person')
+                        <a href="{{ route('kepengasuhan.santri.edit', $selectedSantri->id) }}"
+                            class="px-4 py-2.5 bg-slate-700 hover:bg-slate-600 text-white font-extrabold rounded-xl text-xs shadow-md transition-all flex items-center gap-2">
+                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                            <span>Edit Biodata</span>
+                        </a>
+                        @endcan
+
                         @can('manage-kamar')
                         <button type="button" wire:click="openTransferRoomModal('{{ $selectedSantri->id }}')"
                             class="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold rounded-xl text-xs shadow-md transition-all flex items-center gap-2">
@@ -734,6 +986,72 @@
         </div>
     @endif
 
+    {{-- MODAL UBAH STATUS SANTRI --}}
+    @if($showStatusModal)
+        <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+            <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-5">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-amber-100 dark:bg-amber-950/60 flex items-center justify-center">
+                        <svg class="w-5 h-5 text-amber-600 dark:text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                    </div>
+                    <div>
+                        <h3 class="font-extrabold text-base text-slate-900 dark:text-slate-100">Ubah Status Santri</h3>
+                        <p class="text-xs text-slate-500 mt-0.5">{{ $statusSantriName }}</p>
+                    </div>
+                </div>
+
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1.5">Status Keanggotaan</label>
+                        <select wire:model="targetEnrollmentStatus" class="w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-800 dark:text-slate-100">
+                            <option value="aktif">✅ Aktif (Santri Mukim/Laju)</option>
+                            <option value="boyong">🚪 Boyong (Keluar Tidak Resmi)</option>
+                            <option value="keluar_resmi">📋 Keluar Resmi</option>
+                            <option value="dikeluarkan">❌ Dikeluarkan</option>
+                            <option value="alumni">🎓 Alumni / Lulus</option>
+                            <option value="tanpa_keterangan">❓ Tanpa Keterangan</option>
+                        </select>
+                    </div>
+
+                    @if($targetEnrollmentStatus === 'aktif')
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1.5">Status Keberadaan</label>
+                        <div class="grid grid-cols-2 gap-2">
+                            <label class="flex items-center gap-2.5 p-3 rounded-xl border cursor-pointer transition-colors {{ $targetPresenceStatus === 'mukim' ? 'bg-indigo-50 border-indigo-400 dark:bg-indigo-950/60 dark:border-indigo-600' : 'bg-slate-50 border-slate-200 dark:bg-slate-800 dark:border-slate-700' }}">
+                                <input type="radio" wire:model="targetPresenceStatus" value="mukim" class="text-indigo-600">
+                                <div>
+                                    <div class="text-xs font-bold text-slate-800 dark:text-slate-200">Mukim</div>
+                                    <div class="text-[10px] text-slate-400">Tinggal di asrama</div>
+                                </div>
+                            </label>
+                            <label class="flex items-center gap-2.5 p-3 rounded-xl border cursor-pointer transition-colors {{ $targetPresenceStatus === 'laju' ? 'bg-amber-50 border-amber-400 dark:bg-amber-950/60 dark:border-amber-600' : 'bg-slate-50 border-slate-200 dark:bg-slate-800 dark:border-slate-700' }}">
+                                <input type="radio" wire:model="targetPresenceStatus" value="laju" class="text-amber-600">
+                                <div>
+                                    <div class="text-xs font-bold text-slate-800 dark:text-slate-200">Laju</div>
+                                    <div class="text-[10px] text-slate-400">Non-asrama</div>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+                    @endif
+
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1.5">Catatan Perubahan (Opsional)</label>
+                        <textarea wire:model="statusChangeNotes" rows="2" placeholder="Alasan perubahan status..."
+                            class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-800 dark:text-slate-100 resize-none"></textarea>
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-end gap-2 pt-1">
+                    <button type="button" wire:click="$set('showStatusModal', false)"
+                        class="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold rounded-xl text-xs">Batal</button>
+                    <button type="button" wire:click="requestStatusChangeConfirm"
+                        class="px-5 py-2.5 bg-amber-600 hover:bg-amber-500 text-white font-extrabold rounded-xl text-xs shadow-md transition-all">Simpan Perubahan Status</button>
+                </div>
+            </div>
+        </div>
+    @endif
+
     {{-- MODAL KONFIRMASI KOSTUM ELEGAN (NO BROWSER ALERT) --}}
     @if($showConfirmModal)
         <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md">
@@ -748,7 +1066,7 @@
                     </div>
                     <div>
                         <h3 class="font-extrabold text-base text-slate-900 dark:text-slate-100">{{ $confirmTitle }}</h3>
-                        <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Konfirmasi Pemindahan</p>
+                        <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Konfirmasi Tindakan</p>
                     </div>
                 </div>
 
@@ -768,6 +1086,78 @@
                         {{ $confirmButtonColor === 'emerald' ? 'bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700' : '' }}
                         {{ $confirmButtonColor === 'indigo' ? 'bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700' : '' }}">
                         {{ $confirmButtonText }}
+                    </button>
+                </div>
+            </div>
+        </div>
+    @endif
+
+    {{-- MODAL KONFIRMASI UNDUH EXCEL DENGAN RANGKUMAN FILTER --}}
+    @if($showExportConfirmModal)
+        @php $summary = $this->exportSummary; @endphp
+        <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md">
+            <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl max-w-lg w-full p-6 shadow-2xl space-y-5">
+                <div class="flex items-center gap-3">
+                    <div class="w-12 h-12 rounded-2xl bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-bold flex-shrink-0">
+                        <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                    </div>
+                    <div>
+                        <h3 class="font-extrabold text-base text-slate-900 dark:text-slate-100">Konfirmasi Unduh Excel</h3>
+                        <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Periksa rangkuman filter sebelum mengunduh data</p>
+                    </div>
+                </div>
+
+                <div class="bg-slate-50 dark:bg-slate-800/60 p-4 rounded-2xl border border-slate-200/60 dark:border-slate-700/60 space-y-3 text-xs">
+                    <div class="flex items-center justify-between pb-2.5 border-b border-slate-200/60 dark:border-slate-700/60">
+                        <span class="font-extrabold text-slate-500 dark:text-slate-400 uppercase tracking-wide text-[10px]">Total Santri Diekspor</span>
+                        <span class="px-2.5 py-1 bg-emerald-100 text-emerald-800 dark:bg-emerald-950/80 dark:text-emerald-300 font-extrabold rounded-lg text-xs">
+                            {{ number_format($summary['total_count']) }} Santri
+                        </span>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3 text-slate-700 dark:text-slate-300">
+                        <div>
+                            <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Status Keanggotaan</div>
+                            <div class="font-bold text-slate-800 dark:text-slate-100 mt-0.5">{{ $summary['enrollment_label'] }}</div>
+                        </div>
+                        <div>
+                            <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Status Keberadaan</div>
+                            <div class="font-bold text-slate-800 dark:text-slate-100 mt-0.5">{{ $summary['presence_label'] }}</div>
+                        </div>
+                        <div>
+                            <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Filter Gender</div>
+                            <div class="font-bold text-slate-800 dark:text-slate-100 mt-0.5">{{ $summary['gender_label'] }}</div>
+                        </div>
+                        <div>
+                            <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{{ $activeTab === 'komplek' ? 'Komplek Asrama' : 'Kelas Madrasah' }}</div>
+                            <div class="font-bold text-slate-800 dark:text-slate-100 mt-0.5">{{ $summary['location_label'] }}</div>
+                        </div>
+                    </div>
+
+                    <div class="pt-2 border-t border-slate-200/60 dark:border-slate-700/60">
+                        <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Kata Kunci Pencarian</div>
+                        <div class="font-medium text-slate-700 dark:text-slate-300 mt-0.5 italic">{{ $summary['search_label'] }}</div>
+                    </div>
+
+                    <div class="pt-2 border-t border-slate-200/60 dark:border-slate-700/60">
+                        <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Rencana Nama File Output</div>
+                        <div class="px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl font-mono text-[11px] text-emerald-600 dark:text-emerald-400 font-bold break-all flex items-center gap-2">
+                            <svg class="w-4 h-4 flex-shrink-0 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                            <span>{{ $summary['filename'] }}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-end gap-2 pt-1">
+                    <button type="button" wire:click="$set('showExportConfirmModal', false)"
+                        class="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold rounded-xl text-xs transition-colors">
+                        Batal
+                    </button>
+                    <button type="button" wire:click="exportSantri" wire:loading.attr="disabled"
+                        class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold rounded-xl text-xs shadow-lg transition-all flex items-center gap-2">
+                        <span wire:loading wire:target="exportSantri" class="inline-block w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                        <span>Ya, Unduh File Excel</span>
                     </button>
                 </div>
             </div>
