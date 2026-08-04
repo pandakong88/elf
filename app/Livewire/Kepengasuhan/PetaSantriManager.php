@@ -734,22 +734,23 @@ class PetaSantriManager extends Component
             }
         }
 
-        // Dropdown options
+        // Dropdown options (Natural Sorting: 1, 2, 3... 10, 11)
         $dormitoryOptions = Dormitory::active()
             ->when($this->genderFilter, fn($q) => $q->where('gender', $this->genderFilter))
-            ->get();
+            ->get()
+            ->sort(fn($a, $b) => strnatcasecmp($a->name, $b->name));
 
         $roomOptions = Room::active()
             ->with('dormitory')
             ->when($this->genderFilter, fn($q) => $q->whereHas('dormitory', fn($dq) => $dq->where('gender', $this->genderFilter)))
-            ->get();
+            ->get()
+            ->sort(fn($a, $b) => strnatcasecmp($a->name, $b->name));
 
         $kelasOptions = MadrasahKelas::where('is_active', true)
             ->when($this->genderFilter === 'L', fn($q) => $q->where(fn($sq) => $sq->where('name', 'like', '%(Pa)%')->orWhere('name', 'like', '%Pa%')->orWhere('name', 'like', '%Putra%')->orWhere('name', 'like', '%(L)%')->orWhereHas('enrollments.person', fn($pq) => $pq->where('gender', 'L'))))
             ->when($this->genderFilter === 'P', fn($q) => $q->where(fn($sq) => $sq->where('name', 'like', '%(Pi)%')->orWhere('name', 'like', '%Pi%')->orWhere('name', 'like', '%Putri%')->orWhere('name', 'like', '%(P)%')->orWhereHas('enrollments.person', fn($pq) => $pq->where('gender', 'P'))))
-            ->orderBy('jenjang')
-            ->orderBy('name')
-            ->get();
+            ->get()
+            ->sort(fn($a, $b) => strnatcasecmp($a->name, $b->name));
 
         return view('livewire.kepengasuhan.peta-santri-manager', [
             'santriList'       => $santriList,
