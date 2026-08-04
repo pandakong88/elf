@@ -21,6 +21,7 @@ class DatabaseSeeder extends Seeder
             LandingPageContentSeeder::class, // 7. Landing Page CMS Content
             ActivitySeeder::class,           // 8. Activities with Images
             BillingConfigurationSeeder::class, // 9. Tarif resmi pedoman santri (Syahriah, Registrasi & Kitab)
+            LandingPageContentSeeder::class, // 10. Landing Page CMS Content (re-run to ensure content is up-to-date)
         ]);
     }
 }
