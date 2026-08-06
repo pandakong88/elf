@@ -151,7 +151,8 @@
     {{-- SUB-TAB 1: DATA KOMPLEK (CRUD) --}}
     @if($activeTab === 'komplek')
         <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl shadow-sm overflow-hidden">
-            <table class="w-full text-left border-collapse text-sm">
+            <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse text-sm min-w-[640px]">
                 <thead>
                     <tr class="bg-slate-50 dark:bg-slate-800/60 border-b border-slate-200 dark:border-slate-800 text-[11px] font-extrabold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                         <th class="py-3 px-4 w-12 text-center">No</th>
@@ -160,7 +161,7 @@
                         <th class="py-3 px-4">Nominal Kas Komplek</th>
                         <th class="py-3 px-4 text-center">Jumlah Kamar</th>
                         <th class="py-3 px-4 text-center">Status</th>
-                        <th class="py-3 px-4 text-center w-28">Aksi</th>
+                        <th class="py-3 px-4 text-center w-32">Aksi</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
@@ -183,11 +184,17 @@
                             <td class="py-3 px-4 text-center">
                                 <div class="flex items-center justify-center gap-1">
                                     @can('manage-asrama')
-                                    <button type="button" wire:click="openEditDormitoryModal('{{ $dorm->id }}')" class="p-1 text-slate-500 hover:text-slate-800">
+                                    <button type="button" wire:click="openEditDormitoryModal('{{ $dorm->id }}')" title="Edit Komplek"
+                                        class="p-1.5 text-slate-500 hover:text-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors">
                                         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
                                     </button>
-                                    <button type="button" wire:click="toggleDormitoryStatus('{{ $dorm->id }}')" class="p-1 text-amber-500 hover:text-amber-700">
+                                    <button type="button" wire:click="toggleDormitoryStatus('{{ $dorm->id }}')" title="Toggle Status Aktif/Nonaktif"
+                                        class="p-1.5 text-amber-500 hover:text-amber-700 hover:bg-amber-50 dark:hover:bg-amber-950/40 rounded-lg transition-colors">
                                         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/></svg>
+                                    </button>
+                                    <button type="button" wire:click="requestDeleteDormitoryConfirm('{{ $dorm->id }}')" title="Hapus Komplek"
+                                        class="p-1.5 text-rose-500 hover:text-rose-700 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-lg transition-colors">
+                                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
                                     </button>
                                     @else
                                     <span class="text-xs text-slate-300 italic">—</span>
@@ -200,6 +207,7 @@
                     @endforelse
                 </tbody>
             </table>
+            </div>
             <div class="p-4 border-t border-slate-100 dark:border-slate-800">{{ $dormitoriesList->links() }}</div>
         </div>
     @endif
@@ -207,7 +215,8 @@
     {{-- SUB-TAB 2: DATA KAMAR (CRUD) --}}
     @if($activeTab === 'kamar')
         <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl shadow-sm overflow-hidden">
-            <table class="w-full text-left border-collapse text-sm">
+            <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse text-sm min-w-[640px]">
                 <thead>
                     <tr class="bg-slate-50 dark:bg-slate-800/60 border-b border-slate-200 dark:border-slate-800 text-[11px] font-extrabold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                         <th class="py-3 px-4 w-12 text-center">No</th>
@@ -216,7 +225,7 @@
                         <th class="py-3 px-4 text-center">Kapasitas Bed</th>
                         <th class="py-3 px-4 text-center">Penghuni Aktif</th>
                         <th class="py-3 px-4 text-center">Status</th>
-                        <th class="py-3 px-4 text-center w-28">Aksi</th>
+                        <th class="py-3 px-4 text-center w-32">Aksi</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
@@ -240,11 +249,17 @@
                             <td class="py-3 px-4 text-center">
                                 <div class="flex items-center justify-center gap-1">
                                     @can('manage-kamar')
-                                    <button type="button" wire:click="openEditRoomModal('{{ $roomItem->id }}')" class="p-1 text-slate-500 hover:text-slate-800">
+                                    <button type="button" wire:click="openEditRoomModal('{{ $roomItem->id }}')" title="Edit Kamar"
+                                        class="p-1.5 text-slate-500 hover:text-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors">
                                         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
                                     </button>
-                                    <button type="button" wire:click="toggleRoomStatus('{{ $roomItem->id }}')" class="p-1 text-amber-500 hover:text-amber-700">
+                                    <button type="button" wire:click="toggleRoomStatus('{{ $roomItem->id }}')" title="Toggle Status Aktif/Nonaktif"
+                                        class="p-1.5 text-amber-500 hover:text-amber-700 hover:bg-amber-50 dark:hover:bg-amber-950/40 rounded-lg transition-colors">
                                         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/></svg>
+                                    </button>
+                                    <button type="button" wire:click="requestDeleteRoomConfirm('{{ $roomItem->id }}')" title="Hapus Kamar"
+                                        class="p-1.5 text-rose-500 hover:text-rose-700 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-lg transition-colors">
+                                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
                                     </button>
                                     @else
                                     <span class="text-xs text-slate-300 italic">—</span>
@@ -257,6 +272,7 @@
                     @endforelse
                 </tbody>
             </table>
+            </div>
             <div class="p-4 border-t border-slate-100 dark:border-slate-800">{{ $roomsList->links() }}</div>
         </div>
     @endif
@@ -264,7 +280,8 @@
     {{-- SUB-TAB 3: DATA KELAS (CRUD) --}}
     @if($activeTab === 'kelas')
         <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl shadow-sm overflow-hidden">
-            <table class="w-full text-left border-collapse text-sm">
+            <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse text-sm min-w-[640px]">
                 <thead>
                     <tr class="bg-slate-50 dark:bg-slate-800/60 border-b border-slate-200 dark:border-slate-800 text-[11px] font-extrabold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                         <th class="py-3 px-4 w-12 text-center">No</th>
@@ -292,10 +309,12 @@
                             <td class="py-3 px-4 text-center">
                                 <div class="flex items-center justify-center gap-1">
                                     @can('manage-kelas')
-                                    <button type="button" wire:click="openEditKelasModal('{{ $kItem->id }}')" class="p-1 text-slate-500 hover:text-slate-800">
+                                    <button type="button" wire:click="openEditKelasModal('{{ $kItem->id }}')" title="Edit Kelas"
+                                        class="p-1.5 text-slate-500 hover:text-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors">
                                         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
                                     </button>
-                                    <button type="button" wire:click="deleteKelas('{{ $kItem->id }}')" class="p-1 text-rose-500 hover:text-rose-700">
+                                    <button type="button" wire:click="deleteKelas('{{ $kItem->id }}')" title="Hapus Kelas"
+                                        class="p-1.5 text-rose-500 hover:text-rose-700 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-lg transition-colors">
                                         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
                                     </button>
                                     @else
@@ -309,6 +328,7 @@
                     @endforelse
                 </tbody>
             </table>
+            </div>
             <div class="p-4 border-t border-slate-100 dark:border-slate-800">{{ $kelasList->links() }}</div>
         </div>
     @endif
@@ -657,6 +677,25 @@
                                 </label>
                             </div>
                             <input type="text" wire:model="newSantriMotherAddress" {{ $sameMotherAddress ? 'readonly' : '' }} placeholder="Jalan, RT/RW, Desa, Kecamatan, Kabupaten/Kota" class="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-800 dark:text-slate-100 {{ $sameMotherAddress ? 'opacity-70 cursor-not-allowed bg-slate-100 dark:bg-slate-800' : '' }}">
+                        </div>
+
+                        {{-- Data Wali Santri (Non-Orang Tua / Opsional) --}}
+                        <div class="pt-2 border-t border-slate-200/60 dark:border-slate-700/60">
+                            <label class="block font-extrabold text-xs text-amber-600 dark:text-amber-400 uppercase tracking-wider mb-2">👤 Data Wali Santri (Non-Orang Tua / Opsional)</label>
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                                <div>
+                                    <label class="block font-bold text-slate-600 dark:text-slate-300 mb-1">Nama Wali</label>
+                                    <input type="text" wire:model="newSantriGuardianName" placeholder="Nama Wali (jika tidak bersama orang tua)" class="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-800 dark:text-slate-100">
+                                </div>
+                                <div>
+                                    <label class="block font-bold text-slate-600 dark:text-slate-300 mb-1">No. HP / WA Wali</label>
+                                    <input type="text" wire:model="newSantriGuardianPhone" placeholder="08xxxxxxxxxx" class="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-800 dark:text-slate-100">
+                                </div>
+                                <div>
+                                    <label class="block font-bold text-slate-600 dark:text-slate-300 mb-1">Hubungan Wali</label>
+                                    <input type="text" wire:model="newSantriGuardianRelationship" placeholder="Contoh: Paman, Kakek, Kakak, Wali" class="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-800 dark:text-slate-100">
+                                </div>
+                            </div>
                         </div>
                     </div>
 

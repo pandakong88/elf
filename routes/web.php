@@ -38,6 +38,7 @@ Route::middleware('auth')->group(function () {
     // Livewire Kepengasuhan Pages
     Route::get('/kepengasuhan/asrama-kelas', \App\Livewire\Kepengasuhan\PusatKendaliAsramaKelas::class)->name('kepengasuhan.asrama-kelas');
     Route::get('/kepengasuhan/peta-santri', \App\Livewire\Kepengasuhan\PetaSantriManager::class)->name('kepengasuhan.peta-santri');
+    Route::get('/kepengasuhan/santri/{personId}/edit', \App\Livewire\Kepengasuhan\SantriEditor::class)->name('kepengasuhan.santri.edit');
     Route::get('/kepengasuhan/dormitories', \App\Livewire\Kepengasuhan\DormitoryList::class)->name('kepengasuhan.dormitories');
     Route::get('/kepengasuhan/perizinan',   \App\Livewire\Kepengasuhan\PerizinanList::class)->name('kepengasuhan.perizinan');
     Route::get('/kepengasuhan/violations',  \App\Livewire\Kepengasuhan\ViolationList::class)->name('kepengasuhan.violations');

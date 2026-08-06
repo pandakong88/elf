@@ -48,7 +48,19 @@ class BillingManager extends Component
     public bool $showInstallmentDetailsModal = false;
     public string $instFilterSearch = '';
 
-    // Dedicated View Halaman Detail Riwayat Penerbitan (Option 2)
+    // Tab: Daftar Konfigurasi Tarif
+    public string $rateSearchQuery = '';
+    public string $rateStatusFilter = '';
+
+    public function updatedRateSearchQuery(): void
+    {
+        $this->resetPage('ratesPage');
+    }
+
+    public function updatedRateStatusFilter(): void
+    {
+        $this->resetPage('ratesPage');
+    }
     public ?string $historyDetailConfigId = null;
     public ?int $historyDetailMonth = null;
     public ?int $historyDetailYear = null;
@@ -86,10 +98,13 @@ class BillingManager extends Component
     public ?string $editingItemId   = null;
     public string  $itemLabel       = '';
     public float   $itemAmount      = 0.0;
-    public string  $itemCategory       = 'dasar'; // 'dasar', 'asrama', 'seragam', 'konsumsi', 'kitab'
+    public string  $itemCategory       = 'dasar'; // 'dasar', 'fasilitas', 'seragam', 'katering', 'bangunan', 'administrasi', 'kitab'
     public string  $itemGender         = 'ALL';   // 'ALL', 'L', 'P'
     public string  $itemResidence      = 'ALL';   // 'ALL', 'mukim', 'laju'
     public bool    $itemIsActive       = true;
+    public string  $regItemSearch         = '';
+    public string  $regItemCategoryFilter = '';
+    public string  $regItemGenderFilter   = '';
     public array   $kitabPrices        = [];
     public string  $kitabSearch        = '';
     public string  $kitabJenjangFilter = '';
@@ -219,6 +234,7 @@ class BillingManager extends Component
         ]);
 
         try {
+            $actionText = $this->editingItemId ? 'diperbarui' : 'ditambahkan';
             BillingConfiguration::updateOrCreate(
                 ['id' => $this->editingItemId ?: Str::uuid()->toString()],
                 [
@@ -226,7 +242,7 @@ class BillingManager extends Component
                     'label'          => $this->itemLabel,
                     'amount'         => $this->itemAmount,
                     'effective_from' => now()->startOfYear(),
-                    'interval'       => 'insidental',
+                    'interval'       => 'once',
                     'target_type'    => 'all',
                     'target_filters' => [
                         'category'  => $this->itemCategory,
@@ -238,14 +254,29 @@ class BillingManager extends Component
                 ]
             );
 
-            $msg = "Tarif item {$this->itemLabel} berhasil disimpan.";
+            $msg = "Tarif item '{$this->itemLabel}' berhasil {$actionText}.";
             session()->flash('message', $msg);
             $this->toastSuccess($msg);
             $this->showItemModal = false;
+            $this->editingItemId = null;
         } catch (\Exception $e) {
             session()->flash('error', $e->getMessage());
             $this->toastError($e->getMessage());
         }
+    }
+
+    public function confirmDeleteRegItem(string $itemId): void
+    {
+        $config = BillingConfiguration::find($itemId);
+        if (!$config) {
+            $this->toastError('Item tarif tidak ditemukan.');
+            return;
+        }
+
+        $this->tariffActionConfigId    = $itemId;
+        $this->tariffActionType        = 'delete_reg_item';
+        $this->tariffActionConfigLabel = $config->label;
+        $this->showTariffActionModal   = true;
     }
 
     public function toggleItemActive(string $configId): void
@@ -343,6 +374,7 @@ class BillingManager extends Component
     public bool    $showKasirAddBillModal  = false;
     public int     $kasirWizardStep        = 1;           // 1 = pilih tarif, 2 = pilih periode
     public ?string $kasirAddConfigId       = null;
+    public int     $kasirSelectedYear      = 2026;
     public bool    $kasirSantriIsInTarget  = true;        // warning flag
     public array   $kasirAvailablePeriods  = [];          // computed list
     public array   $kasirSelectedPeriods   = [];          // checked by kasir
@@ -355,6 +387,7 @@ class BillingManager extends Component
         }
         $this->kasirWizardStep       = 1;
         $this->kasirAddConfigId      = null;
+        $this->kasirSelectedYear     = (int) now()->format('Y');
         $this->kasirSantriIsInTarget = true;
         $this->kasirAvailablePeriods = [];
         $this->kasirSelectedPeriods  = [];
@@ -375,7 +408,21 @@ class BillingManager extends Component
 
         $billingService = new BillingService();
         $this->kasirSantriIsInTarget = $billingService->isSantriInTargetForConfig($config, $this->selectedSantriId);
-        $this->kasirAvailablePeriods = $billingService->getAvailablePeriodsForSantri($config, $this->selectedSantriId);
+        $this->kasirAvailablePeriods = $billingService->getAvailablePeriodsForSantri($config, $this->selectedSantriId, $this->kasirSelectedYear);
+    }
+
+    public function updatedKasirSelectedYear(): void
+    {
+        $this->kasirAvailablePeriods = [];
+        $this->kasirSelectedPeriods  = [];
+
+        if (!$this->kasirAddConfigId || !$this->selectedSantriId) return;
+
+        $config = BillingConfiguration::find($this->kasirAddConfigId);
+        if (!$config) return;
+
+        $billingService = new BillingService();
+        $this->kasirAvailablePeriods = $billingService->getAvailablePeriodsForSantri($config, $this->selectedSantriId, $this->kasirSelectedYear);
     }
 
     public function kasirGoToStep2(): void
@@ -505,6 +552,10 @@ class BillingManager extends Component
         ]);
 
         $config = BillingConfiguration::findOrFail($this->genConfigId);
+        if (!$config->is_active) {
+            $this->toastError("Konfigurasi tarif '{$config->label}' sedang nonaktif. Silakan aktifkan tarif terlebih dahulu di tab Konfigurasi Tarif & Target.");
+            return;
+        }
         $billingService = new BillingService();
         $targetStudents = $billingService->getTargetPersonsForConfig($config);
         $studentCount = $targetStudents->count();
@@ -623,7 +674,7 @@ class BillingManager extends Component
         if ($isEventInterval) {
             session()->flash('message', "Tagihan Insidental '{$config->label}' untuk tahun {$this->genYear} berhasil diterbitkan: {$result['generated']} tagihan baru dibuat, {$result['skipped']} tagihan dilewati (sudah ada).");
         } else {
-            $subMsg = $subPeriod ? " (Gelombang {$subPeriod})" : "";
+            $subMsg = $periodSub ? " (Gelombang {$periodSub})" : "";
             session()->flash('message', "Tagihan{$subMsg} berhasil dibuat: {$result['generated']} tagihan baru dibuat, {$result['skipped']} tagihan dilewati (sudah ada).");
         }
     }
@@ -957,7 +1008,11 @@ class BillingManager extends Component
             $search = '%' . trim($this->historyDetailSearch) . '%';
             $query->whereHas('person', function($q) use ($search) {
                 $q->where('name', 'like', $search)
-                  ->orWhere('nis', 'like', $search);
+                  ->orWhere('nik', 'like', $search)
+                  ->orWhereHas('santriProfile', function($sq) use ($search) {
+                      $sq->where('additional_info->nis', 'like', $search)
+                        ->orWhere('additional_info->nisn', 'like', $search);
+                  });
             });
         }
 
@@ -1159,13 +1214,117 @@ class BillingManager extends Component
 
 
 
+    public bool   $showTariffActionModal = false;
+    public ?string $tariffActionConfigId = null;
+    public string  $tariffActionType     = ''; // 'toggle_status' | 'delete'
+    public array   $tariffActionData     = [];
+
+    public function openTariffActionModal(string $configId, string $actionType): void
+    {
+        $config = BillingConfiguration::find($configId);
+        if (!$config) {
+            $this->toastError('Konfigurasi tarif tidak ditemukan.');
+            return;
+        }
+
+        $labelBase = $config->label ?: str_replace('_', ' ', $config->type);
+        $this->tariffActionConfigId = $configId;
+        $this->tariffActionType     = $actionType;
+
+        if ($actionType === 'toggle_status') {
+            $isActivating = !$config->is_active;
+            $this->tariffActionData = [
+                'title'        => $isActivating ? 'Konfirmasi Aktifkan Tarif' : 'Konfirmasi Nonaktifkan Tarif',
+                'message'      => $isActivating 
+                    ? "Apakah Anda YAKIN ingin mengaktifkan kembali tarif '{$labelBase}'? Tarif ini akan dapat diterbitkan kembali ke santri di periode mendatang."
+                    : "Apakah Anda YAKIN ingin menonaktifkan tarif '{$labelBase}'? Tarif ini tidak akan muncul di opsi penerbitan bulan berikutnya, tetapi riwayat tagihan terdahulu tetap 100% aman.",
+                'button_text'  => $isActivating ? 'Ya, Aktifkan Kembali' : 'Ya, Nonaktifkan Tarif',
+                'button_color' => $isActivating ? 'emerald' : 'amber',
+                'label'        => $labelBase,
+                'amount'       => $config->amount,
+                'status_now'   => $config->is_active ? 'Aktif' : 'Nonaktif',
+            ];
+        } elseif ($actionType === 'delete') {
+            $issuedCount = Bill::where('billing_config_id', $configId)->count();
+            if ($issuedCount > 0) {
+                $this->toastError("Tarif '{$labelBase}' tidak dapat dihapus permanent karena sudah memiliki {$issuedCount} tagihan terbit. Silakan gunakan tombol 'Nonaktifkan' untuk mematikan penerbitan tarif ini.");
+                return;
+            }
+
+            $this->tariffActionData = [
+                'title'        => 'Konfirmasi Hapus Permanent Tarif',
+                'message'      => "Apakah Anda YAKIN ingin menghapus permanent tarif '{$labelBase}'? Tarif ini belum pernah diterbitkan ke santri dan akan dihapus dari sistem.",
+                'button_text'  => 'Ya, Hapus Permanent',
+                'button_color' => 'rose',
+                'label'        => $labelBase,
+                'amount'       => $config->amount,
+                'status_now'   => $config->is_active ? 'Aktif' : 'Nonaktif',
+            ];
+        }
+
+        $this->showTariffActionModal = true;
+    }
+
+    public function executeConfirmedTariffAction(): void
+    {
+        $this->showTariffActionModal = false;
+
+        if ($this->tariffActionType === 'toggle_status' && $this->tariffActionConfigId) {
+            $this->toggleConfigStatus($this->tariffActionConfigId);
+        } elseif ($this->tariffActionType === 'delete' && $this->tariffActionConfigId) {
+            $this->deleteConfig($this->tariffActionConfigId);
+        }
+
+        $this->tariffActionConfigId = null;
+        $this->tariffActionType     = '';
+    }
+
+    public function duplicateConfig(string $id): void
+    {
+        $config = BillingConfiguration::find($id);
+        if (!$config) {
+            $this->toastError('Konfigurasi tarif tidak ditemukan.');
+            return;
+        }
+
+        $labelBase = $config->label ?: str_replace('_', ' ', $config->type);
+        $this->toastSuccess("Membuka form pembuatan tarif salinan dari '{$labelBase}'.");
+        $this->redirect(route('keuangan.billing.create', ['copy_from' => $id]), navigate: true);
+    }
+
+    public function toggleConfigStatus(string $id): void
+    {
+        $config = BillingConfiguration::find($id);
+        if (!$config) {
+            $this->toastError('Konfigurasi tarif tidak ditemukan.');
+            return;
+        }
+
+        $config->is_active = !$config->is_active;
+        $config->save();
+
+        $statusLabel = $config->is_active ? 'diaktifkan kembali' : 'dinonaktifkan';
+        $labelBase = $config->label ?: str_replace('_', ' ', $config->type);
+        $this->toastSuccess("Tarif '{$labelBase}' berhasil {$statusLabel}.");
+    }
+
     public function deleteConfig(string $id): void
     {
         $config = BillingConfiguration::find($id);
-        if ($config) {
-            $config->delete();
-            session()->flash('message', 'Konfigurasi tarif berhasil dihapus.');
+        if (!$config) {
+            $this->toastError('Konfigurasi tarif tidak ditemukan.');
+            return;
         }
+
+        $labelBase = $config->label ?: str_replace('_', ' ', $config->type);
+        $issuedCount = Bill::where('billing_config_id', $id)->count();
+        if ($issuedCount > 0) {
+            $this->toastError("Tarif '{$labelBase}' tidak dapat dihapus permanent karena sudah memiliki {$issuedCount} tagihan terbit. Silakan gunakan tombol 'Nonaktifkan' untuk mematikan penerbitan tarif ini.");
+            return;
+        }
+
+        $config->delete();
+        $this->toastSuccess("Konfigurasi tarif '{$labelBase}' berhasil dihapus.");
     }
 
 
@@ -1885,7 +2044,22 @@ class BillingManager extends Component
         $user = auth()->user();
         $isCentral = $user && ($user->hasRole('super-admin') || $user->hasRole('manajemen') || $user->hasRole('bendahara-pondok') || $user->hasRole('bendahara-pusat'));
 
-        $activeConfigs = BillingConfiguration::with('creator')->where('is_active', true)->orderBy('label')->get();
+        $ratesQuery = BillingConfiguration::with('creator');
+
+        if (trim($this->rateSearchQuery) !== '') {
+            $s = '%' . trim($this->rateSearchQuery) . '%';
+            $ratesQuery->where(function($q) use ($s) {
+                $q->where('label', 'like', $s)
+                  ->orWhere('type', 'like', $s);
+            });
+        }
+
+        if ($this->rateStatusFilter === 'active') {
+            $ratesQuery->where('is_active', true);
+        } elseif ($this->rateStatusFilter === 'inactive') {
+            $ratesQuery->where('is_active', false);
+        }
+
         $installmentConfigs = BillingConfiguration::where('is_active', true)
             ->where('can_be_installment', true)
             ->get();
@@ -1927,8 +2101,17 @@ class BillingManager extends Component
                 return false;
             };
 
-            $activeConfigs = $activeConfigs->filter($filterFunc);
+            $allowedConfigIds = BillingConfiguration::all()->filter($filterFunc)->pluck('id')->toArray();
+            $ratesQuery->whereIn('id', $allowedConfigIds);
             $installmentConfigs = $installmentConfigs->filter($filterFunc);
+        }
+
+        $activeConfigs = $ratesQuery->orderBy('is_active', 'desc')->orderBy('label')->paginate(10, ['*'], 'ratesPage');
+
+        // Configs specifically for Generator dropdown (Only active tariffs allowed to generate)
+        $generatorConfigs = BillingConfiguration::where('is_active', true)->orderBy('label')->get();
+        if (!$isCentral && $user) {
+            $generatorConfigs = $generatorConfigs->filter($filterFunc);
         }
 
         // Fetch active installment plans (parent bills)
@@ -2134,8 +2317,23 @@ class BillingManager extends Component
         $paymentsLog = $paymentsLogQuery->paginate(15, pageName: 'payLogPage');
         $generationHistory = $historyQuery->paginate(10, pageName: 'historyPage');
 
+        $regItemsQuery = BillingConfiguration::where('type', 'pendaftaran');
+        if (!empty($this->regItemSearch)) {
+            $regItemsQuery->where('label', 'like', '%' . $this->regItemSearch . '%');
+        }
+        if (!empty($this->regItemCategoryFilter)) {
+            $regItemsQuery->where('target_filters->category', $this->regItemCategoryFilter);
+        }
+        if (!empty($this->regItemGenderFilter)) {
+            $regItemsQuery->where(function ($q) {
+                $q->where('target_filters->gender', $this->regItemGenderFilter)
+                  ->orWhere('target_filters->gender', 'ALL');
+            });
+        }
+        $registrationItems = $regItemsQuery->orderBy('is_active', 'desc')->orderBy('created_at', 'desc')->get();
+
         return view('livewire.keuangan.billing-manager', [
-            'registrationItems'   => BillingConfiguration::where('type', 'pendaftaran')->orderBy('is_active', 'desc')->orderBy('created_at', 'desc')->get(),
+            'registrationItems'   => $registrationItems,
             'santriSearchResults' => $santriSearch,
             'recentSantri'        => $recentSantri,
             'roomsForKomplek'     => $roomsForKomplek,
@@ -2143,6 +2341,7 @@ class BillingManager extends Component
             'selectedSantri'      => $selectedSantri,
             'exceptions'          => $exceptions,
             'activeConfigs'       => $activeConfigs,
+            'generatorConfigs'    => $generatorConfigs,
             'allSantriList'       => Person::whereHas('activeRoles', fn($q) => $q->where('role_type', 'santri')->where('enrollment_status', 'aktif'))->when($this->genderScope(), fn($q, $g) => $q->where('gender', $g))->orderBy('name')->get(['id', 'name', 'gender']),
             'installmentConfigs'  => $installmentConfigs,
             'bills'               => $billsQuery->paginate(10),

@@ -94,78 +94,128 @@
 
     <!-- Results Section -->
     <div class="space-y-3">
-        <div class="flex items-center justify-between px-1">
-            <span class="text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">Hasil Pencarian</span>
-            <span class="text-xs font-extrabold text-emerald-700 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 px-2.5 py-0.5 rounded-full">
-                {{ $santris->total() }} Santri Ditemukan
-            </span>
-        </div>
+        @if(!$hasQuery)
+            <!-- Initial Empty State with Animation & Guidance -->
+            <div class="bg-white dark:bg-slate-900 rounded-3xl p-8 text-center border border-slate-200/80 dark:border-slate-800 shadow-sm space-y-5 transition-all">
+                <!-- Animated Pulse Radar Icon -->
+                <div class="relative w-20 h-20 mx-auto flex items-center justify-center">
+                    <div class="absolute inset-0 bg-emerald-500/10 dark:bg-emerald-400/10 rounded-full animate-ping"></div>
+                    <div class="absolute inset-2 bg-gradient-to-tr from-emerald-600 via-teal-600 to-emerald-700 rounded-2xl shadow-lg flex items-center justify-center transform -rotate-3 hover:rotate-0 transition-transform">
+                        <svg class="w-9 h-9 text-white animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                        </svg>
+                    </div>
+                </div>
 
-        @if($santris->count() > 0)
-            <div class="grid grid-cols-1 gap-3">
-                @foreach($santris as $s)
-                    @php
-                        $activeRoom = $s->roomAssignments->first()?->room;
-                        $activeDorm = $activeRoom?->dormitory;
-                        $activeKelas = $s->madrasahEnrollments->first()?->kelas;
-                    @endphp
-                    <div class="bg-white dark:bg-slate-900 border-2 border-slate-200/80 dark:border-slate-800 hover:border-emerald-500 dark:hover:border-emerald-500/70 rounded-3xl p-4 shadow-sm hover:shadow-md transition-all space-y-3">
-                        <div class="flex items-center gap-3.5">
-                            <!-- Avatar -->
-                            <div class="w-13 h-13 rounded-2xl bg-emerald-700 text-white flex items-center justify-center font-black text-lg shrink-0 shadow-md overflow-hidden border-2 border-emerald-600">
-                                @if($s->photo)
-                                    <img src="{{ Storage::url($s->photo) }}" alt="{{ $s->name }}" class="w-full h-full object-cover">
-                                @else
-                                    <span>{{ strtoupper(substr($s->name, 0, 2)) }}</span>
-                                @endif
-                            </div>
+                <!-- Guidance Heading & Text -->
+                <div class="max-w-md mx-auto space-y-2">
+                    <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200/60 dark:border-emerald-800/40 text-emerald-700 dark:text-emerald-300 text-xs font-black uppercase tracking-wider">
+                        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
+                        <span>✨ Terdapat Total {{ $totalSantriCount }} Santri Terdaftar</span>
+                    </div>
+                    <h3 class="text-lg font-black text-slate-800 dark:text-slate-100">
+                        Cari Data Santri / Putra-Putri Anda
+                    </h3>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                        Silakan ketik <strong>nama santri / anak</strong> pada kolom pencarian di atas atau gunakan <strong>filter komplek / kelas</strong> untuk menampilkan daftar santri.
+                    </p>
+                </div>
 
-                            <!-- Santri Info -->
-                            <div class="flex-1 min-w-0">
-                                <h3 class="text-base font-extrabold text-slate-900 dark:text-slate-100 truncate">
-                                    {{ $s->name }}
-                                </h3>
+                <!-- Quick Action Hints -->
+                <div class="pt-3 border-t border-slate-100 dark:border-slate-800 flex flex-wrap items-center justify-center gap-2 text-xs">
+                    <span class="text-slate-400 font-medium">Petunjuk:</span>
+                    <button type="button" onclick="document.getElementById('searchName').focus()" class="px-3.5 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-emerald-50 dark:hover:bg-emerald-950/50 text-slate-700 dark:text-slate-300 hover:text-emerald-600 text-xs font-bold transition-all border border-slate-200/60 dark:border-slate-700/60 flex items-center gap-1.5">
+                        <svg class="w-3.5 h-3.5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                        <span>Ketik Nama Santri</span>
+                    </button>
+                    <button type="button" @click="openFilter = true" class="px-3.5 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-emerald-50 dark:hover:bg-emerald-950/50 text-slate-700 dark:text-slate-300 hover:text-emerald-600 text-xs font-bold transition-all border border-slate-200/60 dark:border-slate-700/60 flex items-center gap-1.5">
+                        <svg class="w-3.5 h-3.5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/></svg>
+                        <span>Buka Filter Komplek / Kelas</span>
+                    </button>
+                </div>
+            </div>
+        @else
+            <!-- Results View (Fades in when search or filter is active) -->
+            <div class="flex items-center justify-between px-1">
+                <span class="text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">Hasil Pencarian</span>
+                <span class="text-xs font-extrabold text-emerald-700 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 px-2.5 py-0.5 rounded-full">
+                    {{ $santris->total() }} Santri Ditemukan
+                </span>
+            </div>
 
-                                <div class="space-y-1 mt-1 text-xs text-slate-600 dark:text-slate-400">
-                                    <div class="flex items-center gap-1.5 font-medium">
-                                        <svg class="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5m3 0h4"/></svg>
-                                        <span>Komplek:</span>
-                                        <strong class="text-slate-800 dark:text-slate-200 truncate">{{ $activeDorm ? $activeDorm->name : '-' }} {{ $activeRoom ? '(' . $activeRoom->name . ')' : '' }}</strong>
-                                    </div>
-                                    <div class="flex items-center gap-1.5 font-medium">
-                                        <svg class="w-3.5 h-3.5 text-amber-600 dark:text-amber-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
-                                        <span>Madrasah:</span>
-                                        <strong class="text-slate-800 dark:text-slate-200 truncate">{{ $activeKelas ? $activeKelas->name : '-' }}</strong>
+            @if($santris->count() > 0)
+                <div class="grid grid-cols-1 gap-3">
+                    @foreach($santris as $s)
+                        @php
+                            $activeRoom = $s->roomAssignments->first()?->room;
+                            $activeDorm = $activeRoom?->dormitory;
+                            $activeKelas = $s->madrasahEnrollments->first()?->kelas;
+                        @endphp
+                        <div class="bg-white dark:bg-slate-900 border-2 border-slate-200/80 dark:border-slate-800 hover:border-emerald-500 dark:hover:border-emerald-500/70 rounded-3xl p-4 shadow-sm hover:shadow-md transition-all space-y-3">
+                            <div class="flex items-center gap-3.5">
+                                <!-- Avatar -->
+                                <div class="w-13 h-13 rounded-2xl bg-emerald-700 text-white flex items-center justify-center font-black text-lg shrink-0 shadow-md overflow-hidden border-2 border-emerald-600">
+                                    @if($s->photo)
+                                        <img src="{{ Storage::url($s->photo) }}" alt="{{ $s->name }}" class="w-full h-full object-cover">
+                                    @else
+                                        <span>{{ strtoupper(substr($s->name, 0, 2)) }}</span>
+                                    @endif
+                                </div>
+
+                                <!-- Santri Info -->
+                                <div class="flex-1 min-w-0">
+                                    <h3 class="text-base font-extrabold text-slate-900 dark:text-slate-100 truncate">
+                                        {{ $s->name }}
+                                    </h3>
+
+                                    <div class="space-y-1 mt-1 text-xs text-slate-600 dark:text-slate-400">
+                                        <div class="flex items-center gap-1.5 font-medium">
+                                            <span class="text-slate-400">NIS:</span>
+                                            <span class="font-mono font-bold text-slate-800 dark:text-slate-200">{{ $s->santriProfile->additional_info['nis'] ?? ($s->santriProfile->nis ?? '-') }}</span>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
+
+                            <!-- Details Badges -->
+                            <div class="grid grid-cols-2 gap-2 pt-2 border-t border-slate-100 dark:border-slate-800/60 text-xs">
+                                <div class="bg-slate-50 dark:bg-slate-950 p-2.5 rounded-xl border border-slate-200/60 dark:border-slate-800 space-y-0.5">
+                                    <span class="text-[10px] font-bold text-slate-400 uppercase">Komplek &amp; Kamar</span>
+                                    <div class="font-extrabold text-slate-800 dark:text-slate-200 truncate">
+                                        {{ $activeDorm->name ?? 'Non-Asrama' }} - {{ $activeRoom->name ?? '-' }}
+                                    </div>
+                                </div>
+                                <div class="bg-slate-50 dark:bg-slate-950 p-2.5 rounded-xl border border-slate-200/60 dark:border-slate-800 space-y-0.5">
+                                    <span class="text-[10px] font-bold text-slate-400 uppercase">Kelas Madrasah</span>
+                                    <div class="font-extrabold text-emerald-600 dark:text-emerald-400 truncate">
+                                        {{ $activeKelas->name ?? 'Belum ada kelas' }}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Action Button -->
+                            <a href="{{ route('portal-wali.dashboard', $s->id) }}" 
+                               class="w-full py-2.5 px-4 bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white font-extrabold rounded-2xl text-xs flex items-center justify-center gap-2 shadow-md transition-all">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                                <span>Lihat Tagihan &amp; Profil Santri ➔</span>
+                            </a>
                         </div>
+                    @endforeach
+                </div>
 
-                        <!-- Big Friendly Button -->
-                        <a href="{{ route('portal-wali.dashboard', $s->id) }}" 
-                           class="w-full py-3 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white font-extrabold text-xs rounded-2xl transition-all shadow-md flex items-center justify-center gap-2 tracking-wide uppercase">
-                            <span>Lihat Tagihan Anak</span>
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
-                        </a>
+                <!-- Pagination -->
+                <div class="pt-2">
+                    {{ $santris->links() }}
+                </div>
+            @else
+                <div class="bg-white dark:bg-slate-900 rounded-3xl p-8 text-center border border-slate-200/80 dark:border-slate-800 shadow-sm space-y-3">
+                    <div class="w-12 h-12 rounded-2xl bg-rose-50 dark:bg-rose-950/60 text-rose-500 flex items-center justify-center mx-auto">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 9.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                     </div>
-                @endforeach
-            </div>
-
-            <div class="pt-2">
-                {{ $santris->links() }}
-            </div>
-        @else
-            <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-8 text-center space-y-3 shadow-sm transition-colors">
-                <div class="w-12 h-12 rounded-2xl bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center mx-auto border border-amber-200 dark:border-amber-500/20">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                    <h4 class="font-extrabold text-sm text-slate-800 dark:text-slate-200">Santri Tidak Ditemukan</h4>
+                    <p class="text-xs text-slate-500">Tidak ada data santri yang cocok dengan kata kunci atau filter pencarian Anda.</p>
                 </div>
-                <div>
-                    <h4 class="text-base font-extrabold text-slate-800 dark:text-slate-200">Nama Santri Tidak Ditemukan</h4>
-                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-xs mx-auto">
-                        Pastikan ejaan nama anak sudah benar, atau coba ketik beberapa huruf dari nama anak saja (contoh: "Ahmad").
-                    </p>
-                </div>
-            </div>
+            @endif
         @endif
     </div>
 

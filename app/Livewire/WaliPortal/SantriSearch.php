@@ -42,54 +42,68 @@ class SantriSearch extends Component
 
     public function render()
     {
-        $dormitories = Dormitory::orderBy('name')->get();
+        // Natural Sorting for all dropdown options
+        $dormitories = Dormitory::all()->sort(fn($a, $b) => strnatcasecmp($a->name, $b->name));
+
         $rooms = Room::when($this->filterKomplek, fn($q) => $q->where('dormitory_id', $this->filterKomplek))
-            ->orderBy('name')
-            ->get();
-        $kelases = MadrasahKelas::orderBy('name')->get();
+            ->get()
+            ->sort(fn($a, $b) => strnatcasecmp($a->name, $b->name));
 
-        $query = Person::query()
-            ->whereHas('roles', function ($q) {
-                $q->where('role_type', 'santri')->where('is_active', true);
-            })
-            ->with([
-                'roomAssignments' => function ($q) {
-                    $q->where('is_active', true)->with('room.dormitory');
-                },
-                'madrasahEnrollments' => function ($q) {
-                    $q->where('is_active', true)->with('kelas');
-                },
-                'santriProfile'
-            ]);
+        $kelases = MadrasahKelas::where('is_active', true)
+            ->get()
+            ->sort(fn($a, $b) => strnatcasecmp($a->name, $b->name));
 
-        if (trim($this->searchName) !== '') {
-            $query->where('name', 'like', '%' . trim($this->searchName) . '%');
+        $hasQuery = trim($this->searchName) !== '' || $this->filterKomplek !== '' || $this->filterKamar !== '' || $this->filterKelas !== '';
+
+        $totalSantriCount = Person::whereHas('roles', function ($q) {
+            $q->where('role_type', 'santri')->where('is_active', true);
+        })->count();
+
+        $santris = null;
+        if ($hasQuery) {
+            $query = Person::query()
+                ->whereHas('roles', function ($q) {
+                    $q->where('role_type', 'santri')->where('is_active', true);
+                })
+                ->with([
+                    'roomAssignments' => function ($q) {
+                        $q->where('is_active', true)->with('room.dormitory');
+                    },
+                    'madrasahEnrollments' => function ($q) {
+                        $q->where('is_active', true)->with('kelas');
+                    },
+                    'santriProfile'
+                ]);
+
+            if (trim($this->searchName) !== '') {
+                $query->where('name', 'like', '%' . trim($this->searchName) . '%');
+            }
+
+            if ($this->filterKomplek) {
+                $query->whereHas('roomAssignments', function ($q) {
+                    $q->where('is_active', true)
+                      ->whereHas('room', function ($rq) {
+                          $rq->where('dormitory_id', $this->filterKomplek);
+                      });
+                });
+            }
+
+            if ($this->filterKamar) {
+                $query->whereHas('roomAssignments', function ($q) {
+                    $q->where('is_active', true)
+                      ->where('room_id', $this->filterKamar);
+                });
+            }
+
+            if ($this->filterKelas) {
+                $query->whereHas('madrasahEnrollments', function ($q) {
+                    $q->where('is_active', true)
+                      ->where('kelas_id', $this->filterKelas);
+                });
+            }
+
+            $santris = $query->orderBy('name')->paginate(12);
         }
-
-        if ($this->filterKomplek) {
-            $query->whereHas('roomAssignments', function ($q) {
-                $q->where('is_active', true)
-                  ->whereHas('room', function ($rq) {
-                      $rq->where('dormitory_id', $this->filterKomplek);
-                  });
-            });
-        }
-
-        if ($this->filterKamar) {
-            $query->whereHas('roomAssignments', function ($q) {
-                $q->where('is_active', true)
-                  ->where('room_id', $this->filterKamar);
-            });
-        }
-
-        if ($this->filterKelas) {
-            $query->whereHas('madrasahEnrollments', function ($q) {
-                $q->where('is_active', true)
-                  ->where('kelas_id', $this->filterKelas);
-            });
-        }
-
-        $santris = $query->orderBy('name')->paginate(12);
 
         $contents = LandingPageContent::all()->pluck('value', 'key')->toArray();
 
@@ -124,6 +138,8 @@ class SantriSearch extends Component
             'rooms'            => $rooms,
             'kelases'          => $kelases,
             'santris'          => $santris,
+            'hasQuery'         => $hasQuery,
+            'totalSantriCount' => $totalSantriCount,
             'putraData'        => $putraData,
             'putriData'        => $putriData,
             'waliAnnouncement' => $waliAnnouncement,

@@ -449,74 +449,76 @@ class BillingService
                 }
             }
 
-            // Extract target parameters safely
-            $targetGenders = [];
-            $targetIds = [];
-            $residenceTargets = [];
+            // Apply target filtering only for bulk generation (when targetPersonId is null)
+            if (!$targetPersonId) {
+                $targetGenders = [];
+                $targetIds = [];
+                $residenceTargets = [];
 
-            if (is_array($config->target_filters)) {
-                if (isset($config->target_filters['genders'])) {
-                    $targetGenders = (array)$config->target_filters['genders'];
-                } elseif ($config->target_type === 'all') {
-                    $targetGenders = array_values(array_intersect(['L', 'P'], $config->target_filters));
+                if (is_array($config->target_filters)) {
+                    if (isset($config->target_filters['genders'])) {
+                        $targetGenders = (array)$config->target_filters['genders'];
+                    } elseif ($config->target_type === 'all') {
+                        $targetGenders = array_values(array_intersect(['L', 'P'], $config->target_filters));
+                    }
+
+                    if (isset($config->target_filters['residence'])) {
+                        $residenceTargets = (array)$config->target_filters['residence'];
+                    }
+
+                    if (isset($config->target_filters['ids'])) {
+                        $targetIds = (array)$config->target_filters['ids'];
+                    } elseif ($config->target_type !== 'all') {
+                        $targetIds = (array)$config->target_filters;
+                    }
                 }
 
-                if (isset($config->target_filters['residence'])) {
-                    $residenceTargets = (array)$config->target_filters['residence'];
+                // Apply residence filtering (Mukim vs Laju)
+                if (!empty($residenceTargets) && count($residenceTargets) < 2) {
+                    if (in_array('mukim', $residenceTargets)) {
+                        $santriQuery->where(function($rq) {
+                            $rq->whereHas('activeRoles', fn($q) => $q->where('presence_status', 'mukim'))
+                              ->orWhereHas('roomAssignments', fn($q) => $q->where('is_active', true));
+                        });
+                    } elseif (in_array('laju', $residenceTargets)) {
+                        $santriQuery->where(function($rq) {
+                            $rq->whereHas('activeRoles', fn($q) => $q->where('presence_status', 'laju'))
+                              ->whereDoesntHave('roomAssignments', fn($q) => $q->where('is_active', true));
+                        });
+                    }
                 }
 
-                if (isset($config->target_filters['ids'])) {
-                    $targetIds = (array)$config->target_filters['ids'];
-                } elseif ($config->target_type !== 'all') {
-                    $targetIds = (array)$config->target_filters;
-                }
-            }
-
-            // Apply residence filtering (Mukim vs Laju)
-            if (!empty($residenceTargets) && count($residenceTargets) < 2) {
-                if (in_array('mukim', $residenceTargets)) {
-                    $santriQuery->where(function($rq) {
-                        $rq->whereHas('activeRoles', fn($q) => $q->where('presence_status', 'mukim'))
-                          ->orWhereHas('roomAssignments', fn($q) => $q->where('is_active', true));
-                    });
-                } elseif (in_array('laju', $residenceTargets)) {
-                    $santriQuery->where(function($rq) {
-                        $rq->whereHas('activeRoles', fn($q) => $q->where('presence_status', 'laju'))
-                          ->whereDoesntHave('roomAssignments', fn($q) => $q->where('is_active', true));
-                    });
-                }
-            }
-
-            // Apply penargetan dinamis (targeting)
-            if ($config->target_type === 'all') {
-                if (!empty($targetGenders) && count($targetGenders) < 2) {
-                    $santriQuery->whereIn('gender', $targetGenders);
-                }
-            } elseif ($config->target_type === 'dormitory') {
-                $dormIds = !empty($targetIds) ? $targetIds : ($config->target_filters ?? []);
-                if (!empty($dormIds)) {
-                    $santriQuery->whereIn('id', function($q) use ($dormIds) {
-                        $q->select('person_id')
-                          ->from('room_assignments')
-                          ->join('rooms', 'rooms.id', '=', 'room_assignments.room_id')
-                          ->whereIn('rooms.dormitory_id', $dormIds)
-                          ->where('room_assignments.is_active', true);
-                    });
-                }
-            } elseif ($config->target_type === 'kelas') {
-                $kelasIds = !empty($targetIds) ? $targetIds : ($config->target_filters ?? []);
-                if (!empty($kelasIds)) {
-                    $santriQuery->whereIn('id', function($q) use ($kelasIds) {
-                        $q->select('person_id')
-                          ->from('madrasah_enrollments')
-                          ->whereIn('kelas_id', $kelasIds)
-                          ->where('is_active', true);
-                    });
-                }
-            } elseif ($config->target_type === 'individual') {
-                $santriIds = !empty($targetIds) ? $targetIds : ($config->target_filters ?? []);
-                if (!empty($santriIds)) {
-                    $santriQuery->whereIn('id', $santriIds);
+                // Apply penargetan dinamis (targeting)
+                if ($config->target_type === 'all') {
+                    if (!empty($targetGenders) && count($targetGenders) < 2) {
+                        $santriQuery->whereIn('gender', $targetGenders);
+                    }
+                } elseif ($config->target_type === 'dormitory') {
+                    $dormIds = !empty($targetIds) ? $targetIds : ($config->target_filters ?? []);
+                    if (!empty($dormIds)) {
+                        $santriQuery->whereIn('id', function($q) use ($dormIds) {
+                            $q->select('person_id')
+                              ->from('room_assignments')
+                              ->join('rooms', 'rooms.id', '=', 'room_assignments.room_id')
+                              ->whereIn('rooms.dormitory_id', $dormIds)
+                              ->where('room_assignments.is_active', true);
+                        });
+                    }
+                } elseif ($config->target_type === 'kelas') {
+                    $kelasIds = !empty($targetIds) ? $targetIds : ($config->target_filters ?? []);
+                    if (!empty($kelasIds)) {
+                        $santriQuery->whereIn('id', function($q) use ($kelasIds) {
+                            $q->select('person_id')
+                              ->from('madrasah_enrollments')
+                              ->whereIn('kelas_id', $kelasIds)
+                              ->where('is_active', true);
+                        });
+                    }
+                } elseif ($config->target_type === 'individual') {
+                    $santriIds = !empty($targetIds) ? $targetIds : ($config->target_filters ?? []);
+                    if (!empty($santriIds)) {
+                        $santriQuery->whereIn('id', $santriIds);
+                    }
                 }
             }
 
@@ -827,81 +829,53 @@ class BillingService
     }
 
     /**
-     * Get available (not-yet-billed) periods for a specific santri and config.
+     * Get available (not-yet-billed) periods for a specific santri, config, and target year.
      * Returns an array of periods, each with: label, month, year, sub, exists (bool).
-     * Always covers 2 full years (tahun ini + tahun depan) regardless of interval.
      */
-    public function getAvailablePeriodsForSantri(BillingConfiguration $config, string $personId, int $lookahead = 0): array
+    public function getAvailablePeriodsForSantri(BillingConfiguration $config, string $personId, ?int $targetYear = null, int $lookahead = 0): array
     {
-        $nowMonth = (int) now()->format('n');
-        $nowYear  = (int) now()->format('Y');
-
-        // Auto-calculate lookahead to always cover 2 full years based on interval
-        if ($lookahead <= 0) {
-            $lookahead = match(true) {
-                in_array($config->interval, ['semester', '2x_yearly'])           => 4,  // 4 semester = 2 tahun
-                in_array($config->interval, ['caturwulan', '3x_yearly'])         => 6,  // 6 caturwulan = 2 tahun
-                in_array($config->interval, ['triwulan', '4x_yearly'])           => 8,  // 8 triwulan = 2 tahun
-                in_array($config->interval, ['bimulanan', '6x_yearly'])         => 12, // 12 dwibulanan = 2 tahun
-                in_array($config->interval, ['once', 'insidental', 'event', 'sekali']) => 2, // 2 tahun
-                default                                                           => 24, // 24 bulan = 2 tahun
-            };
-        }
+        $targetYear = $targetYear ?: (int) now()->format('Y');
 
         $rawPeriods = [];
-
         $isEventInterval = in_array($config->interval, ['once', 'insidental', 'event', 'sekali']);
 
         if ($isEventInterval) {
-            // For one-off tariffs: show current year and next year
-            for ($offset = 0; $offset <= 1; $offset++) {
-                $y = $nowYear + $offset;
-                $rawPeriods[] = ['month' => 1, 'year' => $y, 'sub' => null, 'label' => "Tahun {$y}"];
-            }
+            $rawPeriods[] = ['month' => 1, 'year' => $targetYear, 'sub' => null, 'label' => "Tahun {$targetYear}"];
 
         } elseif (in_array($config->interval, ['semester', '2x_yearly'])) {
-            // Mulai dari Semester 1 tahun ini, tampilkan $lookahead semester
-            for ($i = 0; $i < $lookahead; $i++) {
-                $s = ($i % 2) + 1;
-                $y = $nowYear + (int)floor($i / 2);
+            for ($s = 1; $s <= 2; $s++) {
                 $startM = ($s - 1) * 6 + 1;
-                $rawPeriods[] = ['month' => $startM, 'year' => $y, 'sub' => $s, 'label' => "Semester {$s} / {$y}"];
+                $rawPeriods[] = ['month' => $startM, 'year' => $targetYear, 'sub' => $s, 'label' => "Semester {$s} / {$targetYear}"];
             }
 
         } elseif (in_array($config->interval, ['caturwulan', '3x_yearly'])) {
-            // Mulai dari Caturwulan 1 tahun ini
-            for ($i = 0; $i < $lookahead; $i++) {
-                $cw = ($i % 3) + 1;
-                $y  = $nowYear + (int)floor($i / 3);
+            for ($cw = 1; $cw <= 3; $cw++) {
                 $startM = ($cw - 1) * 4 + 1;
-                $rawPeriods[] = ['month' => $startM, 'year' => $y, 'sub' => $cw, 'label' => "Caturwulan {$cw} / {$y}"];
+                $rawPeriods[] = ['month' => $startM, 'year' => $targetYear, 'sub' => $cw, 'label' => "Caturwulan {$cw} / {$targetYear}"];
             }
 
         } elseif (in_array($config->interval, ['triwulan', '4x_yearly'])) {
-            // Mulai dari Triwulan 1 tahun ini
-            for ($i = 0; $i < $lookahead; $i++) {
-                $tw = ($i % 4) + 1;
-                $y  = $nowYear + (int)floor($i / 4);
+            for ($tw = 1; $tw <= 4; $tw++) {
                 $startM = ($tw - 1) * 3 + 1;
-                $rawPeriods[] = ['month' => $startM, 'year' => $y, 'sub' => $tw, 'label' => "Triwulan {$tw} / {$y}"];
+                $rawPeriods[] = ['month' => $startM, 'year' => $targetYear, 'sub' => $tw, 'label' => "Triwulan {$tw} / {$targetYear}"];
             }
 
         } elseif (in_array($config->interval, ['bimulanan', '6x_yearly'])) {
-            // Mulai dari Dwibulanan 1 (Jan–Feb) tahun ini
-            for ($i = 0; $i < $lookahead; $i++) {
-                $b = ($i % 6) + 1;
-                $y = $nowYear + (int)floor($i / 6);
+            for ($b = 1; $b <= 6; $b++) {
                 $startM = ($b - 1) * 2 + 1;
-                $rawPeriods[] = ['month' => $startM, 'year' => $y, 'sub' => $b, 'label' => "Dwibulanan {$b} / {$y}"];
+                $rawPeriods[] = ['month' => $startM, 'year' => $targetYear, 'sub' => $b, 'label' => "Dwibulanan {$b} / {$targetYear}"];
             }
 
         } else {
-            // Monthly: Mulai Januari tahun ini, tampilkan $lookahead bulan ke depan
-            for ($i = 0; $i < $lookahead; $i++) {
-                $m = ($i % 12) + 1;
-                $y = $nowYear + (int)floor($i / 12);
-                $monthName = date('F', mktime(0, 0, 0, $m, 1));
-                $rawPeriods[] = ['month' => $m, 'year' => $y, 'sub' => null, 'label' => "{$monthName} {$y}"];
+            $monthNames = [
+                1 => 'Januari', 2 => 'Februari', 3 => 'Maret', 4 => 'April',
+                5 => 'Mei', 6 => 'Juni', 7 => 'Juli', 8 => 'Agustus',
+                9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Desember'
+            ];
+
+            for ($m = 1; $m <= 12; $m++) {
+                $monthName = $monthNames[$m];
+                $rawPeriods[] = ['month' => $m, 'year' => $targetYear, 'sub' => null, 'label' => "{$monthName} {$targetYear}"];
             }
         }
 

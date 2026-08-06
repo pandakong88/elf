@@ -125,6 +125,17 @@ class SantriProfile extends Model
         $this->additional_info = $info;
     }
 
+    public function getNisAttribute(): ?string
+    {
+        return $this->getAdditional('nis');
+    }
+
+    public function getNisnAttribute(): ?string
+    {
+        return $this->getAdditional('nisn');
+    }
+
+
     // =========================================================================
     // Census Update Helpers
     // =========================================================================

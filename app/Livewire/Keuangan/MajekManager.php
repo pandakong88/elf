@@ -106,7 +106,7 @@ class MajekManager extends Component
     public function mount(): void
     {
         $user = auth()->user();
-        if ($user && ! ($user->hasRole('super-admin') || $user->hasRole('manajemen') || $user->hasRole('pengasuh') || $user->hasRole('bendahara-pondok') || $user->hasRole('bendahara-putra') || $user->hasRole('bendahara-putri'))) {
+        if ($user && ! ($user->hasRole('super-admin') || $user->hasRole('manajemen') || $user->hasRole('pengasuh') || $user->can('manage-majek'))) {
             abort(403, 'Anda tidak memiliki akses ke modul Majek (Katering Asrama Pondok).');
         }
 

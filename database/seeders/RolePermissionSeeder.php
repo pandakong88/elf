@@ -64,6 +64,7 @@ class RolePermissionSeeder extends Seeder
             'manage-setoran-kolektif',
             'view-laporan-keuangan',
             'manage-adjustment',
+            'manage-majek',
 
             // Koperasi
             'view-produk',

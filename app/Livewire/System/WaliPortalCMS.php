@@ -37,6 +37,9 @@ class WaliPortalCMS extends Component
     // General Announcement for Wali
     public string $wali_announcement = '';
 
+    // Info Jadwal Rekap Bendahara (Banner Biru)
+    public string $wali_rekap_info   = '';
+
     public function mount()
     {
         // Enforce Authorization: Hanya Super Admin & Manajemen
@@ -72,6 +75,9 @@ class WaliPortalCMS extends Component
 
         // Pengumuman
         $this->wali_announcement       = $contents['wali_announcement'] ?? 'Pembayaran tagihan santri dilakukan sebelum tanggal 10 setiap bulannya.';
+
+        // Info Jadwal Rekap
+        $this->wali_rekap_info         = $contents['wali_rekap_info'] ?? 'Data tagihan diperbarui oleh bendahara setiap Tanggal 1 dan 15 setiap bulannya. Jika Bapak/Ibu sudah melakukan transfer namun status tagihan belum berubah, mohon bersabar hingga tanggal pembaruan berikutnya.';
     }
 
     public function save()
@@ -105,6 +111,7 @@ class WaliPortalCMS extends Component
             'wa_bendahara_putri_name' => 'required|string|max:100',
 
             'wali_announcement'       => 'nullable|string|max:500',
+            'wali_rekap_info'         => 'nullable|string|max:800',
         ], [
             'bank1_name_putra.required'   => 'Nama Bank 1 Putra wajib diisi.',
             'rekening_bsi_putra.required' => 'Nomor Rekening Bank 1 Putra wajib diisi.',
@@ -136,6 +143,7 @@ class WaliPortalCMS extends Component
             'wali_wa_putri_name'     => ['section' => 'wali_portal', 'title' => 'Nama Bendahara Putri', 'type' => 'text', 'value' => $this->wa_bendahara_putri_name],
 
             'wali_announcement'      => ['section' => 'wali_portal', 'title' => 'Pengumuman Portal Wali', 'type' => 'text', 'value' => $this->wali_announcement],
+            'wali_rekap_info'        => ['section' => 'wali_portal', 'title' => 'Info Jadwal Rekap Bendahara', 'type' => 'text', 'value' => $this->wali_rekap_info],
         ];
 
         foreach ($fields as $key => $data) {
