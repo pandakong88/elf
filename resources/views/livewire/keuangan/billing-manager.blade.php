@@ -458,7 +458,7 @@
                                 <p class="text-[11px] text-slate-400 mt-0.5">Terbitkan tagihan otomatis ke santri berdasarkan tarif & siklus penagihan yang telah ditentukan.</p>
                             </div>
                             @php
-                                $selectedConfig = $genConfigId ? $activeConfigs->firstWhere('id', $genConfigId) : null;
+                                $selectedConfig = $genConfigId ? $generatorConfigs->firstWhere('id', $genConfigId) : null;
                             @endphp
                             @if($selectedConfig)
                                 <span class="px-3 py-1 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 text-[10px] font-black rounded-xl uppercase tracking-wider hidden sm:inline-flex">
@@ -506,7 +506,7 @@
                                 }" x-init="initChoices()" wire:ignore>
                                     <select x-ref="configSelect" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-100 rounded-xl px-4 py-2.5 text-xs focus:ring-2 focus:ring-emerald-500 font-bold shadow-xs">
                                         <option value="">-- Pilih Konfigurasi Tarif --</option>
-                                        @foreach($activeConfigs as $cfg)
+                                        @foreach($generatorConfigs as $cfg)
                                             <option value="{{ $cfg->id }}" @selected($genConfigId == $cfg->id)>
                                                 {{ $cfg->label }} — Rp {{ number_format($cfg->amount, 0, ',', '.') }} ({{ strtoupper($cfg->interval) }})
                                             </option>

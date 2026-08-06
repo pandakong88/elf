@@ -552,6 +552,10 @@ class BillingManager extends Component
         ]);
 
         $config = BillingConfiguration::findOrFail($this->genConfigId);
+        if (!$config->is_active) {
+            $this->toastError("Konfigurasi tarif '{$config->label}' sedang nonaktif. Silakan aktifkan tarif terlebih dahulu di tab Konfigurasi Tarif & Target.");
+            return;
+        }
         $billingService = new BillingService();
         $targetStudents = $billingService->getTargetPersonsForConfig($config);
         $studentCount = $targetStudents->count();
@@ -2056,7 +2060,6 @@ class BillingManager extends Component
             $ratesQuery->where('is_active', false);
         }
 
-        $activeConfigs = $ratesQuery->orderBy('is_active', 'desc')->orderBy('label')->paginate(10, ['*'], 'ratesPage');
         $installmentConfigs = BillingConfiguration::where('is_active', true)
             ->where('can_be_installment', true)
             ->get();
@@ -2098,8 +2101,17 @@ class BillingManager extends Component
                 return false;
             };
 
-            $activeConfigs = $activeConfigs->filter($filterFunc);
+            $allowedConfigIds = BillingConfiguration::all()->filter($filterFunc)->pluck('id')->toArray();
+            $ratesQuery->whereIn('id', $allowedConfigIds);
             $installmentConfigs = $installmentConfigs->filter($filterFunc);
+        }
+
+        $activeConfigs = $ratesQuery->orderBy('is_active', 'desc')->orderBy('label')->paginate(10, ['*'], 'ratesPage');
+
+        // Configs specifically for Generator dropdown (Only active tariffs allowed to generate)
+        $generatorConfigs = BillingConfiguration::where('is_active', true)->orderBy('label')->get();
+        if (!$isCentral && $user) {
+            $generatorConfigs = $generatorConfigs->filter($filterFunc);
         }
 
         // Fetch active installment plans (parent bills)
@@ -2329,6 +2341,7 @@ class BillingManager extends Component
             'selectedSantri'      => $selectedSantri,
             'exceptions'          => $exceptions,
             'activeConfigs'       => $activeConfigs,
+            'generatorConfigs'    => $generatorConfigs,
             'allSantriList'       => Person::whereHas('activeRoles', fn($q) => $q->where('role_type', 'santri')->where('enrollment_status', 'aktif'))->when($this->genderScope(), fn($q, $g) => $q->where('gender', $g))->orderBy('name')->get(['id', 'name', 'gender']),
             'installmentConfigs'  => $installmentConfigs,
             'bills'               => $billsQuery->paginate(10),

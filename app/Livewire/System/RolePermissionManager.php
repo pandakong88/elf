@@ -91,6 +91,13 @@ class RolePermissionManager extends Component
             abort(403, 'Anda tidak memiliki wewenang untuk mengakses halaman ini.');
         }
 
+        // Auto-sync missing permission records into DB
+        foreach ($this->getGroupedPermissions() as $group => $perms) {
+            foreach (array_keys($perms) as $permName) {
+                Permission::firstOrCreate(['name' => $permName, 'guard_name' => 'web']);
+            }
+        }
+
         // Set default selected role (first role in the list)
         $firstRole = Role::where('guard_name', 'web')->first();
         if ($firstRole) {
@@ -890,6 +897,7 @@ class RolePermissionManager extends Component
                 'manage-setoran-kolektif' => ['label' => 'Kelola Setoran Kolektif', 'desc' => 'Menerima & memverifikasi setoran kasir harian ke bendahara pusat.'],
                 'view-laporan-keuangan' => ['label' => 'Melihat Laporan Keuangan', 'desc' => 'Mengakses kas masuk syahriah & laporan tunggakan.'],
                 'manage-adjustment' => ['label' => 'Keringanan Biaya (Diskon)', 'desc' => 'Memberikan dispensasi / diskon khusus yatim piatu.'],
+                'manage-majek' => ['label' => 'Kelola Majek (Katering)', 'desc' => 'Mengatur pendaftaran, absensi, dan billing katering santri.'],
             ],
             'Koperasi & Toko' => [
                 'view-produk' => ['label' => 'Melihat Daftar Produk', 'desc' => 'Melihat daftar stok barang di koperasi.'],

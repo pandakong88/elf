@@ -19,8 +19,8 @@ class BillingConfigurationSeeder extends Seeder
         // Hapus konfigurasi lama agar tidak duplikat
         BillingConfiguration::query()->delete();
 
-        // Ambil user pertama (admin) sebagai created_by
-        $admin = User::first();
+        // Ambil user super-admin sebagai created_by
+        $admin = User::role('super-admin')->first() ?? User::where('username', 'admin')->first() ?? User::first();
         if (!$admin) {
             $this->command->error('❌ Tidak ada user di database! Jalankan RolePermissionSeeder terlebih dahulu.');
             return;
@@ -47,7 +47,7 @@ class BillingConfigurationSeeder extends Seeder
             'target_type'        => 'all',
             'target_filters'     => null,
             'can_be_installment' => false,
-            'is_active'          => true,
+            'is_active'          => false,
             'created_by'         => $admin->id,
         ]);
         $created++;
@@ -66,7 +66,7 @@ class BillingConfigurationSeeder extends Seeder
             'target_type'        => 'all',
             'target_filters'     => null,
             'can_be_installment' => true,
-            'is_active'          => true,
+            'is_active'          => false,
             'created_by'         => $admin->id,
         ]);
         $created++;
@@ -85,7 +85,7 @@ class BillingConfigurationSeeder extends Seeder
             'target_type'        => 'all',
             'target_filters'     => null,
             'can_be_installment' => false,
-            'is_active'          => true,
+            'is_active'          => false,
             'created_by'         => $admin->id,
         ]);
         $created++;
@@ -107,7 +107,7 @@ class BillingConfigurationSeeder extends Seeder
                 'target_type'        => 'dormitory',
                 'target_filters'     => [$dorm->id],
                 'can_be_installment' => false,
-                'is_active'          => true,
+                'is_active'          => false,
                 'created_by'         => $admin->id,
             ]);
             $created++;
@@ -193,7 +193,7 @@ class BillingConfigurationSeeder extends Seeder
                 'target_type'        => 'all',
                 'target_filters'     => $ri['filters'],
                 'can_be_installment' => false,
-                'is_active'          => true,
+                'is_active'          => false,
                 'created_by'         => $admin->id,
             ]);
             $created++;
@@ -234,7 +234,7 @@ class BillingConfigurationSeeder extends Seeder
                     'jenjang'    => $kelas->jenjang ?? 'Awaliyah',
                 ],
                 'can_be_installment' => false,
-                'is_active'          => true,
+                'is_active'          => false,
                 'created_by'         => $admin->id,
             ]);
             $created++;

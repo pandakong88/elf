@@ -18,4 +18,9 @@ class LandingPageContent extends Model
         'section',
         'title',
     ];
+
+    public static function getContent(): array
+    {
+        return static::all()->pluck('value', 'key')->toArray();
+    }
 }
