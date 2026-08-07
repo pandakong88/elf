@@ -559,9 +559,9 @@
                                                      @endforeach
                                                  @endif
 
-                                                 <td class="border border-slate-800 py-1.5 px-2 text-center">
+                                                 <td class="border border-slate-800 py-1.5 px-2 text-center whitespace-nowrap overflow-hidden text-ellipsis max-w-[85px]">
                                                      @if(!empty($row['exceptionNote']))
-                                                         <span class="text-amber-600 dark:text-amber-400 font-bold text-[8px]">{{ $row['exceptionNote'] }}</span>
+                                                         <span class="text-amber-600 dark:text-amber-400 font-bold text-[8px]">{{ \Illuminate\Support\Str::limit($row['exceptionNote'], 16) }}</span>
                                                      @else
                                                          <span class="text-slate-400 italic">—</span>
                                                      @endif

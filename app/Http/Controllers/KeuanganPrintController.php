@@ -194,16 +194,26 @@ class KeuanganPrintController extends Controller
 
             if ($exception->exception_type === 'waived') {
                 $amount = 0.00;
-                $note   = $exception->notes ?: 'Bebas (100%)';
+                $defaultNote = 'Bebas (100%)';
             } elseif ($exception->exception_type === 'discount') {
                 $amount = max(0.00, (float)$config->amount - (float)$exception->amount);
-                $note   = $exception->notes ?: 'Diskon Rp ' . number_format($exception->amount, 0, ',', '.');
+                $defaultNote = 'Diskon';
             } elseif ($exception->exception_type === 'custom_rate') {
                 $amount = (float)$exception->amount;
-                $note   = $exception->notes ?: 'Tarif Khusus';
+                $defaultNote = 'Tarif Khusus';
             } else {
                 $amount = (float)$config->amount;
-                $note   = null;
+                $defaultNote = null;
+            }
+
+            $note = $defaultNote;
+            if ($exception->notes) {
+                $cleanNotes = trim($exception->notes);
+                if (preg_match('/kakak|adek/i', $cleanNotes)) {
+                    $note = 'Kakak adek';
+                } elseif (mb_strlen($cleanNotes) <= 15) {
+                    $note = $cleanNotes;
+                }
             }
 
             return [
@@ -508,16 +518,26 @@ class KeuanganPrintController extends Controller
 
             if ($exception->exception_type === 'waived') {
                 $amount = 0.00;
-                $note   = $exception->notes ?: 'Bebas (100%)';
+                $defaultNote = 'Bebas (100%)';
             } elseif ($exception->exception_type === 'discount') {
                 $amount = max(0.00, (float)$config->amount - (float)$exception->amount);
-                $note   = $exception->notes ?: 'Diskon Rp ' . number_format($exception->amount, 0, ',', '.');
+                $defaultNote = 'Diskon';
             } elseif ($exception->exception_type === 'custom_rate') {
                 $amount = (float)$exception->amount;
-                $note   = $exception->notes ?: 'Tarif Khusus';
+                $defaultNote = 'Tarif Khusus';
             } else {
                 $amount = (float)$config->amount;
-                $note   = null;
+                $defaultNote = null;
+            }
+
+            $note = $defaultNote;
+            if ($exception->notes) {
+                $cleanNotes = trim($exception->notes);
+                if (preg_match('/kakak|adek/i', $cleanNotes)) {
+                    $note = 'Kakak adek';
+                } elseif (mb_strlen($cleanNotes) <= 15) {
+                    $note = $cleanNotes;
+                }
             }
 
             return [
