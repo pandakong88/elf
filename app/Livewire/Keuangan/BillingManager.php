@@ -317,9 +317,16 @@ class BillingManager extends Component
     public function updatingHistType(): void { $this->resetPage('historyPage'); }
 
     // Filters for payments log (Riwayat Setoran)
-    public string $payLogSearch = '';
-    public string $payLogMethod = '';
-    public string $payLogDate   = '';
+    public string $payLogSearch      = '';
+    public string $payLogMethod      = '';
+    public string $payLogDate        = '';
+    public string $payLogStartDate   = '';
+    public string $payLogEndDate     = '';
+    public string $payLogUser        = '';
+    public string $payLogConfigId    = '';
+    public string $payLogDormitoryId = '';
+    public string $payLogKelasId     = '';
+    public bool   $showPayLogAdvancedFilters = false;
 
     // Filters for exceptions (Dispensasi & Keringanan)
     public string $exceptionSearch     = '';
@@ -335,6 +342,56 @@ class BillingManager extends Component
     public function updatingPayLogSearch(): void { $this->resetPage('payLogPage'); }
     public function updatingPayLogMethod(): void { $this->resetPage('payLogPage'); }
     public function updatingPayLogDate(): void { $this->resetPage('payLogPage'); }
+    public function updatingPayLogStartDate(): void { $this->resetPage('payLogPage'); }
+    public function updatingPayLogEndDate(): void { $this->resetPage('payLogPage'); }
+    public function updatingPayLogUser(): void { $this->resetPage('payLogPage'); }
+    public function updatingPayLogConfigId(): void { $this->resetPage('payLogPage'); }
+    public function updatingPayLogDormitoryId(): void { $this->resetPage('payLogPage'); }
+    public function updatingPayLogKelasId(): void { $this->resetPage('payLogPage'); }
+
+    public function togglePayLogAdvancedFilters(): void
+    {
+        $this->showPayLogAdvancedFilters = !$this->showPayLogAdvancedFilters;
+    }
+
+    public function setPayLogDatePreset(string $preset): void
+    {
+        $this->payLogDate = '';
+        if ($preset === 'today') {
+            $this->payLogStartDate = now()->toDateString();
+            $this->payLogEndDate   = now()->toDateString();
+        } elseif ($preset === 'yesterday') {
+            $this->payLogStartDate = now()->subDay()->toDateString();
+            $this->payLogEndDate   = now()->subDay()->toDateString();
+        } elseif ($preset === '7days') {
+            $this->payLogStartDate = now()->subDays(6)->toDateString();
+            $this->payLogEndDate   = now()->toDateString();
+        } elseif ($preset === 'this_month') {
+            $this->payLogStartDate = now()->startOfMonth()->toDateString();
+            $this->payLogEndDate   = now()->endOfMonth()->toDateString();
+        } elseif ($preset === 'last_month') {
+            $this->payLogStartDate = now()->subMonth()->startOfMonth()->toDateString();
+            $this->payLogEndDate   = now()->subMonth()->endOfMonth()->toDateString();
+        } elseif ($preset === 'clear') {
+            $this->payLogStartDate = '';
+            $this->payLogEndDate   = '';
+        }
+        $this->resetPage('payLogPage');
+    }
+
+    public function resetPayLogFilters(): void
+    {
+        $this->payLogSearch      = '';
+        $this->payLogMethod      = '';
+        $this->payLogDate        = '';
+        $this->payLogStartDate   = '';
+        $this->payLogEndDate     = '';
+        $this->payLogUser        = '';
+        $this->payLogConfigId    = '';
+        $this->payLogDormitoryId = '';
+        $this->payLogKelasId     = '';
+        $this->resetPage('payLogPage');
+    }
 
     protected $queryString = [
         'activeTab' => ['as' => 'tab', 'except' => 'generate'],
@@ -1694,19 +1751,108 @@ class BillingManager extends Component
         $this->selectSantri($this->selectedSantriId);
     }
 
-    public function deletePayment(string $paymentId): void
+    // Void Modal State
+    public bool $showVoidModal = false;
+    public ?string $paymentToVoidId = null;
+    public ?array $paymentToVoidData = null;
+
+    public function confirmVoidPayment(string $paymentId): void
     {
         $user = auth()->user();
-        if ($user && ! ($user->hasRole('super-admin') || $user->hasRole('pengasuh') || $user->hasPermissionTo('void-pembayaran'))) {
-            session()->flash('error', 'Anda tidak memiliki wewenang untuk membatalkan (void) transaksi pembayaran ini.');
+        $isCentral = $user && ($user->hasRole('super-admin') || $user->hasRole('manajemen') || $user->hasRole('bendahara-pondok') || $user->hasRole('bendahara-pusat') || $user->hasRole('pengasuh'));
+
+        $payment = BillPayment::with(['bill.person', 'bill.config', 'logger'])->find($paymentId);
+        if (!$payment) {
+            $this->toastError('Data transaksi pembayaran tidak ditemukan.');
             return;
         }
 
-        $payment = BillPayment::find($paymentId);
-        if ($payment) {
-            $payment->delete();
-            session()->flash('message', 'Pencatatan pembayaran berhasil dibatalkan & sisa tagihan dikembalikan.');
+        $canVoid = $isCentral 
+            || ($user && $payment->logged_by === $user->id)
+            || ($user && $user->hasPermissionTo('void-pembayaran'));
+
+        if (!$canVoid) {
+            $this->toastError('Anda tidak memiliki wewenang untuk membatalkan (void) transaksi pembayaran ini.');
+            return;
         }
+
+        $bill = $payment->bill;
+        $config = $bill?->config;
+
+        $periodLabel = '—';
+        if ($bill) {
+            if ($config && $config->interval === 'semester') {
+                $periodLabel = 'Semester ' . $bill->period_month . ' / ' . $bill->period_year;
+            } elseif ($config && in_array($config->interval, ['once', 'insidental', 'event', 'sekali'])) {
+                $periodLabel = 'Event / ' . $bill->period_year;
+            } else {
+                $months = [1=>'Januari', 2=>'Februari', 3=>'Maret', 4=>'April', 5=>'Mei', 6=>'Juni', 7=>'Juli', 8=>'Agustus', 9=>'September', 10=>'Oktober', 11=>'November', 12=>'Desember'];
+                $mName = $months[$bill->period_month] ?? ('Bulan ' . $bill->period_month);
+                $periodLabel = $mName . ' ' . $bill->period_year . ($bill->period_sub ? ' (Gel. ' . $bill->period_sub . ')' : '');
+            }
+        }
+
+        $this->paymentToVoidId = $payment->id;
+        $this->paymentToVoidData = [
+            'id'             => $payment->id,
+            'amount_paid'    => $payment->amount_paid,
+            'payment_date'   => $payment->payment_date ? $payment->payment_date->translatedFormat('d M Y') : '—',
+            'created_at'     => $payment->created_at->format('H:i') . ' WIB',
+            'payment_method' => strtoupper($payment->payment_method),
+            'notes'          => $payment->notes,
+            'santri_name'    => $payment->bill?->person?->name ?? 'Santri',
+            'santri_nis'     => $payment->bill?->person?->nis ?? '—',
+            'config_label'   => $payment->bill?->config?->label ?? ($payment->bill?->bill_type ? str_replace('_', ' ', $payment->bill->bill_type) : '—'),
+            'period_label'   => $periodLabel,
+            'logger_name'    => $payment->logger?->name ?? 'Sistem',
+        ];
+
+        $this->showVoidModal = true;
+    }
+
+    public function closeVoidModal(): void
+    {
+        $this->showVoidModal = false;
+        $this->paymentToVoidId = null;
+        $this->paymentToVoidData = null;
+    }
+
+    public function executeVoidPayment(): void
+    {
+        if (!$this->paymentToVoidId) {
+            return;
+        }
+
+        $user = auth()->user();
+        $isCentral = $user && ($user->hasRole('super-admin') || $user->hasRole('manajemen') || $user->hasRole('bendahara-pondok') || $user->hasRole('bendahara-pusat') || $user->hasRole('pengasuh'));
+
+        $payment = BillPayment::find($this->paymentToVoidId);
+        if (!$payment) {
+            $this->toastError('Data transaksi pembayaran tidak ditemukan.');
+            $this->closeVoidModal();
+            return;
+        }
+
+        $canVoid = $isCentral 
+            || ($user && $payment->logged_by === $user->id)
+            || ($user && $user->hasPermissionTo('void-pembayaran'));
+
+        if (!$canVoid) {
+            $this->toastError('Anda tidak memiliki wewenang untuk membatalkan (void) transaksi pembayaran ini.');
+            $this->closeVoidModal();
+            return;
+        }
+
+        $amountFormatted = number_format($payment->amount_paid, 0, ',', '.');
+        $payment->delete();
+
+        $this->toastSuccess("Pencatatan pembayaran sebesar Rp {$amountFormatted} berhasil dibatalkan & sisa tagihan dikembalikan.");
+        $this->closeVoidModal();
+    }
+
+    public function deletePayment(string $paymentId): void
+    {
+        $this->confirmVoidPayment($paymentId);
     }
 
 
@@ -2305,17 +2451,55 @@ class BillingManager extends Component
             ->when($this->payLogDate, function ($q) {
                 $q->whereDate('payment_date', $this->payLogDate);
             })
+            ->when($this->payLogStartDate, function ($q) {
+                $q->whereDate('payment_date', '>=', $this->payLogStartDate);
+            })
+            ->when($this->payLogEndDate, function ($q) {
+                $q->whereDate('payment_date', '<=', $this->payLogEndDate);
+            })
+            ->when($this->payLogUser, function ($q) {
+                $q->where('logged_by', $this->payLogUser);
+            })
+            ->when($this->payLogConfigId, function ($q) {
+                $q->whereHas('bill', fn($bq) => $bq->where('billing_config_id', $this->payLogConfigId));
+            })
+            ->when($this->payLogDormitoryId, function ($q) {
+                $q->whereHas('bill.person.roomAssignments', function($rq) {
+                    $rq->where('is_active', true)
+                      ->whereHas('room', fn($rmq) => $rmq->where('dormitory_id', $this->payLogDormitoryId));
+                });
+            })
+            ->when($this->payLogKelasId, function ($q) {
+                $q->whereHas('bill.person.madrasahEnrollments', function($mq) {
+                    $mq->where('is_active', true)->where('kelas_id', $this->payLogKelasId);
+                });
+            })
             ->orderBy('created_at', 'desc');
 
         if (!$isCentral && $user) {
             $allowedConfigIds = BillingConfiguration::all()->filter($filterFunc)->pluck('id')->toArray();
-            $paymentsLogQuery->whereHas('bill', function ($q) use ($allowedConfigIds) {
-                $q->whereIn('billing_config_id', $allowedConfigIds);
+            $paymentsLogQuery->where(function ($q) use ($allowedConfigIds, $user) {
+                $q->where('logged_by', $user->id)
+                  ->orWhereHas('bill', function ($bq) use ($allowedConfigIds) {
+                      $bq->whereIn('billing_config_id', $allowedConfigIds);
+                  });
             });
         }
 
+        // Summary Statistics for the filtered log query
+        $summaryBaseQuery = clone $paymentsLogQuery;
+        $payLogTotalCash = (float) (clone $summaryBaseQuery)->where('payment_method', 'cash')->sum('amount_paid');
+        $payLogTotalTransfer = (float) (clone $summaryBaseQuery)->where('payment_method', 'transfer')->sum('amount_paid');
+        $payLogTotalCount = (int) (clone $summaryBaseQuery)->count();
+
         $paymentsLog = $paymentsLogQuery->paginate(15, pageName: 'payLogPage');
         $generationHistory = $historyQuery->paginate(10, pageName: 'historyPage');
+
+        // Dropdown Lists for Advanced Filters
+        $cashierUsers = User::whereIn('id', BillPayment::select('logged_by')->distinct())->orderBy('name')->get(['id', 'name']);
+        $payLogConfigs = BillingConfiguration::orderBy('label')->get(['id', 'label', 'type']);
+        $payLogDormitories = Dormitory::when($this->genderScope(), fn($q, $g) => $q->where('gender', $g))->orderBy('name')->get(['id', 'name', 'gender']);
+        $payLogClasses = MadrasahKelas::where('is_active', true)->orderBy('name')->get(['id', 'name', 'academic_year']);
 
         $regItemsQuery = BillingConfiguration::where('type', 'pendaftaran');
         if (!empty($this->regItemSearch)) {
@@ -2361,6 +2545,13 @@ class BillingManager extends Component
             'installmentChildBills' => $installmentChildBills,
             'generationHistory'   => $generationHistory,
             'paymentsLog'         => $paymentsLog,
+            'payLogTotalCash'     => $payLogTotalCash,
+            'payLogTotalTransfer' => $payLogTotalTransfer,
+            'payLogTotalCount'    => $payLogTotalCount,
+            'cashierUsers'        => $cashierUsers,
+            'payLogConfigs'       => $payLogConfigs,
+            'payLogDormitories'   => $payLogDormitories,
+            'payLogClasses'       => $payLogClasses,
             'kpiStats'            => [
                 'total_count'         => $kpiTotalBillsCount,
                 'total_amount'        => $kpiTotalAmount,

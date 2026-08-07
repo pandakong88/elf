@@ -268,11 +268,12 @@
                 <table class="grid">
                     <thead>
                         <tr>
-                            <th style="width: 5%;" class="center">No</th>
-                            <th style="width: 35%; text-align: left;" class="border-dark">Nama Lengkap Santri</th>
-                            <th class="center border-dark" style="width: 15%;">Tagihan</th>
-                            <th class="center" style="width: 35%;">Catatan Cicilan (Nominal & Paraf)</th>
-                            <th class="center border-left-dark" style="width: 10%;">Keterangan</th>
+                            <th style="width: 4%;" class="center">No</th>
+                            <th style="width: 28%; text-align: left;" class="border-dark">Nama Lengkap Santri</th>
+                            <th class="center border-dark" style="width: 14%;">Tagihan</th>
+                            <th class="center border-dark" style="width: 21%;">Bayar I (Nominal & Paraf)</th>
+                            <th class="center border-dark" style="width: 21%;">Bayar II / Pelunasan</th>
+                            <th class="center border-left-dark" style="width: 12%;">Keterangan</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -282,21 +283,26 @@
                                 <td class="center" style="color: #64748b; font-weight: bold;">{{ $i + 1 }}</td>
                                 <td style="font-weight: bold; font-size: 10px; color: #0f172a; white-space: nowrap;" class="border-dark">{{ $row['person']->name }}</td>
                                 <td class="center font-bold border-dark">
-                                    Rp {{ number_format($bill ? $bill->amount : $config->amount, 0, ',', '.') }}
+                                    Rp {{ number_format($bill ? $bill->amount : ($row['expectedAmount'] ?? $config->amount), 0, ',', '.') }}
                                 </td>
-                                <td style="padding: 4px 8px;">
-                                    @if($bill && $bill->status === 'paid')
-                                        <div class="center" style="color: #16a34a; font-weight: 800; padding: 4px 0;">— LUNAS DI SISTEM —</div>
-                                    @else
-                                        <div class="write-lines">
-                                            <div class="write-line"></div>
-                                            <div class="write-line"></div>
-                                            <div class="write-line"></div>
-                                        </div>
-                                    @endif
-                                </td>
+                                @if($bill && $bill->status === 'paid')
+                                    <td colspan="2" class="center font-bold border-dark" style="color: #16a34a; font-weight: 800;">
+                                        — LUNAS DI SISTEM —
+                                    </td>
+                                @else
+                                    <td class="center border-dark" style="color: #cbd5e1; font-size: 8px; vertical-align: bottom; padding-bottom: 4px;">
+                                        Rp .......................... (Paraf)
+                                    </td>
+                                    <td class="center border-dark" style="color: #cbd5e1; font-size: 8px; vertical-align: bottom; padding-bottom: 4px;">
+                                        Rp .......................... (Paraf)
+                                    </td>
+                                @endif
                                 <td class="center border-left-dark" style="color: #64748b; font-size: 8.5px;">
-                                    —
+                                    @if(!empty($row['exceptionNote']))
+                                        <span style="color: #d97706; font-weight: bold;">{{ $row['exceptionNote'] }}</span>
+                                    @else
+                                        —
+                                    @endif
                                 </td>
                             </tr>
                         @endforeach
@@ -358,11 +364,12 @@
             <table class="grid">
                 <thead>
                     <tr>
-                        <th style="width: 5%;" class="center">No</th>
-                        <th style="width: 35%; text-align: left;" class="border-dark">Nama Lengkap Santri</th>
-                        <th class="center border-dark" style="width: 15%;">Tagihan</th>
-                        <th class="center" style="width: 35%;">Catatan Cicilan (Nominal & Paraf)</th>
-                        <th class="center border-left-dark" style="width: 10%;">Keterangan</th>
+                        <th style="width: 4%;" class="center">No</th>
+                        <th style="width: 28%; text-align: left;" class="border-dark">Nama Lengkap Santri</th>
+                        <th class="center border-dark" style="width: 14%;">Tagihan</th>
+                        <th class="center border-dark" style="width: 21%;">Bayar I (Nominal & Paraf)</th>
+                        <th class="center border-dark" style="width: 21%;">Bayar II / Pelunasan</th>
+                        <th class="center border-left-dark" style="width: 12%;">Keterangan</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -382,7 +389,7 @@
                         @endphp
                         @if($currentGroup !== $groupKey)
                             <tr class="room-header">
-                                <td colspan="5">
+                                <td colspan="6">
                                     {{ $groupLabel }}
                                 </td>
                             </tr>
@@ -392,21 +399,26 @@
                             <td class="center" style="color: #64748b; font-weight: bold;">{{ $i + 1 }}</td>
                             <td style="font-weight: bold; font-size: 10px; color: #0f172a; white-space: nowrap;" class="border-dark">{{ $row['person']->name }}</td>
                             <td class="center font-bold border-dark">
-                                Rp {{ number_format($bill ? $bill->amount : $config->amount, 0, ',', '.') }}
+                                Rp {{ number_format($bill ? $bill->amount : ($row['expectedAmount'] ?? $config->amount), 0, ',', '.') }}
                             </td>
-                            <td style="padding: 4px 8px;">
-                                @if($bill && $bill->status === 'paid')
-                                    <div class="center" style="color: #16a34a; font-weight: 800; padding: 4px 0;">— LUNAS DI SISTEM —</div>
-                                @else
-                                    <div class="write-lines">
-                                        <div class="write-line"></div>
-                                        <div class="write-line"></div>
-                                        <div class="write-line"></div>
-                                    </div>
-                                @endif
-                            </td>
+                            @if($bill && $bill->status === 'paid')
+                                <td colspan="2" class="center font-bold border-dark" style="color: #16a34a; font-weight: 800;">
+                                    — LUNAS DI SISTEM —
+                                </td>
+                            @else
+                                <td class="center border-dark" style="color: #cbd5e1; font-size: 8px; vertical-align: bottom; padding-bottom: 4px;">
+                                    Rp .......................... (Paraf)
+                                </td>
+                                <td class="center border-dark" style="color: #cbd5e1; font-size: 8px; vertical-align: bottom; padding-bottom: 4px;">
+                                    Rp .......................... (Paraf)
+                                </td>
+                            @endif
                             <td class="center border-left-dark" style="color: #64748b; font-size: 8.5px;">
-                                —
+                                @if(!empty($row['exceptionNote']))
+                                    <span style="color: #d97706; font-weight: bold;">{{ $row['exceptionNote'] }}</span>
+                                @else
+                                    —
+                                @endif
                             </td>
                         </tr>
                     @endforeach

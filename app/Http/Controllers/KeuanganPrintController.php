@@ -179,6 +179,39 @@ class KeuanganPrintController extends Controller
             ->orderBy('persons.name')
             ->get();
 
+        $exceptions = $config->id 
+            ? \App\Modules\Keuangan\Models\BillingException::where('billing_config_id', $config->id)->get()->keyBy('person_id')
+            : collect();
+
+        $getExpectedTariff = function ($santriId) use ($config, $exceptions) {
+            $exception = $exceptions->get($santriId);
+            if (!$exception) {
+                return [
+                    'amount' => (float)$config->amount,
+                    'note'   => null,
+                ];
+            }
+
+            if ($exception->exception_type === 'waived') {
+                $amount = 0.00;
+                $note   = $exception->notes ?: 'Bebas (100%)';
+            } elseif ($exception->exception_type === 'discount') {
+                $amount = max(0.00, (float)$config->amount - (float)$exception->amount);
+                $note   = $exception->notes ?: 'Diskon Rp ' . number_format($exception->amount, 0, ',', '.');
+            } elseif ($exception->exception_type === 'custom_rate') {
+                $amount = (float)$exception->amount;
+                $note   = $exception->notes ?: 'Tarif Khusus';
+            } else {
+                $amount = (float)$config->amount;
+                $note   = null;
+            }
+
+            return [
+                'amount' => $amount,
+                'note'   => $note,
+            ];
+        };
+
         if ($config->can_be_installment) {
             $maxTerms = Bill::where('billing_config_id', $config->id)
                 ->whereNotNull('parent_bill_id')
@@ -190,7 +223,7 @@ class KeuanganPrintController extends Controller
 
             $terms = range(1, $maxTerms);
 
-            $gridData = $santriList->map(function ($santri) use ($config, $terms) {
+            $gridData = $santriList->map(function ($santri) use ($config, $terms, $getExpectedTariff) {
                 $parentBill = Bill::where('person_id', $santri->id)
                     ->where('billing_config_id', $config->id)
                     ->whereNull('parent_bill_id')
@@ -212,6 +245,8 @@ class KeuanganPrintController extends Controller
                     default  => $santri->kelas_jenjang,
                 };
 
+                $tariffInfo = $getExpectedTariff($santri->id);
+
                 return [
                     'person' => $santri,
                     'kelas_name' => $santri->kelas_name,
@@ -221,6 +256,8 @@ class KeuanganPrintController extends Controller
                     'dormitory_name' => $santri->dormitory_name,
                     'parentBill' => $parentBill,
                     'bills' => $bills,
+                    'expectedAmount' => $tariffInfo['amount'],
+                    'exceptionNote' => $tariffInfo['note'],
                     'tunggakanLamaSum' => 0.00,
                 ];
             });
@@ -251,7 +288,7 @@ class KeuanganPrintController extends Controller
                     $periods["{$semester}-{$year}"]    = "Sem {$semester} / {$year}";
                 }
 
-                $gridData = $santriList->map(function ($santri) use ($periods, $config, $year, $semester) {
+                $gridData = $santriList->map(function ($santri) use ($periods, $config, $year, $semester, $getExpectedTariff) {
                     $bills = [];
                     foreach ($periods as $periodKey => $periodLabel) {
                         [$sem, $yr] = explode('-', $periodKey);
@@ -304,6 +341,8 @@ class KeuanganPrintController extends Controller
                         default  => $santri->kelas_jenjang,
                     };
 
+                    $tariffInfo = $getExpectedTariff($santri->id);
+
                     return [
                         'person' => $santri,
                         'kelas_name' => $santri->kelas_name,
@@ -312,6 +351,8 @@ class KeuanganPrintController extends Controller
                         'room_name' => $santri->room_name,
                         'dormitory_name' => $santri->dormitory_name,
                         'bills' => $bills,
+                        'expectedAmount' => $tariffInfo['amount'],
+                        'exceptionNote' => $tariffInfo['note'],
                         'tunggakanLamaSum' => $tunggakanLamaSum,
                         'lunasDiMukaLabel' => $lunasDiMukaLabel,
                     ];
@@ -326,7 +367,7 @@ class KeuanganPrintController extends Controller
                     $months[$key] = $date->locale('id')->translatedFormat('M');
                 }
 
-                $gridData = $santriList->map(function ($santri) use ($months, $config, $year) {
+                $gridData = $santriList->map(function ($santri) use ($months, $config, $year, $getExpectedTariff) {
                     $bills = [];
                     foreach ($months as $periodKey => $periodLabel) {
                         [$m, $y] = explode('-', $periodKey);
@@ -366,6 +407,8 @@ class KeuanganPrintController extends Controller
                         default  => $santri->kelas_jenjang,
                     };
 
+                    $tariffInfo = $getExpectedTariff($santri->id);
+
                     return [
                         'person' => $santri,
                         'kelas_name' => $santri->kelas_name,
@@ -374,6 +417,8 @@ class KeuanganPrintController extends Controller
                         'room_name' => $santri->room_name,
                         'dormitory_name' => $santri->dormitory_name,
                         'bills' => $bills,
+                        'expectedAmount' => $tariffInfo['amount'],
+                        'exceptionNote' => $tariffInfo['note'],
                         'tunggakanLamaSum' => $tunggakanLamaSum,
                         'lunasDiMukaLabel' => $lunasDiMukaLabel,
                     ];
@@ -381,7 +426,7 @@ class KeuanganPrintController extends Controller
 
                 return view('print.checklist-config-monthly', compact('config', 'dormitories', 'kelasList', 'months', 'gridData', 'year', 'paperSize', 'pageBreakRoom'));
             } else {
-                $gridData = $santriList->map(function ($santri) use ($config) {
+                $gridData = $santriList->map(function ($santri) use ($config, $getExpectedTariff) {
                     $bill = Bill::where('person_id', $santri->id)
                         ->where('billing_config_id', $config->id)
                         ->first();
@@ -393,6 +438,8 @@ class KeuanganPrintController extends Controller
                         default  => $santri->kelas_jenjang,
                     };
 
+                    $tariffInfo = $getExpectedTariff($santri->id);
+
                     return [
                         'person' => $santri,
                         'kelas_name' => $santri->kelas_name,
@@ -401,6 +448,8 @@ class KeuanganPrintController extends Controller
                         'room_name' => $santri->room_name,
                         'dormitory_name' => $santri->dormitory_name,
                         'bills' => ['single' => $bill],
+                        'expectedAmount' => $tariffInfo['amount'],
+                        'exceptionNote' => $tariffInfo['note'],
                         'tunggakanLamaSum' => 0.00,
                     ];
                 });
@@ -446,6 +495,37 @@ class KeuanganPrintController extends Controller
 
         $santriList = $query->get();
 
+        $exceptions = \App\Modules\Keuangan\Models\BillingException::where('billing_config_id', $config->id)->get()->keyBy('person_id');
+
+        $getExpectedTariff = function ($santriId) use ($config, $exceptions) {
+            $exception = $exceptions->get($santriId);
+            if (!$exception) {
+                return [
+                    'amount' => (float)$config->amount,
+                    'note'   => null,
+                ];
+            }
+
+            if ($exception->exception_type === 'waived') {
+                $amount = 0.00;
+                $note   = $exception->notes ?: 'Bebas (100%)';
+            } elseif ($exception->exception_type === 'discount') {
+                $amount = max(0.00, (float)$config->amount - (float)$exception->amount);
+                $note   = $exception->notes ?: 'Diskon Rp ' . number_format($exception->amount, 0, ',', '.');
+            } elseif ($exception->exception_type === 'custom_rate') {
+                $amount = (float)$exception->amount;
+                $note   = $exception->notes ?: 'Tarif Khusus';
+            } else {
+                $amount = (float)$config->amount;
+                $note   = null;
+            }
+
+            return [
+                'amount' => $amount,
+                'note'   => $note,
+            ];
+        };
+
         if ($config->can_be_installment) {
             // Installment-based layout
             // Determine maximum terms count for this config in database
@@ -459,7 +539,7 @@ class KeuanganPrintController extends Controller
 
             $terms = range(1, $maxTerms);
 
-            $gridData = $santriList->map(function ($santri) use ($config, $terms) {
+            $gridData = $santriList->map(function ($santri) use ($config, $terms, $getExpectedTariff) {
                 $parentBill = Bill::where('person_id', $santri->id)
                     ->where('billing_config_id', $config->id)
                     ->whereNull('parent_bill_id')
@@ -474,6 +554,8 @@ class KeuanganPrintController extends Controller
                     $bills[$t] = $childBills->get($t - 1);
                 }
 
+                $tariffInfo = $getExpectedTariff($santri->id);
+
                 return [
                     'person' => $santri,
                     'room_name' => $santri->room_name,
@@ -481,6 +563,8 @@ class KeuanganPrintController extends Controller
                     'dormitory_id' => $santri->dormitory_id,
                     'parentBill' => $parentBill,
                     'bills' => $bills,
+                    'expectedAmount' => $tariffInfo['amount'],
+                    'exceptionNote' => $tariffInfo['note'],
                     'tunggakanLamaSum' => 0.00,
                 ];
             });
@@ -514,7 +598,7 @@ class KeuanganPrintController extends Controller
                     $periods["{$semester}-{$year}"]    = "Sem {$semester} / {$year}";
                 }
 
-                $gridData = $santriList->map(function ($santri) use ($periods, $config, $year, $semester) {
+                $gridData = $santriList->map(function ($santri) use ($periods, $config, $year, $semester, $getExpectedTariff) {
                     $bills = [];
                     foreach ($periods as $periodKey => $periodLabel) {
                         [$sem, $yr] = explode('-', $periodKey);
@@ -562,12 +646,16 @@ class KeuanganPrintController extends Controller
                         $lunasDiMukaLabel = "Sem {$furthestPaidBill->period_month} / {$furthestPaidBill->period_year}";
                     }
 
+                    $tariffInfo = $getExpectedTariff($santri->id);
+
                     return [
                         'person' => $santri,
                         'room_name' => $santri->room_name,
                         'dormitory_name' => $santri->dormitory_name,
                         'dormitory_id' => $santri->dormitory_id,
                         'bills' => $bills,
+                        'expectedAmount' => $tariffInfo['amount'],
+                        'exceptionNote' => $tariffInfo['note'],
                         'tunggakanLamaSum' => $tunggakanLamaSum,
                         'lunasDiMukaLabel' => $lunasDiMukaLabel,
                     ];
@@ -585,7 +673,7 @@ class KeuanganPrintController extends Controller
                     $months[$key] = $date->locale('id')->translatedFormat('M');
                 }
 
-                $gridData = $santriList->map(function ($santri) use ($months, $config, $year) {
+                $gridData = $santriList->map(function ($santri) use ($months, $config, $year, $getExpectedTariff) {
                     $bills = [];
                     foreach ($months as $periodKey => $periodLabel) {
                         [$m, $y] = explode('-', $periodKey);
@@ -620,12 +708,16 @@ class KeuanganPrintController extends Controller
                         $lunasDiMukaLabel = "Th " . $furthestPaidBill->period_year;
                     }
 
+                    $tariffInfo = $getExpectedTariff($santri->id);
+
                     return [
                         'person' => $santri,
                         'room_name' => $santri->room_name,
                         'dormitory_name' => $santri->dormitory_name,
                         'dormitory_id' => $santri->dormitory_id,
                         'bills' => $bills,
+                        'expectedAmount' => $tariffInfo['amount'],
+                        'exceptionNote' => $tariffInfo['note'],
                         'tunggakanLamaSum' => $tunggakanLamaSum,
                         'lunasDiMukaLabel' => $lunasDiMukaLabel,
                     ];
@@ -635,10 +727,12 @@ class KeuanganPrintController extends Controller
             } else {
                 // Yearly / once / insidental (single column checklist)
                 $year = (int) $request->query('year', now()->year);
-                $gridData = $santriList->map(function ($santri) use ($config) {
+                $gridData = $santriList->map(function ($santri) use ($config, $getExpectedTariff) {
                     $bill = Bill::where('person_id', $santri->id)
                         ->where('billing_config_id', $config->id)
                         ->first();
+
+                    $tariffInfo = $getExpectedTariff($santri->id);
 
                     return [
                         'person' => $santri,
@@ -646,6 +740,8 @@ class KeuanganPrintController extends Controller
                         'dormitory_name' => $santri->dormitory_name,
                         'dormitory_id' => $santri->dormitory_id,
                         'bills' => ['single' => $bill],
+                        'expectedAmount' => $tariffInfo['amount'],
+                        'exceptionNote' => $tariffInfo['note'],
                         'tunggakanLamaSum' => 0.00,
                     ];
                 });
