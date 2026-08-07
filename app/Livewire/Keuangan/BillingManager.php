@@ -1751,13 +1751,19 @@ class BillingManager extends Component
         $this->selectSantri($this->selectedSantriId);
     }
 
-    public function deletePayment(string $paymentId): void
+    // Void Modal State
+    public bool $showVoidModal = false;
+    public ?string $paymentToVoidId = null;
+    public ?array $paymentToVoidData = null;
+
+    public function confirmVoidPayment(string $paymentId): void
     {
         $user = auth()->user();
         $isCentral = $user && ($user->hasRole('super-admin') || $user->hasRole('manajemen') || $user->hasRole('bendahara-pondok') || $user->hasRole('bendahara-pusat') || $user->hasRole('pengasuh'));
 
-        $payment = BillPayment::find($paymentId);
+        $payment = BillPayment::with(['bill.person', 'bill.config', 'logger'])->find($paymentId);
         if (!$payment) {
+            $this->toastError('Data transaksi pembayaran tidak ditemukan.');
             return;
         }
 
@@ -1766,12 +1772,70 @@ class BillingManager extends Component
             || ($user && $user->hasPermissionTo('void-pembayaran'));
 
         if (!$canVoid) {
-            session()->flash('error', 'Anda tidak memiliki wewenang untuk membatalkan (void) transaksi pembayaran ini.');
+            $this->toastError('Anda tidak memiliki wewenang untuk membatalkan (void) transaksi pembayaran ini.');
             return;
         }
 
+        $this->paymentToVoidId = $payment->id;
+        $this->paymentToVoidData = [
+            'id'             => $payment->id,
+            'amount_paid'    => $payment->amount_paid,
+            'payment_date'   => $payment->payment_date ? $payment->payment_date->translatedFormat('d M Y') : '—',
+            'created_at'     => $payment->created_at->format('H:i') . ' WIB',
+            'payment_method' => strtoupper($payment->payment_method),
+            'notes'          => $payment->notes,
+            'santri_name'    => $payment->bill?->person?->name ?? 'Santri',
+            'santri_nis'     => $payment->bill?->person?->nis ?? '—',
+            'config_label'   => $payment->bill?->config?->label ?? ($payment->bill?->bill_type ? str_replace('_', ' ', $payment->bill->bill_type) : '—'),
+            'logger_name'    => $payment->logger?->name ?? 'Sistem',
+        ];
+
+        $this->showVoidModal = true;
+    }
+
+    public function closeVoidModal(): void
+    {
+        $this->showVoidModal = false;
+        $this->paymentToVoidId = null;
+        $this->paymentToVoidData = null;
+    }
+
+    public function executeVoidPayment(): void
+    {
+        if (!$this->paymentToVoidId) {
+            return;
+        }
+
+        $user = auth()->user();
+        $isCentral = $user && ($user->hasRole('super-admin') || $user->hasRole('manajemen') || $user->hasRole('bendahara-pondok') || $user->hasRole('bendahara-pusat') || $user->hasRole('pengasuh'));
+
+        $payment = BillPayment::find($this->paymentToVoidId);
+        if (!$payment) {
+            $this->toastError('Data transaksi pembayaran tidak ditemukan.');
+            $this->closeVoidModal();
+            return;
+        }
+
+        $canVoid = $isCentral 
+            || ($user && $payment->logged_by === $user->id)
+            || ($user && $user->hasPermissionTo('void-pembayaran'));
+
+        if (!$canVoid) {
+            $this->toastError('Anda tidak memiliki wewenang untuk membatalkan (void) transaksi pembayaran ini.');
+            $this->closeVoidModal();
+            return;
+        }
+
+        $amountFormatted = number_format($payment->amount_paid, 0, ',', '.');
         $payment->delete();
-        session()->flash('message', 'Pencatatan pembayaran berhasil dibatalkan & sisa tagihan dikembalikan.');
+
+        $this->toastSuccess("Pencatatan pembayaran sebesar Rp {$amountFormatted} berhasil dibatalkan & sisa tagihan dikembalikan.");
+        $this->closeVoidModal();
+    }
+
+    public function deletePayment(string $paymentId): void
+    {
+        $this->confirmVoidPayment($paymentId);
     }
 
 
