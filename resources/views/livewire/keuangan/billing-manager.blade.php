@@ -3218,6 +3218,10 @@
                             <span class="text-xs font-bold text-slate-800 dark:text-slate-200">{{ $paymentToVoidData['config_label'] }}</span>
                         </div>
                         <div class="flex items-center justify-between border-b border-slate-200/60 dark:border-slate-800/60 pb-2.5">
+                            <span class="text-xs text-slate-400 font-medium">Periode Tagihan</span>
+                            <span class="text-xs font-extrabold text-emerald-600 dark:text-emerald-400">📅 {{ $paymentToVoidData['period_label'] }}</span>
+                        </div>
+                        <div class="flex items-center justify-between border-b border-slate-200/60 dark:border-slate-800/60 pb-2.5">
                             <span class="text-xs text-slate-400 font-medium">Metode & Waktu</span>
                             <span class="text-xs font-bold text-slate-800 dark:text-slate-200">{{ $paymentToVoidData['payment_method'] }} • {{ $paymentToVoidData['payment_date'] }} ({{ $paymentToVoidData['created_at'] }})</span>
                         </div>

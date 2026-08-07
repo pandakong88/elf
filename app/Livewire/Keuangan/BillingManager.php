@@ -1776,6 +1776,22 @@ class BillingManager extends Component
             return;
         }
 
+        $bill = $payment->bill;
+        $config = $bill?->config;
+
+        $periodLabel = '—';
+        if ($bill) {
+            if ($config && $config->interval === 'semester') {
+                $periodLabel = 'Semester ' . $bill->period_month . ' / ' . $bill->period_year;
+            } elseif ($config && in_array($config->interval, ['once', 'insidental', 'event', 'sekali'])) {
+                $periodLabel = 'Event / ' . $bill->period_year;
+            } else {
+                $months = [1=>'Januari', 2=>'Februari', 3=>'Maret', 4=>'April', 5=>'Mei', 6=>'Juni', 7=>'Juli', 8=>'Agustus', 9=>'September', 10=>'Oktober', 11=>'November', 12=>'Desember'];
+                $mName = $months[$bill->period_month] ?? ('Bulan ' . $bill->period_month);
+                $periodLabel = $mName . ' ' . $bill->period_year . ($bill->period_sub ? ' (Gel. ' . $bill->period_sub . ')' : '');
+            }
+        }
+
         $this->paymentToVoidId = $payment->id;
         $this->paymentToVoidData = [
             'id'             => $payment->id,
@@ -1787,6 +1803,7 @@ class BillingManager extends Component
             'santri_name'    => $payment->bill?->person?->name ?? 'Santri',
             'santri_nis'     => $payment->bill?->person?->nis ?? '—',
             'config_label'   => $payment->bill?->config?->label ?? ($payment->bill?->bill_type ? str_replace('_', ' ', $payment->bill->bill_type) : '—'),
+            'period_label'   => $periodLabel,
             'logger_name'    => $payment->logger?->name ?? 'Sistem',
         ];
 
