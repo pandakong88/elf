@@ -486,9 +486,9 @@
                                              <th class="border border-slate-800 py-1.5 px-2 text-center" style="width: 5%;">No</th>
                                              <th class="border border-slate-800 py-1.5 px-2" style="width: 30%;">Nama Lengkap Santri</th>
                                              @if($preview['type'] === 'single')
-                                                 <th class="border border-slate-800 py-1.5 px-2 text-center" style="width: 15%;">Tagihan</th>
-                                                 <th class="border border-slate-800 py-1.5 px-2 text-center" style="width: 25%;">Jumlah Bayar</th>
-                                                 <th class="border border-slate-800 py-1.5 px-2 text-center" style="width: 10%;">Paraf</th>
+                                                 <th class="border border-slate-800 py-1.5 px-2 text-center" style="width: 14%;">Tagihan</th>
+                                                 <th class="border border-slate-800 py-1.5 px-2 text-center" style="width: 21%;">Bayar I (Nominal & Paraf)</th>
+                                                 <th class="border border-slate-800 py-1.5 px-2 text-center" style="width: 21%;">Bayar II / Pelunasan</th>
                                              @else
                                                  @if($preview['type'] === 'semester')
                                                      <th class="border border-slate-800 py-1.5 px-2 text-center" style="width: 10%;">Tunggakan</th>
@@ -497,7 +497,7 @@
                                                      <th class="border border-slate-800 py-1.5 px-2 text-center text-[7px]" style="width: 15%;">{{ $header }}</th>
                                                  @endforeach
                                              @endif
-                                             <th class="border border-slate-800 py-1.5 px-2 text-center" style="width: 10%;">Ket</th>
+                                             <th class="border border-slate-800 py-1.5 px-2 text-center" style="width: 11%;">Ket</th>
                                          </tr>
                                      </thead>
                                      <tbody class="divide-y divide-slate-800/20 leading-normal text-[8px]">
@@ -510,7 +510,7 @@
                                              @endphp
                                              @if($currentRoom !== $roomKey)
                                                  <tr class="bg-slate-50 dark:bg-slate-900/60 font-extrabold text-slate-800 dark:text-slate-200">
-                                                     <td colspan="{{ $preview['type'] === 'single' ? 5 : (3 + count($preview['headers']) + ($preview['type'] === 'semester' ? 1 : 0)) }}" class="border border-slate-800 py-1 px-2">
+                                                     <td colspan="{{ $preview['type'] === 'single' ? 6 : (3 + count($preview['headers']) + ($preview['type'] === 'semester' ? 1 : 0)) }}" class="border border-slate-800 py-1 px-2">
                                                          🏢 {{ strtoupper($dormName) }} — KAMAR: {{ strtoupper($roomName) }}
                                                      </td>
                                                  </tr>
@@ -523,19 +523,20 @@
                                                  @if($preview['type'] === 'single')
                                                      @php $bill = $row['bills'][0] ?? null; @endphp
                                                      <td class="border border-slate-800 py-1.5 px-2 text-center font-bold">
-                                                         Rp {{ number_format($bill ? $bill->amount : $config->amount, 0, ',', '.') }}
+                                                         Rp {{ number_format($bill ? $bill->amount : ($row['expectedAmount'] ?? $config->amount), 0, ',', '.') }}
                                                      </td>
-                                                     <td class="border border-slate-800 p-1">
-                                                         @if($bill && $bill->status === 'paid')
-                                                             <div class="text-center text-emerald-600 dark:text-emerald-400 font-extrabold py-1">— LUNAS DI SISTEM —</div>
-                                                         @else
-                                                             <div class="write-lines">
-                                                                 <div class="write-line"></div>
-                                                                 <div class="write-line"></div>
-                                                                 <div class="write-line"></div>
-                                                             </div>
-                                                         @endif
-                                                     </td>
+                                                     @if($bill && $bill->status === 'paid')
+                                                         <td colspan="2" class="border border-slate-800 p-1 text-center text-emerald-600 dark:text-emerald-400 font-extrabold py-1">
+                                                             — LUNAS DI SISTEM —
+                                                         </td>
+                                                     @else
+                                                         <td class="border border-slate-800 p-1 text-center text-slate-300 dark:text-slate-700 text-[7.5px] align-bottom pb-1">
+                                                             Rp .......................... (Paraf)
+                                                         </td>
+                                                         <td class="border border-slate-800 p-1 text-center text-slate-300 dark:text-slate-700 text-[7.5px] align-bottom pb-1">
+                                                             Rp .......................... (Paraf)
+                                                         </td>
+                                                     @endif
                                                  @else
                                                      @if($preview['type'] === 'semester')
                                                          <td class="border border-slate-800 py-1.5 px-2 text-center text-rose-600 font-bold">
@@ -558,8 +559,12 @@
                                                      @endforeach
                                                  @endif
 
-                                                 <td class="border border-slate-800 py-1.5 px-2 text-center text-slate-400 italic">
-                                                     —
+                                                 <td class="border border-slate-800 py-1.5 px-2 text-center">
+                                                     @if(!empty($row['exceptionNote']))
+                                                         <span class="text-amber-600 dark:text-amber-400 font-bold text-[8px]">{{ $row['exceptionNote'] }}</span>
+                                                     @else
+                                                         <span class="text-slate-400 italic">—</span>
+                                                     @endif
                                                  </td>
                                              </tr>
                                          @endforeach

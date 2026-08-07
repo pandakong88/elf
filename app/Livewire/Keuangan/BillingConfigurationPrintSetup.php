@@ -143,6 +143,37 @@ class BillingConfigurationPrintSetup extends Component
             $santriList = $query->get();
         }
 
+        $exceptions = \App\Modules\Keuangan\Models\BillingException::where('billing_config_id', $config->id)->get()->keyBy('person_id');
+
+        $getExpectedTariff = function ($santriId) use ($config, $exceptions) {
+            $exception = $exceptions->get($santriId);
+            if (!$exception) {
+                return [
+                    'amount' => (float)$config->amount,
+                    'note'   => null,
+                ];
+            }
+
+            if ($exception->exception_type === 'waived') {
+                $amount = 0.00;
+                $note   = $exception->notes ?: 'Bebas (100%)';
+            } elseif ($exception->exception_type === 'discount') {
+                $amount = max(0.00, (float)$config->amount - (float)$exception->amount);
+                $note   = $exception->notes ?: 'Diskon Rp ' . number_format($exception->amount, 0, ',', '.');
+            } elseif ($exception->exception_type === 'custom_rate') {
+                $amount = (float)$exception->amount;
+                $note   = $exception->notes ?: 'Tarif Khusus';
+            } else {
+                $amount = (float)$config->amount;
+                $note   = null;
+            }
+
+            return [
+                'amount' => $amount,
+                'note'   => $note,
+            ];
+        };
+
         // 2. Prepare headers and bills mapping based on layoutType
         if ($config->can_be_installment) {
             // Installment-based layout
@@ -157,7 +188,7 @@ class BillingConfigurationPrintSetup extends Component
             $terms = range(1, $maxTerms);
             $headers = array_map(fn($t) => "Termin {$t}", $terms);
 
-            $gridData = $santriList->map(function ($santri) use ($config, $terms) {
+            $gridData = $santriList->map(function ($santri) use ($config, $terms, $getExpectedTariff) {
                 $parentBill = Bill::where('person_id', $santri->id)
                     ->where('billing_config_id', $config->id)
                     ->whereNull('parent_bill_id')
@@ -172,11 +203,15 @@ class BillingConfigurationPrintSetup extends Component
                     $bills[] = $childBills->get($t - 1);
                 }
 
+                $tariffInfo = $getExpectedTariff($santri->id);
+
                 return [
                     'person' => $santri,
                     'room_name' => $santri->room_name ?? null,
                     'dormitory_name' => $santri->dormitory_name ?? null,
                     'bills' => $bills,
+                    'expectedAmount' => $tariffInfo['amount'],
+                    'exceptionNote' => $tariffInfo['note'],
                 ];
             });
 
@@ -193,7 +228,7 @@ class BillingConfigurationPrintSetup extends Component
                 3 => "Caturwulan 3 (Sep–Des)",
             ];
 
-            $gridData = $santriList->map(function ($santri) use ($periods, $config) {
+            $gridData = $santriList->map(function ($santri) use ($periods, $config, $getExpectedTariff) {
                 $bills = [];
                 foreach (array_keys($periods) as $pNum) {
                     $bill = Bill::where('person_id', $santri->id)
@@ -204,11 +239,15 @@ class BillingConfigurationPrintSetup extends Component
                     $bills[] = $bill;
                 }
 
+                $tariffInfo = $getExpectedTariff($santri->id);
+
                 return [
                     'person' => $santri,
                     'room_name' => $santri->room_name ?? null,
                     'dormitory_name' => $santri->dormitory_name ?? null,
                     'bills' => $bills,
+                    'expectedAmount' => $tariffInfo['amount'],
+                    'exceptionNote' => $tariffInfo['note'],
                 ];
             });
 
@@ -226,7 +265,7 @@ class BillingConfigurationPrintSetup extends Component
                 4 => "Triwulan 4 (Okt–Des)",
             ];
 
-            $gridData = $santriList->map(function ($santri) use ($periods, $config) {
+            $gridData = $santriList->map(function ($santri) use ($periods, $config, $getExpectedTariff) {
                 $bills = [];
                 foreach (array_keys($periods) as $pNum) {
                     $bill = Bill::where('person_id', $santri->id)
@@ -237,11 +276,15 @@ class BillingConfigurationPrintSetup extends Component
                     $bills[] = $bill;
                 }
 
+                $tariffInfo = $getExpectedTariff($santri->id);
+
                 return [
                     'person' => $santri,
                     'room_name' => $santri->room_name ?? null,
                     'dormitory_name' => $santri->dormitory_name ?? null,
                     'bills' => $bills,
+                    'expectedAmount' => $tariffInfo['amount'],
+                    'exceptionNote' => $tariffInfo['note'],
                 ];
             });
 
@@ -258,7 +301,7 @@ class BillingConfigurationPrintSetup extends Component
             $periods["{$prevSem}-{$prevYear}"] = "Sem {$prevSem} / {$prevYear}";
             $periods["{$this->selectedSemester}-{$this->selectedYear}"] = "Sem {$this->selectedSemester} / {$this->selectedYear}";
 
-            $gridData = $santriList->map(function ($santri) use ($periods, $config) {
+            $gridData = $santriList->map(function ($santri) use ($periods, $config, $getExpectedTariff) {
                 $bills = [];
                 foreach ($periods as $periodKey => $periodLabel) {
                     [$sem, $yr] = explode('-', $periodKey);
@@ -270,11 +313,15 @@ class BillingConfigurationPrintSetup extends Component
                     $bills[] = $bill;
                 }
 
+                $tariffInfo = $getExpectedTariff($santri->id);
+
                 return [
                     'person' => $santri,
                     'room_name' => $santri->room_name ?? null,
                     'dormitory_name' => $santri->dormitory_name ?? null,
                     'bills' => $bills,
+                    'expectedAmount' => $tariffInfo['amount'],
+                    'exceptionNote' => $tariffInfo['note'],
                 ];
             });
 
@@ -292,7 +339,7 @@ class BillingConfigurationPrintSetup extends Component
                 $months[$key] = $date->locale('id')->translatedFormat('M');
             }
 
-            $gridData = $santriList->map(function ($santri) use ($months, $config) {
+            $gridData = $santriList->map(function ($santri) use ($months, $config, $getExpectedTariff) {
                 $bills = [];
                 foreach ($months as $periodKey => $periodLabel) {
                     [$m, $y] = explode('-', $periodKey);
@@ -304,11 +351,15 @@ class BillingConfigurationPrintSetup extends Component
                     $bills[] = $bill;
                 }
 
+                $tariffInfo = $getExpectedTariff($santri->id);
+
                 return [
                     'person' => $santri,
                     'room_name' => $santri->room_name ?? null,
                     'dormitory_name' => $santri->dormitory_name ?? null,
                     'bills' => $bills,
+                    'expectedAmount' => $tariffInfo['amount'],
+                    'exceptionNote' => $tariffInfo['note'],
                 ];
             });
 
@@ -319,16 +370,20 @@ class BillingConfigurationPrintSetup extends Component
             ];
         } else {
             // Yearly / once / insidental (single column for the bill)
-            $gridData = $santriList->map(function ($santri) use ($config) {
+            $gridData = $santriList->map(function ($santri) use ($config, $getExpectedTariff) {
                 $bill = Bill::where('person_id', $santri->id)
                     ->where('billing_config_id', $config->id)
                     ->first();
+
+                $tariffInfo = $getExpectedTariff($santri->id);
 
                 return [
                     'person' => $santri,
                     'room_name' => $santri->room_name ?? null,
                     'dormitory_name' => $santri->dormitory_name ?? null,
                     'bills' => [$bill],
+                    'expectedAmount' => $tariffInfo['amount'],
+                    'exceptionNote' => $tariffInfo['note'],
                 ];
             });
 

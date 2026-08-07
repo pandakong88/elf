@@ -293,7 +293,7 @@
                         @foreach($rows as $i => $row)
                             @php
                                 $parent = $row['parentBill'];
-                                $total = $parent ? $parent->amount : 0.00;
+                                $total = $parent ? $parent->amount : ($row['expectedAmount'] ?? $config->amount);
                                 $paid = $parent ? $parent->amount_paid : 0.00;
                                 $remaining = $total - $paid;
                             @endphp
@@ -404,7 +404,7 @@
                     @foreach($gridData as $row)
                         @php
                             $parent = $row['parentBill'];
-                            $total = $parent ? $parent->amount : 0.00;
+                            $total = $parent ? $parent->amount : ($row['expectedAmount'] ?? $config->amount);
                             $paid = $parent ? $parent->amount_paid : 0.00;
                             $remaining = $total - $paid;
                             if ($config->target_type === 'kelas') {

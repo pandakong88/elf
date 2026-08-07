@@ -2129,46 +2129,157 @@
         <!-- TAB 6: RIWAYAT SETORAN (LOG PEMBAYARAN KASIR) -->
         @if ($activeTab === 'payments_log')
             <div class="space-y-8 animate-fade-in">
-                <!-- Filters & Stats Header Card -->
-                <div class="bg-white dark:bg-slate-900 border border-slate-200/50 dark:border-slate-800 p-6 rounded-3xl shadow-xs space-y-6">
-                    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-slate-100 dark:border-slate-800 pb-4">
+                <!-- Real-time KPI Summary Cards for Filtered Results -->
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div class="bg-gradient-to-br from-emerald-500/10 via-emerald-500/5 to-transparent border border-emerald-500/20 dark:border-emerald-500/30 p-4 rounded-2xl flex items-center gap-3.5 shadow-2xs">
+                        <div class="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-lg font-bold">
+                            💵
+                        </div>
+                        <div>
+                            <span class="block text-[10px] font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Total Setor Tunai (Cash)</span>
+                            <span class="text-base font-extrabold text-emerald-600 dark:text-emerald-400">Rp {{ number_format($payLogTotalCash, 0, ',', '.') }}</span>
+                        </div>
+                    </div>
+
+                    <div class="bg-gradient-to-br from-blue-500/10 via-blue-500/5 to-transparent border border-blue-500/20 dark:border-blue-500/30 p-4 rounded-2xl flex items-center gap-3.5 shadow-2xs">
+                        <div class="w-10 h-10 rounded-xl bg-blue-500/20 text-blue-600 dark:text-blue-400 flex items-center justify-center text-lg font-bold">
+                            💳
+                        </div>
+                        <div>
+                            <span class="block text-[10px] font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Total Setor Transfer</span>
+                            <span class="text-base font-extrabold text-blue-600 dark:text-blue-400">Rp {{ number_format($payLogTotalTransfer, 0, ',', '.') }}</span>
+                        </div>
+                    </div>
+
+                    <div class="bg-gradient-to-br from-indigo-500/10 via-indigo-500/5 to-transparent border border-indigo-500/20 dark:border-indigo-500/30 p-4 rounded-2xl flex items-center gap-3.5 shadow-2xs">
+                        <div class="w-10 h-10 rounded-xl bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 flex items-center justify-center text-lg font-bold">
+                            🧾
+                        </div>
+                        <div>
+                            <span class="block text-[10px] font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Jumlah Transaksi Terfilter</span>
+                            <span class="text-base font-extrabold text-indigo-600 dark:text-indigo-400">{{ $payLogTotalCount }} <span class="text-xs font-semibold text-slate-500">Transaksi</span></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Filters & Control Panel Card -->
+                <div class="bg-white dark:bg-slate-900 border border-slate-200/50 dark:border-slate-800 p-6 rounded-3xl shadow-xs space-y-5">
+                    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-slate-100 dark:border-slate-800 pb-4">
                         <div>
                             <h3 class="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider block font-serif-display">Riwayat Setoran & Transaksi Kasir</h3>
                             <p class="text-[11px] text-slate-400">Jejak pembayaran iuran santri yang dicatat oleh kasir. Anda dapat melakukan pembatalan pencatatan/void pembayaran jika terjadi kesalahan.</p>
                         </div>
+                        <div class="flex items-center gap-2">
+                            <button type="button" wire:click="togglePayLogAdvancedFilters"
+                                class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl text-xs font-bold transition-all">
+                                🎛️ {{ $showPayLogAdvancedFilters ? 'Sembunyikan Filter' : 'Filter Lanjutan' }}
+                            </button>
+                            @if($payLogSearch || $payLogMethod || $payLogDate || $payLogStartDate || $payLogEndDate || $payLogUser || $payLogConfigId || $payLogDormitoryId || $payLogKelasId)
+                                <button type="button" wire:click="resetPayLogFilters"
+                                    class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-rose-500/10 hover:bg-rose-500 text-rose-600 hover:text-white rounded-xl text-xs font-bold transition-all">
+                                    ❌ Reset Filter
+                                </button>
+                            @endif
+                        </div>
                     </div>
 
-                    <!-- Filter Controls -->
-                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                        <!-- Search Box -->
-                        <div>
-                            <label class="block text-[9px] font-extrabold text-slate-400 uppercase tracking-wider mb-2">Cari Santri / Jenis Iuran</label>
+                    <!-- Main Search & Primary Filters Row -->
+                    <div class="grid grid-cols-1 md:grid-cols-12 gap-4">
+                        <!-- Search Box (Santri / NIS / NIK) -->
+                        <div class="md:col-span-5">
+                            <label class="block text-[9px] font-extrabold text-slate-400 uppercase tracking-wider mb-1.5">Cari Santri (Nama / NIS / NIK)</label>
                             <div class="relative">
                                 <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
                                 </span>
-                                <input type="text" wire:model.live.debounce.300ms="payLogSearch" placeholder="Cari nama santri, NIS, atau jenis iuran..." 
-                                    class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-100 rounded-2xl pl-10 pr-4 py-2.5 text-xs font-bold focus:ring-2 focus:ring-emerald-500 shadow-2xs">
+                                <input type="text" wire:model.live.debounce.300ms="payLogSearch" placeholder="Ketik nama santri, NIS, NIK, atau catatan..." 
+                                    class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-100 rounded-2xl pl-10 pr-4 py-2 text-xs font-bold focus:ring-2 focus:ring-emerald-500 shadow-2xs">
                             </div>
                         </div>
 
-                        <!-- Method Selector -->
-                        <div>
-                            <label class="block text-[9px] font-extrabold text-slate-400 uppercase tracking-wider mb-2">Metode Setoran</label>
-                            <select wire:model.live="payLogMethod" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-100 rounded-2xl px-4 py-2.5 text-xs font-bold focus:ring-2 focus:ring-emerald-500 shadow-2xs">
-                                <option value="">-- Semua Metode --</option>
-                                <option value="CASH">💵 Tunai (Cash)</option>
-                                <option value="TRANSFER">🏦 Transfer Bank</option>
-                                <option value="EWALLET">📱 E-Wallet / Digital</option>
-                            </select>
+                        <!-- Date Range (Mulai s.d Selesai) -->
+                        <div class="md:col-span-4">
+                            <label class="block text-[9px] font-extrabold text-slate-400 uppercase tracking-wider mb-1.5">Rentang Tanggal Setor</label>
+                            <div class="flex items-center gap-1.5">
+                                <input type="date" wire:model.live="payLogStartDate" title="Tanggal Mulai" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-100 rounded-2xl px-2.5 py-2 text-xs font-bold focus:ring-2 focus:ring-emerald-500 shadow-2xs">
+                                <span class="text-slate-400 text-xs font-bold">s/d</span>
+                                <input type="date" wire:model.live="payLogEndDate" title="Tanggal Selesai" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-100 rounded-2xl px-2.5 py-2 text-xs font-bold focus:ring-2 focus:ring-emerald-500 shadow-2xs">
+                            </div>
                         </div>
 
-                        <!-- Date Selector -->
-                        <div>
-                            <label class="block text-[9px] font-extrabold text-slate-400 uppercase tracking-wider mb-2">Tanggal Setor</label>
-                            <input type="date" wire:model.live="payLogDate" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-100 rounded-2xl px-4 py-2.5 text-xs font-bold focus:ring-2 focus:ring-emerald-500 shadow-2xs">
+                        <!-- Cashier User Select -->
+                        <div class="md:col-span-3">
+                            <label class="block text-[9px] font-extrabold text-slate-400 uppercase tracking-wider mb-1.5">Petugas Kasir</label>
+                            <select wire:model.live="payLogUser" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-100 rounded-2xl px-3 py-2 text-xs font-bold focus:ring-2 focus:ring-emerald-500 shadow-2xs">
+                                <option value="">-- Semua Petugas --</option>
+                                @foreach($cashierUsers as $u)
+                                    <option value="{{ $u->id }}">👤 {{ $u->name }}</option>
+                                @endforeach
+                            </select>
                         </div>
                     </div>
+
+                    <!-- Date Presets Shortcuts -->
+                    <div class="flex items-center gap-1.5 flex-wrap text-[10px] font-extrabold pt-1">
+                        <span class="text-slate-400 mr-1">Preset Tanggal:</span>
+                        <button type="button" wire:click="setPayLogDatePreset('today')" class="px-2.5 py-1 bg-slate-100 dark:bg-slate-800 hover:bg-emerald-500/10 hover:text-emerald-600 dark:hover:text-emerald-400 rounded-lg text-slate-600 dark:text-slate-300 transition-all">Hari Ini</button>
+                        <button type="button" wire:click="setPayLogDatePreset('yesterday')" class="px-2.5 py-1 bg-slate-100 dark:bg-slate-800 hover:bg-emerald-500/10 hover:text-emerald-600 dark:hover:text-emerald-400 rounded-lg text-slate-600 dark:text-slate-300 transition-all">Kemarin</button>
+                        <button type="button" wire:click="setPayLogDatePreset('7days')" class="px-2.5 py-1 bg-slate-100 dark:bg-slate-800 hover:bg-emerald-500/10 hover:text-emerald-600 dark:hover:text-emerald-400 rounded-lg text-slate-600 dark:text-slate-300 transition-all">7 Hari Terakhir</button>
+                        <button type="button" wire:click="setPayLogDatePreset('this_month')" class="px-2.5 py-1 bg-slate-100 dark:bg-slate-800 hover:bg-emerald-500/10 hover:text-emerald-600 dark:hover:text-emerald-400 rounded-lg text-slate-600 dark:text-slate-300 transition-all">Bulan Ini</button>
+                        <button type="button" wire:click="setPayLogDatePreset('last_month')" class="px-2.5 py-1 bg-slate-100 dark:bg-slate-800 hover:bg-emerald-500/10 hover:text-emerald-600 dark:hover:text-emerald-400 rounded-lg text-slate-600 dark:text-slate-300 transition-all">Bulan Lalu</button>
+                        @if($payLogStartDate || $payLogEndDate)
+                            <button type="button" wire:click="setPayLogDatePreset('clear')" class="px-2.5 py-1 bg-rose-500/10 text-rose-600 rounded-lg transition-all">Clear Tanggal</button>
+                        @endif
+                    </div>
+
+                    <!-- Advanced Filters Panel (Expandable) -->
+                    @if($showPayLogAdvancedFilters)
+                        <div class="pt-4 border-t border-dashed border-slate-200 dark:border-slate-800 grid grid-cols-1 sm:grid-cols-4 gap-4 animate-fade-in bg-slate-50/50 dark:bg-slate-950/30 p-4 rounded-2xl">
+                            <!-- Filter Jenis Iuran -->
+                            <div>
+                                <label class="block text-[9px] font-extrabold text-slate-400 uppercase tracking-wider mb-1.5">Jenis Iuran / Config</label>
+                                <select wire:model.live="payLogConfigId" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-100 rounded-xl px-3 py-2 text-xs font-bold focus:ring-2 focus:ring-emerald-500 shadow-2xs">
+                                    <option value="">-- Semua Jenis Iuran --</option>
+                                    @foreach($payLogConfigs as $cfg)
+                                        <option value="{{ $cfg->id }}">🏷️ {{ $cfg->label }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+
+                            <!-- Filter Komplek Asrama -->
+                            <div>
+                                <label class="block text-[9px] font-extrabold text-slate-400 uppercase tracking-wider mb-1.5">Komplek Asrama</label>
+                                <select wire:model.live="payLogDormitoryId" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-100 rounded-xl px-3 py-2 text-xs font-bold focus:ring-2 focus:ring-emerald-500 shadow-2xs">
+                                    <option value="">-- Semua Komplek --</option>
+                                    @foreach($payLogDormitories as $dorm)
+                                        <option value="{{ $dorm->id }}">🏠 {{ $dorm->name }} ({{ $dorm->gender === 'L' ? 'Putra' : 'Putri' }})</option>
+                                    @endforeach
+                                </select>
+                            </div>
+
+                            <!-- Filter Kelas Madrasah -->
+                            <div>
+                                <label class="block text-[9px] font-extrabold text-slate-400 uppercase tracking-wider mb-1.5">Kelas Madrasah</label>
+                                <select wire:model.live="payLogKelasId" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-100 rounded-xl px-3 py-2 text-xs font-bold focus:ring-2 focus:ring-emerald-500 shadow-2xs">
+                                    <option value="">-- Semua Kelas --</option>
+                                    @foreach($payLogClasses as $kls)
+                                        <option value="{{ $kls->id }}">🏫 {{ $kls->name }} ({{ $kls->academic_year }})</option>
+                                    @endforeach
+                                </select>
+                            </div>
+
+                            <!-- Filter Metode Setoran -->
+                            <div>
+                                <label class="block text-[9px] font-extrabold text-slate-400 uppercase tracking-wider mb-1.5">Metode Setoran</label>
+                                <select wire:model.live="payLogMethod" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-100 rounded-xl px-3 py-2 text-xs font-bold focus:ring-2 focus:ring-emerald-500 shadow-2xs">
+                                    <option value="">-- Semua Metode --</option>
+                                    <option value="CASH">💵 Tunai (Cash)</option>
+                                    <option value="TRANSFER">🏦 Transfer Bank</option>
+                                    <option value="EWALLET">📱 E-Wallet / Digital</option>
+                                </select>
+                            </div>
+                        </div>
+                    @endif
                 </div>
 
                 <!-- Payment Logs Table -->
