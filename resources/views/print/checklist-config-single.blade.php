@@ -297,9 +297,9 @@
                                         Rp .......................... (Paraf)
                                     </td>
                                 @endif
-                                <td class="center border-left-dark" style="color: #64748b; font-size: 8.5px;">
+                                <td class="center border-left-dark" style="color: #64748b; font-size: 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 85px;">
                                     @if(!empty($row['exceptionNote']))
-                                        <span style="color: #d97706; font-weight: bold;">{{ $row['exceptionNote'] }}</span>
+                                        <span style="color: #d97706; font-weight: bold;">{{ \Illuminate\Support\Str::limit($row['exceptionNote'], 16) }}</span>
                                     @else
                                         —
                                     @endif
@@ -413,9 +413,9 @@
                                     Rp .......................... (Paraf)
                                 </td>
                             @endif
-                            <td class="center border-left-dark" style="color: #64748b; font-size: 8.5px;">
+                            <td class="center border-left-dark" style="color: #64748b; font-size: 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 85px;">
                                 @if(!empty($row['exceptionNote']))
-                                    <span style="color: #d97706; font-weight: bold;">{{ $row['exceptionNote'] }}</span>
+                                    <span style="color: #d97706; font-weight: bold;">{{ \Illuminate\Support\Str::limit($row['exceptionNote'], 16) }}</span>
                                 @else
                                     —
                                 @endif
