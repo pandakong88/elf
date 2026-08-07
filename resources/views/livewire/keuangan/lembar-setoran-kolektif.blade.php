@@ -235,19 +235,31 @@
                                     @if($row['tunggakanLamaSum'] > 0)
                                         <div class="flex items-center gap-1.5 justify-center">
                                             @php
-                                                $isFullyChecked = isset($oldArrearsPayments[$row['person']->id]) && (float)$oldArrearsPayments[$row['person']->id] >= $row['tunggakanLamaSum'];
+                                                $oldVal = isset($oldArrearsPayments[$row['person']->id]) ? (float)$oldArrearsPayments[$row['person']->id] : 0.0;
+                                                $hasOldInput = $oldVal > 0;
+                                                $isOldFullyChecked = $hasOldInput && $oldVal >= $row['tunggakanLamaSum'];
+                                                $isOldPartialInput = $hasOldInput && $oldVal < $row['tunggakanLamaSum'];
                                             @endphp
                                             <button type="button" wire:click="toggleOldArrearsFullPayment('{{ $row['person']->id }}', {{ $row['tunggakanLamaSum'] }})"
-                                                class="p-1 rounded-lg text-[9px] transition-all focus:outline-none 
-                                                    {{ $isFullyChecked ? 'bg-rose-500 text-white font-bold' : 'bg-rose-50 text-rose-600 dark:bg-rose-950/20 dark:text-rose-450 hover:bg-rose-100' }}"
-                                                title="Tandai Lunas Tunggakan">
+                                                class="w-6 h-6 rounded-lg text-[10px] transition-all focus:outline-none flex items-center justify-center font-extrabold shadow-2xs
+                                                    @if($isOldFullyChecked)
+                                                        bg-rose-500 text-white shadow-rose-500/30
+                                                    @elseif($isOldPartialInput)
+                                                        bg-amber-500 text-white shadow-amber-500/30
+                                                    @else
+                                                        bg-rose-50 text-rose-600 dark:bg-rose-950/20 dark:text-rose-400 hover:bg-rose-100
+                                                    @endif"
+                                                title="{{ $isOldFullyChecked ? 'Lunas Tunggakan' : ($isOldPartialInput ? 'Cicilan Tunggakan (Rp ' . number_format($oldVal, 0, ',', '.') . ')' : 'Tandai Lunas Tunggakan') }}">
                                                 ⚡
                                             </button>
                                             <input
                                                 type="number"
-                                                wire:model.live.debounce.500ms="oldArrearsPayments.{{ $row['person']->id }}"
+                                                wire:model.live.debounce.200ms="oldArrearsPayments.{{ $row['person']->id }}"
                                                 placeholder="Rp {{ number_format($row['tunggakanLamaSum'], 0, ',', '') }}"
-                                                class="w-24 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200 rounded-lg px-2 py-1 text-[10px] text-right font-bold focus:ring-rose-500"
+                                                class="w-24 bg-slate-50 dark:bg-slate-950 border rounded-lg px-2 py-1 text-[10px] text-right font-bold focus:ring-1 transition-all
+                                                    @if($isOldFullyChecked) border-rose-500 ring-1 ring-rose-500/30 text-rose-700 dark:text-rose-300 bg-rose-500/5
+                                                    @elseif($isOldPartialInput) border-amber-500 ring-1 ring-amber-500/30 text-amber-700 dark:text-amber-300 bg-amber-500/5
+                                                    @else border-slate-200 dark:border-slate-800 focus:ring-rose-500 text-slate-800 dark:text-slate-200 @endif"
                                             >
                                         </div>
                                     @else
@@ -267,29 +279,37 @@
                                         @else
                                             @php
                                                 $remaining = (float)$data['bill']->amount - (float)$data['bill']->amount_paid;
-                                                $isCellFullyChecked = isset($paymentAmounts[$data['bill']->id]) && (float)$paymentAmounts[$data['bill']->id] >= $remaining;
+                                                $inputVal = isset($paymentAmounts[$data['bill']->id]) ? (float)$paymentAmounts[$data['bill']->id] : 0.0;
+                                                $hasInput = $inputVal > 0;
+                                                $isCellFullyChecked = $hasInput && $inputVal >= $remaining;
+                                                $isCellPartialInput = $hasInput && $inputVal < $remaining;
                                                 $isPartial = $data['bill']->status === 'partial';
                                             @endphp
                                             <div class="flex items-center gap-1.5 justify-center">
                                                 <button type="button" wire:click="toggleBillFullPayment('{{ $data['bill']->id }}', {{ $remaining }})"
-                                                    class="p-1 rounded-lg text-[9px] transition-all focus:outline-none
+                                                    class="w-6 h-6 rounded-lg text-[10px] transition-all focus:outline-none flex items-center justify-center font-extrabold shadow-2xs
                                                         @if($isCellFullyChecked)
-                                                            @if($isPartial) bg-amber-500 text-white font-bold @else bg-emerald-500 text-white font-bold @endif
+                                                            bg-emerald-500 text-white shadow-emerald-500/30
+                                                        @elseif($isCellPartialInput)
+                                                            bg-amber-500 text-white shadow-amber-500/30
                                                         @else
-                                                            @if($isPartial) bg-amber-55 text-amber-600 dark:bg-amber-950/20 dark:text-amber-450 hover:bg-amber-100 @else bg-emerald-50 text-emerald-600 dark:bg-emerald-950/20 dark:text-emerald-450 hover:bg-emerald-100 @endif
+                                                            @if($isPartial) bg-amber-500/10 text-amber-600 dark:bg-amber-950/20 dark:text-amber-400 hover:bg-amber-100 @else bg-slate-100 text-slate-400 dark:bg-slate-800 dark:text-slate-500 hover:bg-emerald-100 hover:text-emerald-600 @endif
                                                         @endif"
-                                                    title="Tandai Lunas">
+                                                    title="{{ $isCellFullyChecked ? 'Lunas Penuh (Rp ' . number_format($inputVal, 0, ',', '.') . ')' : ($isCellPartialInput ? 'Cicilan/Sebagian (Rp ' . number_format($inputVal, 0, ',', '.') . ')' : 'Tandai Lunas Penuh') }}">
                                                     ✓
                                                 </button>
                                                 <div class="relative">
                                                     <input
                                                         type="number"
-                                                        wire:model.live.debounce.500ms="paymentAmounts.{{ $data['bill']->id }}"
+                                                        wire:model.live.debounce.200ms="paymentAmounts.{{ $data['bill']->id }}"
                                                         placeholder="Rp {{ number_format($remaining, 0, ',', '') }}"
-                                                        class="w-24 bg-slate-50 dark:bg-slate-950 border rounded-lg px-2 py-1 text-[10px] text-right font-bold focus:ring-1
-                                                            @if($isPartial) border-amber-300 dark:border-amber-700 focus:ring-amber-500 bg-amber-500/5 text-amber-700 dark:text-amber-300 @else border-slate-200 dark:border-slate-800 focus:ring-emerald-500 text-slate-800 dark:text-slate-200 @endif"
+                                                        class="w-24 bg-slate-50 dark:bg-slate-950 border rounded-lg px-2 py-1 text-[10px] text-right font-bold focus:ring-1 transition-all
+                                                            @if($isCellFullyChecked) border-emerald-500 ring-1 ring-emerald-500/30 text-emerald-700 dark:text-emerald-300 bg-emerald-500/5
+                                                            @elseif($isCellPartialInput) border-amber-500 ring-1 ring-amber-500/30 text-amber-700 dark:text-amber-300 bg-amber-500/5
+                                                            @elseif($isPartial) border-amber-300 dark:border-amber-700 focus:ring-amber-500 bg-amber-500/5 text-amber-700 dark:text-amber-300
+                                                            @else border-slate-200 dark:border-slate-800 focus:ring-emerald-500 text-slate-800 dark:text-slate-200 @endif"
                                                     >
-                                                    @if($isPartial)
+                                                    @if($isPartial && !$hasInput)
                                                         <span class="absolute -top-1 -right-1 flex h-2 w-2">
                                                             <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
                                                             <span class="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
