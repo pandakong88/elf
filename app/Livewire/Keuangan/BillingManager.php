@@ -1754,16 +1754,24 @@ class BillingManager extends Component
     public function deletePayment(string $paymentId): void
     {
         $user = auth()->user();
-        if ($user && ! ($user->hasRole('super-admin') || $user->hasRole('pengasuh') || $user->hasPermissionTo('void-pembayaran'))) {
+        $isCentral = $user && ($user->hasRole('super-admin') || $user->hasRole('manajemen') || $user->hasRole('bendahara-pondok') || $user->hasRole('bendahara-pusat') || $user->hasRole('pengasuh'));
+
+        $payment = BillPayment::find($paymentId);
+        if (!$payment) {
+            return;
+        }
+
+        $canVoid = $isCentral 
+            || ($user && $payment->logged_by === $user->id)
+            || ($user && $user->hasPermissionTo('void-pembayaran'));
+
+        if (!$canVoid) {
             session()->flash('error', 'Anda tidak memiliki wewenang untuk membatalkan (void) transaksi pembayaran ini.');
             return;
         }
 
-        $payment = BillPayment::find($paymentId);
-        if ($payment) {
-            $payment->delete();
-            session()->flash('message', 'Pencatatan pembayaran berhasil dibatalkan & sisa tagihan dikembalikan.');
-        }
+        $payment->delete();
+        session()->flash('message', 'Pencatatan pembayaran berhasil dibatalkan & sisa tagihan dikembalikan.');
     }
 
 
@@ -2389,8 +2397,11 @@ class BillingManager extends Component
 
         if (!$isCentral && $user) {
             $allowedConfigIds = BillingConfiguration::all()->filter($filterFunc)->pluck('id')->toArray();
-            $paymentsLogQuery->whereHas('bill', function ($q) use ($allowedConfigIds) {
-                $q->whereIn('billing_config_id', $allowedConfigIds);
+            $paymentsLogQuery->where(function ($q) use ($allowedConfigIds, $user) {
+                $q->where('logged_by', $user->id)
+                  ->orWhereHas('bill', function ($bq) use ($allowedConfigIds) {
+                      $bq->whereIn('billing_config_id', $allowedConfigIds);
+                  });
             });
         }
 
