@@ -241,13 +241,13 @@
                                                 $isOldPartialInput = $hasOldInput && $oldVal < $row['tunggakanLamaSum'];
                                             @endphp
                                             <button type="button" wire:click="toggleOldArrearsFullPayment('{{ $row['person']->id }}', {{ $row['tunggakanLamaSum'] }})"
-                                                class="w-6 h-6 rounded-lg text-[10px] transition-all focus:outline-none flex items-center justify-center font-extrabold shadow-2xs
+                                                class="w-7 h-7 shrink-0 rounded-xl text-xs font-black transition-all focus:outline-none flex items-center justify-center shadow-2xs border
                                                     @if($isOldFullyChecked)
-                                                        bg-rose-500 text-white shadow-rose-500/30
+                                                        bg-rose-500 text-white border-rose-500 shadow-rose-500/30
                                                     @elseif($isOldPartialInput)
-                                                        bg-amber-500 text-white shadow-amber-500/30
+                                                        bg-amber-500 text-white border-amber-500 shadow-amber-500/30
                                                     @else
-                                                        bg-rose-50 text-rose-600 dark:bg-rose-950/20 dark:text-rose-400 hover:bg-rose-100
+                                                        bg-rose-500/10 text-rose-600 border-rose-500/30 dark:bg-rose-950/30 dark:text-rose-400 hover:bg-rose-500/20
                                                     @endif"
                                                 title="{{ $isOldFullyChecked ? 'Lunas Tunggakan' : ($isOldPartialInput ? 'Cicilan Tunggakan (Rp ' . number_format($oldVal, 0, ',', '.') . ')' : 'Tandai Lunas Tunggakan') }}">
                                                 ⚡
@@ -256,7 +256,7 @@
                                                 type="number"
                                                 wire:model.live.debounce.200ms="oldArrearsPayments.{{ $row['person']->id }}"
                                                 placeholder="Rp {{ number_format($row['tunggakanLamaSum'], 0, ',', '') }}"
-                                                class="w-24 bg-slate-50 dark:bg-slate-950 border rounded-lg px-2 py-1 text-[10px] text-right font-bold focus:ring-1 transition-all
+                                                class="w-24 h-7 bg-slate-50 dark:bg-slate-950 border rounded-xl px-2 text-[10px] text-right font-bold focus:ring-1 transition-all
                                                     @if($isOldFullyChecked) border-rose-500 ring-1 ring-rose-500/30 text-rose-700 dark:text-rose-300 bg-rose-500/5
                                                     @elseif($isOldPartialInput) border-amber-500 ring-1 ring-amber-500/30 text-amber-700 dark:text-amber-300 bg-amber-500/5
                                                     @else border-slate-200 dark:border-slate-800 focus:ring-rose-500 text-slate-800 dark:text-slate-200 @endif"
@@ -273,8 +273,8 @@
                                         @if(!$data['bill'])
                                             <span class="text-[9px] text-slate-300 dark:text-slate-700">—</span>
                                         @elseif($data['bill']->status === 'paid')
-                                            <span class="inline-flex items-center justify-center w-6 h-6 bg-emerald-500 text-white rounded-full">
-                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
+                                            <span class="inline-flex items-center justify-center w-7 h-7 bg-emerald-500 text-white rounded-xl shadow-xs">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
                                             </span>
                                         @else
                                             @php
@@ -287,13 +287,13 @@
                                             @endphp
                                             <div class="flex items-center gap-1.5 justify-center">
                                                 <button type="button" wire:click="toggleBillFullPayment('{{ $data['bill']->id }}', {{ $remaining }})"
-                                                    class="w-6 h-6 rounded-lg text-[10px] transition-all focus:outline-none flex items-center justify-center font-extrabold shadow-2xs
+                                                    class="w-7 h-7 shrink-0 rounded-xl text-xs font-black transition-all focus:outline-none flex items-center justify-center shadow-2xs border
                                                         @if($isCellFullyChecked)
-                                                            bg-emerald-500 text-white shadow-emerald-500/30
+                                                            bg-emerald-500 text-white border-emerald-500 shadow-emerald-500/30
                                                         @elseif($isCellPartialInput)
-                                                            bg-amber-500 text-white shadow-amber-500/30
+                                                            bg-amber-500 text-white border-amber-500 shadow-amber-500/30
                                                         @else
-                                                            @if($isPartial) bg-amber-500/10 text-amber-600 dark:bg-amber-950/20 dark:text-amber-400 hover:bg-amber-100 @else bg-slate-100 text-slate-400 dark:bg-slate-800 dark:text-slate-500 hover:bg-emerald-100 hover:text-emerald-600 @endif
+                                                            @if($isPartial) bg-amber-500/10 text-amber-600 border-amber-500/30 dark:bg-amber-950/30 dark:text-amber-400 hover:bg-amber-500/20 @else bg-slate-100 text-slate-400 dark:bg-slate-800 dark:text-slate-500 border-slate-200 dark:border-slate-700 hover:bg-emerald-500/20 hover:text-emerald-600 hover:border-emerald-500/40 @endif
                                                         @endif"
                                                     title="{{ $isCellFullyChecked ? 'Lunas Penuh (Rp ' . number_format($inputVal, 0, ',', '.') . ')' : ($isCellPartialInput ? 'Cicilan/Sebagian (Rp ' . number_format($inputVal, 0, ',', '.') . ')' : 'Tandai Lunas Penuh') }}">
                                                     ✓
@@ -303,7 +303,7 @@
                                                         type="number"
                                                         wire:model.live.debounce.200ms="paymentAmounts.{{ $data['bill']->id }}"
                                                         placeholder="Rp {{ number_format($remaining, 0, ',', '') }}"
-                                                        class="w-24 bg-slate-50 dark:bg-slate-950 border rounded-lg px-2 py-1 text-[10px] text-right font-bold focus:ring-1 transition-all
+                                                        class="w-24 h-7 bg-slate-50 dark:bg-slate-950 border rounded-xl px-2 text-[10px] text-right font-bold focus:ring-1 transition-all
                                                             @if($isCellFullyChecked) border-emerald-500 ring-1 ring-emerald-500/30 text-emerald-700 dark:text-emerald-300 bg-emerald-500/5
                                                             @elseif($isCellPartialInput) border-amber-500 ring-1 ring-amber-500/30 text-amber-700 dark:text-amber-300 bg-amber-500/5
                                                             @elseif($isPartial) border-amber-300 dark:border-amber-700 focus:ring-amber-500 bg-amber-500/5 text-amber-700 dark:text-amber-300
