@@ -1650,7 +1650,7 @@
                         <span class="text-[9px] font-extrabold uppercase text-emerald-400 tracking-wider block">🛒 {{ count($selectedBillIds) }} Tagihan Dipilih</span>
                         <span class="text-sm font-black text-white block truncate">Rp {{ number_format($this->selectedBillsTotal, 0, ',', '.') }}</span>
                     </div>
-                    <button type="button" wire:click="openPaymentConfirmModal"
+                    <button type="button" wire:click="initiatePayment"
                         class="px-4 py-2.5 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white text-xs font-black rounded-xl shadow-lg shadow-emerald-500/30 flex items-center gap-1.5 shrink-0">
                         <span>PROSES BAYAR</span>
                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
