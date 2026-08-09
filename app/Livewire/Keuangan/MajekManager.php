@@ -1564,6 +1564,47 @@ class MajekManager extends Component
     }
 
     // =========================================================================
+    // Export Excel Report
+    // =========================================================================
+
+    public function exportExcel()
+    {
+        $query = MajekRegistration::where('month', $this->month)
+            ->where('year', $this->year)
+            ->when($this->genderScope(), function ($q, $g) {
+                $q->whereHas('person', fn($pq) => $pq->where('gender', $g));
+            })
+            ->when($this->filterDormitoryIds, function ($q) {
+                $q->whereHas('person.roomAssignments', function ($rq) {
+                    $rq->active()->whereHas('room', function ($r) {
+                        $r->whereIn('dormitory_id', $this->filterDormitoryIds);
+                    });
+                });
+            })
+            ->when($this->searchParticipant, function ($q) {
+                $q->whereHas('person', fn($pq) => $pq->where('name', 'like', '%' . $this->searchParticipant . '%'));
+            })
+            ->with([
+                'person.roomAssignments' => fn($q) => $q->active()->with('room.dormitory'),
+            ]);
+
+        $registrations = $query->get()->sortBy(fn($r) => $r->person?->name ?? '');
+
+        if ($registrations->isEmpty()) {
+            $this->flashError = 'Tidak ada data peserta untuk di-export pada bulan ini.';
+            return;
+        }
+
+        $monthName = $this->monthLabel;
+        $fileName = "Laporan_Katering_Majek_{$monthName}_{$this->year}.xlsx";
+
+        return \Maatwebsite\Excel\Facades\Excel::download(
+            new \App\Exports\MajekReportExport($registrations, $monthName, $this->year, $this->paidDetails),
+            $fileName
+        );
+    }
+
+    // =========================================================================
     // Render
     // =========================================================================
 

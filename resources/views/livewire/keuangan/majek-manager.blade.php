@@ -127,7 +127,12 @@
             </div>
 
             {{-- Action Buttons --}}
-            <div class="flex items-center gap-2 shrink-0">
+            <div class="flex items-center gap-2 shrink-0 flex-wrap sm:flex-nowrap">
+                <button type="button" wire:click="exportExcel"
+                    class="flex-1 sm:flex-initial px-3.5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-all shadow-sm flex items-center justify-center gap-1.5"
+                    title="Export Laporan Excel Majek Bulan Ini">
+                    📊 Export Excel
+                </button>
                 <button type="button" wire:click="openCopyPeriodModal"
                     class="flex-1 sm:flex-initial px-3.5 py-2.5 bg-violet-600 hover:bg-violet-700 text-white rounded-xl text-xs font-bold transition-all shadow-sm flex items-center justify-center gap-1.5">
                     📋 Salin Peserta
