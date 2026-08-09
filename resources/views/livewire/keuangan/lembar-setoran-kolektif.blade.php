@@ -196,8 +196,137 @@
                 </div>
             </div>
 
-            <!-- Scrollable Table Container -->
-            <div class="flex-1 overflow-x-auto overflow-y-auto">
+            {{-- ===== MOBILE VIEW MODE SWITCHER BAR ===== --}}
+            <div class="flex lg:hidden items-center justify-between px-4 py-2 bg-slate-50 dark:bg-slate-950/60 border-b border-slate-200 dark:border-slate-800 text-[10px] shrink-0">
+                <span class="font-extrabold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Tampilan HP:</span>
+                <div class="flex items-center gap-1 bg-white dark:bg-slate-900 p-1 rounded-xl border border-slate-200 dark:border-slate-800 shadow-2xs">
+                    <button type="button" wire:click="setMobileViewMode('cards')"
+                        @class([
+                            'px-2.5 py-1 rounded-lg font-black transition-all flex items-center gap-1',
+                            'bg-emerald-600 text-white shadow-xs' => $mobileViewMode === 'cards',
+                            'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200' => $mobileViewMode !== 'cards',
+                        ])>
+                        🎴 Kartu Santri
+                    </button>
+                    <button type="button" wire:click="setMobileViewMode('table')"
+                        @class([
+                            'px-2.5 py-1 rounded-lg font-black transition-all flex items-center gap-1',
+                            'bg-emerald-600 text-white shadow-xs' => $mobileViewMode === 'table',
+                            'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200' => $mobileViewMode !== 'table',
+                        ])>
+                        📊 Tabel Matrix
+                    </button>
+                </div>
+            </div>
+
+            {{-- ===== MOBILE SANTRI CARDS VIEW (block on mobile when cards mode active, hidden on desktop) ===== --}}
+            @if($mobileViewMode === 'cards')
+                <div class="block lg:hidden flex-1 overflow-y-auto p-3.5 space-y-3.5 bg-slate-50/40 dark:bg-slate-950/20">
+                    @php $currentRoomCard = null; @endphp
+                    @forelse($gridData as $i => $row)
+                        @if($activeType === 'komplek' && isset($row['person']->room_name) && $row['person']->room_name !== $currentRoomCard)
+                            @php $currentRoomCard = $row['person']->room_name; @endphp
+                            <div class="px-3 py-1.5 bg-slate-200/60 dark:bg-slate-800/80 rounded-xl text-[10px] font-black uppercase text-slate-700 dark:text-slate-300 tracking-wider flex items-center gap-1.5">
+                                🚪 Kamar: {{ $currentRoomCard ?: 'Tanpa Kamar' }}
+                            </div>
+                        @endif
+
+                        <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 p-3.5 rounded-2xl shadow-2xs space-y-2.5">
+                            {{-- Card Header: Number, Name, Room --}}
+                            <div class="flex items-center justify-between gap-2 border-b border-slate-100 dark:border-slate-800 pb-2">
+                                <div class="flex items-center gap-2 min-w-0">
+                                    <span class="w-5 h-5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-500 text-[10px] font-black flex items-center justify-center shrink-0">
+                                        {{ $i + 1 }}
+                                    </span>
+                                    <span class="font-bold text-slate-900 dark:text-white text-xs truncate">
+                                        {{ $row['person']->name }}
+                                    </span>
+                                </div>
+                                @if($row['lunasDiMukaLabel'])
+                                    <span class="px-2 py-0.5 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 rounded-full text-[8px] font-extrabold uppercase shrink-0">
+                                        s.d. {{ $row['lunasDiMukaLabel'] }}
+                                    </span>
+                                @endif
+                            </div>
+
+                            {{-- Tunggakan Lama Section --}}
+                            @if($row['tunggakanLamaSum'] > 0)
+                                @php
+                                    $oldVal = isset($oldArrearsPayments[$row['person']->id]) ? (float)$oldArrearsPayments[$row['person']->id] : 0.0;
+                                    $hasOldInput = $oldVal > 0;
+                                    $isOldFullyChecked = $hasOldInput && $oldVal >= $row['tunggakanLamaSum'];
+                                    $isOldPartialInput = $hasOldInput && $oldVal < $row['tunggakanLamaSum'];
+                                @endphp
+                                <div class="p-2 bg-rose-500/5 dark:bg-rose-950/20 border border-rose-200/60 dark:border-rose-900/40 rounded-xl flex items-center justify-between gap-2 text-[10px]">
+                                    <span class="font-extrabold text-rose-600 dark:text-rose-400">⚠️ Tunggakan Lama:</span>
+                                    <div class="inline-flex items-center rounded-xl overflow-hidden border shadow-2xs transition-all bg-white dark:bg-slate-900">
+                                        <button type="button" wire:click="toggleOldArrearsFullPayment('{{ $row['person']->id }}', {{ $row['tunggakanLamaSum'] }})"
+                                            class="h-6 w-6 shrink-0 text-xs font-black transition-all flex items-center justify-center border-r
+                                                {{ $isOldFullyChecked ? 'bg-rose-500 text-white border-rose-600' : ($isOldPartialInput ? 'bg-amber-500 text-white border-amber-600' : 'bg-rose-500/20 text-rose-600 dark:text-rose-400 border-rose-400/30') }}">
+                                            ⚡
+                                        </button>
+                                        <input type="number" wire:model.live.debounce.200ms="oldArrearsPayments.{{ $row['person']->id }}"
+                                            placeholder="Rp {{ number_format($row['tunggakanLamaSum'], 0, ',', '') }}"
+                                            class="w-24 h-6 bg-transparent border-0 px-2 text-[10px] text-right font-extrabold focus:ring-0 focus:outline-none">
+                                    </div>
+                                </div>
+                            @endif
+
+                            {{-- 12-Month Touch Grid Chips (4 cols x 3 rows) --}}
+                            <div class="grid grid-cols-4 gap-1.5">
+                                @foreach($row['bills'] as $periodKey => $data)
+                                    @if(!$data['bill'])
+                                        <div class="py-1.5 px-1 rounded-xl bg-slate-100/50 dark:bg-slate-900/50 border border-slate-200/40 dark:border-slate-800/40 text-center opacity-40">
+                                            <span class="block text-[8px] font-extrabold text-slate-400 uppercase">{{ $months[$periodKey] ?? $periodKey }}</span>
+                                            <span class="text-[8px] text-slate-300 dark:text-slate-600">—</span>
+                                        </div>
+                                    @elseif($data['bill']->status === 'paid')
+                                        <div class="py-1.5 px-1 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-center">
+                                            <span class="block text-[8px] font-black text-emerald-600 dark:text-emerald-400 uppercase">✓ {{ $months[$periodKey] ?? $periodKey }}</span>
+                                            <span class="text-[8px] font-bold text-emerald-600/80">Lunas</span>
+                                        </div>
+                                    @else
+                                        @php
+                                            $remaining = (float)$data['bill']->amount - (float)$data['bill']->amount_paid;
+                                            $inputVal = isset($paymentAmounts[$data['bill']->id]) ? (float)$paymentAmounts[$data['bill']->id] : 0.0;
+                                            $hasInput = $inputVal > 0;
+                                            $isCellFullyChecked = $hasInput && $inputVal >= $remaining;
+                                            $isCellPartialInput = $hasInput && $inputVal < $remaining;
+                                            $isPartial = $data['bill']->status === 'partial';
+                                        @endphp
+                                        <div @class([
+                                            'rounded-xl border transition-all overflow-hidden flex flex-col items-center justify-center p-1',
+                                            'bg-emerald-500 text-white border-emerald-500 shadow-xs' => $isCellFullyChecked,
+                                            'bg-amber-500 text-white border-amber-500 shadow-xs' => $isCellPartialInput,
+                                            'bg-amber-500/10 border-amber-500/30 text-amber-700 dark:text-amber-300' => !$hasInput && $isPartial,
+                                            'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300' => !$hasInput && !$isPartial,
+                                        ])>
+                                            <button type="button" wire:click="toggleBillFullPayment('{{ $data['bill']->id }}', {{ $remaining }})"
+                                                class="w-full text-center focus:outline-none">
+                                                <span class="block text-[8px] font-black uppercase">
+                                                    {{ $isCellFullyChecked ? '✓ ' : ($isCellPartialInput ? '⚡ ' : ($isPartial ? '⚡ ' : '')) }}{{ $months[$periodKey] ?? $periodKey }}
+                                                </span>
+                                            </button>
+                                            <input type="number"
+                                                wire:model.live.debounce.200ms="paymentAmounts.{{ $data['bill']->id }}"
+                                                placeholder="{{ number_format($remaining/1000, 0) }}k"
+                                                class="w-full h-4 bg-transparent border-0 p-0 text-[8px] text-center font-extrabold focus:ring-0 focus:outline-none
+                                                    {{ $isCellFullyChecked || $isCellPartialInput ? 'text-white placeholder-white/70' : 'text-slate-700 dark:text-slate-300' }}">
+                                        </div>
+                                    @endif
+                                @endforeach
+                            </div>
+                        </div>
+                    @empty
+                        <div class="py-8 text-center text-slate-400 text-xs font-semibold">
+                            Tidak ada data santri ditemukan.
+                        </div>
+                    @endforelse
+                </div>
+            @endif
+
+            <!-- Scrollable Table Container (visible on desktop or when table mode selected) -->
+            <div @class(['flex-1 overflow-x-auto overflow-y-auto', 'hidden lg:block' => $mobileViewMode !== 'table'])>
                 <table class="w-full text-left border-collapse text-xs table-fixed">
                     <colgroup>
                         <col class="w-12">

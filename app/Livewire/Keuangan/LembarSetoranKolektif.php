@@ -44,10 +44,16 @@ class LembarSetoranKolektif extends Component
     public bool  $showConfirmModal = false;
     public bool  $confirmCheck = false;
     public bool  $showMobileNavigator = false;
+    public string $mobileViewMode = 'cards'; // 'cards' or 'table'
 
     public function toggleMobileNavigator(): void
     {
         $this->showMobileNavigator = !$this->showMobileNavigator;
+    }
+
+    public function setMobileViewMode(string $mode): void
+    {
+        $this->mobileViewMode = in_array($mode, ['cards', 'table']) ? $mode : 'cards';
     }
 
     protected $queryString = [
