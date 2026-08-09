@@ -160,37 +160,43 @@
                 @elseif($activeType === 'komplek') bg-sky-600 dark:bg-sky-800
                 @else bg-indigo-600 dark:bg-indigo-800 @endif"
             >
-                <div class="flex items-center gap-3 sm:gap-6 min-w-0">
-                    <div class="space-y-0.5 min-w-0">
-                        <div class="text-[8px] sm:text-[9px] font-extrabold uppercase tracking-widest text-white/70 truncate">
-                            INPUT SETORAN KOLEKTIF ({{ $activeType }})
+                <div class="flex items-center gap-2 sm:gap-4 min-w-0 flex-1">
+                    <div class="space-y-0.5 min-w-0 flex-1">
+                        <div class="flex items-center gap-1.5 flex-wrap">
+                            <span class="px-2 py-0.5 rounded-md bg-white/20 text-white font-black text-[9px] uppercase tracking-wider shrink-0">
+                                📑 {{ match($activeType) {
+                                    'komplek' => 'Setoran Komplek Asrama',
+                                    'madrasah' => 'Setoran Kelas Madrasah',
+                                    default => 'Setoran Utama Pondok Pusat'
+                                } }}
+                            </span>
                         </div>
-                        <h2 class="text-xs sm:text-sm font-black uppercase tracking-wide font-serif-display truncate">
+                        <h2 class="text-xs sm:text-base font-black uppercase tracking-wide font-serif-display leading-tight text-white drop-shadow-xs break-words">
                             {{ $activeLabel }}
                         </h2>
                     </div>
 
                     <!-- Year Kalender Switcher -->
-                    <div class="flex items-center bg-white/10 dark:bg-black/20 rounded-xl p-1 border border-white/10 backdrop-blur-xs select-none shrink-0">
-                        <button type="button" wire:click="decrementYear" class="p-1 px-2 rounded-lg hover:bg-white/15 active:scale-95 text-white/90 hover:text-white transition-all text-[10px] font-black" title="Tahun Sebelumnya">
+                    <div class="flex items-center bg-white/15 dark:bg-black/25 rounded-xl p-1 border border-white/20 backdrop-blur-xs select-none shrink-0">
+                        <button type="button" wire:click="decrementYear" class="p-1 px-1.5 sm:px-2 rounded-lg hover:bg-white/20 active:scale-95 text-white transition-all text-[10px] font-black" title="Tahun Sebelumnya">
                             ◀
                         </button>
-                        <span class="px-2 text-xs font-black tracking-wider uppercase text-white font-mono">
+                        <span class="px-1.5 sm:px-2 text-xs font-black tracking-wider uppercase text-white font-mono">
                             {{ $year }}
                         </span>
-                        <button type="button" wire:click="incrementYear" class="p-1 px-2 rounded-lg hover:bg-white/15 active:scale-95 text-white/90 hover:text-white transition-all text-[10px] font-black" title="Tahun Selanjutnya">
+                        <button type="button" wire:click="incrementYear" class="p-1 px-1.5 sm:px-2 rounded-lg hover:bg-white/20 active:scale-95 text-white transition-all text-[10px] font-black" title="Tahun Selanjutnya">
                             ▶
                         </button>
                     </div>
                 </div>
                 
-                <div class="flex items-center gap-2 shrink-0">
+                <div class="flex items-center gap-1.5 shrink-0">
                     <button type="button" wire:click="toggleMobileNavigator"
-                        class="lg:hidden px-2.5 py-1.5 bg-white/15 hover:bg-white/25 active:scale-95 text-white rounded-xl text-[10px] font-black transition-all flex items-center gap-1">
+                        class="lg:hidden px-2.5 py-1.5 bg-white/20 hover:bg-white/30 active:scale-95 text-white rounded-xl text-[10px] font-black transition-all flex items-center gap-1 shadow-xs" title="Ganti Lembar Setoran">
                         <span>📑</span>
                         <span class="hidden sm:inline">Ganti</span> Lembar
                     </button>
-                    <button type="button" wire:click="deselectSheet" class="p-1.5 rounded-full hover:bg-white/10 text-white/80 hover:text-white transition-all" title="Tutup Lembar">
+                    <button type="button" wire:click="deselectSheet" class="p-1.5 rounded-xl hover:bg-white/20 text-white/90 hover:text-white transition-all text-xs" title="Tutup Lembar">
                         ✕
                     </button>
                 </div>
