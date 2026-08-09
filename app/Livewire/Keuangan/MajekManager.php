@@ -96,15 +96,18 @@ class MajekManager extends Component
     public string $searchParticipant = '';
     public array  $filterDormitoryIds = [];
     public string $filterStatus = 'all'; // 'all' | 'paid' | 'unpaid' | 'partial'
+    public int    $perPage      = 15;
 
     public function updatingSearchParticipant(): void { $this->resetPage(); }
     public function updatingFilterDormitoryIds(): void { $this->resetPage(); }
     public function updatingFilterStatus(): void { $this->resetPage(); }
+    public function updatingPerPage(): void { $this->resetPage(); }
 
     protected $queryString = [
         'searchParticipant' => ['except' => ''],
         'filterDormitoryIds' => ['except' => []],
         'filterStatus' => ['except' => 'all'],
+        'perPage' => ['except' => 15],
     ];
 
     // =========================================================================
@@ -194,7 +197,7 @@ class MajekManager extends Component
         return $query->select('majek_registrations.*')
             ->join('persons', 'majek_registrations.person_id', '=', 'persons.id')
             ->orderBy('persons.name', 'asc')
-            ->paginate(15);
+            ->paginate($this->perPage);
     }
 
     #[Computed]
