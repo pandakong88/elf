@@ -43,6 +43,12 @@ class LembarSetoranKolektif extends Component
     // Confirmation Modal States
     public bool  $showConfirmModal = false;
     public bool  $confirmCheck = false;
+    public bool  $showMobileNavigator = false;
+
+    public function toggleMobileNavigator(): void
+    {
+        $this->showMobileNavigator = !$this->showMobileNavigator;
+    }
 
     protected $queryString = [
         'activeType'     => ['except' => ''],
@@ -92,6 +98,7 @@ class LembarSetoranKolektif extends Component
         $this->activeInterval = $interval;
         $this->activeLabel = $label;
         $this->activeConfigId = $configId;
+        $this->showMobileNavigator = false;
 
         $this->resetInputAmounts();
     }
@@ -104,6 +111,7 @@ class LembarSetoranKolektif extends Component
         $this->activeInterval = null;
         $this->activeLabel = null;
         $this->activeConfigId = null;
+        $this->showMobileNavigator = true;
 
         $this->resetInputAmounts();
     }

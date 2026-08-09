@@ -1,6 +1,10 @@
-<div class="h-[calc(100vh-6rem)] flex flex-col lg:flex-row gap-6 overflow-hidden">
+<div class="min-h-[calc(100vh-6rem)] lg:h-[calc(100vh-6rem)] flex flex-col lg:flex-row gap-4 lg:gap-6 overflow-hidden">
     <!-- Panel Kiri: Navigator Lembar Setoran -->
-    <div class="w-full lg:w-80 bg-white dark:bg-slate-900 border border-slate-200/50 dark:border-slate-800 rounded-3xl shadow-xs flex flex-col overflow-hidden shrink-0">
+    <div @class([
+        'w-full lg:w-80 bg-white dark:bg-slate-900 border border-slate-200/50 dark:border-slate-800 rounded-3xl shadow-xs flex flex-col overflow-hidden shrink-0 transition-all',
+        'hidden lg:flex' => $activeBillType && !$showMobileNavigator,
+        'flex' => !$activeBillType || $showMobileNavigator,
+    ])>
         <!-- Header & Search -->
         <div class="p-5 border-b border-slate-100 dark:border-slate-800 space-y-4 bg-slate-50/50 dark:bg-slate-950/20">
             <div>
@@ -151,37 +155,45 @@
         @else
             <!-- State Terbuka: Render Grid Checklist -->
             <!-- Dynamic Color Banner Header -->
-            <div class="px-6 py-4.5 text-white flex items-center justify-between shadow-sm shrink-0
+            <div class="px-4 sm:px-6 py-3.5 text-white flex items-center justify-between shadow-sm shrink-0 gap-3
                 @if($activeBillType === 'syahriah_pondok') bg-emerald-600 dark:bg-emerald-800
                 @elseif($activeType === 'komplek') bg-sky-600 dark:bg-sky-800
                 @else bg-indigo-600 dark:bg-indigo-800 @endif"
             >
-                <div class="flex items-center gap-6">
-                    <div class="space-y-0.5">
-                        <div class="text-[9px] font-extrabold uppercase tracking-widest text-white/70">
+                <div class="flex items-center gap-3 sm:gap-6 min-w-0">
+                    <div class="space-y-0.5 min-w-0">
+                        <div class="text-[8px] sm:text-[9px] font-extrabold uppercase tracking-widest text-white/70 truncate">
                             INPUT SETORAN KOLEKTIF ({{ $activeType }})
                         </div>
-                        <h2 class="text-sm font-black uppercase tracking-wide font-serif-display">
+                        <h2 class="text-xs sm:text-sm font-black uppercase tracking-wide font-serif-display truncate">
                             {{ $activeLabel }}
                         </h2>
                     </div>
 
                     <!-- Year Kalender Switcher -->
-                    <div class="flex items-center bg-white/10 dark:bg-black/20 rounded-xl p-1 border border-white/10 backdrop-blur-xs select-none">
-                        <button type="button" wire:click="decrementYear" class="p-1 px-2.5 rounded-lg hover:bg-white/15 active:scale-95 text-white/90 hover:text-white transition-all text-[11px] font-black" title="Tahun Sebelumnya">
+                    <div class="flex items-center bg-white/10 dark:bg-black/20 rounded-xl p-1 border border-white/10 backdrop-blur-xs select-none shrink-0">
+                        <button type="button" wire:click="decrementYear" class="p-1 px-2 rounded-lg hover:bg-white/15 active:scale-95 text-white/90 hover:text-white transition-all text-[10px] font-black" title="Tahun Sebelumnya">
                             ◀
                         </button>
-                        <span class="px-3 text-xs font-black tracking-wider uppercase text-white font-mono">
+                        <span class="px-2 text-xs font-black tracking-wider uppercase text-white font-mono">
                             {{ $year }}
                         </span>
-                        <button type="button" wire:click="incrementYear" class="p-1 px-2.5 rounded-lg hover:bg-white/15 active:scale-95 text-white/90 hover:text-white transition-all text-[11px] font-black" title="Tahun Selanjutnya">
+                        <button type="button" wire:click="incrementYear" class="p-1 px-2 rounded-lg hover:bg-white/15 active:scale-95 text-white/90 hover:text-white transition-all text-[10px] font-black" title="Tahun Selanjutnya">
                             ▶
                         </button>
                     </div>
                 </div>
-                <button type="button" wire:click="deselectSheet" class="p-1.5 rounded-full hover:bg-white/10 text-white/80 hover:text-white transition-all" title="Tutup Lembar">
-                    ✕
-                </button>
+                
+                <div class="flex items-center gap-2 shrink-0">
+                    <button type="button" wire:click="toggleMobileNavigator"
+                        class="lg:hidden px-2.5 py-1.5 bg-white/15 hover:bg-white/25 active:scale-95 text-white rounded-xl text-[10px] font-black transition-all flex items-center gap-1">
+                        <span>📑</span>
+                        <span class="hidden sm:inline">Ganti</span> Lembar
+                    </button>
+                    <button type="button" wire:click="deselectSheet" class="p-1.5 rounded-full hover:bg-white/10 text-white/80 hover:text-white transition-all" title="Tutup Lembar">
+                        ✕
+                    </button>
+                </div>
             </div>
 
             <!-- Scrollable Table Container -->
@@ -403,6 +415,21 @@
                         Proses & Simpan Setoran ({{ $countChecked }})
                     </button>
                 </div>
+            </div>
+        @endif
+
+        {{-- ===== STICKY FLOATING MOBILE ACTION BAR ===== --}}
+        @if($countChecked > 0)
+            <div class="fixed bottom-4 inset-x-4 z-40 lg:hidden bg-slate-900/95 dark:bg-slate-950/95 backdrop-blur-md text-white p-3.5 rounded-2xl shadow-2xl border border-slate-700/80 flex items-center justify-between gap-3 animate-fade-in">
+                <div class="min-w-0">
+                    <span class="text-[9px] font-extrabold uppercase text-emerald-400 tracking-wider block">🛒 {{ $countChecked }} Setoran Diisi</span>
+                    <span class="text-sm font-black text-white block truncate">Rp {{ number_format($totalChecked, 0, ',', '.') }}</span>
+                </div>
+                <button type="button" wire:click="confirmProsesSetoran"
+                    class="px-4 py-2.5 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white text-xs font-black rounded-xl shadow-lg shadow-emerald-500/30 flex items-center gap-1.5 shrink-0">
+                    <span>SIMPAN SETORAN</span>
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+                </button>
             </div>
         @endif
     </div>
