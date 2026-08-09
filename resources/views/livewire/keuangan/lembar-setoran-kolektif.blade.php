@@ -155,50 +155,53 @@
         @else
             <!-- State Terbuka: Render Grid Checklist -->
             <!-- Dynamic Color Banner Header -->
-            <div class="px-4 sm:px-6 py-3.5 text-white flex items-center justify-between shadow-sm shrink-0 gap-3
+            <div class="p-3.5 sm:px-6 sm:py-4 text-white shadow-sm shrink-0 space-y-2 sm:space-y-0 sm:flex sm:items-center sm:justify-between sm:gap-4
                 @if($activeBillType === 'syahriah_pondok') bg-emerald-600 dark:bg-emerald-800
                 @elseif($activeType === 'komplek') bg-sky-600 dark:bg-sky-800
                 @else bg-indigo-600 dark:bg-indigo-800 @endif"
             >
-                <div class="flex items-center gap-2 sm:gap-4 min-w-0 flex-1">
-                    <div class="space-y-0.5 min-w-0 flex-1">
-                        <div class="flex items-center gap-1.5 flex-wrap">
-                            <span class="px-2 py-0.5 rounded-md bg-white/20 text-white font-black text-[9px] uppercase tracking-wider shrink-0">
-                                📑 {{ match($activeType) {
-                                    'komplek' => 'Setoran Komplek Asrama',
-                                    'madrasah' => 'Setoran Kelas Madrasah',
-                                    default => 'Setoran Utama Pondok Pusat'
-                                } }}
-                            </span>
+                {{-- Top/Main Row: Category Badge, Sheet Title, & Action Buttons --}}
+                <div class="flex items-start justify-between gap-3 min-w-0">
+                    <div class="space-y-1 min-w-0 flex-1">
+                        <div class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-white/20 text-white font-black text-[9px] uppercase tracking-wider">
+                            📑 {{ match($activeType) {
+                                'komplek' => 'Setoran Komplek Asrama',
+                                'madrasah' => 'Setoran Kelas Madrasah',
+                                default => 'Setoran Utama Pondok Pusat'
+                            } }}
                         </div>
-                        <h2 class="text-xs sm:text-base font-black uppercase tracking-wide font-serif-display leading-tight text-white drop-shadow-xs break-words">
+                        <h2 class="text-sm sm:text-base font-black uppercase tracking-wide font-serif-display leading-snug text-white drop-shadow-xs break-words">
                             {{ $activeLabel }}
                         </h2>
                     </div>
 
-                    <!-- Year Kalender Switcher -->
-                    <div class="flex items-center bg-white/15 dark:bg-black/25 rounded-xl p-1 border border-white/20 backdrop-blur-xs select-none shrink-0">
-                        <button type="button" wire:click="decrementYear" class="p-1 px-1.5 sm:px-2 rounded-lg hover:bg-white/20 active:scale-95 text-white transition-all text-[10px] font-black" title="Tahun Sebelumnya">
-                            ◀
+                    {{-- Action Buttons: Mobile Drawer & Close --}}
+                    <div class="flex items-center gap-1.5 shrink-0 pt-0.5">
+                        <button type="button" wire:click="toggleMobileNavigator"
+                            class="lg:hidden px-2.5 py-1.5 bg-white/20 hover:bg-white/30 active:scale-95 text-white rounded-xl text-[10px] font-black transition-all flex items-center gap-1 shadow-xs" title="Ganti Lembar Setoran">
+                            <span>📑</span>
+                            <span>Ganti</span>
                         </button>
-                        <span class="px-1.5 sm:px-2 text-xs font-black tracking-wider uppercase text-white font-mono">
-                            {{ $year }}
-                        </span>
-                        <button type="button" wire:click="incrementYear" class="p-1 px-1.5 sm:px-2 rounded-lg hover:bg-white/20 active:scale-95 text-white transition-all text-[10px] font-black" title="Tahun Selanjutnya">
-                            ▶
+                        <button type="button" wire:click="deselectSheet" class="p-1.5 rounded-xl hover:bg-white/20 text-white/90 hover:text-white transition-all text-xs" title="Tutup Lembar">
+                            ✕
                         </button>
                     </div>
                 </div>
-                
-                <div class="flex items-center gap-1.5 shrink-0">
-                    <button type="button" wire:click="toggleMobileNavigator"
-                        class="lg:hidden px-2.5 py-1.5 bg-white/20 hover:bg-white/30 active:scale-95 text-white rounded-xl text-[10px] font-black transition-all flex items-center gap-1 shadow-xs" title="Ganti Lembar Setoran">
-                        <span>📑</span>
-                        <span class="hidden sm:inline">Ganti</span> Lembar
-                    </button>
-                    <button type="button" wire:click="deselectSheet" class="p-1.5 rounded-xl hover:bg-white/20 text-white/90 hover:text-white transition-all text-xs" title="Tutup Lembar">
-                        ✕
-                    </button>
+
+                {{-- Year Switcher (Shown underneath on mobile, inline on desktop) --}}
+                <div class="flex items-center justify-between sm:justify-end gap-2 pt-1 sm:pt-0 border-t border-white/10 sm:border-0">
+                    <span class="text-[9px] font-extrabold uppercase text-white/80 sm:hidden">Tahun Buku:</span>
+                    <div class="flex items-center bg-white/15 dark:bg-black/25 rounded-xl p-1 border border-white/20 backdrop-blur-xs select-none">
+                        <button type="button" wire:click="decrementYear" class="p-1 px-2 rounded-lg hover:bg-white/20 active:scale-95 text-white transition-all text-[10px] font-black" title="Tahun Sebelumnya">
+                            ◀
+                        </button>
+                        <span class="px-2.5 text-xs font-black tracking-wider uppercase text-white font-mono">
+                            {{ $year }}
+                        </span>
+                        <button type="button" wire:click="incrementYear" class="p-1 px-2 rounded-lg hover:bg-white/20 active:scale-95 text-white transition-all text-[10px] font-black" title="Tahun Selanjutnya">
+                            ▶
+                        </button>
+                    </div>
                 </div>
             </div>
 
