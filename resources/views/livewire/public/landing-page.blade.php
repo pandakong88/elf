@@ -325,71 +325,62 @@
             @php
                 $psbSteps = [
                     [
-                        'no'    => '1',
-                        'color' => 'emerald',
-                        'icon'  => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>',
-                        'title' => 'Sowan kepada Pengasuh',
-                        'desc'  => 'Orang tua/wali santri sowan (menghadap) langsung kepada Pengasuh Pondok sebagai langkah pertama dan paling utama dalam proses pendaftaran.',
+                        'no'      => '1',
+                        'badgeBg' => 'bg-emerald-600 dark:bg-emerald-500 shadow-emerald-500/20',
+                        'barBg'   => 'bg-emerald-500',
+                        'title'   => 'Sowan kepada Pengasuh',
+                        'desc'    => 'Orang tua/wali santri sowan (menghadap) langsung kepada Pengasuh Pondok sebagai langkah pertama dan paling utama dalam proses pendaftaran.',
                     ],
                     [
-                        'no'    => '2',
-                        'color' => 'amber',
-                        'icon'  => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>',
-                        'title' => 'Masa Training (Ta\'aruf)',
-                        'desc'  => 'Santri baru mengikuti masa training atau ta\'aruf di pondok dengan durasi maksimal 10 hari untuk pengenalan lingkungan dan penilaian awal.',
+                        'no'      => '2',
+                        'badgeBg' => 'bg-amber-600 dark:bg-amber-500 shadow-amber-500/20',
+                        'barBg'   => 'bg-amber-500',
+                        'title'   => 'Masa Training (Ta\'aruf)',
+                        'desc'    => 'Santri baru mengikuti masa training atau ta\'aruf di pondok dengan durasi maksimal 10 hari untuk pengenalan lingkungan dan penilaian awal.',
                     ],
                     [
-                        'no'    => '3',
-                        'color' => 'teal',
-                        'icon'  => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>',
-                        'title' => 'Melengkapi Berkas',
-                        'desc'  => 'Siapkan dan serahkan fotokopi Kartu Keluarga (KK) serta pas foto formal berwarna terbaru santri kepada pihak sekretariat pondok.',
+                        'no'      => '3',
+                        'badgeBg' => 'bg-teal-600 dark:bg-teal-500 shadow-teal-500/20',
+                        'barBg'   => 'bg-teal-500',
+                        'title'   => 'Melengkapi Berkas',
+                        'desc'    => 'Siapkan dan serahkan fotokopi Kartu Keluarga (KK) serta pas foto formal berwarna terbaru santri kepada pihak sekretariat pondok.',
                     ],
                     [
-                        'no'    => '4',
-                        'color' => 'blue',
-                        'icon'  => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/>',
-                        'title' => 'Administrasi Masuk',
-                        'desc'  => 'Melunasi biaya administrasi pendaftaran sesuai ketentuan yang berlaku. Dapat diangsur selama 3 bulan pertama sejak santri mulai mukim.',
+                        'no'      => '4',
+                        'badgeBg' => 'bg-sky-600 dark:bg-sky-500 shadow-sky-500/20',
+                        'barBg'   => 'bg-sky-500',
+                        'title'   => 'Administrasi Masuk',
+                        'desc'    => 'Melunasi biaya administrasi pendaftaran sesuai ketentuan yang berlaku. Dapat diangsur selama 3 bulan pertama sejak santri mulai mukim.',
                     ],
                     [
-                        'no'    => '5',
-                        'color' => 'rose',
-                        'icon'  => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>',
-                        'title' => 'Mulai Mukim',
-                        'desc'  => 'Santri baru wajib menetap di asrama selama minimal 40 hari pertama sejak dinyatakan diterima, sebagai masa adaptasi penuh di lingkungan pondok.',
+                        'no'      => '5',
+                        'badgeBg' => 'bg-rose-600 dark:bg-rose-500 shadow-rose-500/20',
+                        'barBg'   => 'bg-rose-500',
+                        'title'   => 'Mulai Mukim',
+                        'desc'    => 'Santri baru wajib menetap di asrama selama minimal 40 hari pertama sejak dinyatakan diterima, sebagai masa adaptasi penuh di lingkungan pondok.',
                     ],
                 ];
             @endphp
 
-            {{-- Grid 2 + 3 --}}
-            <div class="space-y-4 sm:space-y-6">
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-                    @foreach(array_slice($psbSteps, 0, 2) as $step)
-                        <div class="bg-white dark:bg-slate-900 p-6 sm:p-8 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm space-y-4 group hover:shadow-md transition-all relative overflow-hidden">
-                            <div class="absolute top-0 left-0 h-1 w-full bg-{{ $step['color'] }}-500 opacity-70 rounded-t-3xl"></div>
-                            <div class="flex items-start gap-4">
-                                <span class="w-10 h-10 rounded-full bg-{{ $step['color'] }}-500 text-white flex items-center justify-center font-bold text-sm flex-shrink-0 shadow-md shadow-{{ $step['color'] }}-500/20">{{ $step['no'] }}</span>
-                                <div>
-                                    <h3 class="text-base font-bold text-slate-900 dark:text-white font-serif-display">{{ $step['title'] }}</h3>
-                                    <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed mt-1">{{ $step['desc'] }}</p>
-                                </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+                @foreach($psbSteps as $step)
+                    <div class="bg-white dark:bg-slate-900 p-5 sm:p-7 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-xs group hover:shadow-md transition-all relative overflow-hidden flex flex-col justify-between">
+                        <div class="absolute top-0 left-0 h-1.5 w-full {{ $step['barBg'] }} opacity-80 rounded-t-3xl"></div>
+                        <div class="flex items-start gap-4">
+                            <span class="w-10 h-10 rounded-2xl {{ $step['badgeBg'] }} text-white flex items-center justify-center font-black text-sm shrink-0 shadow-md">
+                                {{ $step['no'] }}
+                            </span>
+                            <div class="space-y-1.5 min-w-0 flex-1">
+                                <h3 class="text-sm sm:text-base font-extrabold text-slate-900 dark:text-white font-serif-display leading-tight">
+                                    {{ $step['title'] }}
+                                </h3>
+                                <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                                    {{ $step['desc'] }}
+                                </p>
                             </div>
                         </div>
-                    @endforeach
-                </div>
-                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
-                    @foreach(array_slice($psbSteps, 2) as $step)
-                        <div class="bg-white dark:bg-slate-900 p-6 sm:p-8 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm space-y-4 group hover:shadow-md transition-all relative overflow-hidden">
-                            <div class="absolute top-0 left-0 h-1 w-full bg-{{ $step['color'] }}-500 opacity-70 rounded-t-3xl"></div>
-                            <span class="w-10 h-10 rounded-full bg-{{ $step['color'] }}-500 text-white flex items-center justify-center font-bold text-sm shadow-md shadow-{{ $step['color'] }}-500/20 mx-auto sm:mx-0">{{ $step['no'] }}</span>
-                            <div>
-                                <h3 class="text-base font-bold text-slate-900 dark:text-white font-serif-display text-center sm:text-left">{{ $step['title'] }}</h3>
-                                <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed mt-1 text-center sm:text-left">{{ $step['desc'] }}</p>
-                            </div>
-                        </div>
-                    @endforeach
-                </div>
+                    </div>
+                @endforeach
             </div>
         </div>
     </section>
