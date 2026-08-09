@@ -435,6 +435,7 @@ class BillingManager extends Component
     public bool    $kasirSantriIsInTarget  = true;        // warning flag
     public array   $kasirAvailablePeriods  = [];          // computed list
     public array   $kasirSelectedPeriods   = [];          // checked by kasir
+    public ?int    $kasirLastPeriodIndex   = null;        // smart range anchor
 
     public function openKasirAddBillModal(): void
     {
@@ -448,6 +449,7 @@ class BillingManager extends Component
         $this->kasirSantriIsInTarget = true;
         $this->kasirAvailablePeriods = [];
         $this->kasirSelectedPeriods  = [];
+        $this->kasirLastPeriodIndex  = null;
         $this->showKasirAddBillModal = true;
     }
 
@@ -456,6 +458,7 @@ class BillingManager extends Component
     {
         $this->kasirAvailablePeriods = [];
         $this->kasirSelectedPeriods  = [];
+        $this->kasirLastPeriodIndex  = null;
         $this->kasirSantriIsInTarget = true;
 
         if (!$this->kasirAddConfigId || !$this->selectedSantriId) return;
@@ -472,6 +475,7 @@ class BillingManager extends Component
     {
         $this->kasirAvailablePeriods = [];
         $this->kasirSelectedPeriods  = [];
+        $this->kasirLastPeriodIndex  = null;
 
         if (!$this->kasirAddConfigId || !$this->selectedSantriId) return;
 
@@ -496,6 +500,7 @@ class BillingManager extends Component
     {
         $this->kasirWizardStep      = 1;
         $this->kasirSelectedPeriods = [];
+        $this->kasirLastPeriodIndex = null;
     }
 
     public function toggleKasirPeriod(int $index): void
@@ -503,14 +508,101 @@ class BillingManager extends Component
         $period = $this->kasirAvailablePeriods[$index] ?? null;
         if (!$period || $period['exists']) return; // ignore already-billed
 
+        // Smart Range Selection: if last period index exists and user clicks another period index
+        if ($this->kasirLastPeriodIndex !== null && $this->kasirLastPeriodIndex !== $index && in_array($this->kasirLastPeriodIndex, $this->kasirSelectedPeriods)) {
+            $start = min($this->kasirLastPeriodIndex, $index);
+            $end   = max($this->kasirLastPeriodIndex, $index);
+
+            $rangeIndexes = [];
+            for ($i = $start; $i <= $end; $i++) {
+                $p = $this->kasirAvailablePeriods[$i] ?? null;
+                if ($p && !$p['exists']) {
+                    $rangeIndexes[] = $i;
+                }
+            }
+
+            $this->kasirSelectedPeriods = array_values(array_unique(array_merge($this->kasirSelectedPeriods, $rangeIndexes)));
+            $this->kasirLastPeriodIndex = $index;
+            return;
+        }
+
         if (in_array($index, $this->kasirSelectedPeriods)) {
             $this->kasirSelectedPeriods = array_values(array_filter(
                 $this->kasirSelectedPeriods,
                 fn($i) => $i !== $index
             ));
+            $this->kasirLastPeriodIndex = null;
         } else {
             $this->kasirSelectedPeriods[] = $index;
+            $this->kasirLastPeriodIndex = $index;
         }
+    }
+
+    public function selectAllKasirPeriods(): void
+    {
+        $available = [];
+        foreach ($this->kasirAvailablePeriods as $idx => $period) {
+            if (!$period['exists']) {
+                $available[] = $idx;
+            }
+        }
+        $this->kasirSelectedPeriods = $available;
+        $this->kasirLastPeriodIndex = null;
+    }
+
+    public function selectUpToCurrentKasirPeriods(): void
+    {
+        $nowMonth = (int) now()->format('n');
+        $nowYear  = (int) now()->format('Y');
+
+        $available = [];
+        foreach ($this->kasirAvailablePeriods as $idx => $period) {
+            if ($period['exists']) continue;
+
+            $pMonth = (int) ($period['month'] ?? 1);
+            $pYear  = (int) ($period['year'] ?? $nowYear);
+
+            $isDue = ($pYear < $nowYear) || ($pYear === $nowYear && $pMonth <= $nowMonth);
+            if ($isDue) {
+                $available[] = $idx;
+            }
+        }
+        $this->kasirSelectedPeriods = $available;
+        $this->kasirLastPeriodIndex = null;
+    }
+
+    public function selectSemester1KasirPeriods(): void
+    {
+        $available = [];
+        foreach ($this->kasirAvailablePeriods as $idx => $period) {
+            if ($period['exists']) continue;
+            $pMonth = (int) ($period['month'] ?? 1);
+            if ($pMonth >= 1 && $pMonth <= 6) {
+                $available[] = $idx;
+            }
+        }
+        $this->kasirSelectedPeriods = $available;
+        $this->kasirLastPeriodIndex = null;
+    }
+
+    public function selectSemester2KasirPeriods(): void
+    {
+        $available = [];
+        foreach ($this->kasirAvailablePeriods as $idx => $period) {
+            if ($period['exists']) continue;
+            $pMonth = (int) ($period['month'] ?? 1);
+            if ($pMonth >= 7 && $pMonth <= 12) {
+                $available[] = $idx;
+            }
+        }
+        $this->kasirSelectedPeriods = $available;
+        $this->kasirLastPeriodIndex = null;
+    }
+
+    public function clearKasirPeriods(): void
+    {
+        $this->kasirSelectedPeriods = [];
+        $this->kasirLastPeriodIndex = null;
     }
 
     public function generateFutureBillForSelectedSantri(BillingService $billingService): void
