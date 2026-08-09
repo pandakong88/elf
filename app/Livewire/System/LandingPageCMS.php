@@ -286,7 +286,7 @@ class LandingPageCMS extends Component
         $this->act_description = '';
         $this->act_visibility = 'umum';
         $this->act_organization_id = Organization::first()?->id;
-        $this->act_activity_type_id = MasterData::where('category', 'activity_type')->first()?->id;
+        $this->act_activity_type_id = MasterData::where('category', 'jenis_kegiatan')->first()?->id;
         $this->new_photos = [];
         $this->resetValidation();
     }
@@ -316,17 +316,20 @@ class LandingPageCMS extends Component
     public function saveActivity()
     {
         $this->validate([
-            'act_name' => 'required|string|max:200',
-            'act_date' => 'required|date',
-            'act_description' => 'required|string',
-            'act_visibility' => 'required|in:umum,internal',
-            'new_photos.*' => 'nullable|file|mimes:png,jpg,jpeg,webp|max:5120',
+            'act_name'              => 'required|string|max:200',
+            'act_date'              => 'required|date',
+            'act_description'       => 'required|string',
+            'act_visibility'        => 'required|in:umum,internal',
+            'act_activity_type_id'  => 'required|uuid|exists:master_data,id',
+            'new_photos.*'          => 'nullable|file|mimes:png,jpg,jpeg,webp|max:5120',
         ], [
-            'act_name.required' => 'Judul kegiatan harus diisi.',
-            'act_date.required' => 'Tanggal kegiatan harus diisi.',
-            'act_description.required' => 'Deskripsi kegiatan harus diisi.',
-            'new_photos.*.mimes' => 'Foto harus berformat PNG, JPG, JPEG, atau WEBP.',
-            'new_photos.*.max' => 'Ukuran setiap foto maksimal 5MB.',
+            'act_name.required'             => 'Judul kegiatan harus diisi.',
+            'act_date.required'             => 'Tanggal kegiatan harus diisi.',
+            'act_description.required'      => 'Deskripsi kegiatan harus diisi.',
+            'act_activity_type_id.required' => 'Jenis kegiatan harus dipilih.',
+            'act_activity_type_id.exists'   => 'Jenis kegiatan tidak valid.',
+            'new_photos.*.mimes'            => 'Foto harus berformat PNG, JPG, JPEG, atau WEBP.',
+            'new_photos.*.max'              => 'Ukuran setiap foto maksimal 5MB.',
         ]);
 
         $defaultOrgId = $this->act_organization_id ?: Organization::first()?->id;
@@ -417,7 +420,7 @@ class LandingPageCMS extends Component
             ->with(['activityType', 'media'])
             ->get();
 
-        $activityTypes = MasterData::where('category', 'activity_type')->get();
+        $activityTypes = MasterData::where('category', 'jenis_kegiatan')->active()->get();
         $organizations = Organization::all();
 
         return view('livewire.system.landing-page-cms', [

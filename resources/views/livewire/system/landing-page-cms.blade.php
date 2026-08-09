@@ -503,6 +503,17 @@
                     </div>
 
                     <div>
+                        <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Jenis Kegiatan</label>
+                        <select wire:model.defer="act_activity_type_id" class="w-full text-xs rounded-xl border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 p-3 focus:ring-emerald-500 focus:border-emerald-500">
+                            <option value="">-- Pilih Jenis Kegiatan --</option>
+                            @foreach($activityTypes as $type)
+                                <option value="{{ $type->id }}">{{ $type->name }}</option>
+                            @endforeach
+                        </select>
+                        @error('act_activity_type_id') <span class="text-[10px] text-rose-500 mt-1 block">{{ $message }}</span> @enderror
+                    </div>
+
+                    <div>
                         <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Deskripsi Kegiatan</label>
                         <textarea wire:model.defer="act_description" rows="3" placeholder="Tuliskan gambaran ringkas kegiatan ini..." class="w-full text-xs rounded-xl border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 p-3 focus:ring-emerald-500 focus:border-emerald-500"></textarea>
                         @error('act_description') <span class="text-[10px] text-rose-500 mt-1 block">{{ $message }}</span> @enderror
