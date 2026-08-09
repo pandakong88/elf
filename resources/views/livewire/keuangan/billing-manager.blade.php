@@ -1638,8 +1638,11 @@
                                         </div>
                                     @endforeach
                                 </div>
-                            </div>
                         @endif
+                    </div>
+                </div>
+            @endif
+
             {{-- ===== STICKY FLOATING MOBILE CHECKOUT BAR ===== --}}
             @if(!empty($selectedBillIds))
                 <div class="fixed bottom-4 inset-x-4 z-40 md:hidden bg-slate-900/95 dark:bg-slate-950/95 backdrop-blur-md text-white p-3.5 rounded-2xl shadow-2xl border border-slate-700/80 flex items-center justify-between gap-3 animate-fade-in">
