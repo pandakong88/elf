@@ -1558,6 +1558,7 @@ class BillingManager extends Component
 
         $this->selectedBillIds = array_values(array_unique($this->selectedBillIds));
         $this->previousSelectedBillIds = $this->selectedBillIds;
+        $this->payAmount = $this->selectedBillsTotal;
     }
 
     public function selectTunggakan(): void
@@ -1565,6 +1566,7 @@ class BillingManager extends Component
         $tunggakanIds = $this->tunggakanLamaBills->pluck('id')->toArray();
         $this->selectedBillIds = array_values(array_unique(array_merge($this->selectedBillIds, $tunggakanIds)));
         $this->previousSelectedBillIds = $this->selectedBillIds;
+        $this->payAmount = $this->selectedBillsTotal;
     }
 
     public function deselectTunggakan(): void
@@ -1572,6 +1574,7 @@ class BillingManager extends Component
         $tunggakanIds = $this->tunggakanLamaBills->pluck('id')->toArray();
         $this->selectedBillIds = array_values(array_diff($this->selectedBillIds, $tunggakanIds));
         $this->previousSelectedBillIds = $this->selectedBillIds;
+        $this->payAmount = $this->selectedBillsTotal;
     }
 
     public function selectUpToCurrentMonth(string $configId): void
@@ -1602,6 +1605,7 @@ class BillingManager extends Component
         if (!empty($selectedAdd)) {
             $this->selectedBillIds = array_values(array_unique(array_merge($this->selectedBillIds, $selectedAdd)));
             $this->previousSelectedBillIds = $this->selectedBillIds;
+            $this->payAmount = $this->selectedBillsTotal;
             $this->toastSuccess(count($selectedAdd) . ' tagihan s.d. bulan ini berhasil dipilih!');
         } else {
             $this->toastInfo('Semua tagihan s.d. bulan ini sudah lunas atau dipilih.');
@@ -1806,11 +1810,16 @@ class BillingManager extends Component
     public function initiatePayment(): void
     {
         $selectedBillsTotal = $this->selectedBillsTotal;
+        if ($this->payAmount <= 0 || $this->payAmount > $selectedBillsTotal) {
+            $this->payAmount = $selectedBillsTotal;
+        }
+
         $this->validate([
             'selectedSantriId' => 'required',
             'payAmount' => 'required|numeric|min:1|max:' . $selectedBillsTotal,
             'payMethod' => 'required|in:CASH,TRANSFER,EWALLET',
         ], [
+            'payAmount.min' => 'Silakan pilih minimal satu tagihan untuk dibayar.',
             'payAmount.max' => 'Uang diterima tidak boleh melebihi total tagihan terpilih (Rp ' . number_format($selectedBillsTotal, 0, ',', '.') . '). Masukkan nominal pas yang dibayarkan saja.',
         ]);
 
