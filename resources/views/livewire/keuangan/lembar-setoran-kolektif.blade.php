@@ -326,7 +326,7 @@
             @endif
 
             <!-- Scrollable Table Container (visible on desktop or when table mode selected) -->
-            <div @class(['flex-1 overflow-x-auto overflow-y-auto', 'hidden lg:block' => $mobileViewMode !== 'table'])>
+            <div @class(['flex-1 overflow-x-auto overflow-y-auto min-h-0 relative', 'hidden lg:block' => $mobileViewMode !== 'table'])>
                 <table class="w-full text-left border-collapse text-xs table-fixed">
                     <colgroup>
                         <col class="w-12">
@@ -338,20 +338,20 @@
                         <col class="w-32">
                     </colgroup>
                     <thead>
-                        <tr class="bg-slate-50 dark:bg-slate-950 border-b border-slate-200 dark:border-slate-800">
-                            <th class="py-3 px-4 text-slate-500 font-extrabold uppercase tracking-wider text-[9px] sticky top-0 left-0 bg-slate-50 dark:bg-slate-950 z-30 shadow-sm border-r border-slate-200/80 dark:border-slate-800/80">No</th>
-                            <th class="py-3 px-4 text-slate-500 font-extrabold uppercase tracking-wider text-[9px] sticky top-0 left-12 bg-slate-50 dark:bg-slate-950 z-30 shadow-sm border-r border-slate-200/80 dark:border-slate-800/80">Nama Santri</th>
-                            <th class="py-3 px-4 text-center text-rose-500 font-extrabold uppercase tracking-wider text-[9px] whitespace-nowrap sticky top-0 bg-slate-50 dark:bg-slate-950 z-20 shadow-sm border-r border-slate-200/80 dark:border-slate-800/80">
+                        <tr class="bg-slate-100 dark:bg-slate-950 border-b border-slate-200 dark:border-slate-800">
+                            <th class="py-3 px-4 text-slate-600 dark:text-slate-400 font-extrabold uppercase tracking-wider text-[9px] sticky top-0 left-0 bg-slate-100 dark:bg-slate-950 z-40 shadow-xs border-r border-b border-slate-200 dark:border-slate-800">No</th>
+                            <th class="py-3 px-4 text-slate-600 dark:text-slate-400 font-extrabold uppercase tracking-wider text-[9px] sticky top-0 left-12 bg-slate-100 dark:bg-slate-950 z-40 shadow-xs border-r border-b border-slate-200 dark:border-slate-800">Nama Santri</th>
+                            <th class="py-3 px-4 text-center text-rose-500 font-extrabold uppercase tracking-wider text-[9px] whitespace-nowrap sticky top-0 bg-slate-100 dark:bg-slate-950 z-30 shadow-xs border-r border-b border-slate-200 dark:border-slate-800">
                                 <span class="inline-block px-2 py-0.5 rounded-md bg-rose-500/10 text-rose-600 dark:text-rose-400 font-extrabold text-[9px]">Tunggakan Lama</span>
                             </th>
                             @foreach($months as $periodKey => $periodLabel)
-                                <th class="py-3 px-3 text-center sticky top-0 bg-slate-50 dark:bg-slate-950 z-20 shadow-sm border-r border-slate-200/80 dark:border-slate-800/80">
-                                    <span class="inline-block px-2.5 py-0.5 rounded-md bg-slate-200/70 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 font-black text-[9px] uppercase tracking-wider">
+                                <th class="py-3 px-3 text-center sticky top-0 bg-slate-100 dark:bg-slate-950 z-30 shadow-xs border-r border-b border-slate-200 dark:border-slate-800">
+                                    <span class="inline-block px-2.5 py-0.5 rounded-md bg-slate-200/80 dark:bg-slate-800/80 text-slate-700 dark:text-slate-200 font-black text-[9px] uppercase tracking-wider">
                                         {{ $periodLabel }}
                                     </span>
                                 </th>
                             @endforeach
-                            <th class="py-3 px-4 text-center text-emerald-600 font-extrabold uppercase tracking-wider text-[9px] whitespace-nowrap sticky top-0 bg-slate-50 dark:bg-slate-950 z-20 shadow-sm">Lunas di Muka</th>
+                            <th class="py-3 px-4 text-center text-emerald-600 font-extrabold uppercase tracking-wider text-[9px] whitespace-nowrap sticky top-0 bg-slate-100 dark:bg-slate-950 z-30 shadow-xs border-b border-slate-200 dark:border-slate-800">Lunas di Muka</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-100 dark:divide-slate-800/50">
