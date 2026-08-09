@@ -362,25 +362,51 @@
                 ];
             @endphp
 
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-                @foreach($psbSteps as $step)
-                    <div class="bg-white dark:bg-slate-900 p-5 sm:p-7 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-xs group hover:shadow-md transition-all relative overflow-hidden flex flex-col justify-between">
-                        <div class="absolute top-0 left-0 h-1.5 w-full {{ $step['barBg'] }} opacity-80 rounded-t-3xl"></div>
-                        <div class="flex items-start gap-4">
-                            <span class="w-10 h-10 rounded-2xl {{ $step['badgeBg'] }} text-white flex items-center justify-center font-black text-sm shrink-0 shadow-md">
-                                {{ $step['no'] }}
-                            </span>
-                            <div class="space-y-1.5 min-w-0 flex-1">
-                                <h3 class="text-sm sm:text-base font-extrabold text-slate-900 dark:text-white font-serif-display leading-tight">
-                                    {{ $step['title'] }}
-                                </h3>
-                                <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-                                    {{ $step['desc'] }}
-                                </p>
+            {{-- Steps Layout: Row 1 (3 Cards) + Row 2 (2 Cards Centered) --}}
+            <div class="space-y-4 sm:space-y-6">
+                {{-- Baris 1: Langkah 1, 2, 3 --}}
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
+                    @foreach(array_slice($psbSteps, 0, 3) as $step)
+                        <div class="bg-white dark:bg-slate-900 p-5 sm:p-7 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-xs group hover:shadow-md transition-all relative overflow-hidden flex flex-col justify-between">
+                            <div class="absolute top-0 left-0 h-1.5 w-full {{ $step['barBg'] }} opacity-80 rounded-t-3xl"></div>
+                            <div class="flex items-start gap-4">
+                                <span class="w-10 h-10 rounded-2xl {{ $step['badgeBg'] }} text-white flex items-center justify-center font-black text-sm shrink-0 shadow-md">
+                                    {{ $step['no'] }}
+                                </span>
+                                <div class="space-y-1.5 min-w-0 flex-1">
+                                    <h3 class="text-sm sm:text-base font-extrabold text-slate-900 dark:text-white font-serif-display leading-tight">
+                                        {{ $step['title'] }}
+                                    </h3>
+                                    <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                                        {{ $step['desc'] }}
+                                    </p>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                @endforeach
+                    @endforeach
+                </div>
+
+                {{-- Baris 2: Langkah 4 & 5 (Centered di Desktop) --}}
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 max-w-4xl mx-auto">
+                    @foreach(array_slice($psbSteps, 3) as $step)
+                        <div class="bg-white dark:bg-slate-900 p-5 sm:p-7 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-xs group hover:shadow-md transition-all relative overflow-hidden flex flex-col justify-between">
+                            <div class="absolute top-0 left-0 h-1.5 w-full {{ $step['barBg'] }} opacity-80 rounded-t-3xl"></div>
+                            <div class="flex items-start gap-4">
+                                <span class="w-10 h-10 rounded-2xl {{ $step['badgeBg'] }} text-white flex items-center justify-center font-black text-sm shrink-0 shadow-md">
+                                    {{ $step['no'] }}
+                                </span>
+                                <div class="space-y-1.5 min-w-0 flex-1">
+                                    <h3 class="text-sm sm:text-base font-extrabold text-slate-900 dark:text-white font-serif-display leading-tight">
+                                        {{ $step['title'] }}
+                                    </h3>
+                                    <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                                        {{ $step['desc'] }}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
             </div>
         </div>
     </section>
