@@ -506,37 +506,45 @@
                         @error('periodActiveDays') <p class="text-rose-500 text-[10px] font-bold mt-1">⚠️ {{ $message }}</p> @enderror
                     </div>
 
-                    {{-- Section 2: Tarif Harian per Gender --}}
+                    {{-- Section 2: Tarif Harian & Tarif Bulanan per Gender --}}
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                         
                         {{-- Tarif Putra --}}
-                        <div class="bg-amber-500/5 border border-amber-500/15 p-3.5 sm:p-4 rounded-2xl space-y-2">
+                        <div class="bg-amber-500/5 border border-amber-500/15 p-3.5 sm:p-4 rounded-2xl space-y-2.5">
                             <div class="flex items-center justify-between">
                                 <span class="text-[11px] font-extrabold text-amber-700 dark:text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
-                                    <span>👦</span> Tarif Putra / Hari
+                                    <span>👦</span> Tarif Putra (1 Sesi Sebulan)
                                 </span>
-                                <span class="text-[9px] font-bold px-2 py-0.5 rounded-md bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300">1 Sesi</span>
+                                <span class="text-[9px] font-bold px-2 py-0.5 rounded-md bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300">Bulanan</span>
                             </div>
                             <div class="relative flex items-center">
                                 <span class="absolute left-3 text-xs font-bold text-amber-600 dark:text-amber-400">Rp</span>
-                                <input type="number" step="0.01" wire:model.live.debounce.500ms="periodTarifPerHari" min="1"
+                                <input type="number" wire:model.live.debounce.300ms="targetMonthlyPutra" min="0" step="1000" placeholder="100000"
                                     class="w-full pl-9 pr-3 py-2.5 rounded-xl border border-amber-200 dark:border-amber-800/50 bg-white dark:bg-slate-900 text-amber-900 dark:text-amber-100 text-xs font-black font-mono focus:ring-2 focus:ring-amber-500/30 outline-none">
+                            </div>
+                            <div class="text-[10px] text-amber-800/80 dark:text-amber-300/80 font-mono flex items-center justify-between pt-0.5">
+                                <span>💡 Harian: <strong>Rp {{ number_format($periodTarifPerHari, 2, ',', '.') }}</strong>/hari</span>
+                                <span class="text-[9px] font-sans text-amber-600 dark:text-amber-400">(2x = Rp {{ number_format($targetMonthlyPutra * 2, 0, ',', '.') }})</span>
                             </div>
                             @error('periodTarifPerHari') <p class="text-rose-500 text-[10px] font-bold">⚠️ {{ $message }}</p> @enderror
                         </div>
 
                         {{-- Tarif Putri --}}
-                        <div class="bg-purple-500/5 border border-purple-500/15 p-3.5 sm:p-4 rounded-2xl space-y-2">
+                        <div class="bg-purple-500/5 border border-purple-500/15 p-3.5 sm:p-4 rounded-2xl space-y-2.5">
                             <div class="flex items-center justify-between">
                                 <span class="text-[11px] font-extrabold text-purple-700 dark:text-purple-400 uppercase tracking-wider flex items-center gap-1.5">
-                                    <span>👧</span> Tarif Putri / Hari
+                                    <span>👧</span> Tarif Putri (1 Sesi Sebulan)
                                 </span>
-                                <span class="text-[9px] font-bold px-2 py-0.5 rounded-md bg-purple-100 dark:bg-purple-950/60 text-purple-800 dark:text-purple-300">1 Sesi</span>
+                                <span class="text-[9px] font-bold px-2 py-0.5 rounded-md bg-purple-100 dark:bg-purple-950/60 text-purple-800 dark:text-purple-300">Bulanan</span>
                             </div>
                             <div class="relative flex items-center">
                                 <span class="absolute left-3 text-xs font-bold text-purple-600 dark:text-purple-400">Rp</span>
-                                <input type="number" step="0.01" wire:model.live.debounce.500ms="periodTarifPerHariPutri" min="1"
+                                <input type="number" wire:model.live.debounce.300ms="targetMonthlyPutri" min="0" step="1000" placeholder="90000"
                                     class="w-full pl-9 pr-3 py-2.5 rounded-xl border border-purple-200 dark:border-purple-800/50 bg-white dark:bg-slate-900 text-purple-900 dark:text-purple-100 text-xs font-black font-mono focus:ring-2 focus:ring-purple-500/30 outline-none">
+                            </div>
+                            <div class="text-[10px] text-purple-800/80 dark:text-purple-300/80 font-mono flex items-center justify-between pt-0.5">
+                                <span>💡 Harian: <strong>Rp {{ number_format($periodTarifPerHariPutri, 2, ',', '.') }}</strong>/hari</span>
+                                <span class="text-[9px] font-sans text-purple-600 dark:text-purple-400">(2x = Rp {{ number_format($targetMonthlyPutri * 2, 0, ',', '.') }})</span>
                             </div>
                             @error('periodTarifPerHariPutri') <p class="text-rose-500 text-[10px] font-bold">⚠️ {{ $message }}</p> @enderror
                         </div>
