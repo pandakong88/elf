@@ -83,17 +83,19 @@ class LembarSetoranKolektif extends Component
 
     public function updatedYear(): void
     {
-        // Do not reset inputs when year changes, to allow cross-year payment checklists.
+        $this->resetInputAmounts();
     }
 
     public function incrementYear(): void
     {
         $this->year++;
+        $this->resetInputAmounts();
     }
 
     public function decrementYear(): void
     {
         $this->year--;
+        $this->resetInputAmounts();
     }
 
     public function selectSheet(string $type, string $targetId, string $billType, string $interval, string $label, ?string $configId = null): void
@@ -371,7 +373,7 @@ class LembarSetoranKolektif extends Component
                     $this->oldArrearsPayments[$bill->person_id] = $oldArrearsSum;
                 }
                 
-                // Auto-fill prior grid bills
+                // Auto-fill prior grid bills (ONLY for bills within the current period grid)
                 $priorBills = Bill::where('person_id', $bill->person_id)
                     ->when($configId, fn($q) => $q->where('billing_config_id', $configId), fn($q) => $q->where('bill_type', $bill->bill_type))
                     ->whereIn('status', ['unpaid', 'partial'])
@@ -379,6 +381,20 @@ class LembarSetoranKolektif extends Component
                 
                 foreach ($priorBills as $pb) {
                     if ($pb->id === $bill->id) continue;
+
+                    // Only auto-fill prior bills that are WITHIN the current view's period grid.
+                    // Old arrears prior to firstPeriodKey are already handled by $oldArrearsPayments!
+                    $isWithinCurrentGrid = false;
+                    if (in_array($interval, ['once', 'insidental', 'event', 'sekali'])) {
+                        $isWithinCurrentGrid = $pb->period_year >= (int)$firstY;
+                    } else {
+                        $isWithinCurrentGrid = ($pb->period_year > (int)$firstY) 
+                            || ($pb->period_year == (int)$firstY && $pb->period_month >= (int)$firstM);
+                    }
+
+                    if (!$isWithinCurrentGrid) {
+                        continue;
+                    }
                     
                     $date1 = $pb->due_date ? $pb->due_date->toDateString() : sprintf('%04d-%02d-01', $pb->period_year, $pb->period_month);
                     $date2 = $bill->due_date ? $bill->due_date->toDateString() : sprintf('%04d-%02d-01', $bill->period_year, $bill->period_month);
@@ -420,6 +436,30 @@ class LembarSetoranKolektif extends Component
             }
         } else {
             $this->oldArrearsPayments[$studentId] = $totalArrears;
+
+            // Clear any old bill IDs (before current view's first period) for this student in paymentAmounts
+            $periods = $this->getRelevantPeriods();
+            $firstPeriodKey = array_key_first($periods);
+            if ($firstPeriodKey) {
+                [$firstM, $firstY] = explode('-', $firstPeriodKey);
+                $oldBills = Bill::where('person_id', $studentId)
+                    ->when($configId, fn($q) => $q->where('billing_config_id', $configId), fn($q) => $q->where('bill_type', $this->activeBillType))
+                    ->where(function($q) use ($firstM, $firstY) {
+                        $q->where('period_year', '<', (int)$firstY)
+                          ->orWhere(function($sub) use ($firstM, $firstY) {
+                              $sub->where('period_year', (int)$firstY)
+                                  ->where('period_month', '<', (int)$firstM);
+                          });
+                    })
+                    ->pluck('id')
+                    ->toArray();
+                
+                foreach ($oldBills as $obId) {
+                    if (isset($this->paymentAmounts[$obId])) {
+                        $this->paymentAmounts[$obId] = 0;
+                    }
+                }
+            }
         }
         $this->recalculateTotals();
     }
