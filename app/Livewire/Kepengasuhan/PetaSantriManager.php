@@ -493,10 +493,27 @@ class PetaSantriManager extends Component
         }
 
         // Filter Organization Scope
+        // Hanya berlaku untuk user yang terhubung ke organisasi bertipe 'unit' atau 'pondok'
+        // (yaitu pengurus asrama/komplek). Role yang terhubung ke org tipe lain
+        // (madrasah, koperasi, tahfidz, dll.) TIDAK dikunci per-organisasi — mereka
+        // tetap bisa melihat semua santri, namun tetap dibatasi oleh gender scope di atas.
+        // Ini bersifat future-proof: role baru apapun yg terhubung ke org non-unit/pondok
+        // otomatis akan mendapat perilaku yang sama tanpa perlu mengubah kode ini.
         if ($user && !$user->hasRole('super-admin') && !$user->hasRole('pengasuh') && !$user->hasRole('manajemen')) {
             $orgIds = $user->getOrganizationIds();
             if (!empty($orgIds)) {
-                $santriQuery->byOrganization($orgIds[0]);
+                // Cek apakah salah satu org user bertipe 'unit' atau 'pondok' (scope per-asrama)
+                $asramaOrgIds = \App\Modules\Core\Models\Organization::whereIn('id', $orgIds)
+                    ->whereIn('type', ['unit', 'pondok'])
+                    ->pluck('id')
+                    ->toArray();
+
+                if (!empty($asramaOrgIds)) {
+                    // User adalah pengurus asrama/komplek → filter per organisasi
+                    $santriQuery->byOrganization($asramaOrgIds[0]);
+                }
+                // else: user dari org tipe lain (madrasah, koperasi, tahfidz, dll.)
+                // → tidak dikunci per-organisasi, cukup gender scope saja
             }
         }
 
