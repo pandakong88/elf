@@ -498,97 +498,53 @@ class LembarSetoranKolektif extends Component
     public function getPreviewDataProperty(): Collection
     {
         $preview = collect();
+        $gridData = $this->getGridData();
 
-        // 1. Gather all student IDs involved
-        $checkedBillIds = [];
-        foreach ($this->paymentAmounts as $billId => $amount) {
-            if ((float)$amount > 0) {
-                $checkedBillIds[] = $billId;
-            }
-        }
-
-        $oldArrearsStudentIds = [];
-        foreach ($this->oldArrearsPayments as $studentId => $amount) {
-            if ((float)$amount > 0) {
-                $oldArrearsStudentIds[] = $studentId;
-            }
-        }
-
-        $billStudentIds = [];
-        if (!empty($checkedBillIds)) {
-            $billStudentIds = Bill::whereIn('id', $checkedBillIds)
-                ->pluck('person_id')
-                ->toArray();
-        }
-
-        $studentIds = array_unique(array_merge($oldArrearsStudentIds, $billStudentIds));
-
-        if (empty($studentIds)) {
-            return $preview;
-        }
-
-        // 2. Fetch persons and their room assignments
-        $persons = Person::select('persons.*', 'rooms.name as room_name')
-            ->leftJoin('room_assignments', function($join) {
-                $join->on('room_assignments.person_id', '=', 'persons.id')
-                     ->where('room_assignments.is_active', true);
-            })
-            ->leftJoin('rooms', 'rooms.id', '=', 'room_assignments.room_id')
-            ->whereIn('persons.id', $studentIds)
-            ->get()
-            ->keyBy('id');
-
-        $bills = collect();
-        if (!empty($checkedBillIds)) {
-            $bills = Bill::whereIn('id', $checkedBillIds)->get()->keyBy('id');
-        }
-
-        foreach ($studentIds as $studentId) {
-            $person = $persons->get($studentId);
-            if (!$person) continue;
+        foreach ($gridData as $row) {
+            $santri = $row['person'];
+            $studentId = $santri->id;
 
             $items = [];
             $studentTotal = 0.0;
 
-            // Old Arrears
+            // 1. Old Arrears
             $oldArrears = isset($this->oldArrearsPayments[$studentId]) ? (float)$this->oldArrearsPayments[$studentId] : 0.0;
             if ($oldArrears > 0) {
                 $items[] = "Tunggakan Lama (Rp " . number_format($oldArrears, 0, ',', '.') . ")";
                 $studentTotal += $oldArrears;
             }
 
-            // Grid Bills
+            // 2. Grid Bills
             $gridBillItems = [];
-            foreach ($this->paymentAmounts as $billId => $amount) {
-                $payAmt = (float)$amount;
+            foreach ($row['bills'] as $periodKey => $data) {
+                if (!$data['bill']) continue;
+                $bId = $data['bill']->id;
+                $payAmt = isset($this->paymentAmounts[$bId]) ? (float)$this->paymentAmounts[$bId] : 0.0;
                 if ($payAmt <= 0) continue;
 
-                $bill = $bills->get($billId);
-                if ($bill && $bill->person_id === $studentId) {
-                    $periodLabel = '';
-                    if (in_array($this->activeInterval, ['semester', '2x_yearly'])) {
-                        $semNum = ($bill->period_month >= 7) ? 2 : 1;
-                        $periodLabel = "Sem " . $semNum;
-                    } elseif (in_array($this->activeInterval, ['caturwulan', '3x_yearly'])) {
-                        $cwNum = (int)ceil($bill->period_month / 4);
-                        $periodLabel = "Caturwulan " . $cwNum;
-                    } elseif (in_array($this->activeInterval, ['triwulan', '4x_yearly'])) {
-                        $twNum = (int)ceil($bill->period_month / 3);
-                        $periodLabel = "Triwulan " . $twNum;
-                    } elseif (in_array($this->activeInterval, ['bimulanan', '6x_yearly'])) {
-                        $bmNum = (int)ceil($bill->period_month / 2);
-                        $periodLabel = "Bimulanan " . $bmNum;
-                    } elseif (in_array($this->activeInterval, ['once', 'insidental', 'event', 'sekali'])) {
-                        $periodLabel = "Event";
-                    } else {
-                        $date = \Carbon\Carbon::create($bill->period_year, $bill->period_month, 1);
-                        $periodLabel = $date->locale('id')->translatedFormat('M');
-                    }
-                    
-                    $periodLabel .= " " . $bill->period_year;
-                    $gridBillItems[] = $periodLabel . " (Rp " . number_format($payAmt, 0, ',', '.') . ")";
-                    $studentTotal += $payAmt;
+                $periodLabel = '';
+                if (in_array($this->activeInterval, ['semester', '2x_yearly'])) {
+                    $semNum = ($data['bill']->period_month >= 7) ? 2 : 1;
+                    $periodLabel = "Sem " . $semNum;
+                } elseif (in_array($this->activeInterval, ['caturwulan', '3x_yearly'])) {
+                    $cwNum = (int)ceil($data['bill']->period_month / 4);
+                    $periodLabel = "Caturwulan " . $cwNum;
+                } elseif (in_array($this->activeInterval, ['triwulan', '4x_yearly'])) {
+                    $twNum = (int)ceil($data['bill']->period_month / 3);
+                    $periodLabel = "Triwulan " . $twNum;
+                } elseif (in_array($this->activeInterval, ['bimulanan', '6x_yearly'])) {
+                    $bmNum = (int)ceil($data['bill']->period_month / 2);
+                    $periodLabel = "Bimulanan " . $bmNum;
+                } elseif (in_array($this->activeInterval, ['once', 'insidental', 'event', 'sekali'])) {
+                    $periodLabel = "Event";
+                } else {
+                    $date = \Carbon\Carbon::create($data['bill']->period_year, $data['bill']->period_month, 1);
+                    $periodLabel = $date->locale('id')->translatedFormat('M');
                 }
+                
+                $periodLabel .= " " . $data['bill']->period_year;
+                $gridBillItems[] = $periodLabel . " (Rp " . number_format($payAmt, 0, ',', '.') . ")";
+                $studentTotal += $payAmt;
             }
 
             if (!empty($gridBillItems)) {
@@ -597,8 +553,8 @@ class LembarSetoranKolektif extends Component
 
             if ($studentTotal > 0) {
                 $preview->push([
-                    'person_name' => $person->name,
-                    'room_name' => $person->room_name,
+                    'person_name' => $santri->name,
+                    'room_name' => $santri->room_name ?? null,
                     'details' => implode('; ', $items),
                     'total' => $studentTotal,
                 ]);
