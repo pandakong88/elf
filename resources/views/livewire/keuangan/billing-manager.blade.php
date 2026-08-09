@@ -1403,11 +1403,12 @@
                                     Belum ada tagihan bulanan untuk santri ini di tahun {{ $cashierYear }}.
                                 </div>
                             @else
-                                <div class="overflow-x-auto">
+                                {{-- DESKTOP VIEW MATRIX TABLE (hidden on mobile) --}}
+                                <div class="hidden md:block overflow-x-auto">
                                     <table class="w-full text-left border-collapse text-xs min-w-[700px]">
                                         <thead>
                                             <tr class="bg-slate-50 dark:bg-slate-950 border-b border-slate-200 dark:border-slate-800">
-                                                <th class="py-3 px-3 text-[9px] font-extrabold text-slate-500 uppercase tracking-wider w-36 sticky left-0 bg-slate-50 dark:bg-slate-950">Jenis Iuran</th>
+                                                <th class="py-3 px-3 text-[9px] font-extrabold text-slate-500 uppercase tracking-wider w-40 sticky left-0 bg-slate-50 dark:bg-slate-950">Jenis Iuran</th>
                                                 @foreach($monthNames as $mNum => $mLabel)
                                                     <th class="py-3 px-1 text-center text-[9px] font-extrabold uppercase
                                                         {{ ($mNum === $nowMonth && $cashierYear === $nowYear) ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-500' }}">
@@ -1420,7 +1421,13 @@
                                             @foreach($bulananBills as $configId => $configData)
                                                 <tr class="hover:bg-slate-50/60 dark:hover:bg-slate-800/30 transition-colors">
                                                     <td class="py-3 px-3 font-semibold text-slate-700 dark:text-slate-300 text-[10px] leading-tight sticky left-0 bg-white dark:bg-slate-900">
-                                                        {{ $configData['label'] }}
+                                                        <div class="space-y-1">
+                                                            <span class="block truncate font-bold text-slate-800 dark:text-slate-200">{{ $configData['label'] }}</span>
+                                                            <button type="button" wire:click="selectUpToCurrentMonth('{{ $configId }}')"
+                                                                class="inline-flex items-center gap-1 text-[8px] font-extrabold text-emerald-600 dark:text-emerald-400 hover:underline">
+                                                                ⚡ s.d. {{ $monthNames[$nowMonth] ?? 'Bulan Ini' }}
+                                                            </button>
+                                                        </div>
                                                     </td>
                                                     @foreach($monthNames as $mNum => $mLabel)
                                                         @php $bill = $configData['months'][$mNum] ?? null; @endphp
@@ -1429,7 +1436,7 @@
                                                                 <span class="text-slate-200 dark:text-slate-700 text-base">—</span>
                                                             @elseif($bill->status === 'paid')
                                                                 <span title="Lunas — Rp {{ number_format($bill->amount, 0, ',', '.') }}"
-                                                                    class="inline-flex items-center justify-center w-6 h-6 bg-emerald-500 rounded-full cursor-default">
+                                                                    class="inline-flex items-center justify-center w-6 h-6 bg-emerald-500 rounded-full cursor-default shadow-2xs">
                                                                     <svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
                                                                 </span>
                                                             @elseif($bill->status === 'partial')
@@ -1450,6 +1457,59 @@
                                             @endforeach
                                         </tbody>
                                     </table>
+                                </div>
+
+                                {{-- MOBILE VIEW CARD GRID CHIPS (block on mobile, hidden on desktop) --}}
+                                <div class="block md:hidden p-4 space-y-4">
+                                    @foreach($bulananBills as $configId => $configData)
+                                        <div class="p-3.5 bg-slate-50/70 dark:bg-slate-950/60 border border-slate-200/80 dark:border-slate-800 rounded-2xl space-y-2.5">
+                                            <div class="flex items-center justify-between gap-2 border-b border-slate-200/60 dark:border-slate-800 pb-2">
+                                                <div>
+                                                    <span class="font-extrabold text-slate-800 dark:text-slate-200 text-xs block">{{ $configData['label'] }}</span>
+                                                    <span class="text-[9px] text-slate-400">Bulanan {{ $cashierYear }}</span>
+                                                </div>
+                                                <button type="button" wire:click="selectUpToCurrentMonth('{{ $configId }}')"
+                                                    class="px-2.5 py-1 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 rounded-xl text-[9px] font-black transition-all">
+                                                    ⚡ s.d. {{ $monthNames[$nowMonth] ?? 'Bulan Ini' }}
+                                                </button>
+                                            </div>
+
+                                            <!-- 12 Month Touch Grid Chips (4 cols x 3 rows) -->
+                                            <div class="grid grid-cols-4 gap-1.5">
+                                                @foreach($monthNames as $mNum => $mLabel)
+                                                    @php
+                                                        $bill = $configData['months'][$mNum] ?? null;
+                                                        $isSelected = $bill && in_array($bill->id, $selectedBillIds);
+                                                    @endphp
+                                                    @if(!$bill)
+                                                        <div class="py-2 px-1 rounded-xl bg-slate-100/50 dark:bg-slate-900/50 border border-slate-200/40 dark:border-slate-800/40 text-center opacity-40">
+                                                            <span class="block text-[8px] font-extrabold text-slate-400 uppercase">{{ $mLabel }}</span>
+                                                            <span class="text-[8px] text-slate-300 dark:text-slate-600">—</span>
+                                                        </div>
+                                                    @elseif($bill->status === 'paid')
+                                                        <div class="py-2 px-1 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-center">
+                                                            <span class="block text-[8px] font-black text-emerald-600 dark:text-emerald-400 uppercase">✓ {{ $mLabel }}</span>
+                                                            <span class="text-[8px] font-bold text-emerald-600/80">Lunas</span>
+                                                        </div>
+                                                    @elseif($bill->status === 'partial')
+                                                        <label class="cursor-pointer py-2 px-1 rounded-xl border text-center transition-all block
+                                                            {{ $isSelected ? 'bg-amber-500 text-white border-amber-500 shadow-xs' : 'bg-amber-500/10 border-amber-500/30 text-amber-700 dark:text-amber-300' }}">
+                                                            <input type="checkbox" wire:model.live="selectedBillIds" value="{{ $bill->id }}" class="hidden">
+                                                            <span class="block text-[8px] font-black uppercase">{{ $isSelected ? '✓ ' : '⚡ ' }}{{ $mLabel }}</span>
+                                                            <span class="text-[8px] font-extrabold block truncate">Sisa {{ number_format(($bill->amount - $bill->amount_paid)/1000, 0) }}k</span>
+                                                        </label>
+                                                    @else
+                                                        <label class="cursor-pointer py-2 px-1 rounded-xl border text-center transition-all block
+                                                            {{ $isSelected ? 'bg-emerald-500 text-white border-emerald-500 shadow-xs' : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:border-emerald-500/40' }}">
+                                                            <input type="checkbox" wire:model.live="selectedBillIds" value="{{ $bill->id }}" class="hidden">
+                                                            <span class="block text-[8px] font-black uppercase">{{ $isSelected ? '✓ ' : '' }}{{ $mLabel }}</span>
+                                                            <span class="text-[8px] font-extrabold opacity-80 block truncate">{{ number_format($bill->amount/1000, 0) }}k</span>
+                                                        </label>
+                                                    @endif
+                                                @endforeach
+                                            </div>
+                                        </div>
+                                    @endforeach
                                 </div>
                             @endif
                         </div>
@@ -1580,9 +1640,20 @@
                                 </div>
                             </div>
                         @endif
-                    @endif
+            {{-- ===== STICKY FLOATING MOBILE CHECKOUT BAR ===== --}}
+            @if(!empty($selectedBillIds))
+                <div class="fixed bottom-4 inset-x-4 z-40 md:hidden bg-slate-900/95 dark:bg-slate-950/95 backdrop-blur-md text-white p-3.5 rounded-2xl shadow-2xl border border-slate-700/80 flex items-center justify-between gap-3 animate-fade-in">
+                    <div class="min-w-0">
+                        <span class="text-[9px] font-extrabold uppercase text-emerald-400 tracking-wider block">🛒 {{ count($selectedBillIds) }} Tagihan Dipilih</span>
+                        <span class="text-sm font-black text-white block truncate">Rp {{ number_format($this->selectedBillsTotal, 0, ',', '.') }}</span>
+                    </div>
+                    <button type="button" wire:click="openPaymentConfirmModal"
+                        class="px-4 py-2.5 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white text-xs font-black rounded-xl shadow-lg shadow-emerald-500/30 flex items-center gap-1.5 shrink-0">
+                        <span>PROSES BAYAR</span>
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+                    </button>
                 </div>
-            </div>
+            @endif
 
             {{-- ===== CONFIRMATION MODAL ===== --}}
             @if($showPaymentConfirmModal && $selectedSantri)

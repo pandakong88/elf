@@ -1482,6 +1482,40 @@ class BillingManager extends Component
         $this->previousSelectedBillIds = $this->selectedBillIds;
     }
 
+    public function selectUpToCurrentMonth(string $configId): void
+    {
+        if (!$this->selectedSantriId) {
+            return;
+        }
+
+        $nowMonth = (int) now()->format('n');
+        $nowYear = (int) now()->format('Y');
+
+        $bills = Bill::where('person_id', $this->selectedSantriId)
+            ->where('billing_config_id', $configId)
+            ->where('period_year', $this->cashierYear)
+            ->whereIn('status', ['unpaid', 'partial'])
+            ->get();
+
+        $selectedAdd = [];
+        foreach ($bills as $bill) {
+            $isDueOrCurrent = ($this->cashierYear < $nowYear) 
+                || ($this->cashierYear === $nowYear && $bill->period_month <= $nowMonth);
+
+            if ($isDueOrCurrent) {
+                $selectedAdd[] = $bill->id;
+            }
+        }
+
+        if (!empty($selectedAdd)) {
+            $this->selectedBillIds = array_values(array_unique(array_merge($this->selectedBillIds, $selectedAdd)));
+            $this->previousSelectedBillIds = $this->selectedBillIds;
+            $this->toastSuccess(count($selectedAdd) . ' tagihan s.d. bulan ini berhasil dipilih!');
+        } else {
+            $this->toastInfo('Semua tagihan s.d. bulan ini sudah lunas atau dipilih.');
+        }
+    }
+
     protected function applyManagerRoleScope($query)
     {
         $user = auth()->user();
