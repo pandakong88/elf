@@ -39,13 +39,21 @@ class MajekManager extends Component
     public bool   $showAddModal      = false;
     public string $addTab            = 'komplek'; // 'komplek' | 'pencarian'
 
-    // ─── Tab Komplek (Bulk) ───────────────────────────────────────────────────
-    public string $selectedDormitoryId = '';
-    public array  $dormitoryStudents  = [];      // Array of student details
-    public array  $bulkSelections     = [];      // [person_id => bool]
-    public array  $bulkSessions       = [];      // [person_id => '2x'|'pagi'|'sore']
-    public array  $bulkDays           = [];      // [person_id => int]
-    public array  $bulkNotes          = [];      // [person_id => string]
+    // ─── Tab Komplek / Super Bulk ──────────────────────────────────────────────
+    public string $selectedDormitoryId   = '';
+    public array  $dormitoryStudents    = [];      // Array of student details
+    public array  $bulkSelections       = [];      // [person_id => bool]
+    public array  $bulkSessions         = [];      // [person_id => '2x'|'pagi'|'sore']
+    public array  $bulkDays             = [];      // [person_id => int]
+    public array  $bulkNotes            = [];      // [person_id => string]
+
+    // ─── Super Bulk Search & Mass Config ─────────────────────────────────────
+    public string $searchBulkQuery       = '';
+    public string $filterBulkDormitoryId = '';
+    public string $filterBulkStatus      = 'unregistered'; // 'all' | 'unregistered' | 'registered'
+    public string $massSesi              = '2x';           // '2x' | 'pagi' | 'sore'
+    public int    $massDays              = 30;
+    public string $massNotes             = '';
 
     // ─── Tab Pencarian (Single) ───────────────────────────────────────────────
     public string $searchQuery       = '';
@@ -419,14 +427,176 @@ class MajekManager extends Component
             return [];
         }
 
-        return Person::whereIn('id', $checkedIds)
+        $defaultDays = $this->activePeriod ? $this->activePeriod->active_days : 30;
+
+        $persons = Person::whereIn('id', $checkedIds)
+            ->with(['roomAssignments' => fn($q) => $q->active()->with('room.dormitory')])
             ->orderBy('name')
-            ->get(['id', 'name'])
-            ->map(fn($p) => [
-                'id'   => $p->id,
-                'name' => $p->name,
-            ])
-            ->toArray();
+            ->get();
+
+        $result = [];
+        foreach ($persons as $p) {
+            $dormName = '—';
+            $activeAssignment = $p->roomAssignments->first();
+            if ($activeAssignment && $activeAssignment->room && $activeAssignment->room->dormitory) {
+                $dormName = $activeAssignment->room->dormitory->name;
+            }
+
+            if (!isset($this->bulkSessions[$p->id])) {
+                $this->bulkSessions[$p->id] = '2x';
+            }
+            if (!isset($this->bulkDays[$p->id])) {
+                $this->bulkDays[$p->id] = $defaultDays;
+            }
+            if (!isset($this->bulkNotes[$p->id])) {
+                $this->bulkNotes[$p->id] = '';
+            }
+
+            $result[] = [
+                'id'        => $p->id,
+                'name'      => $p->name,
+                'gender'    => $p->gender,
+                'dormitory' => $dormName,
+                'session'   => $this->bulkSessions[$p->id] ?? '2x',
+                'days'      => $this->bulkDays[$p->id] ?? $defaultDays,
+                'notes'     => $this->bulkNotes[$p->id] ?? '',
+            ];
+        }
+
+        return $result;
+    }
+
+    public function setAllSelectedSessions(string $sesi): void
+    {
+        $selectedIds = array_keys(array_filter($this->bulkSelections));
+        foreach ($selectedIds as $personId) {
+            $this->bulkSessions[$personId] = $sesi;
+        }
+    }
+
+    #[Computed]
+    public function bulkStudentsList(): array
+    {
+        $registrationsMap = MajekRegistration::where('month', $this->month)
+            ->where('year',  $this->year)
+            ->get()
+            ->keyBy('person_id');
+
+        $query = Person::active()
+            ->whereHas('activeRoles', function ($q) {
+                $q->where('role_type', 'santri');
+            })
+            ->when($this->genderScope(), fn($q, $g) => $q->where('gender', $g))
+            ->when($this->filterBulkDormitoryId, function ($q) {
+                $q->whereHas('roomAssignments', function ($rq) {
+                    $rq->active()->whereHas('room', function ($r) {
+                        $r->where('dormitory_id', $this->filterBulkDormitoryId);
+                    });
+                });
+            })
+            ->when($this->searchBulkQuery, function ($q) {
+                $q->where('name', 'like', '%' . $this->searchBulkQuery . '%');
+            })
+            ->with(['roomAssignments' => fn($q) => $q->active()->with('room.dormitory')])
+            ->orderBy('name');
+
+        $students = $query->limit(300)->get();
+        $defaultDays = $this->activePeriod ? $this->activePeriod->active_days : 30;
+        $result = [];
+
+        foreach ($students as $student) {
+            $reg = $registrationsMap->get($student->id);
+            $isReg = !is_null($reg);
+
+            if ($this->filterBulkStatus === 'unregistered' && $isReg) continue;
+            if ($this->filterBulkStatus === 'registered' && !$isReg) continue;
+
+            $dormName = '—';
+            $activeAssignment = $student->roomAssignments->first();
+            if ($activeAssignment && $activeAssignment->room && $activeAssignment->room->dormitory) {
+                $dormName = $activeAssignment->room->dormitory->name;
+            }
+
+            $sesi = '2x';
+            if ($isReg) {
+                if ($reg->session_pagi && $reg->session_sore) {
+                    $sesi = '2x';
+                } elseif ($reg->session_pagi) {
+                    $sesi = 'pagi';
+                } else {
+                    $sesi = 'sore';
+                }
+            }
+
+            $result[] = [
+                'id'            => $student->id,
+                'name'          => $student->name,
+                'gender'        => $student->gender,
+                'dormitory'     => $dormName,
+                'is_registered' => $isReg,
+                'session'       => $sesi,
+                'days'          => $isReg ? $reg->active_days : $defaultDays,
+                'notes'         => $isReg ? ($reg->notes ?? '') : '',
+            ];
+        }
+
+        return $result;
+    }
+
+    public function applyMassConfiguration(): void
+    {
+        $selectedIds = array_keys(array_filter($this->bulkSelections));
+        if (empty($selectedIds)) {
+            $this->flashError = 'Pilih minimal satu santri untuk menerapkan konfigurasi massal.';
+            return;
+        }
+
+        foreach ($selectedIds as $personId) {
+            $this->bulkSessions[$personId] = $this->massSesi;
+            $this->bulkDays[$personId]     = $this->massDays;
+            $this->bulkNotes[$personId]    = $this->massNotes;
+        }
+
+        $this->flashSuccess = 'Konfigurasi berhasil diterapkan ke ' . count($selectedIds) . ' santri terpilih.';
+    }
+
+    public function selectAllFilteredStudents(): void
+    {
+        $students = $this->bulkStudentsList;
+        $defaultDays = $this->activePeriod ? $this->activePeriod->active_days : 30;
+
+        foreach ($students as $std) {
+            if (!$std['is_registered']) {
+                $this->bulkSelections[$std['id']] = true;
+                if (!isset($this->bulkSessions[$std['id']])) {
+                    $this->bulkSessions[$std['id']] = $this->massSesi;
+                }
+                if (!isset($this->bulkDays[$std['id']])) {
+                    $this->bulkDays[$std['id']] = $defaultDays;
+                }
+            }
+        }
+    }
+
+    public function toggleStudentSelection(string $studentId): void
+    {
+        $current = $this->bulkSelections[$studentId] ?? false;
+        $this->bulkSelections[$studentId] = !$current;
+
+        $defaultDays = $this->activePeriod ? $this->activePeriod->active_days : 30;
+        if ($this->bulkSelections[$studentId]) {
+            if (!isset($this->bulkSessions[$studentId])) {
+                $this->bulkSessions[$studentId] = '2x';
+            }
+            if (!isset($this->bulkDays[$studentId])) {
+                $this->bulkDays[$studentId] = $defaultDays;
+            }
+        }
+    }
+
+    public function clearAllBulkSelections(): void
+    {
+        $this->bulkSelections = [];
     }
 
     // =========================================================================
@@ -486,6 +656,8 @@ class MajekManager extends Component
             'periodTarifPerHariPutri.min'      => 'Tarif Putri harus lebih dari 0.',
         ]);
 
+        $oldActiveDays = $this->activePeriod ? $this->activePeriod->active_days : null;
+
         MajekPeriod::updateOrCreate(
             ['month' => $this->month, 'year' => $this->year],
             [
@@ -497,11 +669,13 @@ class MajekManager extends Component
             ]
         );
 
-        $this->recalculateAllUnpaidRegistrations();
+        // CLEAR COMPUTED PROPERTY CACHE FIRST SO RECALCULATION USES FRESH PERIOD DATA
+        unset($this->activePeriod, $this->tarif2x, $this->tarif1x, $this->tarif2xPutri, $this->tarif1xPutri, $this->registrations);
 
-        unset($this->activePeriod, $this->tarif2x, $this->tarif1x, $this->tarif2xPutri, $this->tarif1xPutri);
+        $this->recalculateAllUnpaidRegistrations($oldActiveDays, (int) $this->periodActiveDays);
+
         $this->showPeriodModal = false;
-        $this->flashSuccess    = 'Konfigurasi periode berhasil disimpan.';
+        $this->flashSuccess    = 'Konfigurasi periode berhasil disimpan dan tagihan belum dibayar otomatis dihitung ulang.';
     }
 
     // =========================================================================
@@ -608,7 +782,7 @@ class MajekManager extends Component
         }
     }
 
-    public function recalculateAllUnpaidRegistrations(): void
+    public function recalculateAllUnpaidRegistrations(?int $oldDays = null, ?int $newDays = null): void
     {
         $period = $this->activePeriod;
         if (!$period) return;
@@ -619,8 +793,13 @@ class MajekManager extends Component
                                     ->get();
 
         foreach ($allRegs as $reg) {
-            $hasPaid = Bill::where('reference_id', $reg->id)->where('status', 'paid')->exists();
-            if (!$hasPaid) {
+            // Protect registrations that have any payments already recorded (amount_paid > 0)
+            $hasPayments = Bill::where('reference_id', $reg->id)->where('amount_paid', '>', 0)->exists();
+            if (!$hasPayments) {
+                // If period active_days was updated, sync active_days for registrations that were matching old active_days
+                if ($oldDays !== null && $newDays !== null && ($reg->active_days == $oldDays || $reg->active_days === null)) {
+                    $reg->active_days = $newDays;
+                }
                 $this->recalculateRegistrationAmount($reg);
             }
         }
@@ -635,7 +814,7 @@ class MajekManager extends Component
             $reg->load('person');
         }
 
-        // Use custom active_days if set, otherwise use period default
+        // Use active_days if set, otherwise use period default
         $days = $reg->active_days ?? $period->active_days;
         $dailyRate = $period->getTarifPerHariForGender($reg->person?->gender);
 
@@ -644,17 +823,17 @@ class MajekManager extends Component
         $reg->amount_sore = $reg->session_sore ? $t1x : 0;
         $reg->save();
 
-        // Also sync unpaid bills if present
+        // Sync unpaid bills if present
         $pagiBill = Bill::where('reference_id', $reg->id)->where('bill_type', 'majek_pagi')->first();
-        if ($pagiBill && $pagiBill->status !== 'paid') {
-            $pagiBill->amount = $t1x;
+        if ($pagiBill && $pagiBill->amount_paid == 0) {
+            $pagiBill->amount = $reg->amount_pagi;
             $pagiBill->save();
             $pagiBill->recalculateStatus();
         }
 
         $soreBill = Bill::where('reference_id', $reg->id)->where('bill_type', 'majek_sore')->first();
-        if ($soreBill && $soreBill->status !== 'paid') {
-            $soreBill->amount = $t1x;
+        if ($soreBill && $soreBill->amount_paid == 0) {
+            $soreBill->amount = $reg->amount_sore;
             $soreBill->save();
             $soreBill->recalculateStatus();
         }
@@ -670,21 +849,27 @@ class MajekManager extends Component
             $this->flashError = 'Buat konfigurasi periode terlebih dahulu sebelum mendaftarkan peserta.';
             return;
         }
-        $this->addTab            = 'komplek';
+        $this->addTab              = 'komplek';
         $this->selectedDormitoryId = '';
-        $this->dormitoryStudents  = [];
-        $this->bulkSelections     = [];
-        $this->bulkSessions       = [];
-        $this->bulkDays           = [];
-        $this->bulkNotes          = [];
-        $this->searchQuery       = '';
-        $this->searchResults     = [];
-        $this->selectedPersonId  = '';
-        $this->selectedPersonName = '';
-        $this->selectedSesi      = '2x';
-        $this->selectedPersonDays = $this->activePeriod->active_days;
+        $this->dormitoryStudents   = [];
+        $this->searchBulkQuery     = '';
+        $this->filterBulkDormitoryId = '';
+        $this->filterBulkStatus    = 'unregistered';
+        $this->massSesi            = '2x';
+        $this->massDays            = $this->activePeriod->active_days;
+        $this->massNotes           = '';
+        $this->bulkSelections       = [];
+        $this->bulkSessions         = [];
+        $this->bulkDays             = [];
+        $this->bulkNotes            = [];
+        $this->searchQuery         = '';
+        $this->searchResults       = [];
+        $this->selectedPersonId    = '';
+        $this->selectedPersonName  = '';
+        $this->selectedSesi        = '2x';
+        $this->selectedPersonDays  = $this->activePeriod->active_days;
         $this->selectedPersonNotes = '';
-        $this->showAddModal      = true;
+        $this->showAddModal        = true;
     }
 
     public function closeAddModal(): void
@@ -710,6 +895,9 @@ class MajekManager extends Component
                                              ->keyBy('person_id');
 
         $students = Person::active()
+            ->whereHas('activeRoles', function ($q) {
+                $q->where('role_type', 'santri');
+            })
             ->whereHas('roomAssignments', function ($q) {
                 $q->active()->whereHas('room', function ($r) {
                     $r->where('dormitory_id', $this->selectedDormitoryId);
@@ -1009,7 +1197,40 @@ class MajekManager extends Component
         $dailyRate = $period->getTarifPerHariForGender($reg->person?->gender);
         $t1x = $dailyRate * $this->editDays;
 
-        DB::transaction(function () use ($reg, $t1x) {
+        $pagiBill = Bill::where('reference_id', $reg->id)->where('bill_type', 'majek_pagi')->first();
+        $soreBill = Bill::where('reference_id', $reg->id)->where('bill_type', 'majek_sore')->first();
+
+        $pagiPaid = $pagiBill ? (float)$pagiBill->amount_paid : 0.0;
+        $sorePaid = $soreBill ? (float)$soreBill->amount_paid : 0.0;
+
+        $newSessionPagi = in_array($this->editSesi, ['pagi', '2x']);
+        $newSessionSore = in_array($this->editSesi, ['sore', '2x']);
+
+        $newPagiAmount = $newSessionPagi ? $t1x : 0.0;
+        $newSoreAmount = $newSessionSore ? $t1x : 0.0;
+
+        // Validasi Keuangan: Mencegah penghapusan atau penurunan tarif di bawah nominal yang sudah dibayarkan kasir
+        if (!$newSessionPagi && $pagiPaid > 0) {
+            $this->flashError = "Tidak dapat menghapus Sesi Pagi karena santri sudah mencicil Sesi Pagi sebesar Rp " . number_format($pagiPaid, 0, ',', '.') . ".";
+            return;
+        }
+
+        if (!$newSessionSore && $sorePaid > 0) {
+            $this->flashError = "Tidak dapat menghapus Sesi Sore karena santri sudah mencicil Sesi Sore sebesar Rp " . number_format($sorePaid, 0, ',', '.') . ".";
+            return;
+        }
+
+        if ($newSessionPagi && $newPagiAmount < ($pagiPaid - 0.01)) {
+            $this->flashError = "Total tagihan Pagi baru (Rp " . number_format($newPagiAmount, 0, ',', '.') . ") tidak boleh lebih kecil dari uang yang sudah dibayarkan santri (Rp " . number_format($pagiPaid, 0, ',', '.') . ").";
+            return;
+        }
+
+        if ($newSessionSore && $newSoreAmount < ($sorePaid - 0.01)) {
+            $this->flashError = "Total tagihan Sore baru (Rp " . number_format($newSoreAmount, 0, ',', '.') . ") tidak boleh lebih kecil dari uang yang sudah dibayarkan santri (Rp " . number_format($sorePaid, 0, ',', '.') . ").";
+            return;
+        }
+
+        DB::transaction(function () use ($reg, $t1x, $pagiBill, $soreBill) {
             $reg->session_pagi = in_array($this->editSesi, ['pagi', '2x']);
             $reg->session_sore = in_array($this->editSesi, ['sore', '2x']);
             $reg->active_days  = $this->editDays;
@@ -1019,7 +1240,6 @@ class MajekManager extends Component
             $reg->save();
 
             // Pagi Bill
-            $pagiBill = Bill::where('reference_id', $reg->id)->where('bill_type', 'majek_pagi')->first();
             if ($reg->session_pagi) {
                 if ($pagiBill) {
                     if ($pagiBill->status !== 'paid') {
@@ -1081,7 +1301,7 @@ class MajekManager extends Component
 
         unset($this->registrations, $this->paidStatuses);
         $this->showEditModal = false;
-        $this->flashSuccess  = 'Detail peserta berhasil diperbarui.';
+        $this->flashSuccess  = "Detail katering santri '{$reg->person->name}' berhasil diperbarui.";
     }
 
     // =========================================================================
@@ -1325,8 +1545,8 @@ class MajekManager extends Component
 
         unset($this->registrations, $this->paidStatuses);
         $this->resetPaymentState();
+        $this->flashSuccess = "Santri '{$this->deletePersonName}' berhasil dihapus dari pendaftaran Majek.";
         $this->closeDeleteModal();
-        $this->flashSuccess = 'Peserta berhasil dihapus dari katering.';
     }
 
     // =========================================================================
