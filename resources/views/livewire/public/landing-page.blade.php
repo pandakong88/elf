@@ -386,15 +386,15 @@
     </section>
 
     {{-- ============================================================ --}}
-    {{-- BUKU PEDOMAN SANTRI                                           --}}
+    {{-- BUKU PEDOMAN SANTRI (DIRECT INLINE VIEWER)                    --}}
     {{-- ============================================================ --}}
-    <section class="max-w-5xl mx-auto px-4 sm:px-6 py-28">
-        <div class="p-8 sm:p-14 bg-gradient-to-br from-emerald-800 via-emerald-900 to-emerald-950 rounded-[2rem] text-white shadow-2xl relative overflow-hidden">
+    <section class="max-w-5xl mx-auto px-4 sm:px-6 py-20">
+        <div class="p-6 sm:p-10 bg-gradient-to-br from-emerald-800 via-emerald-900 to-emerald-950 rounded-[2.5rem] text-white shadow-2xl relative overflow-hidden space-y-6">
             <div class="absolute -right-8 -top-8 w-40 h-40 bg-white/5 rounded-full blur-2xl pointer-events-none"></div>
             <div class="absolute -left-8 -bottom-8 w-40 h-40 bg-amber-400/5 rounded-full blur-2xl pointer-events-none"></div>
             <div class="absolute inset-0 opacity-[0.03]" style="background-image: radial-gradient(circle, #ffffff 1px, transparent 1px); background-size: 24px 24px;"></div>
 
-            <div class="relative z-10 flex flex-col sm:flex-row items-center justify-between gap-8">
+            <div class="relative z-10 flex flex-col sm:flex-row items-center justify-between gap-6">
                 {{-- Kiri: Teks --}}
                 <div class="space-y-3 text-center sm:text-left max-w-xl">
                     <div class="flex items-center gap-2 justify-center sm:justify-start">
@@ -407,35 +407,32 @@
                     </p>
                 </div>
 
-                {{-- Kanan: Tombol --}}
+                {{-- Kanan: Tombol Unduh & Layar Penuh --}}
                 <div class="flex flex-col sm:flex-row gap-3 flex-shrink-0">
                     @if(!empty($data['pedoman_file_url']))
-                        {{-- Tombol Baca Online (Trigger Modal) --}}
-                        <button type="button" @click="showPedomanModal = true"
-                                class="inline-flex items-center justify-center gap-2 px-5 py-3.5 bg-white/10 hover:bg-white/20 border border-white/20 hover:border-white/40 text-white rounded-2xl text-xs font-bold transition-all backdrop-blur-sm whitespace-nowrap cursor-pointer hover:scale-105">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
-                            Baca Online
-                        </button>
-                        {{-- Tombol Unduh PDF --}}
                         <a href="{{ route('pedoman.download') }}" download
-                           class="inline-flex items-center justify-center gap-2 px-5 py-3.5 bg-white hover:bg-emerald-50 text-emerald-900 rounded-2xl text-xs font-bold transition-all shadow-md whitespace-nowrap hover:scale-105">
+                           class="inline-flex items-center justify-center gap-2 px-5 py-3 bg-white hover:bg-emerald-50 text-emerald-900 rounded-2xl text-xs font-bold transition-all shadow-md whitespace-nowrap hover:scale-105">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
                             Unduh PDF
                         </a>
-                    @else
-                        <button disabled class="inline-flex items-center justify-center gap-2 px-5 py-3.5 bg-white/10 border border-white/10 text-white/40 rounded-2xl text-xs font-bold cursor-not-allowed whitespace-nowrap">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
-                            Baca Online
-                        </button>
-                        <button disabled class="inline-flex items-center justify-center gap-2 px-5 py-3.5 bg-white/10 border border-white/10 text-white/40 rounded-2xl text-xs font-bold cursor-not-allowed whitespace-nowrap">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-                            Unduh PDF
+                        <button type="button" @click="showPedomanModal = true"
+                                class="inline-flex items-center justify-center gap-2 px-5 py-3 bg-white/10 hover:bg-white/20 border border-white/20 hover:border-white/40 text-white rounded-2xl text-xs font-bold transition-all backdrop-blur-sm whitespace-nowrap cursor-pointer hover:scale-105">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"/></svg>
+                            Layar Penuh
                         </button>
                     @endif
                 </div>
             </div>
 
-            @if(empty($data['pedoman_file_url']))
+            {{-- Embedded Direct PDF Viewer --}}
+            @if(!empty($data['pedoman_file_url']))
+                <div class="relative z-10 w-full h-[500px] sm:h-[650px] bg-slate-950 rounded-2xl overflow-hidden border border-white/15 shadow-2xl">
+                    <iframe src="{{ route('pedoman.stream') }}#toolbar=1" 
+                            class="w-full h-full border-0" 
+                            title="Buku Pedoman Santri Viewer">
+                    </iframe>
+                </div>
+            @else
                 <div class="relative z-10 mt-6 pt-4 border-t border-white/10 text-center">
                     <span class="text-[10px] text-emerald-300/60 font-medium">📋 Buku pedoman sedang dalam proses penerbitan — segera hadir</span>
                 </div>
