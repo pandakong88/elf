@@ -1246,7 +1246,7 @@
                 </div>
 
                 {{-- ===== RIGHT PANEL: LEMBAR TAGIHAN ===== --}}
-                <div class="lg:col-span-8 space-y-5">
+                <div class="lg:col-span-8 space-y-5 @if(!empty($selectedBillIds)) pb-28 md:pb-0 @endif">
                     @if(!$selectedSantri)
                         <div class="bg-white dark:bg-slate-900 border border-slate-200/50 dark:border-slate-800 p-16 rounded-3xl text-center shadow-sm">
                             <div class="text-4xl mb-3">🔍</div>
@@ -1645,16 +1645,21 @@
 
             {{-- ===== STICKY FLOATING MOBILE CHECKOUT BAR ===== --}}
             @if(!empty($selectedBillIds))
-                <div class="fixed bottom-4 inset-x-4 z-40 md:hidden bg-slate-900/95 dark:bg-slate-950/95 backdrop-blur-md text-white p-3.5 rounded-2xl shadow-2xl border border-slate-700/80 flex items-center justify-between gap-3 animate-fade-in">
+                <div class="fixed bottom-4 inset-x-4 z-40 md:hidden bg-slate-900/95 dark:bg-slate-950/95 backdrop-blur-md text-white p-3 rounded-2xl shadow-2xl border border-slate-700/80 flex items-center justify-between gap-3 animate-fade-in">
                     <div class="min-w-0">
                         <span class="text-[9px] font-extrabold uppercase text-emerald-400 tracking-wider block">🛒 {{ count($selectedBillIds) }} Tagihan Dipilih</span>
                         <span class="text-sm font-black text-white block truncate">Rp {{ number_format($this->selectedBillsTotal, 0, ',', '.') }}</span>
                     </div>
-                    <button type="button" wire:click="initiatePayment"
-                        class="px-4 py-2.5 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white text-xs font-black rounded-xl shadow-lg shadow-emerald-500/30 flex items-center gap-1.5 shrink-0">
-                        <span>PROSES BAYAR</span>
-                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
-                    </button>
+                    <div class="flex items-center gap-2 shrink-0">
+                        <button type="button" wire:click="$set('selectedBillIds', [])" class="px-2.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-bold transition-all flex items-center gap-1" title="Batal Pilihan">
+                            🗑️ <span class="text-[10px]">Batal</span>
+                        </button>
+                        <button type="button" wire:click="initiatePayment"
+                            class="px-4 py-2.5 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white text-xs font-black rounded-xl shadow-lg shadow-emerald-500/30 flex items-center gap-1.5 shrink-0">
+                            <span>PROSES BAYAR</span>
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+                        </button>
+                    </div>
                 </div>
             @endif
 
