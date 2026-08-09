@@ -565,23 +565,23 @@
 
     <!-- Modal Konfirmasi Setoran Kolektif -->
     @if($showConfirmModal)
-        <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
-            <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-xl w-full max-w-2xl overflow-hidden animate-zoom-in">
+        <div class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-xs">
+            <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden animate-zoom-in">
                 <!-- Header -->
-                <div class="p-6 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-slate-50/50 dark:bg-slate-950/20">
+                <div class="p-4 sm:p-5 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-slate-50/50 dark:bg-slate-950/20 shrink-0">
                     <div>
-                        <h3 class="text-sm font-extrabold text-slate-950 dark:text-white uppercase tracking-wider block font-serif-display">Preview & Konfirmasi Setoran</h3>
-                        <p class="text-[11px] text-slate-400">Cocokkan rincian setoran berikut dengan kertas fisik Anda.</p>
+                        <h3 class="text-xs sm:text-sm font-extrabold text-slate-950 dark:text-white uppercase tracking-wider block font-serif-display">Preview & Konfirmasi Setoran</h3>
+                        <p class="text-[10px] sm:text-[11px] text-slate-400">Cocokkan rincian setoran berikut dengan kertas fisik Anda.</p>
                     </div>
-                    <span class="text-[10px] font-extrabold uppercase bg-slate-100 dark:bg-slate-800 text-slate-500 px-2.5 py-1 rounded-lg">
+                    <span class="text-[10px] font-extrabold uppercase bg-slate-100 dark:bg-slate-800 text-slate-500 px-2.5 py-1 rounded-lg shrink-0">
                         {{ $countChecked }} Item
                     </span>
                 </div>
 
-                <!-- Content -->
-                <div class="p-6 space-y-4 text-xs">
+                <!-- Content Body (Scrollable) -->
+                <div class="p-4 sm:p-6 space-y-3.5 text-xs overflow-y-auto flex-1">
                     <!-- Details of Iuran -->
-                    <div class="grid grid-cols-2 gap-4 text-[11px] bg-slate-50 dark:bg-slate-950/40 p-4.5 rounded-2xl border border-slate-200/50 dark:border-slate-800/80">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-4 text-[10px] sm:text-[11px] bg-slate-50 dark:bg-slate-950/40 p-3.5 sm:p-4.5 rounded-2xl border border-slate-200/50 dark:border-slate-800/80">
                         <div class="space-y-1">
                             <div><span class="text-slate-450">Target:</span> <strong class="font-extrabold text-slate-700 dark:text-slate-250">{{ $activeLabel }}</strong></div>
                             <div><span class="text-slate-450">Iuran:</span> <strong class="font-extrabold text-slate-700 dark:text-slate-250 uppercase">{{ str_replace('_', ' ', $activeBillType) }}</strong></div>
@@ -596,11 +596,36 @@
                         </div>
                     </div>
 
-                    <!-- Checked Students List Table -->
-                    <div class="border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden max-h-56 overflow-y-auto">
+                    <!-- Checked Students Mobile Cards View (Visible on phones) -->
+                    <div class="block sm:hidden space-y-2 max-h-60 overflow-y-auto p-0.5">
+                        @foreach($this->previewData as $idx => $item)
+                            <div class="p-3 bg-slate-50/80 dark:bg-slate-950/60 border border-slate-200/60 dark:border-slate-800 rounded-xl space-y-1 text-[11px]">
+                                <div class="flex items-center justify-between gap-2 border-b border-slate-200/40 dark:border-slate-800/40 pb-1">
+                                    <div class="font-bold text-slate-900 dark:text-white truncate">
+                                        <span class="text-slate-400 font-normal">#{{ $idx + 1 }}</span> {{ $item['person_name'] }}
+                                    </div>
+                                    @if($activeType === 'komplek' && $item['room_name'])
+                                        <span class="px-2 py-0.5 bg-slate-200/60 dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-[9px] rounded-md font-mono shrink-0">
+                                            🚪 {{ $item['room_name'] }}
+                                        </span>
+                                    @endif
+                                </div>
+                                <div class="text-slate-500 text-[10px]">
+                                    <span class="text-slate-400">Rincian:</span> {{ $item['details'] }}
+                                </div>
+                                <div class="flex justify-between items-center pt-1 text-[11px]">
+                                    <span class="text-slate-400 text-[10px]">Subtotal:</span>
+                                    <span class="font-extrabold text-emerald-600 dark:text-emerald-400">Rp {{ number_format($item['total'], 0, ',', '.') }}</span>
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+
+                    <!-- Checked Students Desktop Table View (Visible on sm screens and up) -->
+                    <div class="hidden sm:block border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden max-h-56 overflow-y-auto">
                         <table class="w-full text-left text-xs border-collapse">
                             <thead>
-                                <tr class="bg-slate-50 dark:bg-slate-950 border-b border-slate-250/60 dark:border-slate-800/80 text-[10px] text-slate-400 font-extrabold uppercase tracking-wider">
+                                <tr class="bg-slate-50 dark:bg-slate-950 border-b border-slate-250/60 dark:border-slate-800/80 text-[10px] text-slate-400 font-extrabold uppercase tracking-wider sticky top-0 bg-slate-50 dark:bg-slate-950">
                                     <th class="py-2.5 px-3">No</th>
                                     <th class="py-2.5 px-3">Nama Santri</th>
                                     @if($activeType === 'komplek')
@@ -626,13 +651,13 @@
                         </table>
                     </div>
 
-                    <div class="bg-emerald-500/5 border border-emerald-500/10 p-4.5 rounded-2xl flex items-center justify-between">
+                    <div class="bg-emerald-500/5 border border-emerald-500/10 p-3.5 sm:p-4.5 rounded-2xl flex items-center justify-between">
                         <span class="text-[10px] text-emerald-600 dark:text-emerald-400 font-extrabold uppercase tracking-wider">Total Setoran Keseluruhan</span>
-                        <strong class="text-emerald-600 dark:text-emerald-400 text-lg font-black font-mono">Rp {{ number_format($totalChecked, 0, ',', '.') }}</strong>
+                        <strong class="text-emerald-600 dark:text-emerald-400 text-base sm:text-lg font-black font-mono">Rp {{ number_format($totalChecked, 0, ',', '.') }}</strong>
                     </div>
 
                     <!-- Persetujuan Aktif Checkbox -->
-                    <label class="flex items-start gap-3 p-3.5 bg-rose-500/5 border border-rose-500/10 rounded-2xl cursor-pointer">
+                    <label class="flex items-start gap-2.5 p-3 sm:p-3.5 bg-rose-500/5 border border-rose-500/10 rounded-2xl cursor-pointer">
                         <input
                             type="checkbox"
                             wire:model.live="confirmCheck"
@@ -644,14 +669,14 @@
                     </label>
                 </div>
 
-                <!-- Footer -->
-                <div class="px-6 py-4 bg-slate-50 dark:bg-slate-950/60 border-t border-slate-100 dark:border-slate-800 flex items-center justify-end gap-3">
+                <!-- Footer (Shrink 0) -->
+                <div class="px-4 sm:px-6 py-3.5 sm:py-4 bg-slate-50 dark:bg-slate-950/60 border-t border-slate-100 dark:border-slate-800 flex items-center justify-end gap-2.5 sm:gap-3 shrink-0">
                     <button type="button" wire:click="cancelConfirm"
-                        class="px-5 py-2.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-xl text-xs font-bold transition-all">
-                        ⬅️ Kembali Edit
+                        class="px-4 sm:px-5 py-2 sm:py-2.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-xl text-xs font-bold transition-all">
+                        ⬅️ Edit
                     </button>
                     <button type="button" wire:click="prosesSetoran" @if(!$confirmCheck) disabled @endif
-                        class="px-6 py-2.5 text-white rounded-xl text-xs font-bold transition-all shadow-md
+                        class="px-5 sm:px-6 py-2 sm:py-2.5 text-white rounded-xl text-xs font-bold transition-all shadow-md
                             @if($confirmCheck)
                                 @if($activeBillType === 'syahriah_pondok') bg-emerald-600 hover:bg-emerald-700
                                 @elseif($activeType === 'komplek') bg-sky-600 hover:bg-sky-700
