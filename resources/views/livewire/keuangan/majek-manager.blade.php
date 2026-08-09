@@ -428,8 +428,23 @@
 
             <!-- Pagination Footer for Participants Table -->
             <div class="px-4 sm:px-6 py-4 border-t border-slate-100 dark:border-slate-800/80 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                <div class="text-[11px] font-semibold text-slate-400 text-center sm:text-left">
-                    Menampilkan <span class="font-bold text-slate-700 dark:text-slate-300">{{ $this->registrations->firstItem() ?? 0 }}</span> s.d. <span class="font-bold text-slate-700 dark:text-slate-300">{{ $this->registrations->lastItem() ?? 0 }}</span> dari <span class="font-bold text-emerald-600 dark:text-emerald-400">{{ $this->registrations->total() }}</span> peserta
+                <div class="flex flex-col sm:flex-row items-center gap-3 text-[11px] font-semibold text-slate-400 text-center sm:text-left">
+                    <div>
+                        Menampilkan <span class="font-bold text-slate-700 dark:text-slate-300">{{ $this->registrations->firstItem() ?? 0 }}</span> s.d. <span class="font-bold text-slate-700 dark:text-slate-300">{{ $this->registrations->lastItem() ?? 0 }}</span> dari <span class="font-bold text-emerald-600 dark:text-emerald-400">{{ $this->registrations->total() }}</span> peserta
+                    </div>
+                    <div class="flex items-center gap-1.5 shrink-0">
+                        <span class="text-[10px] text-slate-400 uppercase font-bold">Per Hal:</span>
+                        <select wire:model.live="perPage"
+                            class="px-2 py-1 text-xs font-bold border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 rounded-lg text-slate-700 dark:text-slate-300 outline-none focus:ring-2 focus:ring-amber-500/20">
+                            <option value="10">10</option>
+                            <option value="15">15</option>
+                            <option value="25">25</option>
+                            <option value="50">50</option>
+                            <option value="100">100</option>
+                            <option value="250">250</option>
+                            <option value="500">500</option>
+                        </select>
+                    </div>
                 </div>
                 <div class="flex justify-center">
                     {{ $this->registrations->links(data: ['scrollTo' => false]) }}
