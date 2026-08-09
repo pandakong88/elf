@@ -28,8 +28,6 @@ class MajekManager extends Component
     public int    $periodActiveDays  = 30;
     public float  $periodTarifPerHari = 3333.33;
     public float  $periodTarifPerHariPutri = 3000.00;
-    public float  $targetMonthlyPutra = 100000.00;
-    public float  $targetMonthlyPutri = 90000.00;
     public string $periodNotes       = '';
 
     // ─── Copy Period Modal ────────────────────────────────────────────────────
@@ -634,49 +632,7 @@ class MajekManager extends Component
         $this->periodTarifPerHari      = $period ? (float) $period->tarif_per_hari    : 3333.33;
         $this->periodTarifPerHariPutri = $period ? (float) ($period->tarif_per_hari_putri ?? 3000.00) : 3000.00;
         $this->periodNotes             = $period ? ($period->notes ?? '')              : '';
-
-        $days = max(1, $this->periodActiveDays);
-        $this->targetMonthlyPutra      = round($this->periodTarifPerHari * $days);
-        $this->targetMonthlyPutri      = round($this->periodTarifPerHariPutri * $days);
-
         $this->showPeriodModal         = true;
-    }
-
-    public function updatedTargetMonthlyPutra(): void
-    {
-        $days = max(1, (int)$this->periodActiveDays);
-        $val = (float)($this->targetMonthlyPutra ?? 0);
-        $this->periodTarifPerHari = round($val / $days, 2);
-    }
-
-    public function updatedTargetMonthlyPutri(): void
-    {
-        $days = max(1, (int)$this->periodActiveDays);
-        $val = (float)($this->targetMonthlyPutri ?? 0);
-        $this->periodTarifPerHariPutri = round($val / $days, 2);
-    }
-
-    public function updatedPeriodActiveDays(): void
-    {
-        $days = max(1, (int)($this->periodActiveDays ?? 30));
-        if ($this->targetMonthlyPutra > 0) {
-            $this->periodTarifPerHari = round((float)$this->targetMonthlyPutra / $days, 2);
-        }
-        if ($this->targetMonthlyPutri > 0) {
-            $this->periodTarifPerHariPutri = round((float)$this->targetMonthlyPutri / $days, 2);
-        }
-    }
-
-    public function updatedPeriodTarifPerHari(): void
-    {
-        $days = max(1, (int)($this->periodActiveDays ?? 30));
-        $this->targetMonthlyPutra = round((float)$this->periodTarifPerHari * $days);
-    }
-
-    public function updatedPeriodTarifPerHariPutri(): void
-    {
-        $days = max(1, (int)($this->periodActiveDays ?? 30));
-        $this->targetMonthlyPutri = round((float)$this->periodTarifPerHariPutri * $days);
     }
 
     public function closePeriodModal(): void
