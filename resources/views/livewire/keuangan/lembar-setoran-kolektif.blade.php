@@ -221,7 +221,7 @@
 
             {{-- ===== MOBILE SANTRI CARDS VIEW (block on mobile when cards mode active, hidden on desktop) ===== --}}
             @if($mobileViewMode === 'cards')
-                <div class="block lg:hidden flex-1 overflow-y-auto p-3.5 space-y-3.5 bg-slate-50/40 dark:bg-slate-950/20">
+                <div class="block lg:hidden flex-1 overflow-y-auto p-3.5 space-y-3.5 bg-slate-50/40 dark:bg-slate-950/20 @if($countChecked > 0) pb-24 @endif">
                     @php $currentRoomCard = null; @endphp
                     @forelse($gridData as $i => $row)
                         @if($activeType === 'komplek' && isset($row['person']->room_name) && $row['person']->room_name !== $currentRoomCard)
@@ -326,7 +326,7 @@
             @endif
 
             <!-- Scrollable Table Container (visible on desktop or when table mode selected) -->
-            <div @class(['flex-1 overflow-x-auto overflow-y-auto min-h-0 relative', 'hidden lg:block' => $mobileViewMode !== 'table'])>
+            <div @class(['flex-1 overflow-x-auto overflow-y-auto min-h-0 relative', 'hidden lg:block' => $mobileViewMode !== 'table', 'pb-24 lg:pb-0' => $countChecked > 0])>
                 <table class="w-full text-left border-collapse text-xs table-fixed">
                     <colgroup>
                         <col class="w-12">
@@ -507,7 +507,7 @@
             </div>
 
             <!-- Footer: Total Summary & Action Buttons -->
-            <div class="border-t border-slate-200 dark:border-slate-800 p-5 flex flex-col md:flex-row md:items-center md:justify-between gap-4 shrink-0 bg-slate-50/50 dark:bg-slate-950/20">
+            <div class="border-t border-slate-200 dark:border-slate-800 p-4 sm:p-5 flex-col lg:flex-row lg:items-center lg:justify-between gap-4 shrink-0 bg-slate-50/50 dark:bg-slate-950/20 @if($countChecked > 0) hidden lg:flex @else flex @endif">
                 <div class="flex items-center gap-6 text-xs">
                     <div>
                         <span class="text-slate-400 text-[9px] font-extrabold uppercase tracking-wider block">Tagihan Diisi</span>
@@ -549,16 +549,21 @@
 
         {{-- ===== STICKY FLOATING MOBILE ACTION BAR ===== --}}
         @if($countChecked > 0)
-            <div class="fixed bottom-4 inset-x-4 z-40 lg:hidden bg-slate-900/95 dark:bg-slate-950/95 backdrop-blur-md text-white p-3.5 rounded-2xl shadow-2xl border border-slate-700/80 flex items-center justify-between gap-3 animate-fade-in">
+            <div class="fixed bottom-4 inset-x-4 z-40 lg:hidden bg-slate-900/95 dark:bg-slate-950/95 backdrop-blur-md text-white p-3 rounded-2xl shadow-2xl border border-slate-700/80 flex items-center justify-between gap-3 animate-fade-in">
                 <div class="min-w-0">
                     <span class="text-[9px] font-extrabold uppercase text-emerald-400 tracking-wider block">🛒 {{ $countChecked }} Setoran Diisi</span>
                     <span class="text-sm font-black text-white block truncate">Rp {{ number_format($totalChecked, 0, ',', '.') }}</span>
                 </div>
-                <button type="button" wire:click="confirmProsesSetoran"
-                    class="px-4 py-2.5 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white text-xs font-black rounded-xl shadow-lg shadow-emerald-500/30 flex items-center gap-1.5 shrink-0">
-                    <span>SIMPAN SETORAN</span>
-                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
-                </button>
+                <div class="flex items-center gap-2 shrink-0">
+                    <button type="button" wire:click="resetInputAmounts" class="px-2.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-bold transition-all flex items-center gap-1" title="Hapus Pilihan">
+                        🗑️ <span class="text-[10px]">Reset</span>
+                    </button>
+                    <button type="button" wire:click="confirmProsesSetoran"
+                        class="px-4 py-2.5 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white text-xs font-black rounded-xl shadow-lg shadow-emerald-500/30 flex items-center gap-1.5 shrink-0">
+                        <span>SIMPAN SETORAN</span>
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+                    </button>
+                </div>
             </div>
         @endif
     </div>
