@@ -868,12 +868,13 @@ class PusatKendaliAsramaKelas extends Component
 
     public function requestToggleDormitoryStatusConfirm(string $id): void
     {
-        $dormitory = Dormitory::findOrFail($id);
+        $dormitory  = Dormitory::findOrFail($id);
         $statusNext = $dormitory->is_active ? 'Nonaktifkan' : 'Aktifkan';
+        $actionVerb = $dormitory->is_active ? 'nonaktifkan' : 'ngaktifkan';
         $this->togglingDormitoryId = $id;
         $this->confirmAction       = 'executeToggleDormitoryStatus';
         $this->confirmTitle        = "{$statusNext} Komplek Asrama";
-        $this->confirmMessage      = "Apakah Anda yakin ingin me-{$dormitory->is_active ? 'nonaktifkan' : 'ngaktifkan'} komplek \"{$dormitory->name}\"?";
+        $this->confirmMessage      = "Apakah Anda yakin ingin me-{$actionVerb} komplek \"{$dormitory->name}\"?";
         $this->confirmButtonText   = "Ya, {$statusNext}";
         $this->confirmButtonColor  = $dormitory->is_active ? 'amber' : 'emerald';
         $this->showConfirmModal    = true;
@@ -995,12 +996,13 @@ class PusatKendaliAsramaKelas extends Component
 
     public function requestToggleRoomStatusConfirm(string $id): void
     {
-        $room = Room::findOrFail($id);
+        $room       = Room::findOrFail($id);
         $statusNext = $room->is_active ? 'Nonaktifkan' : 'Aktifkan';
+        $actionVerb = $room->is_active ? 'nonaktifkan' : 'ngaktifkan';
         $this->togglingRoomId     = $id;
         $this->confirmAction      = 'executeToggleRoomStatus';
         $this->confirmTitle       = "{$statusNext} Kamar";
-        $this->confirmMessage     = "Apakah Anda yakin ingin me-{$room->is_active ? 'nonaktifkan' : 'ngaktifkan'} kamar \"{$room->name}\"?";
+        $this->confirmMessage     = "Apakah Anda yakin ingin me-{$actionVerb} kamar \"{$room->name}\"?";
         $this->confirmButtonText  = "Ya, {$statusNext}";
         $this->confirmButtonColor = $room->is_active ? 'amber' : 'emerald';
         $this->showConfirmModal   = true;
