@@ -542,9 +542,12 @@ class PusatKendaliAsramaKelas extends Component
     public string $confirmButtonText    = 'Ya, Lanjutkan';
     public string $confirmButtonColor   = 'emerald';
 
-    // Delete Target IDs
+    // Delete & Toggle Target IDs
     public ?string $deletingDormitoryId = null;
     public ?string $deletingRoomId      = null;
+    public ?string $deletingKelasId     = null;
+    public ?string $togglingDormitoryId = null;
+    public ?string $togglingRoomId      = null;
 
     public function requestStatusChangeConfirm(): void
     {
@@ -620,6 +623,12 @@ class PusatKendaliAsramaKelas extends Component
             $this->executeDeleteDormitory();
         } elseif ($this->confirmAction === 'executeDeleteRoom') {
             $this->executeDeleteRoom();
+        } elseif ($this->confirmAction === 'executeToggleDormitoryStatus') {
+            $this->executeToggleDormitoryStatus();
+        } elseif ($this->confirmAction === 'executeToggleRoomStatus') {
+            $this->executeToggleRoomStatus();
+        } elseif ($this->confirmAction === 'executeDeleteKelas') {
+            $this->executeDeleteKelas();
         }
     }
 
@@ -857,15 +866,31 @@ class PusatKendaliAsramaKelas extends Component
         $this->showDormitoryModal = false;
     }
 
-    public function toggleDormitoryStatus(string $id): void
+    public function requestToggleDormitoryStatusConfirm(string $id): void
+    {
+        $dormitory = Dormitory::findOrFail($id);
+        $statusNext = $dormitory->is_active ? 'Nonaktifkan' : 'Aktifkan';
+        $this->togglingDormitoryId = $id;
+        $this->confirmAction       = 'executeToggleDormitoryStatus';
+        $this->confirmTitle        = "{$statusNext} Komplek Asrama";
+        $this->confirmMessage      = "Apakah Anda yakin ingin me-{$dormitory->is_active ? 'nonaktifkan' : 'ngaktifkan'} komplek \"{$dormitory->name}\"?";
+        $this->confirmButtonText   = "Ya, {$statusNext}";
+        $this->confirmButtonColor  = $dormitory->is_active ? 'amber' : 'emerald';
+        $this->showConfirmModal    = true;
+    }
+
+    public function executeToggleDormitoryStatus(): void
     {
         if (!auth()->user()->can('manage-asrama')) {
             $this->toastError('Akses ditolak: Anda tidak memiliki izin untuk mengelola data komplek/asrama.');
             return;
         }
 
-        app(DormitoryService::class)->toggleDormitoryStatus($id);
-        $this->toastSuccess('Status komplek berhasil diperbarui.');
+        if ($this->togglingDormitoryId) {
+            app(DormitoryService::class)->toggleDormitoryStatus($this->togglingDormitoryId);
+            $this->togglingDormitoryId = null;
+            $this->toastSuccess('Status komplek berhasil diperbarui.');
+        }
     }
 
     public function requestDeleteDormitoryConfirm(string $id): void
@@ -968,15 +993,31 @@ class PusatKendaliAsramaKelas extends Component
         }
     }
 
-    public function toggleRoomStatus(string $id): void
+    public function requestToggleRoomStatusConfirm(string $id): void
+    {
+        $room = Room::findOrFail($id);
+        $statusNext = $room->is_active ? 'Nonaktifkan' : 'Aktifkan';
+        $this->togglingRoomId     = $id;
+        $this->confirmAction      = 'executeToggleRoomStatus';
+        $this->confirmTitle       = "{$statusNext} Kamar";
+        $this->confirmMessage     = "Apakah Anda yakin ingin me-{$room->is_active ? 'nonaktifkan' : 'ngaktifkan'} kamar \"{$room->name}\"?";
+        $this->confirmButtonText  = "Ya, {$statusNext}";
+        $this->confirmButtonColor = $room->is_active ? 'amber' : 'emerald';
+        $this->showConfirmModal   = true;
+    }
+
+    public function executeToggleRoomStatus(): void
     {
         if (!auth()->user()->can('manage-kamar')) {
             $this->toastError('Akses ditolak: Anda tidak memiliki izin untuk mengelola data kamar.');
             return;
         }
 
-        app(DormitoryService::class)->toggleRoomStatus($id);
-        $this->toastSuccess('Status kamar berhasil diperbarui.');
+        if ($this->togglingRoomId) {
+            app(DormitoryService::class)->toggleRoomStatus($this->togglingRoomId);
+            $this->togglingRoomId = null;
+            $this->toastSuccess('Status kamar berhasil diperbarui.');
+        }
     }
 
     public function requestDeleteRoomConfirm(string $id): void
@@ -1076,20 +1117,41 @@ class PusatKendaliAsramaKelas extends Component
         $this->showKelasModal = false;
     }
 
-    public function deleteKelas(string $id): void
+    public function requestDeleteKelasConfirm(string $id): void
+    {
+        $kelas = MadrasahKelas::findOrFail($id);
+        if ($kelas->enrollments()->exists()) {
+            $this->toastError("Kelas \"{$kelas->name}\" tidak bisa dihapus karena masih ada santri terdaftar.");
+            return;
+        }
+
+        $this->deletingKelasId    = $id;
+        $this->confirmAction      = 'executeDeleteKelas';
+        $this->confirmTitle       = 'Hapus Kelas Madrasah';
+        $this->confirmMessage     = "Anda akan menghapus kelas \"{$kelas->name}\" secara permanen. Tindakan ini tidak dapat dibatalkan.";
+        $this->confirmButtonText  = 'Ya, Hapus Permanen';
+        $this->confirmButtonColor = 'rose';
+        $this->showConfirmModal   = true;
+    }
+
+    public function executeDeleteKelas(): void
     {
         if (!auth()->user()->can('manage-kelas')) {
             $this->toastError('Akses ditolak: Anda tidak memiliki izin untuk menghapus kelas.');
             return;
         }
 
-        $kelas = MadrasahKelas::findOrFail($id);
-        if ($kelas->enrollments()->exists()) {
-            $this->toastError('Kelas tidak bisa dihapus karena masih ada santri terdaftar.');
-            return;
+        if ($this->deletingKelasId) {
+            $kelas = MadrasahKelas::findOrFail($this->deletingKelasId);
+            if ($kelas->enrollments()->exists()) {
+                $this->toastError("Kelas \"{$kelas->name}\" tidak bisa dihapus karena masih ada santri terdaftar.");
+                return;
+            }
+            $name = $kelas->name;
+            $kelas->delete();
+            $this->deletingKelasId = null;
+            $this->toastSuccess("Kelas \"{$name}\" berhasil dihapus.");
         }
-        $kelas->delete();
-        $this->toastSuccess('Kelas berhasil dihapus.');
     }
 
     // =========================================================================
