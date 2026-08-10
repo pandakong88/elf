@@ -83,19 +83,16 @@ class LembarSetoranKolektif extends Component
 
     public function updatedYear(): void
     {
-        $this->resetInputAmounts();
     }
 
     public function incrementYear(): void
     {
         $this->year++;
-        $this->resetInputAmounts();
     }
 
     public function decrementYear(): void
     {
         $this->year--;
-        $this->resetInputAmounts();
     }
 
     public function selectSheet(string $type, string $targetId, string $billType, string $interval, string $label, ?string $configId = null): void
@@ -498,65 +495,95 @@ class LembarSetoranKolektif extends Component
     public function getPreviewDataProperty(): Collection
     {
         $preview = collect();
-        $gridData = $this->getGridData();
+        $studentData = [];
 
-        foreach ($gridData as $row) {
-            $santri = $row['person'];
-            $studentId = $santri->id;
+        // 1. Process Old Arrears Payments
+        foreach ($this->oldArrearsPayments as $studentId => $amount) {
+            $oldArrears = (float)$amount;
+            if ($oldArrears <= 0) continue;
 
-            $items = [];
-            $studentTotal = 0.0;
+            if (!isset($studentData[$studentId])) {
+                $person = Person::find($studentId);
+                if (!$person) continue;
 
-            // 1. Old Arrears
-            $oldArrears = isset($this->oldArrearsPayments[$studentId]) ? (float)$this->oldArrearsPayments[$studentId] : 0.0;
-            if ($oldArrears > 0) {
-                $items[] = "Tunggakan Lama (Rp " . number_format($oldArrears, 0, ',', '.') . ")";
-                $studentTotal += $oldArrears;
+                $roomName = DB::table('room_assignments')
+                    ->join('rooms', 'rooms.id', '=', 'room_assignments.room_id')
+                    ->where('room_assignments.person_id', $studentId)
+                    ->where('room_assignments.is_active', true)
+                    ->value('rooms.name');
+
+                $studentData[$studentId] = [
+                    'person_name' => $person->name,
+                    'room_name'   => $roomName,
+                    'items'       => [],
+                    'total'       => 0.0,
+                ];
             }
 
-            // 2. Grid Bills
-            $gridBillItems = [];
-            foreach ($row['bills'] as $periodKey => $data) {
-                if (!$data['bill']) continue;
-                $bId = $data['bill']->id;
-                $payAmt = isset($this->paymentAmounts[$bId]) ? (float)$this->paymentAmounts[$bId] : 0.0;
+            $studentData[$studentId]['items'][] = "Tunggakan Lama (Rp " . number_format($oldArrears, 0, ',', '.') . ")";
+            $studentData[$studentId]['total'] += $oldArrears;
+        }
+
+        // 2. Process Grid Bills across all selected bill IDs
+        $activeBillIds = array_keys(array_filter($this->paymentAmounts, fn($v) => (float)$v > 0));
+        if (!empty($activeBillIds)) {
+            $bills = Bill::with('person')->whereIn('id', $activeBillIds)->get();
+            foreach ($bills as $bill) {
+                $payAmt = (float)($this->paymentAmounts[$bill->id] ?? 0.0);
                 if ($payAmt <= 0) continue;
+
+                $studentId = $bill->person_id;
+                if (!isset($studentData[$studentId])) {
+                    $santri = $bill->person;
+                    if (!$santri) continue;
+
+                    $roomName = DB::table('room_assignments')
+                        ->join('rooms', 'rooms.id', '=', 'room_assignments.room_id')
+                        ->where('room_assignments.person_id', $studentId)
+                        ->where('room_assignments.is_active', true)
+                        ->value('rooms.name');
+
+                    $studentData[$studentId] = [
+                        'person_name' => $santri->name,
+                        'room_name'   => $roomName,
+                        'items'       => [],
+                        'total'       => 0.0,
+                    ];
+                }
 
                 $periodLabel = '';
                 if (in_array($this->activeInterval, ['semester', '2x_yearly'])) {
-                    $semNum = ($data['bill']->period_month >= 7) ? 2 : 1;
+                    $semNum = ($bill->period_month >= 7) ? 2 : 1;
                     $periodLabel = "Sem " . $semNum;
                 } elseif (in_array($this->activeInterval, ['caturwulan', '3x_yearly'])) {
-                    $cwNum = (int)ceil($data['bill']->period_month / 4);
+                    $cwNum = (int)ceil($bill->period_month / 4);
                     $periodLabel = "Caturwulan " . $cwNum;
                 } elseif (in_array($this->activeInterval, ['triwulan', '4x_yearly'])) {
-                    $twNum = (int)ceil($data['bill']->period_month / 3);
+                    $twNum = (int)ceil($bill->period_month / 3);
                     $periodLabel = "Triwulan " . $twNum;
                 } elseif (in_array($this->activeInterval, ['bimulanan', '6x_yearly'])) {
-                    $bmNum = (int)ceil($data['bill']->period_month / 2);
+                    $bmNum = (int)ceil($bill->period_month / 2);
                     $periodLabel = "Bimulanan " . $bmNum;
                 } elseif (in_array($this->activeInterval, ['once', 'insidental', 'event', 'sekali'])) {
                     $periodLabel = "Event";
                 } else {
-                    $date = \Carbon\Carbon::create($data['bill']->period_year, $data['bill']->period_month, 1);
+                    $date = \Carbon\Carbon::create($bill->period_year, $bill->period_month, 1);
                     $periodLabel = $date->locale('id')->translatedFormat('M');
                 }
-                
-                $periodLabel .= " " . $data['bill']->period_year;
-                $gridBillItems[] = $periodLabel . " (Rp " . number_format($payAmt, 0, ',', '.') . ")";
-                $studentTotal += $payAmt;
-            }
 
-            if (!empty($gridBillItems)) {
-                $items[] = implode(', ', $gridBillItems);
+                $periodLabel .= " " . $bill->period_year;
+                $studentData[$studentId]['items'][] = $periodLabel . " (Rp " . number_format($payAmt, 0, ',', '.') . ")";
+                $studentData[$studentId]['total'] += $payAmt;
             }
+        }
 
-            if ($studentTotal > 0) {
+        foreach ($studentData as $data) {
+            if ($data['total'] > 0) {
                 $preview->push([
-                    'person_name' => $santri->name,
-                    'room_name' => $santri->room_name ?? null,
-                    'details' => implode('; ', $items),
-                    'total' => $studentTotal,
+                    'person_name' => $data['person_name'],
+                    'room_name'   => $data['room_name'] ?? null,
+                    'details'     => implode('; ', $data['items']),
+                    'total'       => $data['total'],
                 ]);
             }
         }
@@ -820,19 +847,8 @@ class LembarSetoranKolektif extends Component
             // Query prepaid until label (furthest future paid month)
             $furthestPaidQuery = Bill::where('person_id', $santri->id)
                 ->when($configId, fn($q) => $q->where('billing_config_id', $configId), fn($q) => $q->where('bill_type', $this->activeBillType))
-                ->where('status', 'paid');
-
-            if (in_array($interval, ['once', 'insidental', 'event', 'sekali'])) {
-                $furthestPaidQuery->where('period_year', '>', (int)$this->year);
-            } else {
-                $furthestPaidQuery->where(function($q) {
-                    $q->where('period_year', '>', (int)$this->year)
-                      ->orWhere(function($sub) {
-                          $sub->where('period_year', (int)$this->year)
-                              ->where('period_month', '>', (int)now()->month);
-                      });
-                });
-            }
+                ->where('status', 'paid')
+                ->where('period_year', '>', (int)$this->year);
 
             $furthestPaidBill = $furthestPaidQuery->orderBy('period_year', 'desc')
                 ->orderBy('period_month', 'desc')
