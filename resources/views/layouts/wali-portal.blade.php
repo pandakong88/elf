@@ -204,6 +204,19 @@
             </a>
 
             <div class="flex items-center gap-2">
+                @auth
+                    <!-- Tombol Kembali ke Dasbor ERP (Hanya Tampil Jika User Terautentikasi / Pengurus) -->
+                    <a href="{{ route('dashboard') }}" 
+                       title="Kembali ke Dasbor ERP Pengurus"
+                       class="px-2.5 py-1.5 rounded-xl bg-amber-400/20 hover:bg-amber-400/30 text-amber-200 dark:text-amber-300 border border-amber-400/40 transition-all flex items-center gap-1.5 text-xs font-bold shadow-sm">
+                        <svg class="w-4 h-4 text-amber-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M11 15l-3-3m0 0l3-3m-3 3h8M3 12a9 9 0 1118 0 9 9 0 01-18 0z" />
+                        </svg>
+                        <span class="hidden sm:inline">Dasbor ERP</span>
+                        <span class="sm:hidden">ERP</span>
+                    </a>
+                @endauth
+
                 <!-- Tombol Menu Sidebar -->
                 <button type="button" 
                         @click="sidebarOpen = true"
@@ -398,7 +411,15 @@
                 </div>
 
                 <!-- Drawer Footer -->
-                <div class="p-4 bg-slate-50 dark:bg-slate-950 border-t border-slate-200 dark:border-slate-800 text-center">
+                <div class="p-4 bg-slate-50 dark:bg-slate-950 border-t border-slate-200 dark:border-slate-800 text-center space-y-2">
+                    @auth
+                        <div class="p-2.5 bg-amber-500/10 border border-amber-500/20 rounded-2xl flex items-center justify-between">
+                            <span class="text-[11px] font-bold text-amber-600 dark:text-amber-400">🛡️ Sesi Pengurus ERP</span>
+                            <a href="{{ route('dashboard') }}" class="px-3 py-1 bg-amber-600 hover:bg-amber-500 text-white font-bold text-[10px] rounded-xl transition-all">
+                                Ke Dasbor &rarr;
+                            </a>
+                        </div>
+                    @endauth
                     <p class="text-[10px] text-slate-400">Pondok Pesantren Al-Fithroh © {{ date('Y') }}</p>
                 </div>
             </div>
