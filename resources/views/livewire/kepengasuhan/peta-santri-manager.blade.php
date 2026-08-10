@@ -844,9 +844,11 @@
                 $motherJob    = $addInfo['mother_job'] ?? '-';
                 $formalGrade  = $prof->school_year ?? ($addInfo['school_grade'] ?? '-');
             @endphp
-            <div class="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4 bg-slate-900/60 backdrop-blur-md">
-                {{-- Bottom sheet di mobile, centered dialog di desktop --}}
-                <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-t-3xl sm:rounded-3xl w-full sm:max-w-4xl p-4 sm:p-6 shadow-2xl space-y-4 max-h-[92vh] sm:max-h-[90vh] overflow-y-auto">
+            <div class="fixed inset-0 z-50 overflow-hidden flex flex-col justify-end sm:justify-center sm:items-center sm:p-4 bg-slate-900/60 backdrop-blur-md">
+                {{-- Bottom sheet di mobile (muncul dari bawah, bisa scroll), centered dialog di desktop --}}
+                <div class="bg-white dark:bg-slate-900 border-t sm:border border-slate-200 dark:border-slate-800 rounded-t-3xl sm:rounded-3xl w-full sm:max-w-4xl shadow-2xl flex flex-col" style="max-height: 90vh;">
+                    {{-- Scrollable content area --}}
+                    <div class="overflow-y-auto flex-1 p-4 sm:p-6 space-y-4">
                     {{-- Header Profile Banner --}}
                     <div class="relative bg-slate-50 dark:bg-slate-800/80 p-4 sm:p-5 rounded-2xl border border-slate-200/80 dark:border-slate-700/80">
                         <div class="flex items-start gap-3">
@@ -1065,8 +1067,9 @@
                             Tutup
                         </button>
                     </div>
-                </div>
-            </div>
+                    </div> {{-- end scrollable content area --}}
+                </div> {{-- end modal card --}}
+            </div> {{-- end backdrop --}}
         @endif
 
     {{-- ============================================================ --}}
