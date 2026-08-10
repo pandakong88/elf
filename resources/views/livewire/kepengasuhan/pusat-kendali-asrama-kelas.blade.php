@@ -918,76 +918,180 @@
                     <button type="button" wire:click="registerNewSantri" class="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white font-extrabold rounded-xl text-xs shadow-lg transition-all">Daftarkan Santri Baru</button>
                 </div>
             </div>
+     {{-- FLOATING SELECTION BAR — hanya tampil jika user punya santri terpilih dan tidak ada modal aktif --}}
+    @if(count($selectedSantriIds) > 0 && !$showBulkTransferRoomModal && !$showBulkTransferKelasModal && !$showStatusModal && !$showConfirmModal)
+        @canany(['manage-kamar', 'manage-kelas'])
+        <div class="fixed bottom-4 sm:bottom-6 left-1/2 -translate-x-1/2 z-40 w-[calc(100%-2rem)] sm:w-auto bg-slate-900 text-white px-4 sm:px-6 py-3 sm:py-3.5 rounded-2xl shadow-2xl border border-slate-700">
+            <div class="flex flex-col sm:flex-row items-center gap-3">
+                <div class="flex items-center gap-2">
+                    <span class="w-6 h-6 rounded-full bg-emerald-500 text-white flex items-center justify-center font-extrabold text-xs">
+                        {{ count($selectedSantriIds) }}
+                    </span>
+                    <span class="text-xs font-bold">Santri Terpilih</span>
+                </div>
+
+                <div class="flex items-center gap-2 w-full sm:w-auto">
+                    @if($activeTab === 'bagan-komplek')
+                        @can('manage-kamar')
+                        <button type="button" wire:click="openBulkTransferRoomModal"
+                            class="flex-1 sm:flex-none px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl shadow transition-all">
+                            Pindahkan ke Kamar Lain
+                        </button>
+                        @endcan
+                    @elseif($activeTab === 'bagan-kelas')
+                        @can('manage-kelas')
+                        <button type="button" wire:click="openBulkTransferKelasModal"
+                            class="flex-1 sm:flex-none px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs rounded-xl shadow transition-all">
+                            Pindahkan Sekaligus ke Kelas Lain
+                        </button>
+                        @endcan
+                    @endif
+
+                    <button type="button" wire:click="clearSelection" class="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs rounded-xl">
+                        Batal
+                    </button>
+                </div>
+            </div>
         </div>
+        @endcanany
     @endif
 
-    {{-- MODAL BULK TRANSFER KAMAR --}}
+    {{-- ============================================================ --}}
+    {{-- MODAL BULK TRANSFER KAMAR                                     --}}
+    {{-- ============================================================ --}}
     @if($showBulkTransferRoomModal)
-        <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm overflow-y-auto">
-            <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl max-w-md w-full p-5 sm:p-6 shadow-2xl space-y-3.5 max-h-[85vh] sm:max-h-[90vh] overflow-y-auto my-auto">
-                <h3 class="font-extrabold text-base text-slate-900 dark:text-slate-100">Pemindahan Massal (Bulk Transfer) Kamar</h3>
-                <p class="text-xs text-slate-500">
-                    Memindahkan <strong>{{ count($selectedSantriIds) }} santri terpilih</strong> sekaligus ke kamar tujuan baru:
-                </p>
-
-                <div class="bg-slate-50 dark:bg-slate-800/50 p-2.5 rounded-xl max-h-28 overflow-y-auto space-y-1 border border-slate-200/50 dark:border-slate-700/50">
-                    @foreach($selectedSantriList as $sItem)
-                        <div class="text-xs font-semibold text-slate-700 dark:text-slate-300 flex items-center justify-between">
-                            <span>• {{ $sItem->name }}</span>
-                            <span class="text-[10px] text-slate-400">NIS: {{ $sItem->santriProfile->nis ?? '-' }}</span>
+        <div class="fixed inset-0 z-50 overflow-hidden flex flex-col justify-end sm:justify-center sm:items-center sm:p-4 bg-slate-900/60 backdrop-blur-md">
+            {{-- Bottom sheet di mobile, centered dialog di desktop --}}
+            <div class="bg-white dark:bg-slate-900 border-t sm:border border-slate-200 dark:border-slate-800 rounded-t-3xl sm:rounded-3xl w-full sm:max-w-lg shadow-2xl flex flex-col max-h-[90vh]">
+                {{-- Header --}}
+                <div class="p-4 sm:p-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-2xl bg-emerald-100 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-bold flex-shrink-0">
+                            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg>
                         </div>
-                    @endforeach
+                        <div>
+                            <h3 class="font-extrabold text-base text-slate-900 dark:text-slate-100">Pindah Kamar Massal</h3>
+                            <p class="text-xs text-slate-500">Memindahkan santri terpilih ke kamar baru</p>
+                        </div>
+                    </div>
+                    <button type="button" wire:click="$set('showBulkTransferRoomModal', false)"
+                        class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+                        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
+                    </button>
                 </div>
 
-                <div>
-                    <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Pilih Komplek &amp; Kamar Tujuan</label>
-                    <select wire:model="bulkTargetRoomId" class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-800 dark:text-slate-100">
-                        <option value="">-- Pilih Kamar Tujuan --</option>
-                        @foreach($roomOptions as $rOpt)
-                            <option value="{{ $rOpt->id }}">{{ $rOpt->dormitory->name }} — {{ $rOpt->name }} (Sisa: {{ $rOpt->capacity - $rOpt->currentAssignments->count() }} Bed)</option>
+                {{-- Content --}}
+                <div class="overflow-y-auto flex-1 p-4 sm:p-5 space-y-4">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">Santri Terpilih</span>
+                        <span class="px-2.5 py-0.5 bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300 text-xs font-extrabold rounded-full">
+                            {{ count($selectedSantriIds) }} Santri
+                        </span>
+                    </div>
+
+                    <div class="bg-slate-50 dark:bg-slate-800/50 p-3 rounded-2xl max-h-36 overflow-y-auto space-y-1.5 border border-slate-200/60 dark:border-slate-700/60">
+                        @foreach($selectedSantriList as $sItem)
+                            <div class="text-xs font-semibold text-slate-800 dark:text-slate-200 flex items-center justify-between py-0.5">
+                                <span class="truncate">👤 {{ $sItem->name }}</span>
+                                <span class="text-[10px] font-mono text-slate-400 flex-shrink-0 ml-2">NIS: {{ $sItem->santriProfile->nis ?? '-' }}</span>
+                            </div>
                         @endforeach
-                    </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1.5">Pilih Komplek &amp; Kamar Tujuan</label>
+                        <select wire:model="bulkTargetRoomId" class="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-emerald-500/20 focus:outline-none">
+                            <option value="">-- Pilih Kamar Tujuan --</option>
+                            @foreach($roomOptions as $rOpt)
+                                @php $sisa = $rOpt->capacity - $rOpt->currentAssignments->count(); @endphp
+                                <option value="{{ $rOpt->id }}" {{ $sisa < count($selectedSantriIds) ? 'disabled' : '' }}>
+                                    {{ $rOpt->dormitory->name }} — {{ $rOpt->name }} (Sisa: {{ $sisa }} Bed)
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
                 </div>
 
-                <div class="flex items-center justify-end gap-2 pt-2">
-                    <button type="button" wire:click="$set('showBulkTransferRoomModal', false)" class="px-4 py-2 bg-slate-100 text-slate-700 font-bold rounded-xl text-xs">Batal</button>
-                    <button type="button" wire:click="requestBulkRoomTransferConfirm" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl text-xs shadow transition-all">Simpan &amp; Pindahkan</button>
+                {{-- Footer --}}
+                <div class="p-4 border-t border-slate-100 dark:border-slate-800 grid grid-cols-2 gap-2 sm:flex sm:justify-end">
+                    <button type="button" wire:click="$set('showBulkTransferRoomModal', false)"
+                        class="w-full sm:w-auto px-4 py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold rounded-xl text-xs transition-colors">
+                        Batal
+                    </button>
+                    <button type="button" wire:click="executeBulkTransferRoom"
+                        class="w-full sm:w-auto px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold rounded-xl text-xs shadow-lg transition-all flex items-center justify-center gap-2">
+                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                        <span>Proses Pindah</span>
+                    </button>
                 </div>
             </div>
         </div>
     @endif
 
-    {{-- MODAL BULK TRANSFER KELAS --}}
+    {{-- ============================================================ --}}
+    {{-- MODAL BULK TRANSFER KELAS                                     --}}
+    {{-- ============================================================ --}}
     @if($showBulkTransferKelasModal)
-        <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm overflow-y-auto">
-            <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl max-w-md w-full p-5 sm:p-6 shadow-2xl space-y-3.5 max-h-[85vh] sm:max-h-[90vh] overflow-y-auto my-auto">
-                <h3 class="font-extrabold text-base text-slate-900 dark:text-slate-100">Pemindahan Massal (Bulk Transfer) Kelas</h3>
-                <p class="text-xs text-slate-500">
-                    Memindahkan <strong>{{ count($selectedSantriIds) }} santri terpilih</strong> sekaligus ke kelas madrasah tujuan:
-                </p>
-
-                <div class="bg-slate-50 dark:bg-slate-800/50 p-2.5 rounded-xl max-h-28 overflow-y-auto space-y-1 border border-slate-200/50 dark:border-slate-700/50">
-                    @foreach($selectedSantriList as $sItem)
-                        <div class="text-xs font-semibold text-slate-700 dark:text-slate-300 flex items-center justify-between">
-                            <span>• {{ $sItem->name }}</span>
-                            <span class="text-[10px] text-slate-400">NIS: {{ $sItem->santriProfile->nis ?? '-' }}</span>
+        <div class="fixed inset-0 z-50 overflow-hidden flex flex-col justify-end sm:justify-center sm:items-center sm:p-4 bg-slate-900/60 backdrop-blur-md">
+            {{-- Bottom sheet di mobile, centered dialog di desktop --}}
+            <div class="bg-white dark:bg-slate-900 border-t sm:border border-slate-200 dark:border-slate-800 rounded-t-3xl sm:rounded-3xl w-full sm:max-w-lg shadow-2xl flex flex-col max-h-[90vh]">
+                {{-- Header --}}
+                <div class="p-4 sm:p-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-2xl bg-indigo-100 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400 flex items-center justify-center font-bold flex-shrink-0">
+                            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l9-5-9-5-9 5 9 5z"/></svg>
                         </div>
-                    @endforeach
+                        <div>
+                            <h3 class="font-extrabold text-base text-slate-900 dark:text-slate-100">Pindah Kelas Massal</h3>
+                            <p class="text-xs text-slate-500">Memindahkan santri terpilih ke kelas madrasah baru</p>
+                        </div>
+                    </div>
+                    <button type="button" wire:click="$set('showBulkTransferKelasModal', false)"
+                        class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+                        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
+                    </button>
                 </div>
 
-                <div>
-                    <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Pilih Kelas Tujuan</label>
-                    <select wire:model="bulkTargetKelasId" class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-800 dark:text-slate-100">
-                        <option value="">-- Pilih Kelas Tujuan --</option>
-                        @foreach($kelasOptions as $kOpt)
-                            <option value="{{ $kOpt->id }}">{{ strtoupper($kOpt->jenjang) }} — {{ $kOpt->name }}</option>
+                {{-- Content --}}
+                <div class="overflow-y-auto flex-1 p-4 sm:p-5 space-y-4">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">Santri Terpilih</span>
+                        <span class="px-2.5 py-0.5 bg-indigo-100 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300 text-xs font-extrabold rounded-full">
+                            {{ count($selectedSantriIds) }} Santri
+                        </span>
+                    </div>
+
+                    <div class="bg-slate-50 dark:bg-slate-800/50 p-3 rounded-2xl max-h-36 overflow-y-auto space-y-1.5 border border-slate-200/60 dark:border-slate-700/60">
+                        @foreach($selectedSantriList as $sItem)
+                            <div class="text-xs font-semibold text-slate-800 dark:text-slate-200 flex items-center justify-between py-0.5">
+                                <span class="truncate">👤 {{ $sItem->name }}</span>
+                                <span class="text-[10px] font-mono text-slate-400 flex-shrink-0 ml-2">NIS: {{ $sItem->santriProfile->nis ?? '-' }}</span>
+                            </div>
                         @endforeach
-                    </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1.5">Pilih Kelas Tujuan</label>
+                        <select wire:model="bulkTargetKelasId" class="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none">
+                            <option value="">-- Pilih Kelas Tujuan --</option>
+                            @foreach($kelasOptions as $kOpt)
+                                <option value="{{ $kOpt->id }}">{{ strtoupper($kOpt->jenjang) }} — {{ $kOpt->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
                 </div>
 
-                <div class="flex items-center justify-end gap-2 pt-2">
-                    <button type="button" wire:click="$set('showBulkTransferKelasModal', false)" class="px-4 py-2 bg-slate-100 text-slate-700 font-bold rounded-xl text-xs">Batal</button>
-                    <button type="button" wire:click="requestBulkKelasTransferConfirm" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl text-xs shadow transition-all">Simpan &amp; Pindahkan</button>
+                {{-- Footer --}}
+                <div class="p-4 border-t border-slate-100 dark:border-slate-800 grid grid-cols-2 gap-2 sm:flex sm:justify-end">
+                    <button type="button" wire:click="$set('showBulkTransferKelasModal', false)"
+                        class="w-full sm:w-auto px-4 py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold rounded-xl text-xs transition-colors">
+                        Batal
+                    </button>
+                    <button type="button" wire:click="executeBulkTransferKelas"
+                        class="w-full sm:w-auto px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-extrabold rounded-xl text-xs shadow-lg transition-all flex items-center justify-center gap-2">
+                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                        <span>Proses Pindah</span>
+                    </button>
                 </div>
             </div>
         </div>
