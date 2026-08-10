@@ -20,6 +20,7 @@ class LembarSetoranKolektif extends Component
     use HasGenderScope;
 
     public string  $search = '';
+    public string  $studentSearch = '';
     public int     $year;
     public string  $payMethod = 'CASH';
 
@@ -64,6 +65,7 @@ class LembarSetoranKolektif extends Component
         'activeInterval' => ['except' => ''],
         'year'           => ['except' => ''],
         'filterConfigId' => ['except' => 'all'],
+        'studentSearch'  => ['except' => ''],
     ];
 
     public function mount(): void
@@ -104,6 +106,7 @@ class LembarSetoranKolektif extends Component
         $this->activeLabel = $label;
         $this->activeConfigId = $configId;
         $this->showMobileNavigator = false;
+        $this->studentSearch = '';
 
         $this->resetInputAmounts();
     }
@@ -117,6 +120,7 @@ class LembarSetoranKolektif extends Component
         $this->activeLabel = null;
         $this->activeConfigId = null;
         $this->showMobileNavigator = true;
+        $this->studentSearch = '';
 
         $this->resetInputAmounts();
     }
@@ -795,6 +799,17 @@ class LembarSetoranKolektif extends Component
                 ->when($this->genderScope(), fn($q, $g) => $q->where('gender', $g))
                 ->orderBy('name');
             $santriList = $query->get();
+        }
+
+        if (!empty($this->studentSearch)) {
+            $term = strtolower(trim($this->studentSearch));
+            $santriList = $santriList->filter(function ($santri) use ($term) {
+                $nameMatch = str_contains(strtolower($santri->name), $term);
+                $roomMatch = isset($santri->room_name) && str_contains(strtolower($santri->room_name), $term);
+                $nisMatch  = isset($santri->nis) && str_contains(strtolower($santri->nis), $term);
+                $nikMatch  = isset($santri->nik) && str_contains(strtolower($santri->nik), $term);
+                return $nameMatch || $roomMatch || $nisMatch || $nikMatch;
+            });
         }
 
         $periods = $this->getRelevantPeriods();
