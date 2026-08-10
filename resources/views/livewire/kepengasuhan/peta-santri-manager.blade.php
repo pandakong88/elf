@@ -1,82 +1,106 @@
 <div class="space-y-6">
     {{-- Header Page --}}
-    <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+    <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
         <div>
-            <h1 class="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-slate-100 flex items-center gap-3">
-                <span>Data Santri (Master Tabel)</span>
+            <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-slate-100 flex flex-wrap items-center gap-2">
+                <span>Data Santri</span>
+                <span class="hidden sm:inline text-slate-400 font-light">—</span>
+                <span class="hidden sm:inline">Master Tabel</span>
                 @if($isGenderLocked)
-                    <span class="px-3 py-1 bg-emerald-100 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 text-xs font-bold rounded-full border border-emerald-300/30">
+                    <span class="px-2.5 py-0.5 bg-emerald-100 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 text-xs font-bold rounded-full border border-emerald-300/30">
                         Scope: {{ $genderFilter === 'L' ? 'Putra (L)' : 'Putri (P)' }}
                     </span>
                 @endif
             </h1>
-            <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">
-                Peta penempatan dan direktori lengkap santri (Mukim, Laju, Boyong, dan Alumni) seluruh pesantren.
+            <p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
+                Peta penempatan & direktori lengkap santri seluruh pesantren.
             </p>
         </div>
         <div class="flex items-center gap-2 flex-shrink-0">
             <button type="button" wire:click="openExportConfirmModal"
-                class="inline-flex items-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl text-xs shadow-sm transition-all">
+                class="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl text-xs shadow-sm transition-all">
                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-                Unduh Excel
+                <span>Unduh Excel</span>
             </button>
             @can('update-person')
             <button type="button" wire:click="$set('showImportModal', true)"
-                class="inline-flex items-center gap-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl text-xs shadow-sm transition-all">
+                class="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl text-xs shadow-sm transition-all">
                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l4-4m0 0l4 4m-4-4v12"/></svg>
-                Update via Excel
+                <span>Update Excel</span>
             </button>
             @endcan
         </div>
     </div>
 
-    {{-- Main Control Card: Tabs & Search/Filters --}}
-    <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-5 shadow-sm space-y-4">
-        {{-- Navigation Sub-Tabs & View Mode Switcher --}}
-        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-slate-100 dark:border-slate-800">
-            {{-- Tabs --}}
-            <div class="flex items-center gap-2 bg-slate-100 dark:bg-slate-800/80 p-1 rounded-xl">
-                <button type="button" wire:click="$set('activeTab', 'komplek')"
-                    class="flex items-center gap-2 px-4 py-2 rounded-lg font-bold text-xs transition-all {{ $activeTab === 'komplek' ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 shadow-sm' : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200' }}">
-                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
-                    <span>Penempatan Asrama &amp; Kamar</span>
-                </button>
+    {{-- Main Control Card: Tabs, Search & Filters --}}
+    <div x-data="{ showFilters: false }" class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-4 sm:p-5 shadow-sm space-y-4">
 
+        {{-- Row 1: Tabs + Search + View Switcher --}}
+        <div class="flex flex-col gap-3">
+            {{-- Tabs (Sub-Navigation) --}}
+            <div class="flex items-center gap-2 bg-slate-100 dark:bg-slate-800/80 p-1 rounded-xl self-start w-full sm:w-auto">
+                <button type="button" wire:click="$set('activeTab', 'komplek')"
+                    class="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3 sm:px-4 py-2 rounded-lg font-bold text-xs transition-all {{ $activeTab === 'komplek' ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 shadow-sm' : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200' }}">
+                    <svg class="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+                    <span class="hidden xs:inline sm:hidden md:inline">Asrama &amp; Kamar</span>
+                    <span class="inline xs:hidden sm:inline md:hidden">Asrama</span>
+                </button>
                 <button type="button" wire:click="$set('activeTab', 'kelas')"
-                    class="flex items-center gap-2 px-4 py-2 rounded-lg font-bold text-xs transition-all {{ $activeTab === 'kelas' ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 shadow-sm' : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200' }}">
-                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l9-5-9-5-9 5 9 5z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0112 20.055a11.952 11.952 0 01-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z"/></svg>
-                    <span>Peta Kelas Madrasah</span>
+                    class="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3 sm:px-4 py-2 rounded-lg font-bold text-xs transition-all {{ $activeTab === 'kelas' ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 shadow-sm' : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200' }}">
+                    <svg class="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l9-5-9-5-9 5 9 5z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0112 20.055a11.952 11.952 0 01-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z"/></svg>
+                    <span class="hidden xs:inline sm:hidden md:inline">Kelas Madrasah</span>
+                    <span class="inline xs:hidden sm:inline md:hidden">Kelas</span>
                 </button>
             </div>
 
-            {{-- Search Bar --}}
-            <div class="flex-1">
-                <div class="relative">
-                    <input type="text" wire:model.live.debounce.300ms="search" placeholder="Cari nama santri, NIK, NIS..."
-                        class="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all text-sm">
-                    <div class="absolute left-3.5 top-3 text-slate-400 dark:text-slate-500">
+            {{-- Search + View Switcher + Filter Toggle Row --}}
+            <div class="flex items-center gap-2">
+                {{-- Search Bar --}}
+                <div class="flex-1 relative">
+                    <input type="text" wire:model.live.debounce.300ms="search" placeholder="Cari nama, NIK, NIS..."
+                        class="w-full pl-9 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all text-xs sm:text-sm">
+                    <div class="absolute left-3 top-2.5 text-slate-400 dark:text-slate-500">
                         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
                     </div>
                 </div>
-            </div>
 
-            {{-- View Mode Switcher Button --}}
-            <div class="flex items-center gap-2 self-end md:self-auto bg-slate-100 dark:bg-slate-800 p-1 rounded-xl">
-                <button type="button" wire:click="$set('viewMode', 'table')"
-                    class="inline-flex items-center gap-2 px-4 py-2 rounded-lg font-bold text-xs transition-all {{ $viewMode === 'table' ? 'bg-emerald-600 text-white shadow' : 'text-slate-600 dark:text-slate-300 hover:text-slate-900' }}">
-                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"/></svg>
-                    <span>Mode Tabel (Default)</span>
-                </button>
-                <button type="button" wire:click="$set('viewMode', 'card')"
-                    class="inline-flex items-center gap-2 px-4 py-2 rounded-lg font-bold text-xs transition-all {{ $viewMode === 'card' ? 'bg-emerald-600 text-white shadow' : 'text-slate-600 dark:text-slate-300 hover:text-slate-900' }}">
-                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1V5zm10 0a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1v-4zm10 0a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z"/></svg>
-                    <span>Mode Kartu / Bagan</span>
+                {{-- View Mode Switcher: ikon saja di mobile, teks di md+ --}}
+                <div class="flex items-center bg-slate-100 dark:bg-slate-800 p-1 rounded-xl gap-1">
+                    <button type="button" wire:click="$set('viewMode', 'table')" title="Mode Tabel"
+                        class="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-2 rounded-lg font-bold text-xs transition-all {{ $viewMode === 'table' ? 'bg-emerald-600 text-white shadow' : 'text-slate-600 dark:text-slate-300' }}">
+                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"/></svg>
+                        <span class="hidden sm:inline">Tabel</span>
+                    </button>
+                    <button type="button" wire:click="$set('viewMode', 'card')" title="Mode Kartu/Bagan"
+                        class="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-2 rounded-lg font-bold text-xs transition-all {{ $viewMode === 'card' ? 'bg-emerald-600 text-white shadow' : 'text-slate-600 dark:text-slate-300' }}">
+                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1V5zm10 0a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1v-4zm10 0a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z"/></svg>
+                        <span class="hidden sm:inline">Bagan</span>
+                    </button>
+                </div>
+
+                {{-- Filter Toggle Button (mobile only) --}}
+                <button type="button" @click="showFilters = !showFilters"
+                    class="md:hidden flex items-center gap-1.5 px-3 py-2.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 font-bold text-xs rounded-xl transition-all border border-slate-200 dark:border-slate-700"
+                    :class="showFilters ? 'bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 border-amber-200 dark:border-amber-800' : ''">
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/></svg>
+                    <span x-text="showFilters ? 'Tutup' : 'Filter'"></span>
                 </button>
             </div>
         </div>
 
-        {{-- Secondary Filter Row --}}
-        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 pt-3 border-t border-slate-100 dark:border-slate-800">
+        {{-- Secondary Filter Row: collapsible di mobile (tekan tombol Filter), selalu tampil di desktop md+ --}}
+        <div x-show="showFilters"
+             x-transition:enter="transition ease-out duration-200"
+             x-transition:enter-start="opacity-0 -translate-y-1"
+             x-transition:enter-end="opacity-100 translate-y-0"
+             x-transition:leave="transition ease-in duration-150"
+             x-transition:leave-start="opacity-100 translate-y-0"
+             x-transition:leave-end="opacity-0 -translate-y-1"
+             class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-3 border-t border-slate-100 dark:border-slate-800 [&]:md:!grid [&]:md:!grid-cols-4"
+             :class="{ 'hidden': !showFilters }"
+             x-init="$watch('$el.offsetParent', () => {}); if (window.innerWidth >= 768) { showFilters = true; }"
+             @resize.window="showFilters = (window.innerWidth >= 768) ? true : showFilters">
+
             {{-- Status Keanggotaan (Enrollment) Filter --}}
             <div>
                 <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">Status Keanggotaan</label>
@@ -85,7 +109,7 @@
                     <option value="aktif">Aktif (Mukim &amp; Laju)</option>
                     <option value="boyong">Boyong / Keluar</option>
                     <option value="alumni">Alumni / Lulus</option>
-                    <option value="">Semua Status Keanggotaan</option>
+                    <option value="">Semua Status</option>
                 </select>
             </div>
 
@@ -169,7 +193,8 @@
     {{-- Main Content: Mode Tabel (Default)                           --}}
     {{-- ============================================================ --}}
     @if($viewMode === 'table')
-        <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl shadow-sm overflow-hidden">
+        {{-- ===== MODE TABEL: Tampil di Desktop (md+) ===== --}}
+        <div class="hidden md:block bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl shadow-sm overflow-hidden">
             <div class="overflow-x-auto">
                 <table class="w-full text-left border-collapse text-sm">
                     <thead>
@@ -353,6 +378,121 @@
 
             {{-- Pagination Links --}}
             <div class="p-4 border-t border-slate-100 dark:border-slate-800">
+                {{ $santriList->links() }}
+            </div>
+        </div>
+
+        {{-- ===== CARD LIST: Tampil di Mobile saja (< md) ===== --}}
+        <div class="md:hidden space-y-3">
+            @forelse($santriList as $index => $santri)
+                @php
+                    $currentAssignment = $santri->roomAssignments->first();
+                    $currentEnrollment = $santri->madrasahEnrollments->first();
+                    $role = $santri->roles->where('role_type', 'santri')->first();
+                    $enrollmentStatus = $role?->enrollment_status ?? 'aktif';
+                    $presenceStatus   = $role?->presence_status ?? 'mukim';
+                @endphp
+                <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-4 shadow-sm space-y-3">
+                    {{-- Card Header: Avatar + Nama + Status Badges --}}
+                    <div class="flex items-start gap-3">
+                        <div class="w-11 h-11 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center flex-shrink-0 text-slate-600 dark:text-slate-300 font-bold text-sm overflow-hidden">
+                            @if($santri->photo)
+                                <img src="{{ Storage::url($santri->photo) }}" class="w-full h-full object-cover" alt="{{ $santri->name }}">
+                            @else
+                                {{ strtoupper(substr($santri->name, 0, 2)) }}
+                            @endif
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <button type="button" wire:click="openQuickProfile('{{ $santri->id }}')" class="font-extrabold text-slate-900 dark:text-slate-100 hover:text-emerald-600 dark:hover:text-emerald-400 text-sm text-left leading-tight transition-colors">
+                                {{ $santri->name }}
+                            </button>
+                            <div class="text-[11px] text-slate-400 mt-0.5">NIS: {{ $santri->santriProfile?->nis ?? '-' }} &bull; {{ $santri->phone ?? 'Tidak ada HP' }}</div>
+                            <div class="flex flex-wrap items-center gap-1.5 mt-1.5">
+                                {{-- Gender Badge --}}
+                                <span class="px-2 py-0.5 text-[10px] font-bold rounded {{ $santri->gender === 'L' ? 'bg-blue-100 text-blue-700 dark:bg-blue-950/50 dark:text-blue-300' : 'bg-pink-100 text-pink-700 dark:bg-pink-950/50 dark:text-pink-300' }}">
+                                    {{ $santri->gender === 'L' ? 'Putra' : 'Putri' }}
+                                </span>
+                                {{-- Enrollment Status Badge --}}
+                                @if(in_array($enrollmentStatus, ['boyong','keluar_resmi','dikeluarkan','tanpa_keterangan']))
+                                    <span class="px-2 py-0.5 text-[10px] font-bold rounded-full bg-rose-100 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300">Boyong</span>
+                                @elseif($enrollmentStatus === 'alumni')
+                                    <span class="px-2 py-0.5 text-[10px] font-bold rounded-full bg-purple-100 text-purple-700 dark:bg-purple-950/60 dark:text-purple-300">Alumni</span>
+                                @else
+                                    <span class="px-2 py-0.5 text-[10px] font-bold rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300">Aktif</span>
+                                @endif
+                                {{-- Presence Status Badge --}}
+                                @if($presenceStatus === 'mukim')
+                                    <span class="px-2 py-0.5 text-[10px] font-bold rounded bg-indigo-50 text-indigo-700 dark:bg-indigo-950/40 dark:text-indigo-300 border border-indigo-200/50">Mukim</span>
+                                @elseif(in_array($presenceStatus, ['izin','pulang']))
+                                    <span class="px-2 py-0.5 text-[10px] font-bold rounded bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300 border border-amber-200/50">Izin/Pulang</span>
+                                @elseif($presenceStatus === 'laju')
+                                    <span class="px-2 py-0.5 text-[10px] font-bold rounded bg-amber-100 text-amber-800 dark:bg-amber-950/40 dark:text-amber-300 border border-amber-200/50">Laju</span>
+                                @endif
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- Card Body: Komplek & Kelas --}}
+                    <div class="grid grid-cols-2 gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+                        <div>
+                            <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Komplek & Kamar</div>
+                            @if($currentAssignment?->room)
+                                <div class="text-xs font-bold text-slate-800 dark:text-slate-200">{{ $currentAssignment->room->dormitory?->name ?? '-' }}</div>
+                                <div class="text-[11px] text-slate-500">{{ $currentAssignment->room->name }}</div>
+                            @else
+                                <div class="text-xs text-slate-400 italic">Belum ditempatkan</div>
+                            @endif
+                        </div>
+                        <div>
+                            <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Kelas Madrasah</div>
+                            @if($currentEnrollment?->kelas)
+                                <div class="text-xs font-bold text-slate-800 dark:text-slate-200">{{ strtoupper($currentEnrollment->kelas->jenjang) }} — {{ $currentEnrollment->kelas->name }}</div>
+                            @else
+                                <div class="text-xs text-slate-400 italic">Belum ada kelas</div>
+                            @endif
+                        </div>
+                    </div>
+
+                    {{-- Card Footer: Action Buttons --}}
+                    <div class="flex items-center gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+                        {{-- Profil --}}
+                        <button type="button" wire:click="openQuickProfile('{{ $santri->id }}')" title="Lihat Profil"
+                            class="flex-1 flex items-center justify-center gap-1.5 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-xl text-[11px] font-bold transition-colors">
+                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                            Profil
+                        </button>
+
+                        @can('change-enrollment-status')
+                        <button type="button" wire:click="openStatusModal('{{ $santri->id }}')" title="Ubah Status"
+                            class="flex-1 flex items-center justify-center gap-1.5 py-2 bg-amber-50 hover:bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 rounded-xl text-[11px] font-bold transition-colors">
+                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                            Status
+                        </button>
+                        @endcan
+
+                        @can('manage-kamar')
+                        <button type="button" wire:click="openTransferRoomModal('{{ $santri->id }}')" title="Pindah Kamar"
+                            class="flex-1 flex items-center justify-center gap-1.5 py-2 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 rounded-xl text-[11px] font-bold transition-colors">
+                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+                            Kamar
+                        </button>
+                        @endcan
+
+                        @can('update-person')
+                        <a href="{{ route('kepengasuhan.santri.edit', $santri->id) }}" title="Edit Data"
+                            class="flex-1 flex items-center justify-center gap-1.5 py-2 bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 rounded-xl text-[11px] font-bold transition-colors">
+                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                            Edit
+                        </a>
+                        @endcan
+                    </div>
+                </div>
+            @empty
+                <div class="p-10 text-center text-slate-400 text-sm">Tidak ada data santri ditemukan.</div>
+            @endforelse
+
+            {{-- Pagination (mobile) --}}
+            <div class="pt-2">
                 {{ $santriList->links() }}
             </div>
         </div>
