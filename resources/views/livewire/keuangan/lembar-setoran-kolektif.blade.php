@@ -205,26 +205,58 @@
                 </div>
             </div>
 
-            {{-- ===== MOBILE VIEW MODE SWITCHER BAR ===== --}}
-            <div class="flex lg:hidden items-center justify-between px-4 py-2 bg-slate-50 dark:bg-slate-950/60 border-b border-slate-200 dark:border-slate-800 text-[10px] shrink-0">
-                <span class="font-extrabold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Tampilan HP:</span>
-                <div class="flex items-center gap-1 bg-white dark:bg-slate-900 p-1 rounded-xl border border-slate-200 dark:border-slate-800 shadow-2xs">
-                    <button type="button" wire:click="setMobileViewMode('cards')"
-                        @class([
-                            'px-2.5 py-1 rounded-lg font-black transition-all flex items-center gap-1',
-                            'bg-emerald-600 text-white shadow-xs' => $mobileViewMode === 'cards',
-                            'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200' => $mobileViewMode !== 'cards',
-                        ])>
-                        🎴 Kartu Santri
-                    </button>
-                    <button type="button" wire:click="setMobileViewMode('table')"
-                        @class([
-                            'px-2.5 py-1 rounded-lg font-black transition-all flex items-center gap-1',
-                            'bg-emerald-600 text-white shadow-xs' => $mobileViewMode === 'table',
-                            'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200' => $mobileViewMode !== 'table',
-                        ])>
-                        📊 Tabel Matrix
-                    </button>
+            {{-- ===== TOOLBAR SEARCH SANTRI & MOBILE SWITCHER BAR ===== --}}
+            <div class="px-3.5 py-2 sm:px-6 bg-slate-50 dark:bg-slate-950/60 border-b border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 text-[11px] shrink-0">
+                {{-- Search Santri Input --}}
+                <div class="relative flex-1 max-w-full sm:max-w-md">
+                    <input
+                        type="text"
+                        wire:model.live.debounce.250ms="studentSearch"
+                        placeholder="🔍 Cari nama santri, kamar, atau NIS..."
+                        class="w-full bg-white dark:bg-slate-900 border border-slate-250 dark:border-slate-800 text-slate-800 dark:text-slate-200 rounded-xl pl-8 pr-8 py-1.5 text-xs focus:ring-emerald-500 shadow-2xs placeholder:text-slate-400"
+                    >
+                    <span class="absolute left-2.5 top-2 text-slate-400">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                    </span>
+                    @if(!empty($studentSearch))
+                        <button type="button" wire:click="$set('studentSearch', '')" class="absolute right-2.5 top-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-xs font-black p-0.5" title="Hapus Pencarian">
+                            ✕
+                        </button>
+                    @endif
+                </div>
+
+                {{-- Status & Mobile Mode Switcher Row --}}
+                <div class="flex items-center justify-between sm:justify-end gap-3 min-w-0">
+                    @if(!empty($studentSearch))
+                        <div class="text-[10px] text-emerald-600 dark:text-emerald-400 font-extrabold truncate flex items-center gap-1.5">
+                            <span>Ditemukan {{ $gridData->count() }} santri</span>
+                            <button type="button" wire:click="$set('studentSearch', '')" class="text-slate-400 hover:text-rose-500 font-normal underline text-[9px]">
+                                Reset
+                            </button>
+                        </div>
+                    @endif
+
+                    <div class="flex lg:hidden items-center gap-1.5 shrink-0">
+                        <span class="font-extrabold text-slate-500 dark:text-slate-400 text-[10px] uppercase">HP:</span>
+                        <div class="flex items-center gap-0.5 bg-white dark:bg-slate-900 p-0.5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-2xs">
+                            <button type="button" wire:click="setMobileViewMode('cards')"
+                                @class([
+                                    'px-2 py-0.5 rounded-lg text-[10px] font-black transition-all flex items-center gap-1',
+                                    'bg-emerald-600 text-white shadow-xs' => $mobileViewMode === 'cards',
+                                    'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200' => $mobileViewMode !== 'cards',
+                                ])>
+                                🎴 Kartu
+                            </button>
+                            <button type="button" wire:click="setMobileViewMode('table')"
+                                @class([
+                                    'px-2 py-0.5 rounded-lg text-[10px] font-black transition-all flex items-center gap-1',
+                                    'bg-emerald-600 text-white shadow-xs' => $mobileViewMode === 'table',
+                                    'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200' => $mobileViewMode !== 'table',
+                                ])>
+                                📊 Tabel
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -327,8 +359,20 @@
                             </div>
                         </div>
                     @empty
-                        <div class="py-8 text-center text-slate-400 text-xs font-semibold">
-                            Tidak ada data santri ditemukan.
+                        <div class="py-10 text-center text-slate-400 text-xs font-semibold space-y-2">
+                            <div class="text-2xl">🔍</div>
+                            <div class="font-extrabold text-slate-600 dark:text-slate-300">
+                                @if(!empty($studentSearch))
+                                    Tidak ada santri dengan kata kunci "{{ $studentSearch }}" di lembar ini.
+                                @else
+                                    Tidak ada data santri ditemukan.
+                                @endif
+                            </div>
+                            @if(!empty($studentSearch))
+                                <button type="button" wire:click="$set('studentSearch', '')" class="mt-2 inline-block px-3 py-1.5 bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 text-slate-700 dark:text-slate-300 rounded-xl text-[10px] font-extrabold transition-all">
+                                    Reset Pencarian Santri
+                                </button>
+                            @endif
                         </div>
                     @endforelse
                 </div>
@@ -506,8 +550,20 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="{{ count($months) + 4 }}" class="py-8 text-center text-slate-400 font-semibold text-xs">
-                                    Tidak ada data santri ditemukan.
+                                <td colspan="{{ count($months) + 4 }}" class="py-12 text-center text-slate-400 font-semibold text-xs">
+                                    <div class="text-2xl mb-1">🔍</div>
+                                    <div class="font-extrabold text-slate-600 dark:text-slate-300">
+                                        @if(!empty($studentSearch))
+                                            Tidak ada santri dengan kata kunci "{{ $studentSearch }}" di lembar ini.
+                                        @else
+                                            Tidak ada data santri ditemukan.
+                                        @endif
+                                    </div>
+                                    @if(!empty($studentSearch))
+                                        <button type="button" wire:click="$set('studentSearch', '')" class="mt-2.5 inline-block px-3 py-1.5 bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 text-slate-700 dark:text-slate-300 rounded-xl text-[10px] font-extrabold transition-all">
+                                            Reset Pencarian Santri
+                                        </button>
+                                    @endif
                                 </td>
                             </tr>
                         @endforelse
