@@ -93,8 +93,21 @@
                     <div class="flex items-center justify-between mb-1.5">
                         <label for="password" class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Kata Sandi</label>
                     </div>
-                    <input type="password" name="password" id="password" required placeholder="••••••••" 
-                           class="w-full px-3.5 py-2.5 sm:px-4 sm:py-3 bg-slate-900 border border-slate-800 rounded-xl text-white placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 transition-all text-sm">
+                    <div class="relative">
+                        <input type="password" name="password" id="password" required placeholder="••••••••" 
+                               class="w-full px-3.5 py-2.5 sm:px-4 sm:py-3 pr-11 bg-slate-900 border border-slate-800 rounded-xl text-white placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 transition-all text-sm">
+                        <button type="button" onclick="togglePasswordVisibility()" 
+                                class="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 p-1 focus:outline-none transition-colors" 
+                                title="Tampilkan / Sembunyikan Kata Sandi">
+                            <svg id="eyeIconShow" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                            </svg>
+                            <svg id="eyeIconHide" class="w-4 h-4 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858-5.908a10.025 10.025 0 012.122-.363c4.478 0 8.268 2.943 9.542 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21M3 3l18 18"/>
+                            </svg>
+                        </button>
+                    </div>
                 </div>
 
                 <button type="submit" 
@@ -283,6 +296,21 @@
                 return;
             }
             quickLogin(email, devPassword);
+        }
+        function togglePasswordVisibility() {
+            const pwdInput = document.getElementById('password');
+            const eyeShow = document.getElementById('eyeIconShow');
+            const eyeHide = document.getElementById('eyeIconHide');
+
+            if (pwdInput.type === 'password') {
+                pwdInput.type = 'text';
+                eyeShow.classList.add('hidden');
+                eyeHide.classList.remove('hidden');
+            } else {
+                pwdInput.type = 'password';
+                eyeShow.classList.remove('hidden');
+                eyeHide.classList.add('hidden');
+            }
         }
     </script>
 </body>
