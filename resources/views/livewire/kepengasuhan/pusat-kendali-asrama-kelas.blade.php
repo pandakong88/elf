@@ -598,42 +598,7 @@
         </div>
     @endif
 
-    {{-- FLOATING SELECTION BAR — hanya tampil jika user punya permission transfer --}}
-    @if(count($selectedSantriIds) > 0)
-        @canany(['manage-kamar', 'manage-kelas'])
-        <div class="fixed bottom-4 sm:bottom-6 left-1/2 -translate-x-1/2 z-40 w-[calc(100%-2rem)] sm:w-auto bg-slate-900 text-white px-4 sm:px-6 py-3 sm:py-3.5 rounded-2xl shadow-2xl border border-slate-700">
-            <div class="flex flex-col sm:flex-row items-center gap-3">
-                <div class="flex items-center gap-2">
-                    <span class="w-6 h-6 rounded-full bg-emerald-500 text-white flex items-center justify-center font-extrabold text-xs">
-                        {{ count($selectedSantriIds) }}
-                    </span>
-                    <span class="text-xs font-bold">Santri Terpilih</span>
-                </div>
 
-                <div class="flex items-center gap-2 w-full sm:w-auto">
-                    @if($activeTab === 'bagan-komplek')
-                        @can('manage-kamar')
-                        <button type="button" wire:click="openBulkTransferRoomModal"
-                            class="flex-1 sm:flex-none px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl shadow transition-all">
-                            Pindahkan ke Kamar Lain
-                        </button>
-                        @endcan
-                    @elseif($activeTab === 'bagan-kelas')
-                        @can('manage-kelas')
-                        <button type="button" wire:click="openBulkTransferKelasModal"
-                            class="flex-1 sm:flex-none px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs rounded-xl shadow transition-all">
-                        Pindahkan Sekaligus ke Kelas Lain
-                    </button>
-                    @endcan
-                @endif
-
-                <button type="button" wire:click="clearSelection" class="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs rounded-xl">
-                    Batal
-                </button>
-            </div>
-        </div>
-        @endcanany
-    @endif
 
     {{-- MODAL UBAH STATUS SANTRI (MUKIM / LAJU / BOYONG) --}}
     @if($showStatusModal)
@@ -918,7 +883,10 @@
                     <button type="button" wire:click="registerNewSantri" class="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white font-extrabold rounded-xl text-xs shadow-lg transition-all">Daftarkan Santri Baru</button>
                 </div>
             </div>
-     {{-- FLOATING SELECTION BAR — hanya tampil jika user punya santri terpilih dan tidak ada modal aktif --}}
+        </div>
+    @endif
+
+    {{-- FLOATING SELECTION BAR — hanya tampil jika user punya santri terpilih dan tidak ada modal aktif --}}
     @if(count($selectedSantriIds) > 0 && !$showBulkTransferRoomModal && !$showBulkTransferKelasModal && !$showStatusModal && !$showConfirmModal)
         @canany(['manage-kamar', 'manage-kelas'])
         <div class="fixed bottom-4 sm:bottom-6 left-1/2 -translate-x-1/2 z-40 w-[calc(100%-2rem)] sm:w-auto bg-slate-900 text-white px-4 sm:px-6 py-3 sm:py-3.5 rounded-2xl shadow-2xl border border-slate-700">
