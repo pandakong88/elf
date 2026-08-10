@@ -51,6 +51,7 @@
 
         <!-- 2. Dev Corner Arcade Box (Multi-Game Randomizer) -->
         <div x-data="{
+            showDevCorner: false,
             activeGame: 'dice',
             games: ['dice', 'khodam', 'slot', 'reflex'],
             
@@ -184,28 +185,53 @@
                     }
                 }
             }
-        }" class="bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-white border border-slate-800 p-6 sm:p-7 rounded-3xl shadow-xl relative overflow-hidden space-y-5">
-
-            <!-- Control Header Bar -->
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-4">
-                <div class="flex items-center gap-2">
-                    <span class="text-xl">🚀</span>
+        }">
+            <!-- Compact Banner saat Dev Corner disembunyikan -->
+            <div x-show="!showDevCorner" class="bg-gradient-to-r from-slate-950 via-slate-900 to-slate-950 text-white border border-slate-800/80 p-4 sm:p-5 rounded-3xl shadow-lg flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold text-xl shrink-0">
+                        🎮
+                    </div>
                     <div>
-                        <h3 class="text-sm font-black uppercase tracking-wider text-emerald-400 font-serif-display flex items-center gap-2">
+                        <h3 class="text-xs font-black uppercase tracking-wider text-emerald-400 font-mono flex items-center gap-2">
                             <span>DEV CORNER ARCADE</span>
-                            <span class="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-[10px] font-mono">Hiburan Santri 🎮</span>
+                            <span class="px-2 py-0.5 rounded-full bg-slate-800 text-slate-400 text-[10px] font-mono">Disembunyikan 🔒</span>
                         </h3>
-                        <p class="text-xs text-slate-400 mt-0.5">Mini game interaktif acak pengisi waktu luang pengurus &amp; ustadz.</p>
+                        <p class="text-xs text-slate-400 mt-0.5">Mini game interaktif acak (Dadu Nasihat, Khodam, Slot Barokah, &amp; Tes Refleks Santri).</p>
                     </div>
                 </div>
 
-                <div class="flex flex-wrap items-center gap-2 shrink-0">
-                    <!-- Game Switcher Button -->
-                    <button type="button" @click="switchRandomGame()" class="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white text-xs font-mono font-bold rounded-xl shadow-md transition-all flex items-center gap-1.5">
-                        <span>🔀 Putar Game Random</span>
-                    </button>
-                </div>
+                <button type="button" @click="showDevCorner = true" class="w-full sm:w-auto px-4 py-2 bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 border border-emerald-500/30 text-xs font-mono font-bold rounded-xl transition-all flex items-center justify-center gap-2 shrink-0">
+                    <span>🎮 Buka Dev Corner Arcade</span>
+                </button>
             </div>
+
+            <!-- Full Dev Corner Box (tampil jika showDevCorner = true) -->
+            <div x-show="showDevCorner" x-cloak class="bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-white border border-slate-800 p-5 sm:p-7 rounded-3xl shadow-xl relative overflow-hidden space-y-5">
+                <!-- Control Header Bar -->
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-4">
+                    <div class="flex items-center gap-2">
+                        <span class="text-xl">🚀</span>
+                        <div>
+                            <h3 class="text-sm font-black uppercase tracking-wider text-emerald-400 font-serif-display flex items-center gap-2">
+                                <span>DEV CORNER ARCADE</span>
+                                <span class="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-[10px] font-mono">Hiburan Santri 🎮</span>
+                            </h3>
+                            <p class="text-xs text-slate-400 mt-0.5">Mini game interaktif acak pengisi waktu luang pengurus &amp; ustadz.</p>
+                        </div>
+                    </div>
+
+                    <div class="flex flex-wrap items-center gap-2 shrink-0">
+                        <!-- Game Switcher Button -->
+                        <button type="button" @click="switchRandomGame()" class="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white text-xs font-mono font-bold rounded-xl shadow-md transition-all flex items-center gap-1.5">
+                            <span>🔀 Putar Game Random</span>
+                        </button>
+                        <!-- Hide Button -->
+                        <button type="button" @click="showDevCorner = false" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-mono font-bold rounded-xl transition-all flex items-center gap-1.5">
+                            <span>🙈 Sembunyikan</span>
+                        </button>
+                    </div>
+                </div>
 
             <!-- Mini Game Navigation Tabs -->
             <div class="flex flex-wrap gap-2 border-b border-slate-800/80 pb-3">
@@ -406,6 +432,7 @@
                 </div>
             </div>
         </div>
+        </div>
 
         <!-- 3. Interactive Widget Kalender Masehi & Hijriah -->
         <div x-data="{
@@ -525,8 +552,8 @@
                     </div>
 
                     <!-- Days Header -->
-                    <div class="grid grid-cols-7 gap-1.5 text-center text-[11px] font-black uppercase text-slate-400 tracking-wider py-1.5 border-b border-slate-200/60 dark:border-slate-800">
-                        <span class="text-rose-500">Ahad</span>
+                    <div class="grid grid-cols-7 gap-1 sm:gap-1.5 text-center text-[10px] sm:text-[11px] font-black uppercase text-slate-400 tracking-wider py-1.5 border-b border-slate-200/60 dark:border-slate-800">
+                        <span class="text-rose-500">Ahd</span>
                         <span>Sen</span>
                         <span>Sel</span>
                         <span>Rab</span>
@@ -536,17 +563,17 @@
                     </div>
 
                     <!-- Days Grid -->
-                    <div class="grid grid-cols-7 gap-2">
+                    <div class="grid grid-cols-7 gap-1 sm:gap-2">
                         @foreach($calendarData['calendar_days'] as $day)
                             @if(is_null($day))
-                                <div class="h-14 bg-transparent rounded-2xl"></div>
+                                <div class="h-10 sm:h-14 bg-transparent rounded-xl sm:rounded-2xl"></div>
                             @else
-                                <div class="h-14 rounded-2xl border p-2 flex flex-col justify-between transition-all relative overflow-hidden group cursor-pointer {{ $day['is_today'] ? 'bg-emerald-600 text-white border-emerald-500 shadow-md font-bold ring-2 ring-emerald-400/50' : 'bg-white dark:bg-slate-900 border-slate-200/70 dark:border-slate-800 text-slate-800 dark:text-slate-200 hover:border-emerald-500/50 hover:shadow-xs' }}">
+                                <div class="h-10 sm:h-14 rounded-xl sm:rounded-2xl border p-1 sm:p-2 flex flex-col justify-between transition-all relative overflow-hidden group cursor-pointer {{ $day['is_today'] ? 'bg-emerald-600 text-white border-emerald-500 shadow-md font-bold ring-2 ring-emerald-400/50' : 'bg-white dark:bg-slate-900 border-slate-200/70 dark:border-slate-800 text-slate-800 dark:text-slate-200 hover:border-emerald-500/50 hover:shadow-xs' }}">
                                     <div class="flex items-center justify-between leading-none">
-                                        <span class="text-xs font-extrabold {{ $day['is_today'] ? 'text-white' : '' }}">{{ $day['day'] }}</span>
+                                        <span class="text-[10px] sm:text-xs font-extrabold {{ $day['is_today'] ? 'text-white' : '' }}">{{ $day['day'] }}</span>
                                     </div>
                                     <div class="text-right leading-none">
-                                        <span class="text-[9px] font-bold {{ $day['is_today'] ? 'text-amber-200' : 'text-amber-600 dark:text-amber-400' }}">{{ $day['hijri_day'] }}</span>
+                                        <span class="text-[8px] sm:text-[9px] font-bold {{ $day['is_today'] ? 'text-amber-200' : 'text-amber-600 dark:text-amber-400' }}">{{ $day['hijri_day'] }}</span>
                                     </div>
                                 </div>
                             @endif
