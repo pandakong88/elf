@@ -637,8 +637,8 @@
 
     {{-- MODAL UBAH STATUS SANTRI (MUKIM / LAJU / BOYONG) --}}
     @if($showStatusModal)
-        <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
-            <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4">
+        <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm overflow-y-auto">
+            <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4 max-h-[85vh] sm:max-h-[90vh] overflow-y-auto my-auto">
                 <h3 class="font-extrabold text-base text-slate-900 dark:text-slate-100">Ubah Status Santri</h3>
                 <p class="text-xs text-slate-500">Mengatur status keberadaan atau keanggotaan untuk <strong>{{ $statusSantriName }}</strong>:</p>
 
@@ -923,14 +923,14 @@
 
     {{-- MODAL BULK TRANSFER KAMAR --}}
     @if($showBulkTransferRoomModal)
-        <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
-            <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4">
+        <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm overflow-y-auto">
+            <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl max-w-md w-full p-5 sm:p-6 shadow-2xl space-y-3.5 max-h-[85vh] sm:max-h-[90vh] overflow-y-auto my-auto">
                 <h3 class="font-extrabold text-base text-slate-900 dark:text-slate-100">Pemindahan Massal (Bulk Transfer) Kamar</h3>
                 <p class="text-xs text-slate-500">
                     Memindahkan <strong>{{ count($selectedSantriIds) }} santri terpilih</strong> sekaligus ke kamar tujuan baru:
                 </p>
 
-                <div class="bg-slate-50 dark:bg-slate-800/50 p-3 rounded-xl max-h-36 overflow-y-auto space-y-1 border border-slate-200/50 dark:border-slate-700/50">
+                <div class="bg-slate-50 dark:bg-slate-800/50 p-2.5 rounded-xl max-h-28 overflow-y-auto space-y-1 border border-slate-200/50 dark:border-slate-700/50">
                     @foreach($selectedSantriList as $sItem)
                         <div class="text-xs font-semibold text-slate-700 dark:text-slate-300 flex items-center justify-between">
                             <span>• {{ $sItem->name }}</span>
@@ -949,7 +949,7 @@
                     </select>
                 </div>
 
-                <div class="flex items-center justify-end gap-2 pt-3">
+                <div class="flex items-center justify-end gap-2 pt-2">
                     <button type="button" wire:click="$set('showBulkTransferRoomModal', false)" class="px-4 py-2 bg-slate-100 text-slate-700 font-bold rounded-xl text-xs">Batal</button>
                     <button type="button" wire:click="requestBulkRoomTransferConfirm" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl text-xs shadow transition-all">Simpan &amp; Pindahkan</button>
                 </div>
@@ -959,14 +959,14 @@
 
     {{-- MODAL BULK TRANSFER KELAS --}}
     @if($showBulkTransferKelasModal)
-        <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
-            <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4">
+        <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm overflow-y-auto">
+            <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl max-w-md w-full p-5 sm:p-6 shadow-2xl space-y-3.5 max-h-[85vh] sm:max-h-[90vh] overflow-y-auto my-auto">
                 <h3 class="font-extrabold text-base text-slate-900 dark:text-slate-100">Pemindahan Massal (Bulk Transfer) Kelas</h3>
                 <p class="text-xs text-slate-500">
                     Memindahkan <strong>{{ count($selectedSantriIds) }} santri terpilih</strong> sekaligus ke kelas madrasah tujuan:
                 </p>
 
-                <div class="bg-slate-50 dark:bg-slate-800/50 p-3 rounded-xl max-h-36 overflow-y-auto space-y-1 border border-slate-200/50 dark:border-slate-700/50">
+                <div class="bg-slate-50 dark:bg-slate-800/50 p-2.5 rounded-xl max-h-28 overflow-y-auto space-y-1 border border-slate-200/50 dark:border-slate-700/50">
                     @foreach($selectedSantriList as $sItem)
                         <div class="text-xs font-semibold text-slate-700 dark:text-slate-300 flex items-center justify-between">
                             <span>• {{ $sItem->name }}</span>
@@ -985,7 +985,7 @@
                     </select>
                 </div>
 
-                <div class="flex items-center justify-end gap-2 pt-3">
+                <div class="flex items-center justify-end gap-2 pt-2">
                     <button type="button" wire:click="$set('showBulkTransferKelasModal', false)" class="px-4 py-2 bg-slate-100 text-slate-700 font-bold rounded-xl text-xs">Batal</button>
                     <button type="button" wire:click="requestBulkKelasTransferConfirm" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl text-xs shadow transition-all">Simpan &amp; Pindahkan</button>
                 </div>
@@ -995,8 +995,8 @@
 
     {{-- MODAL CRUD KOMPLEK --}}
     @if($showDormitoryModal)
-        <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
-            <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4">
+        <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm overflow-y-auto">
+            <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4 max-h-[85vh] sm:max-h-[90vh] overflow-y-auto my-auto">
                 <h3 class="font-extrabold text-base text-slate-900 dark:text-slate-100">
                     {{ $editingDormitoryId ? 'Edit Data Komplek' : 'Tambah Komplek Baru' }}
                 </h3>
@@ -1033,8 +1033,8 @@
 
     {{-- MODAL CRUD KAMAR --}}
     @if($showRoomModal)
-        <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
-            <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4">
+        <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm overflow-y-auto">
+            <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4 max-h-[85vh] sm:max-h-[90vh] overflow-y-auto my-auto">
                 <h3 class="font-extrabold text-base text-slate-900 dark:text-slate-100">
                     {{ $editingRoomId ? 'Edit Data Kamar' : 'Tambah Kamar Baru' }}
                 </h3>
@@ -1068,8 +1068,8 @@
 
     {{-- MODAL CRUD KELAS --}}
     @if($showKelasModal)
-        <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
-            <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4">
+        <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm overflow-y-auto">
+            <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4 max-h-[85vh] sm:max-h-[90vh] overflow-y-auto my-auto">
                 <h3 class="font-extrabold text-base text-slate-900 dark:text-slate-100">
                     {{ $editingKelasId ? 'Edit Data Kelas' : 'Tambah Kelas Baru' }}
                 </h3>
@@ -1112,8 +1112,8 @@
 
     {{-- MODAL SINGLE TRANSFER KAMAR --}}
     @if($showTransferRoomModal)
-        <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
-            <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4">
+        <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm overflow-y-auto">
+            <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4 max-h-[85vh] sm:max-h-[90vh] overflow-y-auto my-auto">
                 <h3 class="font-extrabold text-base text-slate-900 dark:text-slate-100">Pindah Kamar / Komplek Instan</h3>
                 <p class="text-xs text-slate-500">Pilih kamar &amp; komplek tujuan untuk <strong>{{ $transferSantriName }}</strong>:</p>
 
@@ -1137,8 +1137,8 @@
 
     {{-- MODAL SINGLE TRANSFER KELAS --}}
     @if($showTransferKelasModal)
-        <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
-            <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4">
+        <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm overflow-y-auto">
+            <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4 max-h-[85vh] sm:max-h-[90vh] overflow-y-auto my-auto">
                 <h3 class="font-extrabold text-base text-slate-900 dark:text-slate-100">Pindah Kelas Madrasah Instan</h3>
                 <p class="text-xs text-slate-500">Pilih kelas madrasah tujuan untuk <strong>{{ $transferKelasSantriName }}</strong>:</p>
 
@@ -1162,8 +1162,8 @@
 
     {{-- MODAL KONFIRMASI KOSTUM ELEGAN (NO BROWSER ALERT) --}}
     @if($showConfirmModal)
-        <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md">
-            <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4">
+        <div class="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md overflow-y-auto">
+            <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4 max-h-[85vh] sm:max-h-[90vh] overflow-y-auto my-auto">
                 <div class="flex items-center gap-3">
                     <div class="w-12 h-12 rounded-2xl flex items-center justify-center font-bold flex-shrink-0
                         {{ $confirmButtonColor === 'rose' ? 'bg-rose-100 text-rose-600 dark:bg-rose-950 dark:text-rose-400' : '' }}
