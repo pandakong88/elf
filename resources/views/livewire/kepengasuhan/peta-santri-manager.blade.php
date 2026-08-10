@@ -844,58 +844,53 @@
                 $motherJob    = $addInfo['mother_job'] ?? '-';
                 $formalGrade  = $prof->school_year ?? ($addInfo['school_grade'] ?? '-');
             @endphp
-            <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md overflow-y-auto">
-                <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl max-w-4xl w-full p-6 sm:p-8 shadow-2xl space-y-6 my-8 max-h-[90vh] overflow-y-auto">
+            <div class="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4 bg-slate-900/60 backdrop-blur-md">
+                {{-- Bottom sheet di mobile, centered dialog di desktop --}}
+                <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-t-3xl sm:rounded-3xl w-full sm:max-w-4xl p-4 sm:p-6 shadow-2xl space-y-4 max-h-[92vh] sm:max-h-[90vh] overflow-y-auto">
                     {{-- Header Profile Banner --}}
-                    <div class="relative bg-slate-50 dark:bg-slate-800/80 p-5 rounded-2xl border border-slate-200/80 dark:border-slate-700/80 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                        <div class="flex items-center gap-4">
-                            <div class="w-16 h-16 rounded-2xl bg-emerald-600 text-white flex items-center justify-center font-black text-2xl shadow-lg flex-shrink-0 overflow-hidden border-2 border-emerald-400">
+                    <div class="relative bg-slate-50 dark:bg-slate-800/80 p-4 sm:p-5 rounded-2xl border border-slate-200/80 dark:border-slate-700/80">
+                        <div class="flex items-start gap-3">
+                            <div class="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-emerald-600 text-white flex items-center justify-center font-black text-xl sm:text-2xl shadow-lg flex-shrink-0 overflow-hidden border-2 border-emerald-400">
                                 @if($selectedSantri->photo)
                                     <img src="{{ Storage::url($selectedSantri->photo) }}" class="w-full h-full object-cover" alt="">
                                 @else
                                     {{ strtoupper(substr($selectedSantri->name, 0, 2)) }}
                                 @endif
                             </div>
-                            <div>
-                                <h3 class="font-black text-xl text-slate-900 dark:text-slate-100 tracking-tight">{{ $selectedSantri->name }}</h3>
-                                <div class="flex flex-wrap items-center gap-3 text-xs text-slate-500 mt-1">
+                            <div class="flex-1 min-w-0 pr-8">
+                                <h3 class="font-black text-base sm:text-xl text-slate-900 dark:text-slate-100 tracking-tight leading-tight">{{ $selectedSantri->name }}</h3>
+                                <div class="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-slate-500 mt-1">
                                     <span class="font-medium">NIS: <strong class="font-mono text-slate-900 dark:text-slate-100">{{ $prof->nis ?? '-' }}</strong></span>
-                                    <span class="text-slate-300 dark:text-slate-700">•</span>
                                     <span class="font-medium">NIK: <strong class="font-mono text-slate-900 dark:text-slate-100">{{ $selectedSantri->nik ?? '-' }}</strong></span>
                                 </div>
-                                <div class="mt-2.5 flex flex-wrap items-center gap-2">
-                                    <span class="px-2.5 py-0.5 text-[10px] font-extrabold uppercase rounded-full {{ $selectedSantri->gender === 'L' ? 'bg-blue-100 text-blue-700 dark:bg-blue-950/80 dark:text-blue-300' : 'bg-pink-100 text-pink-700 dark:bg-pink-950/80 dark:text-pink-300' }}">
+                                <div class="mt-2 flex flex-wrap items-center gap-1.5">
+                                    <span class="px-2 py-0.5 text-[10px] font-extrabold uppercase rounded-full {{ $selectedSantri->gender === 'L' ? 'bg-blue-100 text-blue-700 dark:bg-blue-950/80 dark:text-blue-300' : 'bg-pink-100 text-pink-700 dark:bg-pink-950/80 dark:text-pink-300' }}">
                                         {{ $selectedSantri->gender === 'L' ? 'Putra (L)' : 'Putri (P)' }}
                                     </span>
 
                                     @if($enrollStatus === 'alumni')
-                                        <span class="px-2.5 py-0.5 text-[10px] font-extrabold uppercase rounded-full bg-purple-100 text-purple-700 dark:bg-purple-950/80 dark:text-purple-300">
-                                            ALUMNI / LULUS
-                                        </span>
+                                        <span class="px-2 py-0.5 text-[10px] font-extrabold uppercase rounded-full bg-purple-100 text-purple-700 dark:bg-purple-950/80 dark:text-purple-300">Alumni</span>
                                     @elseif(in_array($enrollStatus, ['boyong', 'keluar_resmi', 'dikeluarkan']))
-                                        <span class="px-2.5 py-0.5 text-[10px] font-extrabold uppercase rounded-full bg-rose-100 text-rose-700 dark:bg-rose-950/80 dark:text-rose-300">
-                                            BOYONG / KELUAR
-                                        </span>
+                                        <span class="px-2 py-0.5 text-[10px] font-extrabold uppercase rounded-full bg-rose-100 text-rose-700 dark:bg-rose-950/80 dark:text-rose-300">Boyong</span>
                                     @else
-                                        <span class="px-2.5 py-0.5 text-[10px] font-extrabold uppercase rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-950/80 dark:text-emerald-300">
-                                            SANTRI AKTIF
-                                        </span>
+                                        <span class="px-2 py-0.5 text-[10px] font-extrabold uppercase rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-950/80 dark:text-emerald-300">Aktif</span>
                                     @endif
 
-                                    <span class="px-2.5 py-0.5 text-[10px] font-extrabold uppercase rounded-full bg-indigo-100 text-indigo-700 dark:bg-indigo-950/80 dark:text-indigo-300">
+                                    <span class="px-2 py-0.5 text-[10px] font-extrabold uppercase rounded-full bg-indigo-100 text-indigo-700 dark:bg-indigo-950/80 dark:text-indigo-300">
                                         {{ strtoupper($presStatus) }}
                                     </span>
                                 </div>
                             </div>
                         </div>
-
-                        <button type="button" wire:click="closeQuickProfile" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1.5 rounded-xl hover:bg-slate-200/60 dark:hover:bg-slate-700 transition-colors">
+                        {{-- Close button absolute top-right --}}
+                        <button type="button" wire:click="closeQuickProfile"
+                            class="absolute top-3 right-3 sm:top-4 sm:right-4 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1.5 rounded-xl hover:bg-slate-200/60 dark:hover:bg-slate-700 transition-colors">
                             <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
                         </button>
                     </div>
 
                     {{-- Detail Information Grid --}}
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-5 text-xs">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
                         {{-- 1. Penempatan Asrama & Madrasah --}}
                         <div class="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-2xl border border-slate-200/60 dark:border-slate-700/60 space-y-3">
                             <div class="flex items-center gap-2 border-b border-slate-200/60 dark:border-slate-700/60 pb-2">
@@ -1039,12 +1034,11 @@
                         </div>
                     </div>
 
-                    {{-- Action Buttons --}}
-
-                    <div class="flex flex-wrap items-center justify-end gap-3 border-t border-slate-100 dark:border-slate-800 pt-4">
+                    {{-- Action Buttons: grid di mobile, flex di desktop --}}
+                    <div class="grid grid-cols-2 sm:flex sm:flex-wrap sm:items-center sm:justify-end gap-2 sm:gap-3 border-t border-slate-100 dark:border-slate-800 pt-4">
                         @can('update-person')
                         <a href="{{ route('kepengasuhan.santri.edit', $selectedSantri->id) }}"
-                            class="px-4 py-2.5 bg-slate-700 hover:bg-slate-600 text-white font-extrabold rounded-xl text-xs shadow-md transition-all flex items-center gap-2">
+                            class="flex items-center justify-center gap-2 px-4 py-2.5 bg-slate-700 hover:bg-slate-600 text-white font-extrabold rounded-xl text-xs shadow-md transition-all">
                             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
                             <span>Edit Biodata</span>
                         </a>
@@ -1052,7 +1046,7 @@
 
                         @can('manage-kamar')
                         <button type="button" wire:click="openTransferRoomModal('{{ $selectedSantri->id }}')"
-                            class="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold rounded-xl text-xs shadow-md transition-all flex items-center gap-2">
+                            class="flex items-center justify-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold rounded-xl text-xs shadow-md transition-all">
                             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
                             <span>Pindah Kamar</span>
                         </button>
@@ -1060,13 +1054,16 @@
 
                         @can('manage-kelas')
                         <button type="button" wire:click="openTransferKelasModal('{{ $selectedSantri->id }}')"
-                            class="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-extrabold rounded-xl text-xs shadow-md transition-all flex items-center gap-2">
+                            class="flex items-center justify-center gap-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-extrabold rounded-xl text-xs shadow-md transition-all">
                             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
                             <span>Pindah Kelas</span>
                         </button>
                         @endcan
 
-                        <button type="button" wire:click="closeQuickProfile" class="px-6 py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-extrabold rounded-xl text-xs shadow-md transition-all">Tutup Informasi Profil</button>
+                        <button type="button" wire:click="closeQuickProfile"
+                            class="col-span-2 sm:col-span-1 flex items-center justify-center px-5 py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-extrabold rounded-xl text-xs shadow-md transition-all">
+                            Tutup
+                        </button>
                     </div>
                 </div>
             </div>
