@@ -435,6 +435,17 @@ class DashboardTagihan extends Component
             'wa_url'     => 'https://wa.me/' . preg_replace('/[^0-9]/', '', $contents['wali_wa_putri'] ?? '6285713285438') . '?text=' . urlencode("Assalamu'alaikum Bendahara Putri Al-Fithroh, saya Wali Santri dari {$santri->name} ingin konfirmasi pembayaran."),
         ];
 
+        // Compute Last Updated Time for Wali Portal Transparency
+        $lastBillUpdate = Bill::where('person_id', $this->personId)->max('updated_at');
+        $lastPayment = \App\Modules\Keuangan\Models\BillPayment::whereHas('bill', fn($q) => $q->where('person_id', $this->personId))
+            ->max('paid_at');
+
+        $latestTimestamp = max($lastBillUpdate, $lastPayment);
+
+        $lastUpdatedLabel = $latestTimestamp
+            ? \Carbon\Carbon::parse($latestTimestamp)->locale('id')->translatedFormat('d M Y • H:i') . ' WIB'
+            : 'Hari ini (Sistem Real-Time)';
+
         return view('livewire.wali-portal.dashboard-tagihan', [
             'santri'                  => $santri,
             'isPutri'                 => $isPutri,
@@ -472,6 +483,7 @@ class DashboardTagihan extends Component
             'simulasiBillOptions'     => $simulasiBillOptions,
             'mandatoryBillIds'        => $mandatoryBillIds,
             'pastBillIdsOnly'         => $pastBillIdsOnly,
+            'lastUpdatedLabel'        => $lastUpdatedLabel,
         ])->layout('layouts.wali-portal', ['title' => 'Dashboard Tagihan — ' . $santri->name]);
     }
 }

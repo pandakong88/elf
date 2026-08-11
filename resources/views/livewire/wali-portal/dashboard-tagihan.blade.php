@@ -34,9 +34,15 @@
 
             <!-- Profile Info -->
             <div class="flex-1 min-w-0">
-                <span class="inline-block text-[10px] font-extrabold uppercase tracking-wider text-emerald-700 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-500/10 px-2 py-0.5 rounded-md border border-emerald-200 dark:border-emerald-500/20">
-                    Santri Aktif
-                </span>
+                <div class="flex items-center gap-1.5 flex-wrap">
+                    <span class="inline-block text-[10px] font-extrabold uppercase tracking-wider text-emerald-700 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-500/10 px-2 py-0.5 rounded-md border border-emerald-200 dark:border-emerald-500/20">
+                        Santri Aktif
+                    </span>
+                    <span class="inline-flex items-center gap-1.5 text-[10px] font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-300 dark:border-emerald-800 px-2 py-0.5 rounded-md shadow-2xs">
+                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                        <span>Terakhir Di-update: {{ $lastUpdatedLabel }}</span>
+                    </span>
+                </div>
                 <h2 class="text-base font-extrabold text-slate-900 dark:text-slate-100 truncate mt-0.5">{{ $santri->name }}</h2>
                 @if($santri->nis)
                     <p class="text-[11px] font-mono text-slate-500 dark:text-slate-400">NIS: {{ $santri->nis }}</p>
