@@ -3,6 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <title>Checklist Keuangan — {{ $config->label }}</title>
+    @php
+        $blankRowsCount = isset($extraBlankRows) ? max(0, (int)$extraBlankRows) : 0;
+        $mode = $printMode ?? 'blank';
+    @endphp
     <style>
         @page {
             size: {{ $paperSize === 'f4' ? '215mm 330mm' : 'A4 portrait' }};
@@ -275,16 +279,20 @@
                                     @endif
                                 </td>
                                 @foreach($row['bills'] as $periodKey => $bill)
-                                    <td style="padding: 4px 8px;">
-                                        @if(!$bill)
-                                            <div class="center" style="color: #cbd5e1; font-weight: normal;">—</div>
-                                        @elseif($bill->status === 'paid')
-                                            <div class="center" style="color: #16a34a; font-weight: 800;">LUNAS</div>
+                                    <td class="center font-bold" style="padding: 6px 8px;">
+                                        @if($mode === 'history')
+                                            @if($bill && $bill->amount_paid > 0)
+                                                <span style="color: #16a34a; font-size: 9px; font-weight: 800;">
+                                                    Rp {{ number_format($bill->amount_paid, 0, ',', '.') }}
+                                                    @if($bill->status === 'paid')
+                                                        ✓
+                                                    @endif
+                                                </span>
+                                            @else
+                                                <span style="color: #cbd5e1;">—</span>
+                                            @endif
                                         @else
-                                            <div class="write-lines">
-                                                <div class="write-line"></div>
-                                                <div class="write-line"></div>
-                                            </div>
+                                            &nbsp;
                                         @endif
                                     </td>
                                 @endforeach
@@ -297,6 +305,21 @@
                                 </td>
                             </tr>
                         @endforeach
+
+                        {{-- Extra Blank Rows --}}
+                        @if($blankRowsCount > 0)
+                            @for($b = 1; $b <= $blankRowsCount; $b++)
+                                <tr>
+                                    <td class="center" style="color: #94a3b8; font-weight: bold;">{{ count($rows) + $b }}</td>
+                                    <td class="border-dark">&nbsp;</td>
+                                    <td class="center border-dark" style="color: #cbd5e1;">—</td>
+                                    @foreach($periods as $periodKey => $periodLabel)
+                                        <td class="center">&nbsp;</td>
+                                    @endforeach
+                                    <td class="center border-left-dark">&nbsp;</td>
+                                </tr>
+                            @endfor
+                        @endif
                     </tbody>
                 </table>
 
@@ -369,7 +392,7 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @php $currentGroup = null; @endphp
+                    @php $currentGroup = null; $counter = 1; @endphp
                     @foreach($gridData as $i => $row)
                         @php 
                             if ($config->target_type === 'kelas') {
@@ -383,6 +406,20 @@
                             }
                         @endphp
                         @if($currentGroup !== $groupKey)
+                            @if($currentGroup !== null && $blankRowsCount > 0)
+                                @for($b = 1; $b <= $blankRowsCount; $b++)
+                                    <tr>
+                                        <td class="center" style="color: #94a3b8; font-weight: bold;">{{ $counter++ }}</td>
+                                        <td class="border-dark">&nbsp;</td>
+                                        <td class="center border-dark" style="color: #cbd5e1;">—</td>
+                                        @foreach($periods as $periodKey => $periodLabel)
+                                            <td class="center">&nbsp;</td>
+                                        @endforeach
+                                        <td class="center border-left-dark">&nbsp;</td>
+                                    </tr>
+                                @endfor
+                            @endif
+
                             <tr class="room-header">
                                 <td colspan="{{ 4 + count($periods) }}">
                                     {{ $groupLabel }}
@@ -391,7 +428,7 @@
                             @php $currentGroup = $groupKey; @endphp
                         @endif
                         <tr>
-                            <td class="center" style="color: #64748b; font-weight: bold;">{{ $i + 1 }}</td>
+                            <td class="center" style="color: #64748b; font-weight: bold;">{{ $counter++ }}</td>
                             <td style="font-weight: bold; font-size: 10px; color: #0f172a; white-space: nowrap;" class="border-dark">{{ $row['person']->name }}</td>
                             <td class="center font-bold border-dark" style="color: #b91c1c;">
                                 @if($row['tunggakanLamaSum'] > 0)
@@ -401,16 +438,20 @@
                                 @endif
                             </td>
                             @foreach($row['bills'] as $periodKey => $bill)
-                                <td style="padding: 4px 8px;">
-                                    @if(!$bill)
-                                        <div class="center" style="color: #cbd5e1; font-weight: normal;">—</div>
-                                    @elseif($bill->status === 'paid')
-                                        <div class="center" style="color: #16a34a; font-weight: 800;">LUNAS</div>
+                                <td class="center font-bold" style="padding: 6px 8px;">
+                                    @if($mode === 'history')
+                                        @if($bill && $bill->amount_paid > 0)
+                                            <span style="color: #16a34a; font-size: 9px; font-weight: 800;">
+                                                Rp {{ number_format($bill->amount_paid, 0, ',', '.') }}
+                                                @if($bill->status === 'paid')
+                                                    ✓
+                                                @endif
+                                            </span>
+                                        @else
+                                            <span style="color: #cbd5e1;">—</span>
+                                        @endif
                                     @else
-                                        <div class="write-lines">
-                                            <div class="write-line"></div>
-                                            <div class="write-line"></div>
-                                        </div>
+                                        &nbsp;
                                     @endif
                                 </td>
                             @endforeach
@@ -423,6 +464,20 @@
                             </td>
                         </tr>
                     @endforeach
+
+                    @if($blankRowsCount > 0)
+                        @for($b = 1; $b <= $blankRowsCount; $b++)
+                            <tr>
+                                <td class="center" style="color: #94a3b8; font-weight: bold;">{{ $counter++ }}</td>
+                                <td class="border-dark">&nbsp;</td>
+                                <td class="center border-dark" style="color: #cbd5e1;">—</td>
+                                @foreach($periods as $periodKey => $periodLabel)
+                                    <td class="center">&nbsp;</td>
+                                @endforeach
+                                <td class="center border-left-dark">&nbsp;</td>
+                            </tr>
+                        @endfor
+                    @endif
                 </tbody>
             </table>
 

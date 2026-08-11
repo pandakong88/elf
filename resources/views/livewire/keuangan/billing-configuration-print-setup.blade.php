@@ -254,6 +254,47 @@
 
                     {{-- Ukuran Kertas & Format Halaman --}}
                     <div class="pt-3 border-t border-slate-100 dark:border-slate-800 space-y-3">
+                        @if($config->interval === 'monthly')
+                            <div>
+                                <label class="block text-[10px] font-extrabold text-slate-450 dark:text-slate-500 uppercase tracking-wider mb-1.5">
+                                    Rentang Waktu Cetak
+                                </label>
+                                <select wire:model.live="yearRangeMode"
+                                    class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200 rounded-xl px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500/30">
+                                    <option value="1_year">📅 1 Tahun (12 Bulan)</option>
+                                    <option value="2_years">📅 2 Tahun (24 Bulan — Landscape Compact)</option>
+                                </select>
+                            </div>
+                        @endif
+
+                        <div>
+                            <label class="block text-[10px] font-extrabold text-slate-450 dark:text-slate-500 uppercase tracking-wider mb-1.5">
+                                Mode Isi Sel Cetakan
+                            </label>
+                            <select wire:model.live="printContentMode"
+                                class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200 rounded-xl px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500/30">
+                                <option value="blank">📝 Blangko Kosong Penagihan (Untuk Diisi Manual Pulpen)</option>
+                                <option value="history">📊 Rekap Histori Pembayaran (Cetak Nominal Terbayar)</option>
+                            </select>
+                            <span class="text-[9px] text-slate-400 mt-1 block">Mode <b>Blangko Kosong</b> untuk formulir cetak penagihan fisik. Mode <b>Rekap Histori</b> otomatis mencetak nominal uang yang sudah masuk.</span>
+                        </div>
+
+                        <div>
+                            <label class="block text-[10px] font-extrabold text-slate-450 dark:text-slate-500 uppercase tracking-wider mb-1.5">
+                                Baris Kosong Cadangan (per Kamar/Kelas)
+                            </label>
+                            <select wire:model.live="extraBlankRows"
+                                class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200 rounded-xl px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500/30">
+                                <option value="0">❌ Tanpa Baris Cadangan</option>
+                                <option value="1">+ 1 Baris Kosong</option>
+                                <option value="2">+ 2 Baris Kosong</option>
+                                <option value="3">+ 3 Baris Kosong (Disarankan)</option>
+                                <option value="5">+ 5 Baris Kosong</option>
+                                <option value="10">+ 10 Baris Kosong</option>
+                            </select>
+                            <span class="text-[9px] text-slate-400 mt-1 block">Baris ekstra di bawah tabel untuk ditulis manual (santri baru/pindahan).</span>
+                        </div>
+
                         <div>
                             <label class="block text-[10px] font-extrabold text-slate-450 dark:text-slate-500 uppercase tracking-wider mb-1.5">
                                 Ukuran Kertas
@@ -281,7 +322,7 @@
                 <div class="pt-4 border-t border-slate-100 dark:border-slate-800 space-y-2.5">
                     @if($config->target_type === 'kelas')
                         @if(!empty($selectedKelasIds))
-                            <a href="{{ route('print.checklist-kelas', ['kelas_ids' => implode(',', $selectedKelasIds), 'bill_type' => $config->type, 'semester' => $selectedSemester, 'year' => $selectedYear, 'paper_size' => $paperSize]) }}"
+                            <a href="{{ route('print.checklist-kelas', ['kelas_ids' => implode(',', $selectedKelasIds), 'bill_type' => $config->type, 'semester' => $selectedSemester, 'year' => $selectedYear, 'year_range' => $yearRangeMode, 'blank_rows' => $extraBlankRows, 'print_mode' => $printContentMode, 'paper_size' => $paperSize]) }}"
                                target="_blank"
                                class="w-full flex items-center justify-center gap-2 px-5 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-xl text-xs font-bold transition-all shadow-md shadow-blue-500/10">
                                 <svg class="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
@@ -295,7 +336,7 @@
                         @endif
                     @else
                         @if(!empty($selectedDormitoryIds))
-                            <a href="{{ route('print.checklist-config', ['id' => $config->id, 'dormitory_ids' => implode(',', $selectedDormitoryIds), 'month' => $selectedMonth, 'year' => $selectedYear, 'paper_size' => $paperSize, 'page_break_room' => $pageBreakPerRoom ? 1 : 0]) }}"
+                            <a href="{{ route('print.checklist-config', ['id' => $config->id, 'dormitory_ids' => implode(',', $selectedDormitoryIds), 'month' => $selectedMonth, 'year' => $selectedYear, 'year_range' => $yearRangeMode, 'blank_rows' => $extraBlankRows, 'print_mode' => $printContentMode, 'paper_size' => $paperSize, 'page_break_room' => $pageBreakPerRoom ? 1 : 0]) }}"
                                target="_blank"
                                class="w-full flex items-center justify-center gap-2 px-5 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-xl text-xs font-bold transition-all shadow-md shadow-blue-500/10">
                                 <svg class="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>

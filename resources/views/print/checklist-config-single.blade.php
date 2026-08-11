@@ -3,6 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <title>Checklist Keuangan — {{ $config->label }}</title>
+    @php
+        $blankRowsCount = isset($extraBlankRows) ? max(0, (int)$extraBlankRows) : 0;
+        $mode = $printMode ?? 'blank';
+    @endphp
     <style>
         @page {
             size: {{ $paperSize === 'f4' ? '215mm 330mm' : 'A4 portrait' }};
@@ -126,18 +130,6 @@
             border: 1.5px solid #475569;
         }
 
-        /* Write lines for manual handwriting */
-        .write-lines {
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-            padding: 2px 0;
-        }
-        .write-line {
-            border-bottom: 1.5px dotted #cbd5e1;
-            height: 11px;
-        }
-
         /* Repeat headers */
         thead {
             display: table-header-group;
@@ -210,46 +202,31 @@
 </head>
 <body>
     <div class="no-print" style="margin-bottom: 20px; text-align: right; padding: 12px 20px; background: #f8fafc; border-bottom: 1px solid #e2e8f0; font-family: sans-serif;">
-        <div style="max-width: 1200px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between;">
-            <span style="font-size: 12px; font-weight: bold; color: #475569;">Mode Cetak Kertas Checklist Keuangan (Sekali Bayar / Tahunan)</span>
+        <div style="max-width: 1200px; margin: 0 auto; display: flex; align-items: center; justify-between;">
+            <span style="font-size: 12px; font-weight: bold; color: #475569;">Mode Cetak Kertas Checklist Keuangan (Event / Insidental)</span>
             <button onclick="window.print()" style="padding: 8px 20px; font-size: 11px; font-weight: bold; cursor: pointer; background: #10b981; color: #fff; border: 0; border-radius: 6px; box-shadow: 0 2px 4px rgba(16,185,129,0.2); transition: all 0.2s;">🖨️ Cetak / Simpan PDF</button>
         </div>
     </div>
 
     @if($pageBreakRoom)
-        {{-- Group by class or dormitory/room based on target_type --}}
+        {{-- Group by dormitory and room name, render separate sheets --}}
         @php
-            if ($config->target_type === 'kelas') {
-                $grouped = collect($gridData)->groupBy('kelas_name');
-            } else {
-                $grouped = collect($gridData)->groupBy(fn($item) => $item['dormitory_name'] . '|' . $item['room_name']);
-            }
+            $grouped = collect($gridData)->groupBy(fn($item) => $item['dormitory_name'] . '|' . $item['room_name']);
         @endphp
         @foreach($grouped as $key => $rows)
             @php
-                if ($config->target_type === 'kelas') {
-                    $kelasName = $key;
-                    $firstRow = $rows->first();
-                    $headerLabel = "Kelas: " . $kelasName . ($firstRow['kelas_jenjang'] ? " (" . strtoupper($firstRow['kelas_jenjang']) . ")" : "");
-                    $metaLabelName = "Kelas / Jenjang";
-                    $metaValueString = $kelasName . ($firstRow['kelas_jenjang'] ? " / " . strtoupper($firstRow['kelas_jenjang']) : "");
-                } else {
-                    [$dormName, $roomName] = explode('|', $key);
-                    $headerLabel = $dormName . " (KAMAR: " . strtoupper($roomName) . ")";
-                    $metaLabelName = "Komplek";
-                    $metaValueString = $dormName . " (KAMAR: " . strtoupper($roomName) . ")";
-                }
+                [$dormName, $roomName] = explode('|', $key);
             @endphp
             <div class="page-container" style="{{ !$loop->first ? 'margin-top: 20px;' : '' }}">
                 <div class="header">
                     <h1>Pondok Pesantren Al-Fithroh</h1>
-                    <p>Buku Pedoman Keuangan Santri — Lembar Checklist Tagihan Khusus</p>
+                    <p>Buku Pedoman Keuangan Santri — Lembar Setoran Tagihan Khusus / Event</p>
                 </div>
 
                 <div class="meta-container">
                     <div class="meta-item">
-                        <span class="meta-label">{{ $metaLabelName }}</span>
-                        <span class="meta-value">: {{ $metaValueString }}</span>
+                        <span class="meta-label">Komplek</span>
+                        <span class="meta-value">: {{ $dormName }} (KAMAR: {{ strtoupper($roomName) }})</span>
                     </div>
                     <div class="meta-item">
                         <span class="meta-label">Nama Iuran</span>
@@ -260,8 +237,8 @@
                         <span class="meta-value">: {{ strtoupper(str_replace('_', ' ', $config->type)) }}</span>
                     </div>
                     <div class="meta-item">
-                        <span class="meta-label">Interval</span>
-                        <span class="meta-value">: {{ strtoupper($config->interval) }}</span>
+                        <span class="meta-label">Tahun Buku</span>
+                        <span class="meta-value">: {{ $year }}</span>
                     </div>
                 </div>
 
@@ -278,26 +255,32 @@
                     </thead>
                     <tbody>
                         @foreach($rows as $i => $row)
-                            @php $bill = $row['bills']['single'] ?? null; @endphp
+                            @php
+                                $bill = $row['bills']['single'] ?? null;
+                                $expectedTotal = $bill ? $bill->amount : ($row['expectedAmount'] ?? $config->amount);
+                                $paidAmount = $bill ? $bill->amount_paid : 0.00;
+                                $remaining = max(0, $expectedTotal - $paidAmount);
+                            @endphp
                             <tr>
                                 <td class="center" style="color: #64748b; font-weight: bold;">{{ $i + 1 }}</td>
                                 <td style="font-weight: bold; font-size: 10px; color: #0f172a; white-space: nowrap;" class="border-dark">{{ $row['person']->name }}</td>
                                 <td class="center font-bold border-dark">
-                                    Rp {{ number_format($bill ? $bill->amount : ($row['expectedAmount'] ?? $config->amount), 0, ',', '.') }}
+                                    Rp {{ number_format($expectedTotal, 0, ',', '.') }}
                                 </td>
-                                @if($bill && $bill->status === 'paid')
-                                    <td colspan="2" class="center font-bold border-dark" style="color: #16a34a; font-weight: 800;">
-                                        — LUNAS DI SISTEM —
+                                @if($mode === 'history')
+                                    <td class="center font-bold border-dark" style="{{ $paidAmount > 0 ? 'color: #16a34a;' : 'color: #94a3b8;' }}">
+                                        @if($paidAmount > 0)
+                                            Rp {{ number_format($paidAmount, 0, ',', '.') }}
+                                        @else
+                                            —
+                                        @endif
                                     </td>
+                                    <td class="center border-dark">&nbsp;</td>
                                 @else
-                                    <td class="center border-dark" style="color: #cbd5e1; font-size: 8px; vertical-align: bottom; padding-bottom: 4px;">
-                                        Rp .......................... (Paraf)
-                                    </td>
-                                    <td class="center border-dark" style="color: #cbd5e1; font-size: 8px; vertical-align: bottom; padding-bottom: 4px;">
-                                        Rp .......................... (Paraf)
-                                    </td>
+                                    <td class="center border-dark">&nbsp;</td>
+                                    <td class="center border-dark">&nbsp;</td>
                                 @endif
-                                <td class="center border-left-dark" style="color: #64748b; font-size: 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 85px;">
+                                <td class="center border-left-dark" style="color: #64748b; font-size: 8.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 85px;">
                                     @if(!empty($row['exceptionNote']))
                                         <span style="color: #d97706; font-weight: bold;">{{ \Illuminate\Support\Str::limit($row['exceptionNote'], 16) }}</span>
                                     @else
@@ -306,6 +289,20 @@
                                 </td>
                             </tr>
                         @endforeach
+
+                        {{-- Extra Blank Rows --}}
+                        @if($blankRowsCount > 0)
+                            @for($b = 1; $b <= $blankRowsCount; $b++)
+                                <tr>
+                                    <td class="center" style="color: #94a3b8; font-weight: bold;">{{ count($rows) + $b }}</td>
+                                    <td class="border-dark">&nbsp;</td>
+                                    <td class="center border-dark" style="color: #cbd5e1;">—</td>
+                                    <td class="center border-dark">&nbsp;</td>
+                                    <td class="center border-dark">&nbsp;</td>
+                                    <td class="center border-left-dark">&nbsp;</td>
+                                </tr>
+                            @endfor
+                        @endif
                     </tbody>
                 </table>
 
@@ -336,7 +333,7 @@
         <div class="page-container">
             <div class="header">
                 <h1>Pondok Pesantren Al-Fithroh</h1>
-                <p>Buku Pedoman Keuangan Santri — Lembar Checklist Tagihan Khusus</p>
+                <p>Buku Pedoman Keuangan Santri — Lembar Setoran Tagihan Khusus / Event</p>
             </div>
 
             <div class="meta-container">
@@ -359,6 +356,10 @@
                     <span class="meta-label">Tipe Tagihan</span>
                     <span class="meta-value">: {{ strtoupper(str_replace('_', ' ', $config->type)) }}</span>
                 </div>
+                <div class="meta-item">
+                    <span class="meta-label">Tahun Buku</span>
+                    <span class="meta-value">: {{ $year }}</span>
+                </div>
             </div>
 
             <table class="grid">
@@ -373,10 +374,13 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @php $currentGroup = null; @endphp
+                    @php $currentGroup = null; $counter = 1; @endphp
                     @foreach($gridData as $i => $row)
                         @php 
                             $bill = $row['bills']['single'] ?? $row['bills'][0] ?? null;
+                            $expectedTotal = $bill ? $bill->amount : ($row['expectedAmount'] ?? $config->amount);
+                            $paidAmount = $bill ? $bill->amount_paid : 0.00;
+                            $remaining = max(0, $expectedTotal - $paidAmount);
                             if ($config->target_type === 'kelas') {
                                 $groupKey = $row['kelas_name'] ?? 'Tanpa Kelas';
                                 $groupLabel = "🏫 KELAS: " . strtoupper($groupKey) . ($row['kelas_jenjang'] ? " (" . strtoupper($row['kelas_jenjang']) . ")" : "");
@@ -388,6 +392,19 @@
                             }
                         @endphp
                         @if($currentGroup !== $groupKey)
+                            @if($currentGroup !== null && $blankRowsCount > 0)
+                                @for($b = 1; $b <= $blankRowsCount; $b++)
+                                    <tr>
+                                        <td class="center" style="color: #94a3b8; font-weight: bold;">{{ $counter++ }}</td>
+                                        <td class="border-dark">&nbsp;</td>
+                                        <td class="center border-dark" style="color: #cbd5e1;">—</td>
+                                        <td class="center border-dark">&nbsp;</td>
+                                        <td class="center border-dark">&nbsp;</td>
+                                        <td class="center border-left-dark">&nbsp;</td>
+                                    </tr>
+                                @endfor
+                            @endif
+
                             <tr class="room-header">
                                 <td colspan="6">
                                     {{ $groupLabel }}
@@ -396,24 +413,25 @@
                             @php $currentGroup = $groupKey; @endphp
                         @endif
                         <tr>
-                            <td class="center" style="color: #64748b; font-weight: bold;">{{ $i + 1 }}</td>
+                            <td class="center" style="color: #64748b; font-weight: bold;">{{ $counter++ }}</td>
                             <td style="font-weight: bold; font-size: 10px; color: #0f172a; white-space: nowrap;" class="border-dark">{{ $row['person']->name }}</td>
                             <td class="center font-bold border-dark">
-                                Rp {{ number_format($bill ? $bill->amount : ($row['expectedAmount'] ?? $config->amount), 0, ',', '.') }}
+                                Rp {{ number_format($expectedTotal, 0, ',', '.') }}
                             </td>
-                            @if($bill && $bill->status === 'paid')
-                                <td colspan="2" class="center font-bold border-dark" style="color: #16a34a; font-weight: 800;">
-                                    — LUNAS DI SISTEM —
+                            @if($mode === 'history')
+                                <td class="center font-bold border-dark" style="{{ $paidAmount > 0 ? 'color: #16a34a;' : 'color: #94a3b8;' }}">
+                                    @if($paidAmount > 0)
+                                        Rp {{ number_format($paidAmount, 0, ',', '.') }}
+                                    @else
+                                        —
+                                    @endif
                                 </td>
+                                <td class="center border-dark">&nbsp;</td>
                             @else
-                                <td class="center border-dark" style="color: #cbd5e1; font-size: 8px; vertical-align: bottom; padding-bottom: 4px;">
-                                    Rp .......................... (Paraf)
-                                </td>
-                                <td class="center border-dark" style="color: #cbd5e1; font-size: 8px; vertical-align: bottom; padding-bottom: 4px;">
-                                    Rp .......................... (Paraf)
-                                </td>
+                                <td class="center border-dark">&nbsp;</td>
+                                <td class="center border-dark">&nbsp;</td>
                             @endif
-                            <td class="center border-left-dark" style="color: #64748b; font-size: 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 85px;">
+                            <td class="center border-left-dark" style="color: #64748b; font-size: 8.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 85px;">
                                 @if(!empty($row['exceptionNote']))
                                     <span style="color: #d97706; font-weight: bold;">{{ \Illuminate\Support\Str::limit($row['exceptionNote'], 16) }}</span>
                                 @else
@@ -422,6 +440,19 @@
                             </td>
                         </tr>
                     @endforeach
+
+                    @if($blankRowsCount > 0)
+                        @for($b = 1; $b <= $blankRowsCount; $b++)
+                            <tr>
+                                <td class="center" style="color: #94a3b8; font-weight: bold;">{{ $counter++ }}</td>
+                                <td class="border-dark">&nbsp;</td>
+                                <td class="center border-dark" style="color: #cbd5e1;">—</td>
+                                <td class="center border-dark">&nbsp;</td>
+                                <td class="center border-dark">&nbsp;</td>
+                                <td class="center border-left-dark">&nbsp;</td>
+                            </tr>
+                        @endfor
+                    @endif
                 </tbody>
             </table>
 

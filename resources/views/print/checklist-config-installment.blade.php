@@ -3,6 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <title>Checklist Keuangan (Cicilan) — {{ $config->label }}</title>
+    @php
+        $blankRowsCount = isset($extraBlankRows) ? max(0, (int)$extraBlankRows) : 0;
+        $mode = $printMode ?? 'blank';
+    @endphp
     <style>
         @page {
             size: {{ $paperSize === 'f4' ? '330mm 215mm' : '297mm 210mm' }};
@@ -126,30 +130,6 @@
             border: 1.5px solid #475569;
         }
 
-        /* Checkbox Design */
-        .checkbox-box {
-            display: inline-block;
-            width: 11px;
-            height: 11px;
-            border: 1px solid #475569;
-            border-radius: 2px;
-            position: relative;
-            background-color: #fff;
-        }
-        .checkbox-box.checked {
-            border-color: #16a34a;
-            background-color: #f0fdf4;
-        }
-        .checkbox-box.checked::after {
-            content: "✓";
-            position: absolute;
-            top: -3.5px;
-            left: 1px;
-            font-size: 9.5px;
-            color: #16a34a;
-            font-weight: 900;
-        }
-
         /* Repeat headers */
         thead {
             display: table-header-group;
@@ -223,45 +203,30 @@
 <body>
     <div class="no-print" style="margin-bottom: 20px; text-align: right; padding: 12px 20px; background: #f8fafc; border-bottom: 1px solid #e2e8f0; font-family: sans-serif;">
         <div style="max-width: 1200px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between;">
-            <span style="font-size: 12px; font-weight: bold; color: #475569;">Mode Cetak Kertas Checklist Keuangan (Cicilan / Event)</span>
+            <span style="font-size: 12px; font-weight: bold; color: #475569;">Mode Cetak Kertas Checklist Keuangan (Cicilan)</span>
             <button onclick="window.print()" style="padding: 8px 20px; font-size: 11px; font-weight: bold; cursor: pointer; background: #10b981; color: #fff; border: 0; border-radius: 6px; box-shadow: 0 2px 4px rgba(16,185,129,0.2); transition: all 0.2s;">🖨️ Cetak / Simpan PDF</button>
         </div>
     </div>
 
     @if($pageBreakRoom)
-        {{-- Group by class or dormitory/room based on target_type --}}
+        {{-- Group by dormitory and room name, render separate sheets --}}
         @php
-            if ($config->target_type === 'kelas') {
-                $grouped = collect($gridData)->groupBy('kelas_name');
-            } else {
-                $grouped = collect($gridData)->groupBy(fn($item) => $item['dormitory_name'] . '|' . $item['room_name']);
-            }
+            $grouped = collect($gridData)->groupBy(fn($item) => $item['dormitory_name'] . '|' . $item['room_name']);
         @endphp
         @foreach($grouped as $key => $rows)
             @php
-                if ($config->target_type === 'kelas') {
-                    $kelasName = $key;
-                    $firstRow = $rows->first();
-                    $headerLabel = "Kelas: " . $kelasName . ($firstRow['kelas_jenjang'] ? " (" . strtoupper($firstRow['kelas_jenjang']) . ")" : "");
-                    $metaLabelName = "Kelas / Jenjang";
-                    $metaValueString = $kelasName . ($firstRow['kelas_jenjang'] ? " / " . strtoupper($firstRow['kelas_jenjang']) : "");
-                } else {
-                    [$dormName, $roomName] = explode('|', $key);
-                    $headerLabel = $dormName . " (KAMAR: " . strtoupper($roomName) . ")";
-                    $metaLabelName = "Komplek";
-                    $metaValueString = $dormName . " (KAMAR: " . strtoupper($roomName) . ")";
-                }
+                [$dormName, $roomName] = explode('|', $key);
             @endphp
             <div class="page-container" style="{{ !$loop->first ? 'margin-top: 20px;' : '' }}">
                 <div class="header">
                     <h1>Pondok Pesantren Al-Fithroh</h1>
-                    <p>Buku Pedoman Keuangan Santri — Lembar Checklist Tagihan Cicilan / Event</p>
+                    <p>Buku Pedoman Keuangan Santri — Lembar Setoran Tagihan Cicilan / Event</p>
                 </div>
 
                 <div class="meta-container">
                     <div class="meta-item">
-                        <span class="meta-label">{{ $metaLabelName }}</span>
-                        <span class="meta-value">: {{ $metaValueString }}</span>
+                        <span class="meta-label">Komplek</span>
+                        <span class="meta-value">: {{ $dormName }} (KAMAR: {{ strtoupper($roomName) }})</span>
                     </div>
                     <div class="meta-item">
                         <span class="meta-label">Nama Iuran</span>
@@ -281,12 +246,12 @@
                     <thead>
                         <tr>
                             <th style="width: 5%;" class="center">No</th>
-                            <th style="width: 28%; text-align: left;" class="border-dark">Nama Lengkap Santri</th>
+                            <th style="width: 26%; text-align: left;" class="border-dark">Nama Lengkap Santri</th>
                             <th class="center border-dark" style="width: 13%;">Total Tagihan</th>
                             @foreach($terms as $term)
-                                <th class="center border-dark" style="width: 11%;">Termin {{ $term }}</th>
+                                <th class="center border-dark" style="width: 12%;">Termin {{ $term }}</th>
                             @endforeach
-                            <th class="center" style="width: 13%;">Sisa Tunggakan</th>
+                            <th class="center" style="width: 13%;">Keterangan</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -294,8 +259,8 @@
                             @php
                                 $parent = $row['parentBill'];
                                 $total = $parent ? $parent->amount : ($row['expectedAmount'] ?? $config->amount);
-                                $paid = $parent ? $parent->amount_paid : 0.00;
-                                $remaining = $total - $paid;
+                                $paid = $parent ? $parent->amount_paid : collect($row['bills'])->sum(fn($b) => $b ? $b->amount_paid : 0);
+                                $remaining = max(0, $total - $paid);
                             @endphp
                             <tr>
                                 <td class="center" style="color: #64748b; font-weight: bold;">{{ $i + 1 }}</td>
@@ -307,27 +272,48 @@
                                         <span style="color: #cbd5e1;">—</span>
                                     @endif
                                 </td>
-                                @foreach($terms as $term)
-                                    @php $bill = $row['bills'][$term]; @endphp
-                                    <td class="center font-bold border-dark">
-                                        @if(!$bill)
-                                            <span style="color: #cbd5e1; font-weight: normal;">—</span>
-                                        @elseif($bill->status === 'paid')
-                                            <span class="checkbox-box checked"></span>
-                                        @else
-                                            <span class="checkbox-box"></span>
-                                        @endif
-                                    </td>
-                                @endforeach
-                                <td class="center font-bold" style="{{ $remaining > 0 ? 'color: #b91c1c;' : 'color: #16a34a;' }}">
-                                    @if($remaining > 0)
-                                        Rp {{ number_format($remaining, 0, ',', '.') }}
-                                    @else
-                                        [ LUNAS ]
-                                    @endif
-                                </td>
+                                @if($mode === 'history')
+                                    @foreach($terms as $term)
+                                        @php
+                                            $bill = $row['bills'][$term] ?? null;
+                                            $termPaid = $bill ? $bill->amount_paid : 0.00;
+                                            $isPaid = $bill && $bill->status === 'paid';
+                                        @endphp
+                                        <td class="center font-bold border-dark" style="font-size: 8.5px; {{ $termPaid > 0 ? 'color: #16a34a;' : 'color: #94a3b8;' }}">
+                                            @if($termPaid > 0)
+                                                Rp {{ number_format($termPaid, 0, ',', '.') }}
+                                                @if($isPaid)
+                                                    <span style="font-size: 8px; color: #16a34a;">✓</span>
+                                                @endif
+                                            @else
+                                                —
+                                            @endif
+                                        </td>
+                                    @endforeach
+                                    <td class="center border-dark">&nbsp;</td>
+                                @else
+                                    @foreach($terms as $term)
+                                        <td class="center border-dark">&nbsp;</td>
+                                    @endforeach
+                                    <td class="center">&nbsp;</td>
+                                @endif
                             </tr>
                         @endforeach
+
+                        {{-- Extra Blank Rows --}}
+                        @if($blankRowsCount > 0)
+                            @for($b = 1; $b <= $blankRowsCount; $b++)
+                                <tr>
+                                    <td class="center" style="color: #94a3b8; font-weight: bold;">{{ count($rows) + $b }}</td>
+                                    <td class="border-dark">&nbsp;</td>
+                                    <td class="center border-dark" style="color: #cbd5e1;">—</td>
+                                    @foreach($terms as $term)
+                                        <td class="center border-dark">&nbsp;</td>
+                                    @endforeach
+                                    <td class="center">&nbsp;</td>
+                                </tr>
+                            @endfor
+                        @endif
                     </tbody>
                 </table>
 
@@ -358,7 +344,7 @@
         <div class="page-container">
             <div class="header">
                 <h1>Pondok Pesantren Al-Fithroh</h1>
-                <p>Buku Pedoman Keuangan Santri — Lembar Checklist Tagihan Cicilan / Event</p>
+                <p>Buku Pedoman Keuangan Santri — Lembar Setoran Tagihan Cicilan / Event</p>
             </div>
 
             <div class="meta-container">
@@ -391,12 +377,12 @@
                 <thead>
                     <tr>
                         <th style="width: 5%;" class="center">No</th>
-                        <th style="width: 28%; text-align: left;" class="border-dark">Nama Lengkap Santri</th>
+                        <th style="width: 26%; text-align: left;" class="border-dark">Nama Lengkap Santri</th>
                         <th class="center border-dark" style="width: 13%;">Total Tagihan</th>
                         @foreach($terms as $term)
-                            <th class="center border-dark" style="width: 11%;">Termin {{ $term }}</th>
+                            <th class="center border-dark" style="width: 12%;">Termin {{ $term }}</th>
                         @endforeach
-                        <th class="center" style="width: 13%;">Sisa Tunggakan</th>
+                        <th class="center" style="width: 13%;">Keterangan</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -405,8 +391,8 @@
                         @php
                             $parent = $row['parentBill'];
                             $total = $parent ? $parent->amount : ($row['expectedAmount'] ?? $config->amount);
-                            $paid = $parent ? $parent->amount_paid : 0.00;
-                            $remaining = $total - $paid;
+                            $paid = $parent ? $parent->amount_paid : collect($row['bills'])->sum(fn($b) => $b ? $b->amount_paid : 0);
+                            $remaining = max(0, $total - $paid);
                             if ($config->target_type === 'kelas') {
                                 $groupKey = $row['kelas_name'] ?? 'Tanpa Kelas';
                                 $groupLabel = "🏫 KELAS: " . strtoupper($groupKey) . ($row['kelas_jenjang'] ? " (" . strtoupper($row['kelas_jenjang']) . ")" : "");
@@ -418,6 +404,20 @@
                             }
                         @endphp
                         @if($currentGroup !== $groupKey)
+                            @if($currentGroup !== null && $blankRowsCount > 0)
+                                @for($b = 1; $b <= $blankRowsCount; $b++)
+                                    <tr>
+                                        <td class="center" style="color: #94a3b8; font-weight: bold;">{{ $counter++ }}</td>
+                                        <td class="border-dark">&nbsp;</td>
+                                        <td class="center border-dark" style="color: #cbd5e1;">—</td>
+                                        @foreach($terms as $term)
+                                            <td class="center border-dark">&nbsp;</td>
+                                        @endforeach
+                                        <td class="center">&nbsp;</td>
+                                    </tr>
+                                @endfor
+                            @endif
+
                             <tr class="room-header">
                                 <td colspan="{{ 4 + count($terms) }}">
                                     {{ $groupLabel }}
@@ -435,27 +435,47 @@
                                     <span style="color: #cbd5e1;">—</span>
                                 @endif
                             </td>
-                            @foreach($terms as $term)
-                                @php $bill = $row['bills'][$term]; @endphp
-                                <td class="center font-bold border-dark">
-                                    @if(!$bill)
-                                        <span style="color: #cbd5e1; font-weight: normal;">—</span>
-                                    @elseif($bill->status === 'paid')
-                                        <span class="checkbox-box checked"></span>
-                                    @else
-                                        <span class="checkbox-box"></span>
-                                    @endif
-                                </td>
-                            @endforeach
-                            <td class="center font-bold" style="{{ $remaining > 0 ? 'color: #b91c1c;' : 'color: #16a34a;' }}">
-                                @if($remaining > 0)
-                                    Rp {{ number_format($remaining, 0, ',', '.') }}
-                                @else
-                                    [ LUNAS ]
-                                @endif
-                            </td>
+                            @if($mode === 'history')
+                                @foreach($terms as $term)
+                                    @php
+                                        $bill = $row['bills'][$term] ?? null;
+                                        $termPaid = $bill ? $bill->amount_paid : 0.00;
+                                        $isPaid = $bill && $bill->status === 'paid';
+                                    @endphp
+                                    <td class="center font-bold border-dark" style="font-size: 8.5px; {{ $termPaid > 0 ? 'color: #16a34a;' : 'color: #94a3b8;' }}">
+                                        @if($termPaid > 0)
+                                            Rp {{ number_format($termPaid, 0, ',', '.') }}
+                                            @if($isPaid)
+                                                <span style="font-size: 8px; color: #16a34a;">✓</span>
+                                            @endif
+                                        @else
+                                            —
+                                        @endif
+                                    </td>
+                                @endforeach
+                                <td class="center border-dark">&nbsp;</td>
+                            @else
+                                @foreach($terms as $term)
+                                    <td class="center border-dark">&nbsp;</td>
+                                @endforeach
+                                <td class="center">&nbsp;</td>
+                            @endif
                         </tr>
                     @endforeach
+
+                    @if($blankRowsCount > 0)
+                        @for($b = 1; $b <= $blankRowsCount; $b++)
+                            <tr>
+                                <td class="center" style="color: #94a3b8; font-weight: bold;">{{ $counter++ }}</td>
+                                <td class="border-dark">&nbsp;</td>
+                                <td class="center border-dark" style="color: #cbd5e1;">—</td>
+                                @foreach($terms as $term)
+                                    <td class="center border-dark">&nbsp;</td>
+                                @endforeach
+                                <td class="center">&nbsp;</td>
+                            </tr>
+                        @endfor
+                    @endif
                 </tbody>
             </table>
 
