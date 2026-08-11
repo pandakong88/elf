@@ -438,7 +438,7 @@ class DashboardTagihan extends Component
         // Compute Last Updated Time for Wali Portal Transparency
         $lastBillUpdate = Bill::where('person_id', $this->personId)->max('updated_at');
         $lastPayment = \App\Modules\Keuangan\Models\BillPayment::whereHas('bill', fn($q) => $q->where('person_id', $this->personId))
-            ->max('paid_at');
+            ->max('created_at');
 
         $latestTimestamp = max($lastBillUpdate, $lastPayment);
 
