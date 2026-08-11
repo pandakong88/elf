@@ -1,4 +1,4 @@
-<div class="space-y-5">
+<div x-data="{ openSimulasi: false }" class="space-y-5 relative">
     <!-- Tombol Kembali & Header Actions -->
     <div class="flex items-center justify-between">
         <a href="{{ route('portal-wali.search') }}" 
@@ -183,7 +183,7 @@
     @endif
 
     <!-- KALKULATOR SIMULASI PEMBAYARAN — CHECKLIST PILIH TAGIHAN (ACCORDION) -->
-    <div x-data="{ openSimulasi: false }" class="bg-white dark:bg-slate-900 border-2 border-emerald-600/30 dark:border-slate-800 rounded-3xl p-4 shadow-md space-y-3 transition-colors">
+    <div id="simulasiAccordionBox" class="bg-white dark:bg-slate-900 border-2 border-emerald-600/30 dark:border-slate-800 rounded-3xl p-4 shadow-md space-y-3 transition-colors">
         <button type="button" @click="openSimulasi = !openSimulasi" class="w-full flex items-center justify-between text-xs font-black text-slate-800 dark:text-slate-200 uppercase tracking-wider py-1">
             <span class="flex items-center gap-2 text-emerald-700 dark:text-emerald-400">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
@@ -783,4 +783,37 @@
             </a>
         </div>
     </div>
+
+    <!-- FLOATING STICKY BAR KALKULATOR SIMULASI (MOBILE & DESKTOP) -->
+    @if(count($selectedBillIds) > 0 && $simulasiTotal > 0)
+        <div class="fixed bottom-4 left-3 right-3 sm:left-auto sm:right-6 sm:max-w-md z-40 transition-all duration-300">
+            <div class="bg-slate-900/95 dark:bg-slate-950/95 backdrop-blur-md text-white p-3.5 rounded-2xl shadow-2xl border-2 border-emerald-500/80 flex items-center justify-between gap-3">
+                <div class="min-w-0 flex-1">
+                    <div class="flex items-center gap-1.5 text-[10px] font-black uppercase text-emerald-400">
+                        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                        <span>Simulasi ({{ count($selectedBillIds) }} Tagihan)</span>
+                    </div>
+                    <div class="text-base font-black text-white truncate font-mono">
+                        Rp {{ number_format($simulasiTotal, 0, ',', '.') }}
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-1.5 shrink-0">
+                    <button type="button" 
+                            @click="openSimulasi = !openSimulasi; if(openSimulasi) { $nextTick(() => { document.getElementById('simulasiAccordionBox').scrollIntoView({ behavior: 'smooth', block: 'center' }); }); }"
+                            class="px-3 py-2 bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white font-extrabold rounded-xl text-xs transition-all shadow-md flex items-center gap-1">
+                        <span>🧮</span>
+                        <span x-text="openSimulasi ? 'Tutup' : 'Buka Detail'"></span>
+                    </button>
+                    @if($simulasiWaUrl)
+                        <a href="{{ $simulasiWaUrl }}" target="_blank" 
+                           class="p-2 bg-emerald-500/20 hover:bg-emerald-500 text-emerald-400 hover:text-white rounded-xl border border-emerald-500/40 transition-all text-xs flex items-center justify-center" 
+                           title="Kirim Ke WA">
+                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981z"/></svg>
+                        </a>
+                    @endif
+                </div>
+            </div>
+        </div>
+    @endif
 </div>
