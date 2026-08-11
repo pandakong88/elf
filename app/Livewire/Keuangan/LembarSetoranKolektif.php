@@ -47,6 +47,28 @@ class LembarSetoranKolektif extends Component
     public bool  $showMobileNavigator = false;
     public string $mobileViewMode = 'cards'; // 'cards' or 'table'
 
+    // Auto-Jump Year Switcher States
+    public ?int $originYear = null;
+    public ?string $highlightPersonId = null;
+
+    public function jumpToArrearYear(string $personId, int $targetYear): void
+    {
+        $this->originYear = $this->year;
+        $this->year = $targetYear;
+        $this->highlightPersonId = $personId;
+        $this->dispatch('scroll-to-santri', personId: $personId);
+    }
+
+    public function jumpBackToOriginYear(string $personId): void
+    {
+        if ($this->originYear) {
+            $this->year = $this->originYear;
+            $this->originYear = null;
+        }
+        $this->highlightPersonId = $personId;
+        $this->dispatch('scroll-to-santri', personId: $personId);
+    }
+
     public function toggleMobileNavigator(): void
     {
         $this->showMobileNavigator = !$this->showMobileNavigator;
