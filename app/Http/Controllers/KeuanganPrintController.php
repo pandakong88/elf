@@ -234,8 +234,13 @@ class KeuanganPrintController extends Controller
             $terms = range(1, $maxTerms);
 
             $gridData = $santriList->map(function ($santri) use ($config, $terms, $getExpectedTariff) {
-                $parentBill = Bill::where('person_id', $santri->id)
-                    ->where('billing_config_id', $config->id)
+                $parentBill = Bill::with('payments')->where('person_id', $santri->id)
+                    ->where(function($q) use ($config) {
+                        if ($config->id) {
+                            $q->where('billing_config_id', $config->id);
+                        }
+                        $q->orWhere('bill_type', $config->type);
+                    })
                     ->whereNull('parent_bill_id')
                     ->first();
 
@@ -244,8 +249,36 @@ class KeuanganPrintController extends Controller
                     : collect();
 
                 $bills = [];
-                foreach ($terms as $t) {
-                    $bills[$t] = $childBills->get($t - 1);
+                if ($childBills->isNotEmpty()) {
+                    foreach ($terms as $t) {
+                        $bills[$t] = $childBills->get($t - 1);
+                    }
+                } else {
+                    $payments = $parentBill ? $parentBill->payments()->orderBy('created_at')->get() : collect();
+                    if ($payments->isNotEmpty()) {
+                        foreach ($terms as $t) {
+                            $pm = $payments->get($t - 1);
+                            if ($pm) {
+                                $bills[$t] = (object)[
+                                    'amount_paid' => (float)$pm->amount_paid,
+                                    'status' => ($parentBill && $parentBill->status === 'paid' && $t === $payments->count()) ? 'paid' : 'partial',
+                                ];
+                            } else {
+                                $bills[$t] = null;
+                            }
+                        }
+                    } else {
+                        foreach ($terms as $t) {
+                            if ($t === 1 && $parentBill && $parentBill->amount_paid > 0) {
+                                $bills[$t] = (object)[
+                                    'amount_paid' => (float)$parentBill->amount_paid,
+                                    'status' => $parentBill->status,
+                                ];
+                            } else {
+                                $bills[$t] = null;
+                            }
+                        }
+                    }
                 }
 
                 $jenjangLabel = match ($santri->kelas_jenjang) {
@@ -272,7 +305,9 @@ class KeuanganPrintController extends Controller
                 ];
             });
 
-            return view('print.checklist-config-installment', compact('config', 'dormitories', 'kelasList', 'terms', 'gridData', 'paperSize', 'pageBreakRoom'));
+            $extraBlankRows = max(0, (int) $request->query('blank_rows', 0));
+            $printMode = $request->query('print_mode', 'history');
+            return view('print.checklist-config-installment', compact('config', 'dormitories', 'kelasList', 'terms', 'gridData', 'paperSize', 'pageBreakRoom', 'extraBlankRows', 'printMode'));
         } else {
             $layoutType = $config->interval;
 
@@ -303,7 +338,12 @@ class KeuanganPrintController extends Controller
                     foreach ($periods as $periodKey => $periodLabel) {
                         [$sem, $yr] = explode('-', $periodKey);
                         $bill = Bill::where('person_id', $santri->id)
-                            ->where('billing_config_id', $config->id)
+                            ->where(function($q) use ($config) {
+                                if ($config->id) {
+                                    $q->where('billing_config_id', $config->id);
+                                }
+                                $q->orWhere('bill_type', $config->type);
+                            })
                             ->where('period_month', (int)$sem)
                             ->where('period_year', (int)$yr)
                             ->first();
@@ -368,13 +408,25 @@ class KeuanganPrintController extends Controller
                     ];
                 });
 
-                return view('print.checklist-config-semester', compact('config', 'dormitories', 'kelasList', 'periods', 'gridData', 'year', 'paperSize', 'pageBreakRoom'));
+                $extraBlankRows = max(0, (int) $request->query('blank_rows', 0));
+                $printMode = $request->query('print_mode', 'history');
+                return view('print.checklist-config-semester', compact('config', 'dormitories', 'kelasList', 'periods', 'gridData', 'year', 'paperSize', 'pageBreakRoom', 'extraBlankRows', 'printMode'));
             } elseif ($layoutType === 'monthly') {
+                $yearRangeMode = $request->query('year_range', '1_year');
+                $extraBlankRows = max(0, (int) $request->query('blank_rows', 0));
+
                 $months = [];
-                for ($m = 1; $m <= 12; $m++) {
-                    $date = now()->setDate($year, $m, 1);
-                    $key  = $m . '-' . $year;
-                    $months[$key] = $date->locale('id')->translatedFormat('M');
+                $yearsHeader = [];
+                $yearsCount = ($yearRangeMode === '2_years') ? 2 : 1;
+
+                for ($yOffset = 0; $yOffset < $yearsCount; $yOffset++) {
+                    $yr = $year + $yOffset;
+                    $yearsHeader[$yr] = 12;
+                    for ($m = 1; $m <= 12; $m++) {
+                        $date = now()->setDate($yr, $m, 1);
+                        $key  = $m . '-' . $yr;
+                        $months[$key] = $date->locale('id')->translatedFormat('M');
+                    }
                 }
 
                 $gridData = $santriList->map(function ($santri) use ($months, $config, $year, $getExpectedTariff) {
@@ -382,7 +434,12 @@ class KeuanganPrintController extends Controller
                     foreach ($months as $periodKey => $periodLabel) {
                         [$m, $y] = explode('-', $periodKey);
                         $bill = Bill::where('person_id', $santri->id)
-                            ->where('billing_config_id', $config->id)
+                            ->where(function($q) use ($config) {
+                                if ($config->id) {
+                                    $q->where('billing_config_id', $config->id);
+                                }
+                                $q->orWhere('bill_type', $config->type);
+                            })
                             ->where('period_month', (int)$m)
                             ->where('period_year', (int)$y)
                             ->first();
@@ -395,12 +452,13 @@ class KeuanganPrintController extends Controller
                         ->where('period_year', '<', $year)
                         ->get();
 
+                    $tunggakanLamaCount = $tunggakanLama->count();
                     $tunggakanLamaSum = $tunggakanLama->sum(fn($b) => $b->amount - $b->amount_paid);
 
                     $furthestPaidBill = Bill::where('person_id', $santri->id)
                         ->where('billing_config_id', $config->id)
                         ->where('status', 'paid')
-                        ->where('period_year', '>', $year)
+                        ->where('period_year', '>', $year + (count($months) > 12 ? 1 : 0))
                         ->orderBy('period_year', 'desc')
                         ->orderBy('period_month', 'desc')
                         ->first();
@@ -429,16 +487,24 @@ class KeuanganPrintController extends Controller
                         'bills' => $bills,
                         'expectedAmount' => $tariffInfo['amount'],
                         'exceptionNote' => $tariffInfo['note'],
+                        'tunggakanLamaCount' => $tunggakanLamaCount,
                         'tunggakanLamaSum' => $tunggakanLamaSum,
                         'lunasDiMukaLabel' => $lunasDiMukaLabel,
                     ];
                 });
 
-                return view('print.checklist-config-monthly', compact('config', 'dormitories', 'kelasList', 'months', 'gridData', 'year', 'paperSize', 'pageBreakRoom'));
+                $extraBlankRows = max(0, (int) $request->query('blank_rows', 0));
+                $printMode = $request->query('print_mode', 'history');
+                return view('print.checklist-config-monthly', compact('config', 'dormitories', 'kelasList', 'months', 'yearsHeader', 'extraBlankRows', 'printMode', 'gridData', 'year', 'paperSize', 'pageBreakRoom'));
             } else {
                 $gridData = $santriList->map(function ($santri) use ($config, $getExpectedTariff) {
                     $bill = Bill::where('person_id', $santri->id)
-                        ->where('billing_config_id', $config->id)
+                        ->where(function($q) use ($config) {
+                            if ($config->id) {
+                                $q->where('billing_config_id', $config->id);
+                            }
+                            $q->orWhere('bill_type', $config->type);
+                        })
                         ->first();
 
                     $jenjangLabel = match ($santri->kelas_jenjang) {
@@ -464,7 +530,9 @@ class KeuanganPrintController extends Controller
                     ];
                 });
 
-                return view('print.checklist-config-single', compact('config', 'dormitories', 'kelasList', 'gridData', 'year', 'paperSize', 'pageBreakRoom'));
+                $extraBlankRows = max(0, (int) $request->query('blank_rows', 0));
+                $printMode = $request->query('print_mode', 'history');
+                return view('print.checklist-config-single', compact('config', 'dormitories', 'kelasList', 'gridData', 'year', 'paperSize', 'pageBreakRoom', 'extraBlankRows', 'printMode'));
             }
         }
     }
@@ -560,8 +628,13 @@ class KeuanganPrintController extends Controller
             $terms = range(1, $maxTerms);
 
             $gridData = $santriList->map(function ($santri) use ($config, $terms, $getExpectedTariff) {
-                $parentBill = Bill::where('person_id', $santri->id)
-                    ->where('billing_config_id', $config->id)
+                $parentBill = Bill::with('payments')->where('person_id', $santri->id)
+                    ->where(function($q) use ($config) {
+                        if ($config->id) {
+                            $q->where('billing_config_id', $config->id);
+                        }
+                        $q->orWhere('bill_type', $config->type);
+                    })
                     ->whereNull('parent_bill_id')
                     ->first();
 
@@ -570,8 +643,36 @@ class KeuanganPrintController extends Controller
                     : collect();
 
                 $bills = [];
-                foreach ($terms as $t) {
-                    $bills[$t] = $childBills->get($t - 1);
+                if ($childBills->isNotEmpty()) {
+                    foreach ($terms as $t) {
+                        $bills[$t] = $childBills->get($t - 1);
+                    }
+                } else {
+                    $payments = $parentBill ? $parentBill->payments()->orderBy('created_at')->get() : collect();
+                    if ($payments->isNotEmpty()) {
+                        foreach ($terms as $t) {
+                            $pm = $payments->get($t - 1);
+                            if ($pm) {
+                                $bills[$t] = (object)[
+                                    'amount_paid' => (float)$pm->amount_paid,
+                                    'status' => ($parentBill && $parentBill->status === 'paid' && $t === $payments->count()) ? 'paid' : 'partial',
+                                ];
+                            } else {
+                                $bills[$t] = null;
+                            }
+                        }
+                    } else {
+                        foreach ($terms as $t) {
+                            if ($t === 1 && $parentBill && $parentBill->amount_paid > 0) {
+                                $bills[$t] = (object)[
+                                    'amount_paid' => (float)$parentBill->amount_paid,
+                                    'status' => $parentBill->status,
+                                ];
+                            } else {
+                                $bills[$t] = null;
+                            }
+                        }
+                    }
                 }
 
                 $tariffInfo = $getExpectedTariff($santri->id);
@@ -589,7 +690,9 @@ class KeuanganPrintController extends Controller
                 ];
             });
 
-            return view('print.checklist-config-installment', compact('config', 'dormitories', 'terms', 'gridData', 'paperSize', 'pageBreakRoom'));
+            $extraBlankRows = max(0, (int) $request->query('blank_rows', 0));
+            $printMode = $request->query('print_mode', 'history');
+            return view('print.checklist-config-installment', compact('config', 'dormitories', 'terms', 'gridData', 'paperSize', 'pageBreakRoom', 'extraBlankRows', 'printMode'));
         } else {
             $layoutType = $config->interval;
 
@@ -623,7 +726,12 @@ class KeuanganPrintController extends Controller
                     foreach ($periods as $periodKey => $periodLabel) {
                         [$sem, $yr] = explode('-', $periodKey);
                         $bill = Bill::where('person_id', $santri->id)
-                            ->where('billing_config_id', $config->id)
+                            ->where(function($q) use ($config) {
+                                if ($config->id) {
+                                    $q->where('billing_config_id', $config->id);
+                                }
+                                $q->orWhere('bill_type', $config->type);
+                            })
                             ->where('period_month', (int)$sem)
                             ->where('period_year', (int)$yr)
                             ->first();
@@ -681,16 +789,27 @@ class KeuanganPrintController extends Controller
                     ];
                 });
 
-                return view('print.checklist-config-semester', compact('config', 'dormitories', 'periods', 'gridData', 'year', 'paperSize', 'pageBreakRoom'));
+                $extraBlankRows = max(0, (int) $request->query('blank_rows', 0));
+                $printMode = $request->query('print_mode', 'history');
+                return view('print.checklist-config-semester', compact('config', 'dormitories', 'periods', 'gridData', 'year', 'paperSize', 'pageBreakRoom', 'extraBlankRows', 'printMode'));
             } elseif ($layoutType === 'monthly') {
-                // Monthly/regular grid layout: 12 months for the selected calendar year
+                // Monthly/regular grid layout: 12 or 24 months for the selected calendar year
                 $year = (int) $request->query('year', now()->year);
+                $yearRangeMode = $request->query('year_range', '1_year');
+                $extraBlankRows = max(0, (int) $request->query('blank_rows', 0));
 
                 $months = [];
-                for ($m = 1; $m <= 12; $m++) {
-                    $date = now()->setDate($year, $m, 1);
-                    $key  = $m . '-' . $year;
-                    $months[$key] = $date->locale('id')->translatedFormat('M');
+                $yearsHeader = [];
+                $yearsCount = ($yearRangeMode === '2_years') ? 2 : 1;
+
+                for ($yOffset = 0; $yOffset < $yearsCount; $yOffset++) {
+                    $yr = $year + $yOffset;
+                    $yearsHeader[$yr] = 12;
+                    for ($m = 1; $m <= 12; $m++) {
+                        $date = now()->setDate($yr, $m, 1);
+                        $key  = $m . '-' . $yr;
+                        $months[$key] = $date->locale('id')->translatedFormat('M');
+                    }
                 }
 
                 $gridData = $santriList->map(function ($santri) use ($months, $config, $year, $getExpectedTariff) {
@@ -698,7 +817,12 @@ class KeuanganPrintController extends Controller
                     foreach ($months as $periodKey => $periodLabel) {
                         [$m, $y] = explode('-', $periodKey);
                         $bill = Bill::where('person_id', $santri->id)
-                            ->where('billing_config_id', $config->id)
+                            ->where(function($q) use ($config) {
+                                if ($config->id) {
+                                    $q->where('billing_config_id', $config->id);
+                                }
+                                $q->orWhere('bill_type', $config->type);
+                            })
                             ->where('period_month', (int)$m)
                             ->where('period_year', (int)$y)
                             ->first();
@@ -712,13 +836,14 @@ class KeuanganPrintController extends Controller
                         ->where('period_year', '<', $year)
                         ->get();
 
+                    $tunggakanLamaCount = $tunggakanLama->count();
                     $tunggakanLamaSum = $tunggakanLama->sum(fn($b) => $b->amount - $b->amount_paid);
 
                     // Prepaid indicator (paid bills in future years)
                     $furthestPaidBill = Bill::where('person_id', $santri->id)
                         ->where('billing_config_id', $config->id)
                         ->where('status', 'paid')
-                        ->where('period_year', '>', $year)
+                        ->where('period_year', '>', $year + (count($months) > 12 ? 1 : 0))
                         ->orderBy('period_year', 'desc')
                         ->orderBy('period_month', 'desc')
                         ->first();
@@ -738,18 +863,26 @@ class KeuanganPrintController extends Controller
                         'bills' => $bills,
                         'expectedAmount' => $tariffInfo['amount'],
                         'exceptionNote' => $tariffInfo['note'],
+                        'tunggakanLamaCount' => $tunggakanLamaCount,
                         'tunggakanLamaSum' => $tunggakanLamaSum,
                         'lunasDiMukaLabel' => $lunasDiMukaLabel,
                     ];
                 });
 
-                return view('print.checklist-config-monthly', compact('config', 'dormitories', 'months', 'gridData', 'year', 'paperSize', 'pageBreakRoom'));
+                $extraBlankRows = max(0, (int) $request->query('blank_rows', 0));
+                $printMode = $request->query('print_mode', 'history');
+                return view('print.checklist-config-monthly', compact('config', 'dormitories', 'months', 'yearsHeader', 'extraBlankRows', 'printMode', 'gridData', 'year', 'paperSize', 'pageBreakRoom'));
             } else {
                 // Yearly / once / insidental (single column checklist)
                 $year = (int) $request->query('year', now()->year);
                 $gridData = $santriList->map(function ($santri) use ($config, $getExpectedTariff) {
                     $bill = Bill::where('person_id', $santri->id)
-                        ->where('billing_config_id', $config->id)
+                        ->where(function($q) use ($config) {
+                            if ($config->id) {
+                                $q->where('billing_config_id', $config->id);
+                            }
+                            $q->orWhere('bill_type', $config->type);
+                        })
                         ->first();
 
                     $tariffInfo = $getExpectedTariff($santri->id);
@@ -766,7 +899,9 @@ class KeuanganPrintController extends Controller
                     ];
                 });
 
-                return view('print.checklist-config-single', compact('config', 'dormitories', 'gridData', 'year', 'paperSize', 'pageBreakRoom'));
+                $extraBlankRows = max(0, (int) $request->query('blank_rows', 0));
+                $printMode = $request->query('print_mode', 'history');
+                return view('print.checklist-config-single', compact('config', 'dormitories', 'gridData', 'year', 'paperSize', 'pageBreakRoom', 'extraBlankRows', 'printMode'));
             }
         }
     }

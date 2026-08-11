@@ -23,6 +23,9 @@ class BillingConfigurationPrintSetup extends Component
     public int $selectedSemester = 1;
     public string $paperSize = 'a4';
     public bool $pageBreakPerRoom = false;
+    public string $yearRangeMode = '1_year'; // '1_year' (12 Bulan) atau '2_years' (24 Bulan)
+    public int $extraBlankRows = 3;          // 0, 1, 2, 3, 5, 10 baris kosong cadangan
+    public string $printContentMode = 'history'; // 'history' (Rekap Histori Terbayar) atau 'blank' (Blangko Penagihan)
 
     public function mount(string $id): void
     {
@@ -341,12 +344,21 @@ class BillingConfigurationPrintSetup extends Component
                 'gridData' => $gridData,
             ];
         } elseif ($layoutType === 'monthly') {
-            // Monthly layout (12 columns)
+            // Monthly layout (12 or 24 columns)
             $months = [];
-            for ($m = 1; $m <= 12; $m++) {
-                $date = now()->setDate($this->selectedYear, $m, 1);
-                $key  = $m . '-' . $this->selectedYear;
-                $months[$key] = $date->locale('id')->translatedFormat('M');
+            $yearsCount = ($this->yearRangeMode === '2_years') ? 2 : 1;
+
+            for ($yOffset = 0; $yOffset < $yearsCount; $yOffset++) {
+                $yr = $this->selectedYear + $yOffset;
+                for ($m = 1; $m <= 12; $m++) {
+                    $date = now()->setDate($yr, $m, 1);
+                    $key  = $m . '-' . $yr;
+                    $label = $date->locale('id')->translatedFormat('M');
+                    if ($yearsCount > 1) {
+                        $label .= "'" . substr($yr, -2);
+                    }
+                    $months[$key] = $label;
+                }
             }
 
             $gridData = $santriList->map(function ($santri) use ($months, $config, $getExpectedTariff) {
