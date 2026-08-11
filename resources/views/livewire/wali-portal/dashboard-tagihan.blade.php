@@ -15,63 +15,90 @@
         </button>
     </div>
 
-    <!-- Profil Santri Card -->
+    <!-- Profil Santri Card Super Premium -->
     @php
         $activeRoom = $santri->roomAssignments->first()?->room;
         $activeDorm = $activeRoom?->dormitory;
         $activeKelas = $santri->madrasahEnrollments->first()?->kelas;
     @endphp
-    <div class="bg-white dark:bg-slate-900 border-2 border-emerald-600/30 dark:border-slate-800 rounded-3xl p-4 shadow-md space-y-3 relative overflow-hidden transition-colors">
-        <div class="flex items-center gap-3.5">
-            <!-- Avatar -->
-            <div class="w-14 h-14 rounded-2xl bg-emerald-700 text-white flex items-center justify-center font-black text-xl shrink-0 shadow-md overflow-hidden border-2 border-emerald-600">
-                @if($santri->photo)
-                    <img src="{{ Storage::url($santri->photo) }}" alt="{{ $santri->name }}" class="w-full h-full object-cover">
-                @else
-                    <span>{{ strtoupper(substr($santri->name, 0, 2)) }}</span>
-                @endif
-            </div>
+    <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-3xl shadow-md overflow-hidden transition-colors">
+        <!-- Top Accent Line -->
+        <div class="h-1.5 w-full bg-gradient-to-r from-emerald-500 via-teal-500 to-sky-500"></div>
 
-            <!-- Profile Info -->
-            <div class="flex-1 min-w-0">
+        <div class="p-4 sm:p-5 space-y-3.5">
+            <!-- Header Status & Live Sync Pill -->
+            <div class="flex items-center justify-between gap-2 flex-wrap pb-1">
                 <div class="flex items-center gap-1.5 flex-wrap">
-                    <span class="inline-block text-[10px] font-extrabold uppercase tracking-wider text-emerald-700 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-500/10 px-2 py-0.5 rounded-md border border-emerald-200 dark:border-emerald-500/20">
-                        Santri Aktif
+                    <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                        <span>●</span>
+                        <span>Santri Aktif</span>
                     </span>
-                    <span class="inline-flex items-center gap-1.5 text-[10px] font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-300 dark:border-emerald-800 px-2 py-0.5 rounded-md shadow-2xs">
+                    <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[9px] font-bold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/60 shadow-2xs">
                         <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                        <span>Terakhir Di-update: {{ $lastUpdatedLabel }}</span>
+                        <span>Terakhir Di-update: <strong class="text-slate-800 dark:text-slate-100 font-extrabold">{{ $lastUpdatedLabel }}</strong></span>
                     </span>
                 </div>
-                <h2 class="text-base font-extrabold text-slate-900 dark:text-slate-100 truncate mt-0.5">{{ $santri->name }}</h2>
-                @if($santri->nis)
-                    <p class="text-[11px] font-mono text-slate-500 dark:text-slate-400">NIS: {{ $santri->nis }}</p>
-                @endif
             </div>
-        </div>
 
-        <!-- Detail Lokasi & Alamat -->
-        <div class="grid grid-cols-2 gap-2 pt-2.5 border-t border-slate-100 dark:border-slate-800 text-xs">
-            <div class="bg-slate-50 dark:bg-slate-950 p-2 rounded-xl border border-slate-200/80 dark:border-slate-800">
-                <span class="block text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase">Komplek / Asrama</span>
-                <strong class="text-slate-800 dark:text-slate-200 text-[11px] block truncate">
-                    {{ $activeDorm ? $activeDorm->name : '-' }} {{ $activeRoom ? '(' . $activeRoom->name . ')' : '' }}
-                </strong>
+            <!-- Profile Info: Avatar + Name + NIS -->
+            <div class="flex items-center gap-3.5">
+                <!-- Avatar Photo / Initials -->
+                <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-emerald-600 to-teal-700 text-white flex items-center justify-center font-black text-xl shrink-0 shadow-md overflow-hidden border-2 border-white dark:border-slate-800">
+                    @if($santri->photo)
+                        <img src="{{ Storage::url($santri->photo) }}" alt="{{ $santri->name }}" class="w-full h-full object-cover">
+                    @else
+                        <span>{{ strtoupper(substr($santri->name, 0, 2)) }}</span>
+                    @endif
+                </div>
+
+                <!-- Name & NIS -->
+                <div class="flex-1 min-w-0 space-y-1">
+                    <h2 class="text-base sm:text-lg font-black text-slate-900 dark:text-white leading-snug truncate">
+                        {{ $santri->name }}
+                    </h2>
+                    @if($santri->nis)
+                        <div class="inline-flex items-center gap-1.5 text-[10px] font-mono font-extrabold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800/60 px-2 py-0.5 rounded-md border border-slate-200/80 dark:border-slate-700/60">
+                            <span>💳 NIS:</span>
+                            <span class="text-emerald-700 dark:text-emerald-400 font-bold">{{ $santri->nis }}</span>
+                        </div>
+                    @endif
+                </div>
             </div>
-            <div class="bg-slate-50 dark:bg-slate-950 p-2 rounded-xl border border-slate-200/80 dark:border-slate-800">
-                <span class="block text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase">Kelas Madrasah</span>
-                <strong class="text-slate-800 dark:text-slate-200 text-[11px] block truncate">
-                    {{ $activeKelas ? $activeKelas->name : '-' }}
-                </strong>
-            </div>
-            @if(!empty($santri->address))
-                <div class="col-span-2 bg-slate-50 dark:bg-slate-950 p-2 rounded-xl border border-slate-200/80 dark:border-slate-800">
-                    <span class="block text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase">Alamat Asal Santri</span>
-                    <strong class="text-slate-800 dark:text-slate-200 text-[11px] block truncate">
-                        📍 {{ $santri->address }}
+
+            <!-- Detail Grid Info (Asrama, Kelas, Alamat) -->
+            <div class="grid grid-cols-2 gap-2 pt-2 border-t border-slate-100 dark:border-slate-800 text-xs">
+                <div class="bg-slate-50/80 dark:bg-slate-950/60 p-2.5 rounded-2xl border border-slate-200/60 dark:border-slate-800/80 space-y-0.5">
+                    <span class="block text-[9px] font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-wider flex items-center gap-1">
+                        <span>🏠</span>
+                        <span>Komplek / Asrama</span>
+                    </span>
+                    <strong class="text-slate-800 dark:text-slate-200 text-[11px] block truncate font-bold">
+                        {{ $activeDorm ? $activeDorm->name : '-' }} {{ $activeRoom ? '(' . $activeRoom->name . ')' : '' }}
                     </strong>
                 </div>
-            @endif
+
+                <div class="bg-slate-50/80 dark:bg-slate-950/60 p-2.5 rounded-2xl border border-slate-200/60 dark:border-slate-800/80 space-y-0.5">
+                    <span class="block text-[9px] font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-wider flex items-center gap-1">
+                        <span>🏫</span>
+                        <span>Kelas Madrasah</span>
+                    </span>
+                    <strong class="text-slate-800 dark:text-slate-200 text-[11px] block truncate font-bold">
+                        {{ $activeKelas ? $activeKelas->name : '-' }}
+                    </strong>
+                </div>
+
+                @if(!empty($santri->address))
+                    <div class="col-span-2 bg-slate-50/80 dark:bg-slate-950/60 p-2.5 rounded-2xl border border-slate-200/60 dark:border-slate-800/80 space-y-0.5">
+                        <span class="block text-[9px] font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-wider flex items-center gap-1">
+                            <span>📍</span>
+                            <span>Alamat Asal Santri</span>
+                        </span>
+                        <strong class="text-slate-800 dark:text-slate-200 text-[11px] block break-words font-semibold leading-relaxed">
+                            {{ $santri->address }}
+                        </strong>
+                    </div>
+                @endif
+            </div>
         </div>
     </div>
 
