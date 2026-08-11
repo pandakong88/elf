@@ -1,4 +1,18 @@
-<div class="min-h-[calc(100vh-6rem)] lg:h-[calc(100vh-6rem)] flex flex-col lg:flex-row gap-4 lg:gap-6 overflow-hidden">
+<div x-data
+    x-on:scroll-to-santri.window="
+        $nextTick(() => {
+            const personId = $event.detail.personId;
+            const el = document.getElementById('santri-row-' + personId) || document.getElementById('santri-card-' + personId);
+            if (el) {
+                el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                el.classList.add('ring-4', 'ring-amber-400', 'dark:ring-amber-500', 'scale-[1.02]', 'transition-all', 'duration-500');
+                setTimeout(() => {
+                    el.classList.remove('ring-4', 'ring-amber-400', 'dark:ring-amber-500', 'scale-[1.02]');
+                }, 2200);
+            }
+        });
+    "
+    class="min-h-[calc(100vh-6rem)] lg:h-[calc(100vh-6rem)] flex flex-col lg:flex-row gap-4 lg:gap-6 overflow-hidden">
     <!-- Panel Kiri: Navigator Lembar Setoran -->
     <div @class([
         'w-full lg:w-80 bg-white dark:bg-slate-900 border border-slate-200/50 dark:border-slate-800 rounded-3xl shadow-xs flex flex-col overflow-hidden shrink-0 transition-all',
@@ -154,107 +168,109 @@
             </div>
         @else
             <!-- State Terbuka: Render Grid Checklist -->
-            <!-- Dynamic Color Banner Header -->
-            <div class="p-3.5 sm:px-6 sm:py-4 text-white shadow-sm shrink-0 space-y-2 sm:space-y-0 sm:flex sm:items-center sm:justify-between sm:gap-4
-                @if($activeBillType === 'syahriah_pondok') bg-emerald-600 dark:bg-emerald-800
-                @elseif($activeType === 'komplek') bg-sky-600 dark:bg-sky-800
-                @else bg-indigo-600 dark:bg-indigo-800 @endif"
-            >
-                {{-- Top/Main Row: Category Badge, Sheet Title, & Action Buttons --}}
-                <div class="flex items-start justify-between gap-3 min-w-0">
-                    <div class="space-y-1 min-w-0 flex-1">
-                        <div class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-white/20 text-white font-black text-[9px] uppercase tracking-wider">
-                            📑 {{ match($activeType) {
-                                'komplek' => 'Setoran Komplek Asrama',
-                                'madrasah' => 'Setoran Kelas Madrasah',
-                                default => 'Setoran Utama Pondok Pusat'
-                            } }}
+            <div class="sticky top-0 z-30 shadow-md backdrop-blur-md">
+                <!-- Dynamic Color Banner Header -->
+                <div class="p-3.5 sm:px-6 sm:py-4 text-white shadow-sm shrink-0 space-y-2 sm:space-y-0 sm:flex sm:items-center sm:justify-between sm:gap-4
+                    @if($activeBillType === 'syahriah_pondok') bg-emerald-600 dark:bg-emerald-800
+                    @elseif($activeType === 'komplek') bg-sky-600 dark:bg-sky-800
+                    @else bg-indigo-600 dark:bg-indigo-800 @endif"
+                >
+                    {{-- Top/Main Row: Category Badge, Sheet Title, & Action Buttons --}}
+                    <div class="flex items-start justify-between gap-3 min-w-0">
+                        <div class="space-y-1 min-w-0 flex-1">
+                            <div class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-white/20 text-white font-black text-[9px] uppercase tracking-wider">
+                                📑 {{ match($activeType) {
+                                    'komplek' => 'Setoran Komplek Asrama',
+                                    'madrasah' => 'Setoran Kelas Madrasah',
+                                    default => 'Setoran Utama Pondok Pusat'
+                                } }}
+                            </div>
+                            <h2 class="text-sm sm:text-base font-black uppercase tracking-wide font-serif-display leading-snug text-white drop-shadow-xs break-words">
+                                {{ $activeLabel }}
+                            </h2>
                         </div>
-                        <h2 class="text-sm sm:text-base font-black uppercase tracking-wide font-serif-display leading-snug text-white drop-shadow-xs break-words">
-                            {{ $activeLabel }}
-                        </h2>
+
+                        {{-- Action Buttons: Mobile Drawer & Close --}}
+                        <div class="flex items-center gap-1.5 shrink-0 pt-0.5">
+                            <button type="button" wire:click="toggleMobileNavigator"
+                                class="lg:hidden px-2.5 py-1.5 bg-white/20 hover:bg-white/30 active:scale-95 text-white rounded-xl text-[10px] font-black transition-all flex items-center gap-1 shadow-xs" title="Ganti Lembar Setoran">
+                                <span>📑</span>
+                                <span>Ganti</span>
+                            </button>
+                            <button type="button" wire:click="deselectSheet" class="p-1.5 rounded-xl hover:bg-white/20 text-white/90 hover:text-white transition-all text-xs" title="Tutup Lembar">
+                                ✕
+                            </button>
+                        </div>
                     </div>
 
-                    {{-- Action Buttons: Mobile Drawer & Close --}}
-                    <div class="flex items-center gap-1.5 shrink-0 pt-0.5">
-                        <button type="button" wire:click="toggleMobileNavigator"
-                            class="lg:hidden px-2.5 py-1.5 bg-white/20 hover:bg-white/30 active:scale-95 text-white rounded-xl text-[10px] font-black transition-all flex items-center gap-1 shadow-xs" title="Ganti Lembar Setoran">
-                            <span>📑</span>
-                            <span>Ganti</span>
-                        </button>
-                        <button type="button" wire:click="deselectSheet" class="p-1.5 rounded-xl hover:bg-white/20 text-white/90 hover:text-white transition-all text-xs" title="Tutup Lembar">
-                            ✕
-                        </button>
+                    {{-- Year Switcher (Shown underneath on mobile, inline on desktop) --}}
+                    <div class="flex items-center justify-between sm:justify-end gap-2 pt-1 sm:pt-0 border-t border-white/10 sm:border-0">
+                        <span class="text-[9px] font-extrabold uppercase text-white/80 sm:hidden">Tahun Buku:</span>
+                        <div class="flex items-center bg-white/15 dark:bg-black/25 rounded-xl p-1 border border-white/20 backdrop-blur-xs select-none">
+                            <button type="button" wire:click="decrementYear" class="p-1 px-2 rounded-lg hover:bg-white/20 active:scale-95 text-white transition-all text-[10px] font-black" title="Tahun Sebelumnya">
+                                ◀
+                            </button>
+                            <span class="px-2.5 text-xs font-black tracking-wider uppercase text-white font-mono">
+                                {{ $year }}
+                            </span>
+                            <button type="button" wire:click="incrementYear" class="p-1 px-2 rounded-lg hover:bg-white/20 active:scale-95 text-white transition-all text-[10px] font-black" title="Tahun Selanjutnya">
+                                ▶
+                            </button>
+                        </div>
                     </div>
                 </div>
 
-                {{-- Year Switcher (Shown underneath on mobile, inline on desktop) --}}
-                <div class="flex items-center justify-between sm:justify-end gap-2 pt-1 sm:pt-0 border-t border-white/10 sm:border-0">
-                    <span class="text-[9px] font-extrabold uppercase text-white/80 sm:hidden">Tahun Buku:</span>
-                    <div class="flex items-center bg-white/15 dark:bg-black/25 rounded-xl p-1 border border-white/20 backdrop-blur-xs select-none">
-                        <button type="button" wire:click="decrementYear" class="p-1 px-2 rounded-lg hover:bg-white/20 active:scale-95 text-white transition-all text-[10px] font-black" title="Tahun Sebelumnya">
-                            ◀
-                        </button>
-                        <span class="px-2.5 text-xs font-black tracking-wider uppercase text-white font-mono">
-                            {{ $year }}
+                {{-- ===== TOOLBAR SEARCH SANTRI & MOBILE SWITCHER BAR ===== --}}
+                <div class="px-3.5 py-2 sm:px-6 bg-slate-50 dark:bg-slate-950/60 border-b border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 text-[11px] shrink-0">
+                    {{-- Search Santri Input --}}
+                    <div class="relative flex-1 max-w-full sm:max-w-md">
+                        <input
+                            type="text"
+                            wire:model.live.debounce.250ms="studentSearch"
+                            placeholder="🔍 Cari nama santri, kamar, atau NIS..."
+                            class="w-full bg-white dark:bg-slate-900 border border-slate-250 dark:border-slate-800 text-slate-800 dark:text-slate-200 rounded-xl pl-8 pr-8 py-1.5 text-xs focus:ring-emerald-500 shadow-2xs placeholder:text-slate-400"
+                        >
+                        <span class="absolute left-2.5 top-2 text-slate-400">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
                         </span>
-                        <button type="button" wire:click="incrementYear" class="p-1 px-2 rounded-lg hover:bg-white/20 active:scale-95 text-white transition-all text-[10px] font-black" title="Tahun Selanjutnya">
-                            ▶
-                        </button>
+                        @if(!empty($studentSearch))
+                            <button type="button" wire:click="$set('studentSearch', '')" class="absolute right-2.5 top-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-xs font-black p-0.5" title="Hapus Pencarian">
+                                ✕
+                            </button>
+                        @endif
                     </div>
-                </div>
-            </div>
 
-            {{-- ===== TOOLBAR SEARCH SANTRI & MOBILE SWITCHER BAR ===== --}}
-            <div class="px-3.5 py-2 sm:px-6 bg-slate-50 dark:bg-slate-950/60 border-b border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 text-[11px] shrink-0">
-                {{-- Search Santri Input --}}
-                <div class="relative flex-1 max-w-full sm:max-w-md">
-                    <input
-                        type="text"
-                        wire:model.live.debounce.250ms="studentSearch"
-                        placeholder="🔍 Cari nama santri, kamar, atau NIS..."
-                        class="w-full bg-white dark:bg-slate-900 border border-slate-250 dark:border-slate-800 text-slate-800 dark:text-slate-200 rounded-xl pl-8 pr-8 py-1.5 text-xs focus:ring-emerald-500 shadow-2xs placeholder:text-slate-400"
-                    >
-                    <span class="absolute left-2.5 top-2 text-slate-400">
-                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-                    </span>
-                    @if(!empty($studentSearch))
-                        <button type="button" wire:click="$set('studentSearch', '')" class="absolute right-2.5 top-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-xs font-black p-0.5" title="Hapus Pencarian">
-                            ✕
-                        </button>
-                    @endif
-                </div>
+                    {{-- Status & Mobile Mode Switcher Row --}}
+                    <div class="flex items-center justify-between sm:justify-end gap-3 min-w-0">
+                        @if(!empty($studentSearch))
+                            <div class="text-[10px] text-emerald-600 dark:text-emerald-400 font-extrabold truncate flex items-center gap-1.5">
+                                <span>Ditemukan {{ $gridData->count() }} santri</span>
+                                <button type="button" wire:click="$set('studentSearch', '')" class="text-slate-400 hover:text-rose-500 font-normal underline text-[9px]">
+                                    Reset
+                                </button>
+                            </div>
+                        @endif
 
-                {{-- Status & Mobile Mode Switcher Row --}}
-                <div class="flex items-center justify-between sm:justify-end gap-3 min-w-0">
-                    @if(!empty($studentSearch))
-                        <div class="text-[10px] text-emerald-600 dark:text-emerald-400 font-extrabold truncate flex items-center gap-1.5">
-                            <span>Ditemukan {{ $gridData->count() }} santri</span>
-                            <button type="button" wire:click="$set('studentSearch', '')" class="text-slate-400 hover:text-rose-500 font-normal underline text-[9px]">
-                                Reset
-                            </button>
-                        </div>
-                    @endif
-
-                    <div class="flex lg:hidden items-center gap-1.5 shrink-0">
-                        <span class="font-extrabold text-slate-500 dark:text-slate-400 text-[10px] uppercase">HP:</span>
-                        <div class="flex items-center gap-0.5 bg-white dark:bg-slate-900 p-0.5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-2xs">
-                            <button type="button" wire:click="setMobileViewMode('cards')"
-                                @class([
-                                    'px-2 py-0.5 rounded-lg text-[10px] font-black transition-all flex items-center gap-1',
-                                    'bg-emerald-600 text-white shadow-xs' => $mobileViewMode === 'cards',
-                                    'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200' => $mobileViewMode !== 'cards',
-                                ])>
-                                🎴 Kartu
-                            </button>
-                            <button type="button" wire:click="setMobileViewMode('table')"
-                                @class([
-                                    'px-2 py-0.5 rounded-lg text-[10px] font-black transition-all flex items-center gap-1',
-                                    'bg-emerald-600 text-white shadow-xs' => $mobileViewMode === 'table',
-                                    'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200' => $mobileViewMode !== 'table',
-                                ])>
-                                📊 Tabel
-                            </button>
+                        <div class="flex lg:hidden items-center gap-1.5 shrink-0">
+                            <span class="font-extrabold text-slate-500 dark:text-slate-400 text-[10px] uppercase">HP:</span>
+                            <div class="flex items-center gap-0.5 bg-white dark:bg-slate-900 p-0.5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-2xs">
+                                <button type="button" wire:click="setMobileViewMode('cards')"
+                                    @class([
+                                        'px-2 py-0.5 rounded-lg text-[10px] font-black transition-all flex items-center gap-1',
+                                        'bg-emerald-600 text-white shadow-xs' => $mobileViewMode === 'cards',
+                                        'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200' => $mobileViewMode !== 'cards',
+                                    ])>
+                                    🎴 Kartu
+                                </button>
+                                <button type="button" wire:click="setMobileViewMode('table')"
+                                    @class([
+                                        'px-2 py-0.5 rounded-lg text-[10px] font-black transition-all flex items-center gap-1',
+                                        'bg-emerald-600 text-white shadow-xs' => $mobileViewMode === 'table',
+                                        'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200' => $mobileViewMode !== 'table',
+                                    ])>
+                                    📊 Tabel
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -272,7 +288,7 @@
                             </div>
                         @endif
 
-                        <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 p-3.5 rounded-2xl shadow-2xs space-y-2.5">
+                        <div id="santri-card-{{ $row['person']->id }}" class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 p-3.5 rounded-2xl shadow-2xs space-y-2.5 transition-all">
                             {{-- Card Header: Number, Name, Room --}}
                             <div class="flex items-center justify-between gap-2 border-b border-slate-100 dark:border-slate-800 pb-2">
                                 <div class="flex items-center gap-2 min-w-0">
@@ -298,9 +314,23 @@
                                     $isOldFullyChecked = $hasOldInput && $oldVal >= $row['tunggakanLamaSum'];
                                     $isOldPartialInput = $hasOldInput && $oldVal < $row['tunggakanLamaSum'];
                                 @endphp
-                                <div class="p-2 bg-rose-500/5 dark:bg-rose-950/20 border border-rose-200/60 dark:border-rose-900/40 rounded-xl flex items-center justify-between gap-2 text-[10px]">
-                                    <span class="font-extrabold text-rose-600 dark:text-rose-400">⚠️ Tunggakan Lama:</span>
-                                    <div class="inline-flex items-center rounded-xl overflow-hidden border shadow-2xs transition-all bg-white dark:bg-slate-900">
+                                <div class="p-2 bg-rose-500/5 dark:bg-rose-950/20 border border-rose-200/60 dark:border-rose-900/40 rounded-xl flex items-center justify-between gap-2 text-[10px] flex-wrap">
+                                    <div class="flex items-center gap-1.5 flex-wrap">
+                                        <span class="font-extrabold text-rose-600 dark:text-rose-400">⚠️ Tunggakan Lama:</span>
+                                        <button type="button" wire:click="jumpToArrearYear('{{ $row['person']->id }}', {{ $year - 1 }})"
+                                            class="px-2 py-0.5 bg-rose-500/20 hover:bg-rose-500 text-rose-700 dark:text-rose-300 hover:text-white rounded-lg text-[9px] font-black transition-all border border-rose-400/30 flex items-center gap-1 shadow-2xs"
+                                            title="Buka Tahun {{ $year - 1 }} & Jump Ke Santri Ini">
+                                            <span>⇄ {{ $year - 1 }}</span>
+                                        </button>
+                                        @if($originYear && $year !== $originYear)
+                                            <button type="button" wire:click="jumpBackToOriginYear('{{ $row['person']->id }}')"
+                                                class="px-2 py-0.5 bg-indigo-500/20 hover:bg-indigo-500 text-indigo-700 dark:text-indigo-300 hover:text-white rounded-lg text-[9px] font-black transition-all border border-indigo-400/30 flex items-center gap-1 shadow-2xs"
+                                                title="Kembali Ke Tahun {{ $originYear }}">
+                                                <span>↩️ Balik {{ $originYear }}</span>
+                                            </button>
+                                        @endif
+                                    </div>
+                                    <div class="inline-flex items-center rounded-xl overflow-hidden border shadow-2xs transition-all bg-white dark:bg-slate-900 shrink-0">
                                         <button type="button" wire:click="toggleOldArrearsFullPayment('{{ $row['person']->id }}', {{ $row['tunggakanLamaSum'] }})"
                                             class="h-6 w-6 shrink-0 text-xs font-black transition-all flex items-center justify-center border-r
                                                 {{ $isOldFullyChecked ? 'bg-rose-500 text-white border-rose-600' : ($isOldPartialInput ? 'bg-amber-500 text-white border-amber-600' : 'bg-rose-500/20 text-rose-600 dark:text-rose-400 border-rose-400/30') }}">
@@ -424,7 +454,7 @@
                                     </td>
                                 </tr>
                             @endif
-                            <tr wire:key="student-row-{{ $row['person']->id }}" class="hover:bg-slate-50/40 dark:hover:bg-slate-800/20 transition-colors">
+                            <tr id="santri-row-{{ $row['person']->id }}" wire:key="student-row-{{ $row['person']->id }}" class="hover:bg-slate-50/40 dark:hover:bg-slate-800/20 transition-colors">
                                 <td class="py-2.5 px-4 text-slate-400 text-[10px] sticky left-0 bg-white dark:bg-slate-900 z-10 shadow-xs border-r border-slate-200/50 dark:border-slate-800/50">{{ $i + 1 }}</td>
                                 <td class="py-2.5 px-4 font-semibold text-slate-800 dark:text-slate-200 sticky left-12 bg-white dark:bg-slate-900 z-10 shadow-xs truncate border-r border-slate-200/50 dark:border-slate-800/50" title="{{ $row['person']->name }}">
                                     {{ $row['person']->name }}
@@ -439,35 +469,49 @@
                                             $isOldFullyChecked = $hasOldInput && $oldVal >= $row['tunggakanLamaSum'];
                                             $isOldPartialInput = $hasOldInput && $oldVal < $row['tunggakanLamaSum'];
                                         @endphp
-                                        <div class="inline-flex items-center rounded-xl overflow-hidden border shadow-2xs transition-all
-                                            @if($isOldFullyChecked)
-                                                border-rose-500 bg-rose-500/10 ring-1 ring-rose-500/30
-                                            @elseif($isOldPartialInput)
-                                                border-amber-500 bg-amber-500/10 ring-1 ring-amber-500/30
-                                            @else
-                                                border-rose-300/50 dark:border-rose-800/60 bg-rose-500/5
-                                            @endif">
-                                            <button type="button" wire:click="toggleOldArrearsFullPayment('{{ $row['person']->id }}', {{ $row['tunggakanLamaSum'] }})"
-                                                class="h-7 w-7 shrink-0 text-xs font-black transition-all focus:outline-none flex items-center justify-center border-r
-                                                    @if($isOldFullyChecked)
-                                                        bg-rose-500 text-white border-rose-600
-                                                    @elseif($isOldPartialInput)
-                                                        bg-amber-500 text-white border-amber-600
-                                                    @else
-                                                        bg-rose-500/20 text-rose-600 dark:text-rose-400 border-rose-400/30 hover:bg-rose-500/30
-                                                    @endif"
-                                                title="{{ $isOldFullyChecked ? 'Lunas Tunggakan' : ($isOldPartialInput ? 'Cicilan Tunggakan (Rp ' . number_format($oldVal, 0, ',', '.') . ')' : 'Tandai Lunas Tunggakan') }}">
-                                                ⚡
+                                        <div class="flex items-center justify-center gap-1.5">
+                                            <button type="button" wire:click="jumpToArrearYear('{{ $row['person']->id }}', {{ $year - 1 }})"
+                                                class="px-1.5 py-0.5 bg-rose-500/20 hover:bg-rose-500 text-rose-700 dark:text-rose-300 hover:text-white rounded-lg text-[9px] font-black transition-all border border-rose-400/30 flex items-center gap-1 shadow-2xs"
+                                                title="Buka Tahun {{ $year - 1 }} & Jump Ke Santri Ini">
+                                                <span>⇄ {{ $year - 1 }}</span>
                                             </button>
-                                            <input
-                                                type="number"
-                                                wire:model.live.debounce.200ms="oldArrearsPayments.{{ $row['person']->id }}"
-                                                placeholder="Rp {{ number_format($row['tunggakanLamaSum'], 0, ',', '') }}"
-                                                class="w-20 h-7 bg-transparent border-0 px-2 text-[10px] text-right font-extrabold focus:ring-0 focus:outline-none transition-all
-                                                    @if($isOldFullyChecked) text-rose-700 dark:text-rose-300
-                                                    @elseif($isOldPartialInput) text-amber-700 dark:text-amber-300
-                                                    @else text-rose-800 dark:text-rose-200 @endif"
-                                            >
+                                            @if($originYear && $year !== $originYear)
+                                                <button type="button" wire:click="jumpBackToOriginYear('{{ $row['person']->id }}')"
+                                                    class="px-1.5 py-0.5 bg-indigo-500/20 hover:bg-indigo-500 text-indigo-700 dark:text-indigo-300 hover:text-white rounded-lg text-[9px] font-black transition-all border border-indigo-400/30 flex items-center gap-1 shadow-2xs"
+                                                    title="Kembali ke {{ $originYear }}">
+                                                    <span>↩️ Balik {{ $originYear }}</span>
+                                                </button>
+                                            @endif
+                                            <div class="inline-flex items-center rounded-xl overflow-hidden border shadow-2xs transition-all
+                                                @if($isOldFullyChecked)
+                                                    border-rose-500 bg-rose-500/10 ring-1 ring-rose-500/30
+                                                @elseif($isOldPartialInput)
+                                                    border-amber-500 bg-amber-500/10 ring-1 ring-amber-500/30
+                                                @else
+                                                    border-rose-300/50 dark:border-rose-800/60 bg-rose-500/5
+                                                @endif">
+                                                <button type="button" wire:click="toggleOldArrearsFullPayment('{{ $row['person']->id }}', {{ $row['tunggakanLamaSum'] }})"
+                                                    class="h-7 w-7 shrink-0 text-xs font-black transition-all focus:outline-none flex items-center justify-center border-r
+                                                        @if($isOldFullyChecked)
+                                                            bg-rose-500 text-white border-rose-600
+                                                        @elseif($isOldPartialInput)
+                                                            bg-amber-500 text-white border-amber-600
+                                                        @else
+                                                            bg-rose-500/20 text-rose-600 dark:text-rose-400 border-rose-400/30 hover:bg-rose-500/30
+                                                        @endif"
+                                                    title="{{ $isOldFullyChecked ? 'Lunas Tunggakan' : ($isOldPartialInput ? 'Cicilan Tunggakan (Rp ' . number_format($oldVal, 0, ',', '.') . ')' : 'Tandai Lunas Tunggakan') }}">
+                                                    ⚡
+                                                </button>
+                                                <input
+                                                    type="number"
+                                                    wire:model.live.debounce.200ms="oldArrearsPayments.{{ $row['person']->id }}"
+                                                    placeholder="Rp {{ number_format($row['tunggakanLamaSum'], 0, ',', '') }}"
+                                                    class="w-20 h-7 bg-transparent border-0 px-2 text-[10px] text-right font-extrabold focus:ring-0 focus:outline-none transition-all
+                                                        @if($isOldFullyChecked) text-rose-700 dark:text-rose-300
+                                                        @elseif($isOldPartialInput) text-amber-700 dark:text-amber-300
+                                                        @else text-rose-800 dark:text-rose-200 @endif"
+                                                >
+                                            </div>
                                         </div>
                                     @else
                                         <span class="text-[9px] text-slate-300 dark:text-slate-700">—</span>
