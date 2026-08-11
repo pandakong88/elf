@@ -53,7 +53,9 @@ class LembarSetoranKolektif extends Component
 
     public function jumpToArrearYear(string $personId, int $targetYear): void
     {
-        $this->originYear = $this->year;
+        if ($this->originYear === null) {
+            $this->originYear = (int)$this->year;
+        }
         $this->year = $targetYear;
         $this->highlightPersonId = $personId;
         $this->dispatch('scroll-to-santri', personId: $personId);
@@ -61,10 +63,9 @@ class LembarSetoranKolektif extends Component
 
     public function jumpBackToOriginYear(string $personId): void
     {
-        if ($this->originYear) {
-            $this->year = $this->originYear;
-            $this->originYear = null;
-        }
+        $targetYear = $this->originYear ?? (int)now()->format('Y');
+        $this->year = $targetYear;
+        $this->originYear = null;
         $this->highlightPersonId = $personId;
         $this->dispatch('scroll-to-santri', personId: $personId);
     }
@@ -879,7 +880,9 @@ class LembarSetoranKolektif extends Component
                 });
             }
 
-            $tunggakanLamaSum = $tunggakanLamaQuery->get()->sum(fn($b) => $b->amount - $b->amount_paid);
+            $tunggakanLamaBills = $tunggakanLamaQuery->get();
+            $tunggakanLamaSum = $tunggakanLamaBills->sum(fn($b) => $b->amount - $b->amount_paid);
+            $tunggakanLamaYears = $tunggakanLamaBills->pluck('period_year')->map(fn($y) => (int)$y)->unique()->sortDesc()->values()->toArray();
 
             // Query prepaid until label (furthest future paid month)
             $furthestPaidQuery = Bill::where('person_id', $santri->id)
@@ -918,6 +921,7 @@ class LembarSetoranKolektif extends Component
                 'person' => $santri,
                 'bills' => $bills,
                 'tunggakanLamaSum' => $tunggakanLamaSum,
+                'tunggakanLamaYears' => $tunggakanLamaYears,
                 'lunasDiMukaLabel' => $lunasDiMukaLabel,
             ];
         });

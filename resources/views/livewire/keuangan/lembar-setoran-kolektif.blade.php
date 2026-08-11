@@ -317,16 +317,22 @@
                                 <div class="p-2 bg-rose-500/5 dark:bg-rose-950/20 border border-rose-200/60 dark:border-rose-900/40 rounded-xl flex items-center justify-between gap-2 text-[10px] flex-wrap">
                                     <div class="flex items-center gap-1.5 flex-wrap">
                                         <span class="font-extrabold text-rose-600 dark:text-rose-400">⚠️ Tunggakan Lama:</span>
-                                        <button type="button" wire:click="jumpToArrearYear('{{ $row['person']->id }}', {{ $year - 1 }})"
-                                            class="px-2 py-0.5 bg-rose-500/20 hover:bg-rose-500 text-rose-700 dark:text-rose-300 hover:text-white rounded-lg text-[9px] font-black transition-all border border-rose-400/30 flex items-center gap-1 shadow-2xs"
-                                            title="Buka Tahun {{ $year - 1 }} & Jump Ke Santri Ini">
-                                            <span>⇄ {{ $year - 1 }}</span>
-                                        </button>
-                                        @if($originYear && $year !== $originYear)
+                                        @php $arrearYears = $row['tunggakanLamaYears'] ?? []; @endphp
+                                        @foreach($arrearYears as $yr)
+                                            @if((int)$yr !== (int)$year)
+                                                <button type="button" wire:click="jumpToArrearYear('{{ $row['person']->id }}', {{ $yr }})"
+                                                    class="px-2 py-0.5 bg-rose-500/20 hover:bg-rose-500 text-rose-700 dark:text-rose-300 hover:text-white rounded-lg text-[9px] font-black transition-all border border-rose-400/30 flex items-center gap-1 shadow-2xs"
+                                                    title="Buka Tahun {{ $yr }} & Jump Ke Santri Ini">
+                                                    <span>⇄ {{ $yr }}</span>
+                                                </button>
+                                            @endif
+                                        @endforeach
+                                        @php $targetReturnYear = $originYear ?? (int)now()->format('Y'); @endphp
+                                        @if((int)$year !== (int)$targetReturnYear)
                                             <button type="button" wire:click="jumpBackToOriginYear('{{ $row['person']->id }}')"
-                                                class="px-2 py-0.5 bg-indigo-500/20 hover:bg-indigo-500 text-indigo-700 dark:text-indigo-300 hover:text-white rounded-lg text-[9px] font-black transition-all border border-indigo-400/30 flex items-center gap-1 shadow-2xs"
-                                                title="Kembali Ke Tahun {{ $originYear }}">
-                                                <span>↩️ Balik {{ $originYear }}</span>
+                                                class="px-2 py-0.5 bg-indigo-600 text-white hover:bg-indigo-700 rounded-lg text-[9px] font-black transition-all border border-indigo-500 flex items-center gap-1 shadow-xs animate-pulse"
+                                                title="Kembali Ke Tahun {{ $targetReturnYear }}">
+                                                <span>↩️ Balik {{ $targetReturnYear }}</span>
                                             </button>
                                         @endif
                                     </div>
@@ -469,17 +475,23 @@
                                             $isOldFullyChecked = $hasOldInput && $oldVal >= $row['tunggakanLamaSum'];
                                             $isOldPartialInput = $hasOldInput && $oldVal < $row['tunggakanLamaSum'];
                                         @endphp
-                                        <div class="flex items-center justify-center gap-1.5">
-                                            <button type="button" wire:click="jumpToArrearYear('{{ $row['person']->id }}', {{ $year - 1 }})"
-                                                class="px-1.5 py-0.5 bg-rose-500/20 hover:bg-rose-500 text-rose-700 dark:text-rose-300 hover:text-white rounded-lg text-[9px] font-black transition-all border border-rose-400/30 flex items-center gap-1 shadow-2xs"
-                                                title="Buka Tahun {{ $year - 1 }} & Jump Ke Santri Ini">
-                                                <span>⇄ {{ $year - 1 }}</span>
-                                            </button>
-                                            @if($originYear && $year !== $originYear)
+                                        <div class="flex items-center justify-center gap-1.5 flex-wrap">
+                                            @php $arrearYears = $row['tunggakanLamaYears'] ?? []; @endphp
+                                            @foreach($arrearYears as $yr)
+                                                @if((int)$yr !== (int)$year)
+                                                    <button type="button" wire:click="jumpToArrearYear('{{ $row['person']->id }}', {{ $yr }})"
+                                                        class="px-1.5 py-0.5 bg-rose-500/20 hover:bg-rose-500 text-rose-700 dark:text-rose-300 hover:text-white rounded-lg text-[9px] font-black transition-all border border-rose-400/30 flex items-center gap-1 shadow-2xs"
+                                                        title="Buka Tahun {{ $yr }} & Jump Ke Santri Ini">
+                                                        <span>⇄ {{ $yr }}</span>
+                                                    </button>
+                                                @endif
+                                            @endforeach
+                                            @php $targetReturnYear = $originYear ?? (int)now()->format('Y'); @endphp
+                                            @if((int)$year !== (int)$targetReturnYear)
                                                 <button type="button" wire:click="jumpBackToOriginYear('{{ $row['person']->id }}')"
-                                                    class="px-1.5 py-0.5 bg-indigo-500/20 hover:bg-indigo-500 text-indigo-700 dark:text-indigo-300 hover:text-white rounded-lg text-[9px] font-black transition-all border border-indigo-400/30 flex items-center gap-1 shadow-2xs"
-                                                    title="Kembali ke {{ $originYear }}">
-                                                    <span>↩️ Balik {{ $originYear }}</span>
+                                                    class="px-1.5 py-0.5 bg-indigo-600 text-white hover:bg-indigo-700 rounded-lg text-[9px] font-black transition-all border border-indigo-500 flex items-center gap-1 shadow-xs animate-pulse"
+                                                    title="Kembali ke {{ $targetReturnYear }}">
+                                                    <span>↩️ Balik {{ $targetReturnYear }}</span>
                                                 </button>
                                             @endif
                                             <div class="inline-flex items-center rounded-xl overflow-hidden border shadow-2xs transition-all
