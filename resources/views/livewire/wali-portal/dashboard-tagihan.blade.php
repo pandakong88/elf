@@ -65,20 +65,33 @@
                 </div>
             </div>
 
-            <!-- Detail Grid Info (Asrama, Kelas, Alamat) -->
-            <div class="grid grid-cols-2 gap-2 pt-2 border-t border-slate-100 dark:border-slate-800 text-xs">
+            <!-- Detail Grid Info Mobile-First (Asrama, Kamar, Kelas, Alamat) -->
+            <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 pt-2 border-t border-slate-100 dark:border-slate-800 text-xs">
+                <!-- 1. Komplek / Asrama -->
                 <div class="bg-slate-50/80 dark:bg-slate-950/60 p-2.5 rounded-2xl border border-slate-200/60 dark:border-slate-800/80 space-y-0.5">
-                    <span class="block text-[9px] font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-wider flex items-center gap-1">
+                    <span class="block text-[9px] font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-wider flex items-center gap-1 truncate">
                         <span>🏠</span>
-                        <span>Komplek / Asrama</span>
+                        <span>Komplek Asrama</span>
                     </span>
                     <strong class="text-slate-800 dark:text-slate-200 text-[11px] block truncate font-bold">
-                        {{ $activeDorm ? $activeDorm->name : '-' }} {{ $activeRoom ? '(' . $activeRoom->name . ')' : '' }}
+                        {{ $activeDorm ? $activeDorm->name : '-' }}
                     </strong>
                 </div>
 
+                <!-- 2. Nomor Kamar -->
                 <div class="bg-slate-50/80 dark:bg-slate-950/60 p-2.5 rounded-2xl border border-slate-200/60 dark:border-slate-800/80 space-y-0.5">
-                    <span class="block text-[9px] font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-wider flex items-center gap-1">
+                    <span class="block text-[9px] font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-wider flex items-center gap-1 truncate">
+                        <span>🔑</span>
+                        <span>Kamar</span>
+                    </span>
+                    <strong class="text-slate-800 dark:text-slate-200 text-[11px] block truncate font-bold">
+                        {{ $activeRoom ? $activeRoom->name : '-' }}
+                    </strong>
+                </div>
+
+                <!-- 3. Kelas Madrasah -->
+                <div class="col-span-2 sm:col-span-1 bg-slate-50/80 dark:bg-slate-950/60 p-2.5 rounded-2xl border border-slate-200/60 dark:border-slate-800/80 space-y-0.5">
+                    <span class="block text-[9px] font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-wider flex items-center gap-1 truncate">
                         <span>🏫</span>
                         <span>Kelas Madrasah</span>
                     </span>
@@ -87,8 +100,9 @@
                     </strong>
                 </div>
 
+                <!-- 4. Alamat Asal Santri -->
                 @if(!empty($santri->address))
-                    <div class="col-span-2 bg-slate-50/80 dark:bg-slate-950/60 p-2.5 rounded-2xl border border-slate-200/60 dark:border-slate-800/80 space-y-0.5">
+                    <div class="col-span-2 sm:col-span-3 bg-slate-50/80 dark:bg-slate-950/60 p-2.5 rounded-2xl border border-slate-200/60 dark:border-slate-800/80 space-y-0.5">
                         <span class="block text-[9px] font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-wider flex items-center gap-1">
                             <span>📍</span>
                             <span>Alamat Asal Santri</span>
