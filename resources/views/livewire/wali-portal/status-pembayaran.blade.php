@@ -134,30 +134,40 @@
                         </div>
 
                         {{-- Rincian tagihan yang dibayar --}}
-                        @if($bills->count() > 0)
-                            <div class="space-y-2">
-                                @foreach($bills as $bill)
+                        @php
+                            $breakdownList = $transaction->bill_breakdown ?? [];
+                        @endphp
+                        @if(!empty($breakdownList))
+                            <div class="space-y-1.5">
+                                @foreach($breakdownList as $item)
                                     @php
-                                        $isFull = $bill->status === 'paid';
-                                        $sisa = max(0, $bill->amount - $bill->amount_paid);
+                                        $billObj = $bills->firstWhere('id', $item['bill_id']);
+                                        $title = $billObj?->notes ?: ($billObj?->config?->label ?: ucwords(str_replace('_', ' ', $item['bill_type'] ?? 'Tagihan')));
+                                        $isPartial = !empty($item['is_partial']);
+                                        $payPortion = (float)($item['pay_portion'] ?? $item['net_amount'] ?? 0);
+                                        $remainingBefore = (float)($item['bill_remaining'] ?? $payPortion);
+                                        $remainingAfter = max(0, $remainingBefore - $payPortion);
                                     @endphp
-                                    <div class="flex items-center justify-between text-xs py-0.5">
+                                    <div class="flex items-center justify-between text-xs py-1 border-b border-slate-100 dark:border-slate-800/60 last:border-0">
                                         <div class="truncate flex-1 mr-2 text-left">
-                                            <span class="text-slate-700 dark:text-slate-300 font-semibold block truncate">
-                                                {{ $bill->notes ?: ($bill->config?->label ?: ($bill->bill_type ? ucwords(str_replace('_', ' ', $bill->bill_type)) : '-')) }}
+                                            <span class="text-slate-800 dark:text-slate-200 font-bold block truncate">
+                                                {{ $title }}
                                             </span>
-                                            @if(!$isFull && $sisa > 0)
-                                                <span class="text-[10px] text-amber-600 dark:text-amber-400">Sisa kekurangan: Rp {{ number_format($sisa, 0, ',', '.') }}</span>
-                                            @endif
+                                            <span class="text-[10px] text-slate-500 dark:text-slate-400 font-mono">
+                                                Dibayar: <strong class="text-slate-700 dark:text-slate-300">Rp {{ number_format($payPortion, 0, ',', '.') }}</strong>
+                                                @if($isPartial && $remainingAfter > 0)
+                                                    • <span class="text-amber-600 dark:text-amber-400 font-bold">Sisa: Rp {{ number_format($remainingAfter, 0, ',', '.') }}</span>
+                                                @endif
+                                            </span>
                                         </div>
 
-                                        @if($isFull)
-                                            <span class="font-black text-emerald-700 dark:text-emerald-400 shrink-0 flex items-center gap-1 text-[11px]">
-                                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
+                                        @if(!$isPartial)
+                                            <span class="font-black text-emerald-700 dark:text-emerald-400 shrink-0 flex items-center gap-1 text-[10px] bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 rounded-md border border-emerald-200 dark:border-emerald-800">
+                                                <svg class="w-3 h-3 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
                                                 LUNAS
                                             </span>
                                         @else
-                                            <span class="font-bold text-amber-600 dark:text-amber-400 shrink-0 px-2 py-0.5 bg-amber-50 dark:bg-amber-950/40 rounded border border-amber-200 dark:border-amber-800 text-[10px]">
+                                            <span class="font-bold text-amber-700 dark:text-amber-400 shrink-0 px-2 py-0.5 bg-amber-50 dark:bg-amber-950/40 rounded-md border border-amber-200 dark:border-amber-800 text-[10px]">
                                                 DICICIL
                                             </span>
                                         @endif
