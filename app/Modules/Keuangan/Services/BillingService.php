@@ -938,10 +938,10 @@ class BillingService
         return DB::transaction(function () use ($bill, $amount, $transactionId) {
             // Ambil user pencatat: created_by bill -> admin/bendahara pertama -> user pertama
             $loggedBy = $bill->created_by;
-            if (!$loggedBy || !\App\Modules\Core\Models\User::where('id', $loggedBy)->exists()) {
-                $loggedBy = \App\Modules\Core\Models\User::whereHas('roles', function($q) {
+            if (!$loggedBy || !\App\Models\User::where('id', $loggedBy)->exists()) {
+                $loggedBy = \App\Models\User::whereHas('roles', function($q) {
                     $q->whereIn('name', ['super-admin', 'admin', 'bendahara-putra', 'bendahara-putri']);
-                })->value('id') ?? \App\Modules\Core\Models\User::value('id');
+                })->value('id') ?? \App\Models\User::value('id');
             }
 
             $payment = BillPayment::create([
