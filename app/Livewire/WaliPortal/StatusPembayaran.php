@@ -126,14 +126,75 @@ class StatusPembayaran extends Component
         };
     }
 
+    public function getBillTypeLabel(string $type): string
+    {
+        $labels = [
+            'syahriah_pondok'   => 'SPP / Syahriah Pondok',
+            'kas_komplek'       => 'Kas Komplek Asrama',
+            'majek_pagi'        => 'Majek / Catering Pagi',
+            'majek_sore'        => 'Majek / Catering Sore',
+            'syahriah_madrasah' => 'Syahriah Madrasah',
+            'kebersihan'        => 'Uang Kebersihan',
+            'kitab'             => 'Biaya Kitab / Buku',
+            'pendaftaran'       => 'Biaya Pendaftaran',
+            'event_iuran'       => 'Iuran Acara / Event',
+            'insidental'        => 'Iuran Acara / Event',
+        ];
+
+        return $labels[$type] ?? ucwords(str_replace('_', ' ', $type));
+    }
+
+    public function getBillPeriodLabel(?Bill $bill): string
+    {
+        if (!$bill) return '';
+
+        $monthNames = [
+            1 => 'Januari', 2 => 'Februari', 3 => 'Maret', 4 => 'April',
+            5 => 'Mei', 6 => 'Juni', 7 => 'Juli', 8 => 'Agustus',
+            9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Desember'
+        ];
+
+        $interval = $bill->config?->interval ?? 'monthly';
+
+        if (in_array($interval, ['semester', '2x_yearly'])) {
+            $s = $bill->period_sub ?? ($bill->period_month && $bill->period_month <= 6 ? 1 : 2);
+            return "Semester {$s} ({$bill->period_year})";
+        }
+
+        if (in_array($interval, ['once', 'insidental', 'event', 'sekali', 'yearly'])) {
+            return $bill->period_year ? "Tahun {$bill->period_year}" : '';
+        }
+
+        if ($bill->period_month && isset($monthNames[$bill->period_month])) {
+            return "{$monthNames[$bill->period_month]} {$bill->period_year}";
+        }
+
+        return $bill->period_year ? (string)$bill->period_year : '';
+    }
+
+    public function getBillTitle(?Bill $bill, ?string $fallbackType = null): string
+    {
+        if (!$bill) {
+            return $fallbackType ? $this->getBillTypeLabel($fallbackType) : 'Tagihan Santri';
+        }
+
+        $baseName = $bill->notes ?: ($bill->config?->label ?: $this->getBillTypeLabel($bill->bill_type));
+        $period   = $this->getBillPeriodLabel($bill);
+
+        return $period ? "{$baseName} ({$period})" : $baseName;
+    }
+
     public function render()
     {
         $santri = null;
         if ($this->transaction) {
-            $santri = $this->transaction->person;
+            $santri = $this->transaction->person()->with([
+                'roomAssignments' => fn($q) => $q->where('is_active', true)->with('room.dormitory'),
+                'madrasahEnrollments' => fn($q) => $q->where('is_active', true)->with('kelas'),
+            ])->first();
         }
 
-        $bills = $this->transaction ? $this->transaction->bills() : collect();
+        $bills = $this->transaction ? $this->transaction->bills()->load('config') : collect();
 
         return view('livewire.wali-portal.status-pembayaran', [
             'transaction' => $this->transaction,
@@ -144,3 +205,4 @@ class StatusPembayaran extends Component
         ]);
     }
 }
+

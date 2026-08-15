@@ -117,99 +117,168 @@
                 </p>
             </div>
 
-            {{-- Ringkasan Pembayaran --}}
+            {{-- Ringkasan Bukti Pembayaran Super Informatif --}}
             @if($transaction)
-                <div class="bg-white dark:bg-slate-900 border-2 border-emerald-200 dark:border-emerald-800/40 rounded-3xl overflow-hidden shadow-sm">
-                    <div class="h-1 bg-gradient-to-r from-emerald-500 to-teal-500"></div>
-                    <div class="p-4 space-y-3">
-                        {{-- Header --}}
-                        <div class="flex items-center gap-2 pb-2 border-b border-slate-100 dark:border-slate-800">
-                            <div class="w-8 h-8 rounded-xl bg-emerald-100 dark:bg-emerald-500/10 flex items-center justify-center">
-                                <svg class="w-4 h-4 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
+                @php
+                    $activeRoom = $santri?->roomAssignments->first()?->room;
+                    $activeDorm = $activeRoom?->dormitory;
+                    $activeKelas = $santri?->madrasahEnrollments->first()?->kelas;
+                    $breakdownList = $transaction->bill_breakdown ?? [];
+                @endphp
+
+                <div id="printableReceipt" class="bg-white dark:bg-slate-900 border-2 border-emerald-300 dark:border-emerald-700/60 rounded-3xl overflow-hidden shadow-lg transition-colors text-left">
+                    {{-- Header Gradient Accent --}}
+                    <div class="h-2 bg-gradient-to-r from-emerald-500 via-teal-500 to-sky-500"></div>
+
+                    <div class="p-5 space-y-4">
+                        {{-- Receipt Header --}}
+                        <div class="flex items-start justify-between gap-3 pb-3 border-b border-slate-100 dark:border-slate-800">
+                            <div>
+                                <span class="text-[9px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-widest block">BUKTI PEMBAYARAN RESMI</span>
+                                <h3 class="text-base font-black text-slate-900 dark:text-white mt-0.5">PESANTREN AL-FITHROH</h3>
+                                <p class="text-[11px] font-mono font-bold text-slate-500 dark:text-slate-400 mt-0.5">
+                                    No. Transaksi: <span class="text-slate-800 dark:text-slate-200">{{ $transaction->merchant_order_id }}</span>
+                                </p>
                             </div>
-                            <div class="text-left">
-                                <p class="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase">Bukti Pembayaran</p>
-                                <p class="text-[11px] font-mono font-black text-slate-700 dark:text-slate-300">{{ $transaction->merchant_order_id }}</p>
+
+                            <div class="text-right shrink-0">
+                                <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-100 dark:bg-emerald-500/20 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-500/30">
+                                    <span>✓</span>
+                                    <span>BERHASIL</span>
+                                </span>
+                                <span class="block text-[10px] text-slate-400 dark:text-slate-500 font-medium mt-1">
+                                    {{ ($transaction->callback_received_at ?? $transaction->updated_at ?? now())->translatedFormat('d M Y, H:i') }} WIB
+                                </span>
                             </div>
                         </div>
 
-                        {{-- Rincian tagihan yang dibayar --}}
-                        @php
-                            $breakdownList = $transaction->bill_breakdown ?? [];
-                        @endphp
-                        @if(!empty($breakdownList))
-                            <div class="space-y-1.5">
-                                @foreach($breakdownList as $item)
-                                    @php
-                                        $billObj = $bills->firstWhere('id', $item['bill_id']);
-                                        $title = $billObj?->notes ?: ($billObj?->config?->label ?: ucwords(str_replace('_', ' ', $item['bill_type'] ?? 'Tagihan')));
-                                        $isPartial = !empty($item['is_partial']);
-                                        $payPortion = (float)($item['pay_portion'] ?? $item['net_amount'] ?? 0);
-                                        $remainingBefore = (float)($item['bill_remaining'] ?? $payPortion);
-                                        $remainingAfter = max(0, $remainingBefore - $payPortion);
-                                    @endphp
-                                    <div class="flex items-center justify-between text-xs py-1 border-b border-slate-100 dark:border-slate-800/60 last:border-0">
-                                        <div class="truncate flex-1 mr-2 text-left">
-                                            <span class="text-slate-800 dark:text-slate-200 font-bold block truncate">
-                                                {{ $title }}
-                                            </span>
-                                            <span class="text-[10px] text-slate-500 dark:text-slate-400 font-mono">
-                                                Dibayar: <strong class="text-slate-700 dark:text-slate-300">Rp {{ number_format($payPortion, 0, ',', '.') }}</strong>
-                                                @if($isPartial && $remainingAfter > 0)
-                                                    • <span class="text-amber-600 dark:text-amber-400 font-bold">Sisa: Rp {{ number_format($remainingAfter, 0, ',', '.') }}</span>
-                                                @endif
-                                            </span>
-                                        </div>
-
-                                        @if(!$isPartial)
-                                            <span class="font-black text-emerald-700 dark:text-emerald-400 shrink-0 flex items-center gap-1 text-[10px] bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 rounded-md border border-emerald-200 dark:border-emerald-800">
-                                                <svg class="w-3 h-3 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
-                                                LUNAS
-                                            </span>
-                                        @else
-                                            <span class="font-bold text-amber-700 dark:text-amber-400 shrink-0 px-2 py-0.5 bg-amber-50 dark:bg-amber-950/40 rounded-md border border-amber-200 dark:border-amber-800 text-[10px]">
-                                                DICICIL
-                                            </span>
+                        {{-- Identitas Santri --}}
+                        @if($santri)
+                            <div class="bg-slate-50 dark:bg-slate-950/60 p-3 rounded-2xl border border-slate-200/80 dark:border-slate-800 grid grid-cols-2 gap-2 text-xs">
+                                <div>
+                                    <span class="text-[10px] font-bold text-slate-400 uppercase block">Nama Santri</span>
+                                    <strong class="text-slate-900 dark:text-white font-extrabold text-sm block truncate">{{ $santri->name }}</strong>
+                                </div>
+                                <div>
+                                    <span class="text-[10px] font-bold text-slate-400 uppercase block">Komplek / Kelas</span>
+                                    <span class="text-slate-700 dark:text-slate-300 font-semibold block truncate">
+                                        {{ $activeDorm?->name ?: ($activeRoom ? "Kamar {$activeRoom->name}" : '-') }}
+                                        @if($activeKelas)
+                                            • {{ $activeKelas->name }}
                                         @endif
-                                    </div>
-                                @endforeach
+                                    </span>
+                                </div>
                             </div>
                         @endif
 
+                        {{-- Rincian Tagihan yang Dibayarkan --}}
+                        @if(!empty($breakdownList))
+                            <div class="space-y-2">
+                                <span class="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-wider block">
+                                    Rincian Tagihan ({{ count($breakdownList) }} Item)
+                                </span>
 
-                        {{-- Total --}}
-                        <div class="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
-                            <span class="text-xs font-bold text-slate-500 dark:text-slate-400">Total Dibayar</span>
-                            <span class="text-base font-black text-emerald-700 dark:text-emerald-400">
-                                Rp {{ number_format($transaction->total_amount, 0, ',', '.') }}
-                            </span>
+                                <div class="divide-y divide-slate-100 dark:divide-slate-800/80 border-t border-b border-slate-100 dark:border-slate-800">
+                                    @foreach($breakdownList as $item)
+                                        @php
+                                            $billObj = $bills->firstWhere('id', $item['bill_id']);
+                                            $fullTitle = $this->getBillTitle($billObj, $item['bill_type'] ?? null);
+                                            $isPartial = !empty($item['is_partial']);
+                                            $payPortion = (float)($item['pay_portion'] ?? $item['net_amount'] ?? 0);
+                                            $remainingBefore = (float)($item['bill_remaining'] ?? $payPortion);
+                                            $remainingAfter = max(0, $remainingBefore - $payPortion);
+                                        @endphp
+
+                                        <div class="py-2.5 flex items-start justify-between gap-3 text-xs">
+                                            <div class="flex-1 min-w-0">
+                                                <h4 class="font-extrabold text-slate-900 dark:text-slate-100 leading-snug">
+                                                    {{ $fullTitle }}
+                                                </h4>
+                                                <div class="flex items-center gap-2 text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 font-mono flex-wrap">
+                                                    <span>Dibayar: <strong class="text-slate-800 dark:text-slate-200">Rp {{ number_format($payPortion, 0, ',', '.') }}</strong></span>
+                                                    @if($isPartial && $remainingAfter > 0)
+                                                        <span class="text-amber-600 dark:text-amber-400 font-bold">• Sisa kekurangan: Rp {{ number_format($remainingAfter, 0, ',', '.') }}</span>
+                                                    @endif
+                                                </div>
+                                            </div>
+
+                                            <div class="text-right shrink-0">
+                                                @if(!$isPartial)
+                                                    <span class="inline-flex items-center gap-1 text-[10px] font-black text-emerald-700 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-500/20 px-2 py-0.5 rounded-md border border-emerald-300 dark:border-emerald-500/30">
+                                                        <span>✓</span> LUNAS
+                                                    </span>
+                                                @else
+                                                    <span class="inline-flex items-center gap-1 text-[10px] font-bold text-amber-700 dark:text-amber-400 bg-amber-100 dark:bg-amber-500/20 px-2 py-0.5 rounded-md border border-amber-300 dark:border-amber-500/30">
+                                                        DICICIL
+                                                    </span>
+                                                @endif
+                                            </div>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            </div>
+                        @endif
+
+                        {{-- Rekap Pembayaran & Biaya Layanan --}}
+                        <div class="space-y-1.5 pt-2 text-xs">
+                            <div class="flex items-center justify-between text-slate-600 dark:text-slate-400">
+                                <span>Subtotal Tagihan</span>
+                                <span class="font-mono font-bold text-slate-800 dark:text-slate-200">
+                                    Rp {{ number_format($transaction->bill_amount ?? ($transaction->total_amount - ($transaction->mdr_amount ?? 0)), 0, ',', '.') }}
+                                </span>
+                            </div>
+
+                            @if(($transaction->mdr_amount ?? 0) > 0)
+                                <div class="flex items-center justify-between text-slate-600 dark:text-slate-400">
+                                    <span>Biaya Layanan ({{ $transaction->channel_label }})</span>
+                                    <span class="font-mono text-slate-600 dark:text-slate-400">
+                                        Rp {{ number_format($transaction->mdr_amount, 0, ',', '.') }}
+                                    </span>
+                                </div>
+                            @endif
+
+                            <div class="flex items-center justify-between pt-2 border-t border-slate-200 dark:border-slate-800 text-sm">
+                                <span class="font-black text-slate-900 dark:text-white">TOTAL DIBAYARKAN</span>
+                                <span class="font-black text-emerald-700 dark:text-emerald-400 text-base font-mono">
+                                    Rp {{ number_format($transaction->total_amount, 0, ',', '.') }}
+                                </span>
+                            </div>
+
+                            <div class="flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400 pt-1">
+                                <span>Metode Pembayaran</span>
+                                <span class="font-bold text-slate-800 dark:text-slate-200">{{ $transaction->channel_label }}</span>
+                            </div>
                         </div>
 
-                        {{-- Metode --}}
-                        <div class="flex items-center justify-between text-xs">
-                            <span class="text-slate-500 dark:text-slate-400 font-semibold">Via</span>
-                            <span class="font-bold text-slate-700 dark:text-slate-300">{{ $transaction->channel_label }}</span>
-                        </div>
-
-                        <div class="flex items-center justify-between text-xs">
-                            <span class="text-slate-500 dark:text-slate-400 font-semibold">Waktu</span>
-                            <span class="font-bold text-slate-700 dark:text-slate-300">
-                                {{ ($transaction->callback_received_at ?? now())->translatedFormat('d M Y, H:i') }} WIB
-                            </span>
+                        {{-- Footer Struk --}}
+                        <div class="pt-3 border-t border-dashed border-slate-200 dark:border-slate-800 text-center">
+                            <p class="text-[10px] text-slate-400 dark:text-slate-500">
+                                🔒 Bukti pembayaran sah dan tervalidasi otomatis oleh sistem Elvith v1.
+                            </p>
                         </div>
                     </div>
                 </div>
-            @endif
 
-            {{-- Tombol Kembali --}}
-            @if($santri)
-                <a href="{{ route('portal-wali.dashboard', $santri->id) }}"
-                   class="w-full inline-flex items-center justify-center gap-2 px-5 py-3.5 bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold rounded-2xl text-sm transition-all shadow-md">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
-                    Kembali ke Dashboard Tagihan
-                </a>
+                {{-- Action Buttons: Cetak & Kembali --}}
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 w-full">
+                    <button type="button"
+                            onclick="window.print()"
+                            class="w-full inline-flex items-center justify-center gap-2 px-4 py-3 bg-slate-800 hover:bg-slate-700 text-white font-extrabold rounded-2xl text-xs transition-all shadow-md active:scale-95 border border-slate-700">
+                        <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+                        <span>Cetak Bukti Pembayaran</span>
+                    </button>
+
+                    @if($santri)
+                        <a href="{{ route('portal-wali.dashboard', $santri->id) }}"
+                           class="w-full inline-flex items-center justify-center gap-2 px-4 py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold rounded-2xl text-xs transition-all shadow-md active:scale-95">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+                            <span>Kembali ke Dashboard</span>
+                        </a>
+                    @endif
+                </div>
             @endif
         </div>
+
 
     {{-- ================================================================= --}}
     {{-- STATE: FAILED / EXPIRED ❌                                         --}}
