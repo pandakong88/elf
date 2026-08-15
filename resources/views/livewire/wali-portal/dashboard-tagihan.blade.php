@@ -233,7 +233,8 @@
                 </div>
 
                 {{-- Daftar Checklist dengan Badge Kategori --}}
-                         @foreach($simulasiBillOptions as $bill)
+                <div class="space-y-2">
+                    @foreach($simulasiBillOptions as $bill)
                         @php
                             $maxKekurangan = max(0, (float)$bill->amount - (float)$bill->amount_paid);
                             $cat = $bill->simulasi_cat ?? 'current';
