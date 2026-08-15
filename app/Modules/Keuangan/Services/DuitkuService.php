@@ -109,10 +109,14 @@ class DuitkuService
         $merchantOrderId = 'ELF-' . now()->format('ymdHis') . '-' . strtoupper(Str::random(6));
 
         // 4. Ambil info santri untuk detail produk
-        $person      = $bills[0]->person;
-        $billLabels  = collect($bills)->map(fn($b) => $b->bill_type)->implode(', ');
-        $productDetail = "Pembayaran Tagihan Santri: {$billLabels}";
-        $customerName  = $person?->full_name ?? 'Wali Santri';
+        $person        = $bills[0]->person ?? null;
+        $santriName    = $person?->name ?? 'Santri';
+        $billCount     = count($bills);
+        $productDetail = Str::limit("Tagihan {$santriName} ({$billCount} item)", 240, '...');
+        $customerName  = Str::limit(preg_replace('/[^a-zA-Z0-9\s]/', '', (string)$santriName), 30, '');
+        if (empty($customerName)) {
+            $customerName = 'Wali Santri';
+        }
         $customerEmail = $person?->user?->email ?? 'wali@elvith.id';
 
         // 5. Signature: MD5(merchantCode + merchantOrderId + amount + apiKey)
