@@ -342,9 +342,25 @@ class DuitkuService
     // ─── Private Helpers ─────────────────────────────────────────────────────
 
     /**
+     * Re-sync semua transaksi berstatus success yang mungkin belum tercatat di bill_payments.
+     */
+    public function resyncAllSuccessfulTransactions(): int
+    {
+        $transactions = PaymentTransaction::where('status', 'success')->get();
+        $count = 0;
+
+        foreach ($transactions as $transaction) {
+            $this->handleSuccessfulPayment($transaction, $transaction->raw_callback_payload ?? []);
+            $count++;
+        }
+
+        return $count;
+    }
+
+    /**
      * Tangani pembayaran sukses: update transaksi + buat BillPayment records.
      */
-    private function handleSuccessfulPayment(PaymentTransaction $transaction, array $payload): void
+    public function handleSuccessfulPayment(PaymentTransaction $transaction, array $payload = []): void
     {
         // Update status transaksi
         if ($transaction->status !== 'success') {
@@ -375,6 +391,7 @@ class DuitkuService
                 ]);
             }
         }
+
 
 
         Log::info('[Duitku] Payment successfully processed', [
