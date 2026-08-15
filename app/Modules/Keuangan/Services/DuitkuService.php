@@ -85,10 +85,11 @@ class DuitkuService
     /**
      * Buat transaksi baru ke Duitku.
      *
-     * @param  Bill[]  $bills       Koleksi Bill yang akan dibayar
-     * @param  string  $channel     Kode channel (SP, BR, BT, I1, M2, ...)
-     * @param  string  $personId    UUID santri
-     * @param  string|null $userId  UUID user yang memulai (null = portal wali)
+     * @param  Bill[]  $bills          Koleksi Bill yang akan dibayar
+     * @param  string  $channel        Kode channel (SP, BR, BT, I1, M2, ...)
+     * @param  string  $personId       UUID santri
+     * @param  string|null $userId     UUID user yang memulai (null = portal wali)
+     * @param  array   $customAmounts  Nominal custom per bill [bill_id => amount] (untuk cicilan)
      * @return PaymentTransaction
      * @throws \Exception
      */
@@ -96,14 +97,22 @@ class DuitkuService
         array $bills,
         string $channel,
         string $personId,
-        ?string $userId = null
+        ?string $userId = null,
+        array $customAmounts = []
     ): PaymentTransaction {
-        // 1. Hitung total tagihan
-        $billAmount = collect($bills)->sum(fn($b) => (float) $b->amount - (float) $b->amount_paid);
-        $mdrData    = $this->calculateMdr($billAmount, $channel);
+        // 1. Hitung total tagihan (dukung nominal custom / parsial)
+        $billAmount = collect($bills)->sum(function($b) use ($customAmounts) {
+            $maxRemaining = max(0, (float) $b->amount - (float) $b->amount_paid);
+            if (isset($customAmounts[$b->id]) && is_numeric($customAmounts[$b->id]) && (float)$customAmounts[$b->id] > 0) {
+                return min($maxRemaining, (float)$customAmounts[$b->id]);
+            }
+            return $maxRemaining;
+        });
+
+        $mdrData = $this->calculateMdr($billAmount, $channel);
 
         // 2. Buat bill_breakdown (alokasi MDR per bill secara proporsional)
-        $breakdown = $this->buildBillBreakdown($bills, $mdrData);
+        $breakdown = $this->buildBillBreakdown($bills, $mdrData, $customAmounts);
 
         // 3. Generate merchant order ID yang unik
         $merchantOrderId = 'ELF-' . now()->format('ymdHis') . '-' . strtoupper(Str::random(6));
@@ -374,32 +383,39 @@ class DuitkuService
      *
      * @param  Bill[]  $bills
      * @param  array   $mdrData
+     * @param  array   $customAmounts
      * @return array
      */
-    private function buildBillBreakdown(array $bills, array $mdrData): array
+    private function buildBillBreakdown(array $bills, array $mdrData, array $customAmounts = []): array
     {
         $totalBillAmount = $mdrData['bill_amount'];
         $totalMdr        = $mdrData['mdr_amount'];
         $breakdown       = [];
 
         foreach ($bills as $bill) {
-            $billRemaining = (float) $bill->amount - (float) $bill->amount_paid;
+            $maxRemaining = max(0, (float) $bill->amount - (float) $bill->amount_paid);
+            $payPortion   = isset($customAmounts[$bill->id]) && is_numeric($customAmounts[$bill->id]) && (float)$customAmounts[$bill->id] > 0
+                ? min($maxRemaining, (float)$customAmounts[$bill->id])
+                : $maxRemaining;
 
-            // Alokasi MDR proporsional
+            // Alokasi MDR proporsional terhadap nominal yang dibayarkan
             $mdrPortion = $totalBillAmount > 0
-                ? round(($billRemaining / $totalBillAmount) * $totalMdr, 2)
+                ? round(($payPortion / $totalBillAmount) * $totalMdr, 2)
                 : 0;
 
             $breakdown[] = [
-                'bill_id'       => $bill->id,
-                'bill_type'     => $bill->bill_type,
-                'bill_remaining'=> $billRemaining,
-                'mdr_portion'   => $mdrPortion,
-                'net_amount'    => $billRemaining, // Net amount yang dicatat ke kas
-                'total_charged' => $billRemaining + $mdrPortion,
+                'bill_id'        => $bill->id,
+                'bill_type'      => $bill->bill_type,
+                'bill_remaining' => $maxRemaining,
+                'pay_portion'    => $payPortion,
+                'mdr_portion'    => $mdrPortion,
+                'net_amount'     => $payPortion, // Net amount yang dicatat ke kas
+                'total_charged'  => $payPortion + $mdrPortion,
+                'is_partial'     => ($payPortion < $maxRemaining),
             ];
         }
 
         return $breakdown;
     }
 }
+

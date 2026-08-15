@@ -17,6 +17,9 @@ class DashboardTagihan extends Component
     public array $selectedBillIds = [];
     public bool $isInitialized = false;
 
+    // Pembayaran Parsial / Cicilan — nominal custom per bill [bill_id => amount]
+    public array $customAmounts = [];
+
     // Bayar Online — channel yang dipilih wali di modal
     public string $selectedChannel = '';
     public bool $isProcessingPayment = false;
@@ -212,10 +215,11 @@ class DashboardTagihan extends Component
             // Buat transaksi ke Duitku
             $duitkuService = app(DuitkuService::class);
             $transaction   = $duitkuService->createTransaction(
-                bills:    $bills,
-                channel:  $channel,
-                personId: $this->personId,
-                userId:   null, // portal wali = no user
+                bills:         $bills,
+                channel:       $channel,
+                personId:      $this->personId,
+                userId:        null, // portal wali = no user
+                customAmounts: $this->customAmounts,
             );
 
             // Redirect ke halaman bayar Duitku
@@ -231,6 +235,17 @@ class DashboardTagihan extends Component
             $this->isProcessingPayment = false;
         }
     }
+
+    public function setCustomBillAmount(string $billId, float $amount): void
+    {
+        $this->customAmounts[$billId] = $amount;
+    }
+
+    public function resetCustomBillAmount(string $billId): void
+    {
+        unset($this->customAmounts[$billId]);
+    }
+
 
     public function render()
     {
@@ -444,23 +459,33 @@ class DashboardTagihan extends Component
             foreach ($unpaidQueue as $bill) {
                 if (!in_array($bill->id, $this->selectedBillIds)) continue;
 
-                $kekurangan = max(0, $bill->amount - $bill->amount_paid);
-                if ($kekurangan <= 0) continue;
+                $maxKekurangan = max(0, (float)$bill->amount - (float)$bill->amount_paid);
+                if ($maxKekurangan <= 0) continue;
+
+                $customVal = $this->customAmounts[$bill->id] ?? null;
+                $payAmount = (isset($customVal) && is_numeric($customVal) && (float)$customVal > 0)
+                    ? min($maxKekurangan, (float)$customVal)
+                    : $maxKekurangan;
+
+                $sisaBill = max(0, $maxKekurangan - $payAmount);
+                $isFull   = ($sisaBill <= 0);
 
                 $bMonthName = $this->getMonthName($bill->period_month);
                 $label = $this->getBillDisplayName($bill) . ($bMonthName ? " ($bMonthName {$bill->period_year})" : "");
 
                 $simulasiHasil[] = [
-                    'bill_id'   => $bill->id,
-                    'label'     => $label,
-                    'terbayar'  => $kekurangan,
-                    'status'    => 'LUNAS',
-                    'sisa_bill' => 0,
+                    'bill_id'    => $bill->id,
+                    'label'      => $label,
+                    'terbayar'   => $payAmount,
+                    'status'     => $isFull ? 'LUNAS' : 'SEBAGIAN / CICILAN',
+                    'sisa_bill'  => $sisaBill,
+                    'is_partial' => !$isFull,
                 ];
-                $simulasiTotal += $kekurangan;
+                $simulasiTotal += $payAmount;
             }
 
             $this->simulasiTotal = $simulasiTotal;
+
 
             if ($simulasiTotal > 0) {
                 $waText  = "Assalamu'alaikum $waName,\n\n";
