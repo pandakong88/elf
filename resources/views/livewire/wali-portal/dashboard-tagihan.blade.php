@@ -1,4 +1,5 @@
-<div x-data="{ openSimulasi: false }" class="space-y-5 relative">
+<div x-data="{ openSimulasi: false, openBayarModal: false, processingChannel: '' }" class="space-y-5 relative"
+     x-on:livewire-payment-redirect.window="openBayarModal = false">
     <!-- Tombol Kembali & Header Actions -->
     <div class="flex items-center justify-between">
         <a href="{{ route('portal-wali.search') }}" 
@@ -805,6 +806,15 @@
                         <span>🧮</span>
                         <span x-text="openSimulasi ? 'Tutup' : 'Buka Detail'"></span>
                     </button>
+
+                    {{-- TOMBOL BAYAR ONLINE --}}
+                    <button type="button"
+                            @click="openBayarModal = true"
+                            class="px-3 py-2 bg-sky-500 hover:bg-sky-400 active:scale-95 text-white font-extrabold rounded-xl text-xs transition-all shadow-md flex items-center gap-1.5">
+                        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                        <span>Bayar Online</span>
+                    </button>
+
                     @if($simulasiWaUrl)
                         <a href="{{ $simulasiWaUrl }}" target="_blank" 
                            class="p-2 bg-emerald-500/20 hover:bg-emerald-500 text-emerald-400 hover:text-white rounded-xl border border-emerald-500/40 transition-all text-xs flex items-center justify-center" 
@@ -816,4 +826,135 @@
             </div>
         </div>
     @endif
+
+    {{-- ================================================================= --}}
+    {{-- MODAL PILIH CHANNEL PEMBAYARAN DUITKU                              --}}
+    {{-- ================================================================= --}}
+    <div x-show="openBayarModal"
+         x-transition:enter="transition ease-out duration-200"
+         x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100"
+         x-transition:leave="transition ease-in duration-150"
+         x-transition:leave-start="opacity-100"
+         x-transition:leave-end="opacity-0"
+         class="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4"
+         style="display: none;">
+
+        {{-- Backdrop --}}
+        <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" @click="openBayarModal = false"></div>
+
+        {{-- Modal Content --}}
+        <div class="relative w-full sm:max-w-md bg-white dark:bg-slate-900 rounded-t-3xl sm:rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden"
+             x-transition:enter="transition ease-out duration-300"
+             x-transition:enter-start="translate-y-full sm:translate-y-4 opacity-0"
+             x-transition:enter-end="translate-y-0 opacity-100"
+             x-transition:leave="transition ease-in duration-200"
+             x-transition:leave-start="translate-y-0 opacity-100"
+             x-transition:leave-end="translate-y-full sm:translate-y-4 opacity-0">
+
+            {{-- Header Modal --}}
+            <div class="h-1 w-full bg-gradient-to-r from-sky-500 via-blue-500 to-indigo-500"></div>
+            <div class="p-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                <div>
+                    <h3 class="text-sm font-black text-slate-900 dark:text-white">⚡ Pilih Metode Pembayaran</h3>
+                    <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                        Total: <strong class="text-sky-600 dark:text-sky-400 font-black">Rp {{ number_format($simulasiTotal, 0, ',', '.') }}</strong>
+                        <span class="text-slate-400">+ biaya layanan</span>
+                    </p>
+                </div>
+                <button @click="openBayarModal = false" class="p-1.5 rounded-xl text-slate-500 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+
+            {{-- Error Message --}}
+            @if($paymentError)
+                <div class="mx-4 mt-3 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/40 rounded-2xl flex items-center gap-2">
+                    <svg class="w-4 h-4 text-red-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    <p class="text-xs text-red-700 dark:text-red-400 font-semibold">{{ $paymentError }}</p>
+                </div>
+            @endif
+
+            {{-- Daftar Channel --}}
+            <div class="p-4 space-y-2.5 max-h-[60vh] overflow-y-auto">
+                @php
+                    $channels = config('duitku.enabled_channels', []);
+                    $channelIcons = [
+                        'SP' => '📱', 'BR' => '🏦', 'BT' => '🕌',
+                        'I1' => '🏦', 'M2' => '🏦',
+                    ];
+                @endphp
+
+                @foreach($channels as $code => $channel)
+                    @php
+                        $mdrAmount  = $simulasiTotal * ($channel['mdr_rate'] ?? 0) + ($channel['mdr_fixed'] ?? 0);
+                        $totalBayar = $simulasiTotal + $mdrAmount;
+                        $icon       = $channelIcons[$code] ?? '💳';
+                    @endphp
+
+                    <button type="button"
+                            wire:click="initiateBayarOnline('{{ $code }}')"
+                            wire:loading.attr="disabled"
+                            @click="processingChannel = '{{ $code }}'"
+                            :disabled="$wire.isProcessingPayment"
+                            class="w-full text-left bg-white dark:bg-slate-800/60 hover:bg-sky-50 dark:hover:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 hover:border-sky-400 dark:hover:border-sky-600 rounded-2xl p-3.5 transition-all group disabled:opacity-60 disabled:cursor-not-allowed">
+
+                        <div class="flex items-center gap-3">
+                            {{-- Icon --}}
+                            <div class="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-700 flex items-center justify-center text-xl shrink-0 group-hover:bg-sky-100 dark:group-hover:bg-sky-900/30 transition-colors">
+                                <span x-show="processingChannel !== '{{ $code }}' || !$wire.isProcessingPayment">{{ $icon }}</span>
+                                <span x-show="processingChannel === '{{ $code }}' && $wire.isProcessingPayment">
+                                    <svg class="w-5 h-5 animate-spin text-sky-500" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path></svg>
+                                </span>
+                            </div>
+
+                            {{-- Info Channel --}}
+                            <div class="flex-1 min-w-0">
+                                <div class="text-sm font-extrabold text-slate-900 dark:text-slate-100 group-hover:text-sky-700 dark:group-hover:text-sky-400 transition-colors">
+                                    {{ $channel['name'] }}
+                                </div>
+                                <div class="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">
+                                    @if($mdrAmount > 0)
+                                        Biaya layanan:
+                                        @if(($channel['mdr_rate'] ?? 0) > 0)
+                                            {{ ($channel['mdr_rate'] * 100) }}%
+                                        @else
+                                            Rp {{ number_format($channel['mdr_fixed'], 0, ',', '.') }}
+                                        @endif
+                                    @else
+                                        Tanpa biaya layanan
+                                    @endif
+                                </div>
+                            </div>
+
+                            {{-- Total Bayar --}}
+                            <div class="text-right shrink-0">
+                                <div class="text-xs font-black text-slate-800 dark:text-slate-200 group-hover:text-sky-700 dark:group-hover:text-sky-400 transition-colors">
+                                    Rp {{ number_format($totalBayar, 0, ',', '.') }}
+                                </div>
+                                @if($mdrAmount > 0)
+                                    <div class="text-[10px] text-slate-400 dark:text-slate-500">
+                                        +Rp {{ number_format($mdrAmount, 0, ',', '.') }}
+                                    </div>
+                                @endif
+                            </div>
+
+                            {{-- Arrow --}}
+                            <svg class="w-4 h-4 text-slate-400 group-hover:text-sky-500 shrink-0 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg>
+                        </div>
+                    </button>
+                @endforeach
+            </div>
+
+            {{-- Footer Info --}}
+            <div class="px-4 pb-4 pt-1">
+                <p class="text-[10px] text-slate-400 dark:text-slate-500 text-center leading-relaxed">
+                    🔒 Pembayaran diproses secara aman oleh <strong>Duitku</strong>.
+                    Setelah membayar, status tagihan akan otomatis diperbarui.
+                </p>
+            </div>
+        </div>
+    </div>
+
 </div>
+

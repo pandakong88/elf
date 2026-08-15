@@ -895,4 +895,60 @@ class BillingService
 
         return $rawPeriods;
     }
+
+    /**
+     * Catat pembayaran yang berasal dari Duitku Payment Gateway.
+     *
+     * Method ini dipanggil oleh DuitkuService::handleSuccessfulPayment()
+     * setelah callback dari Duitku diterima dan diverifikasi.
+     *
+     * Idempotent: tidak akan membuat BillPayment duplikat
+     * untuk kombinasi bill_id + payment_transaction_id yang sama.
+     *
+     * @param  string  $billId         UUID Bill yang dibayar
+     * @param  float   $amount         Nominal yang dibayarkan (net, tanpa MDR)
+     * @param  string  $transactionId  UUID PaymentTransaction (untuk referensi)
+     * @return BillPayment
+     * @throws \Exception
+     */
+    public function recordGatewayPayment(
+        string $billId,
+        float $amount,
+        string $transactionId
+    ): BillPayment {
+        $bill = Bill::find($billId);
+
+        if (!$bill) {
+            throw new \Exception("Bill not found: {$billId}");
+        }
+
+        // Idempotency check: cegah double-record untuk transaksi yang sama
+        $existing = BillPayment::where('bill_id', $billId)
+            ->where('notes', 'LIKE', "%{$transactionId}%")
+            ->first();
+
+        if ($existing) {
+            \Illuminate\Support\Facades\Log::info('[BillingService] recordGatewayPayment: Already recorded (idempotent)', [
+                'bill_id'        => $billId,
+                'transaction_id' => $transactionId,
+            ]);
+            return $existing;
+        }
+
+        return DB::transaction(function () use ($bill, $amount, $transactionId) {
+            $payment = BillPayment::create([
+                'bill_id'        => $bill->id,
+                'amount_paid'    => $amount,
+                'payment_date'   => now()->toDateString(),
+                'payment_method' => 'gateway_duitku',
+                'logged_by'      => $bill->created_by, // System / bendahara yang buat tagihan
+                'notes'          => "Pembayaran otomatis via Duitku. Ref transaksi: {$transactionId}",
+            ]);
+
+            // recalculateStatus() sudah dipanggil otomatis oleh BillPayment::booted()
+
+            return $payment;
+        });
+    }
 }
+

@@ -6,6 +6,7 @@ use Livewire\Component;
 use App\Modules\Core\Models\Person;
 use App\Modules\Core\Models\LandingPageContent;
 use App\Modules\Keuangan\Models\Bill;
+use App\Modules\Keuangan\Services\DuitkuService;
 
 class DashboardTagihan extends Component
 {
@@ -15,6 +16,11 @@ class DashboardTagihan extends Component
     // Simulasi Checklist — array of bill IDs yang dipilih wali
     public array $selectedBillIds = [];
     public bool $isInitialized = false;
+
+    // Bayar Online — channel yang dipilih wali di modal
+    public string $selectedChannel = '';
+    public bool $isProcessingPayment = false;
+    public ?string $paymentError = null;
 
     // Public properties untuk mencegah undefined variable di Livewire hydration
     public float $totalTunggakan = 0;
@@ -162,11 +168,76 @@ class DashboardTagihan extends Component
         return $this->getBillTypeLabel($bill->bill_type);
     }
 
+    /**
+     * Inisiasi pembayaran online via Duitku.
+     * Dipanggil dari blade saat wali klik tombol "Bayar" di modal channel.
+     *
+     * @param  string  $channel  Kode channel: SP, BR, BT, I1, M2
+     */
+    public function initiateBayarOnline(string $channel): void
+    {
+        $this->paymentError       = null;
+        $this->isProcessingPayment = true;
+        $this->selectedChannel    = $channel;
+
+        try {
+            // Validasi: harus ada tagihan yang dipilih
+            if (empty($this->selectedBillIds)) {
+                $this->paymentError       = 'Pilih minimal satu tagihan terlebih dahulu.';
+                $this->isProcessingPayment = false;
+                return;
+            }
+
+            // Validasi: channel harus valid
+            $channels = config('duitku.enabled_channels', []);
+            if (!array_key_exists($channel, $channels)) {
+                $this->paymentError       = 'Metode pembayaran tidak valid.';
+                $this->isProcessingPayment = false;
+                return;
+            }
+
+            // Ambil Bill objects
+            $bills = Bill::whereIn('id', $this->selectedBillIds)
+                ->where('person_id', $this->personId)
+                ->whereIn('status', ['unpaid', 'partial'])
+                ->get()
+                ->all();
+
+            if (empty($bills)) {
+                $this->paymentError       = 'Tagihan yang dipilih tidak ditemukan atau sudah lunas.';
+                $this->isProcessingPayment = false;
+                return;
+            }
+
+            // Buat transaksi ke Duitku
+            $duitkuService = app(DuitkuService::class);
+            $transaction   = $duitkuService->createTransaction(
+                bills:    $bills,
+                channel:  $channel,
+                personId: $this->personId,
+                userId:   null, // portal wali = no user
+            );
+
+            // Redirect ke halaman bayar Duitku
+            $this->redirect($transaction->payment_url, navigate: false);
+
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('[DashboardTagihan] initiateBayarOnline failed', [
+                'person_id' => $this->personId,
+                'channel'   => $channel,
+                'error'     => $e->getMessage(),
+            ]);
+            $this->paymentError       = 'Gagal menghubungi server pembayaran. Silakan coba lagi.';
+            $this->isProcessingPayment = false;
+        }
+    }
+
     public function render()
     {
         $santri = Person::with([
             'roomAssignments' => fn($q) => $q->where('is_active', true)->with('room.dormitory'),
             'madrasahEnrollments' => fn($q) => $q->where('is_active', true)->with('kelas'),
+
             'santriProfile'
         ])->findOrFail($this->personId);
 

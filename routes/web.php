@@ -18,6 +18,14 @@ Route::post('/logout', [WebAuthController::class, 'logout'])->name('logout');
 // Public Portal Wali (Tanpa Login)
 Route::get('/portal-wali', \App\Livewire\WaliPortal\SantriSearch::class)->name('portal-wali.search');
 Route::get('/portal-wali/{personId}', \App\Livewire\WaliPortal\DashboardTagihan::class)->name('portal-wali.dashboard');
+Route::get('/portal-wali/payment/return', \App\Livewire\WaliPortal\StatusPembayaran::class)->name('portal-wali.payment.return');
+
+// ─── Duitku Payment Gateway ───────────────────────────────────────────────────
+// Webhook callback dari Duitku — publik, tanpa auth, tanpa CSRF
+Route::post('/duitku/callback', [\App\Http\Controllers\DuitkuCallbackController::class, 'handle'])
+    ->name('duitku.callback')
+    ->withoutMiddleware([\Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class]);
+// ─────────────────────────────────────────────────────────────────────────────
 
 
 Route::middleware('auth')->group(function () {
