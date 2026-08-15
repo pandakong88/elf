@@ -2209,33 +2209,44 @@
         @if ($activeTab === 'payments_log')
             <div class="space-y-8 animate-fade-in">
                 <!-- Real-time KPI Summary Cards for Filtered Results -->
-                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                     <div class="bg-gradient-to-br from-emerald-500/10 via-emerald-500/5 to-transparent border border-emerald-500/20 dark:border-emerald-500/30 p-4 rounded-2xl flex items-center gap-3.5 shadow-2xs">
-                        <div class="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-lg font-bold">
+                        <div class="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-lg font-bold shrink-0">
                             💵
                         </div>
                         <div>
-                            <span class="block text-[10px] font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Total Setor Tunai (Cash)</span>
+                            <span class="block text-[10px] font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Total Tunai (Cash)</span>
                             <span class="text-base font-extrabold text-emerald-600 dark:text-emerald-400">Rp {{ number_format($payLogTotalCash, 0, ',', '.') }}</span>
                         </div>
                     </div>
 
                     <div class="bg-gradient-to-br from-blue-500/10 via-blue-500/5 to-transparent border border-blue-500/20 dark:border-blue-500/30 p-4 rounded-2xl flex items-center gap-3.5 shadow-2xs">
-                        <div class="w-10 h-10 rounded-xl bg-blue-500/20 text-blue-600 dark:text-blue-400 flex items-center justify-center text-lg font-bold">
-                            💳
+                        <div class="w-10 h-10 rounded-xl bg-blue-500/20 text-blue-600 dark:text-blue-400 flex items-center justify-center text-lg font-bold shrink-0">
+                            🏦
                         </div>
                         <div>
-                            <span class="block text-[10px] font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Total Setor Transfer</span>
+                            <span class="block text-[10px] font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Total Transfer Bank</span>
                             <span class="text-base font-extrabold text-blue-600 dark:text-blue-400">Rp {{ number_format($payLogTotalTransfer, 0, ',', '.') }}</span>
                         </div>
                     </div>
 
+                    <div class="bg-gradient-to-br from-amber-500/10 via-amber-500/5 to-transparent border border-amber-500/20 dark:border-amber-500/30 p-4 rounded-2xl flex items-center gap-3.5 shadow-2xs">
+                        <div class="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-600 dark:text-amber-400 flex items-center justify-center text-lg font-bold shrink-0">
+                            ⚡
+                        </div>
+                        <div>
+                            <span class="block text-[10px] font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Via Gateway Duitku</span>
+                            <span class="text-base font-extrabold text-amber-600 dark:text-amber-400">Rp {{ number_format($payLogTotalGateway, 0, ',', '.') }}</span>
+                            <span class="text-[9px] text-slate-400">{{ $payLogGatewayCount }} transaksi online</span>
+                        </div>
+                    </div>
+
                     <div class="bg-gradient-to-br from-indigo-500/10 via-indigo-500/5 to-transparent border border-indigo-500/20 dark:border-indigo-500/30 p-4 rounded-2xl flex items-center gap-3.5 shadow-2xs">
-                        <div class="w-10 h-10 rounded-xl bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 flex items-center justify-center text-lg font-bold">
+                        <div class="w-10 h-10 rounded-xl bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 flex items-center justify-center text-lg font-bold shrink-0">
                             🧾
                         </div>
                         <div>
-                            <span class="block text-[10px] font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Jumlah Transaksi Terfilter</span>
+                            <span class="block text-[10px] font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Total Transaksi Terfilter</span>
                             <span class="text-base font-extrabold text-indigo-600 dark:text-indigo-400">{{ $payLogTotalCount }} <span class="text-xs font-semibold text-slate-500">Transaksi</span></span>
                         </div>
                     </div>
@@ -2352,9 +2363,9 @@
                                 <label class="block text-[9px] font-extrabold text-slate-400 uppercase tracking-wider mb-1.5">Metode Setoran</label>
                                 <select wire:model.live="payLogMethod" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-100 rounded-xl px-3 py-2 text-xs font-bold focus:ring-2 focus:ring-emerald-500 shadow-2xs">
                                     <option value="">-- Semua Metode --</option>
-                                    <option value="CASH">💵 Tunai (Cash)</option>
-                                    <option value="TRANSFER">🏦 Transfer Bank</option>
-                                    <option value="EWALLET">📱 E-Wallet / Digital</option>
+                                    <option value="cash">💵 Tunai (Cash)</option>
+                                    <option value="transfer">🏦 Transfer Bank</option>
+                                    <option value="gateway_duitku">⚡ Gateway Duitku (QRIS/VA)</option>
                                 </select>
                             </div>
                         </div>
@@ -2425,17 +2436,32 @@
                                             Rp {{ number_format($pay->amount_paid, 0, ',', '.') }}
                                         </td>
                                         <td class="py-4 px-4 text-center">
-                                            <span class="inline-block px-2.5 py-1 rounded-lg text-[9px] font-extrabold uppercase tracking-wider
-                                                @if(strtoupper($pay->payment_method) === 'CASH') bg-teal-500/10 text-teal-600 dark:text-teal-400
-                                                @elseif(strtoupper($pay->payment_method) === 'TRANSFER') bg-blue-500/10 text-blue-600 dark:text-blue-400
-                                                @else bg-purple-500/10 text-purple-600 dark:text-purple-400 @endif">
-                                                @if(strtoupper($pay->payment_method) === 'CASH') 💵 Tunai
-                                                @elseif(strtoupper($pay->payment_method) === 'TRANSFER') 🏦 Transfer
-                                                @else 📱 E-Wallet @endif
+                                            @php $method = strtolower($pay->payment_method); @endphp
+                                            <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[9px] font-extrabold uppercase tracking-wider
+                                                @if($method === 'cash') bg-teal-500/10 text-teal-600 dark:text-teal-400
+                                                @elseif($method === 'transfer') bg-blue-500/10 text-blue-600 dark:text-blue-400
+                                                @elseif($method === 'gateway_duitku') bg-amber-500/10 text-amber-600 dark:text-amber-400
+                                                @else bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400 @endif">
+                                                @if($method === 'cash') 💵 Tunai
+                                                @elseif($method === 'transfer') 🏦 Transfer
+                                                @elseif($method === 'gateway_duitku') ⚡ Duitku Online
+                                                @else 💳 {{ $pay->payment_method }} @endif
                                             </span>
                                         </td>
-                                        <td class="py-4 px-4 text-slate-505 max-w-[150px] truncate" title="{{ $pay->notes }}">
-                                            {{ $pay->notes ?: '—' }}
+                                        <td class="py-4 px-4 max-w-[180px]">
+                                            @if($method === 'gateway_duitku')
+                                                @php
+                                                    // Ekstrak nomor referensi dari catatan
+                                                    preg_match('/Ref transaksi:\s*(\S+)/', $pay->notes ?? '', $refMatch);
+                                                    $refCode = $refMatch[1] ?? null;
+                                                @endphp
+                                                <span class="text-[10px] text-slate-500 dark:text-slate-400 block">Bayar mandiri via Duitku</span>
+                                                @if($refCode)
+                                                    <code class="text-[9px] font-mono bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 px-1.5 py-0.5 rounded mt-0.5 block truncate" title="{{ $refCode }}">{{ $refCode }}</code>
+                                                @endif
+                                            @else
+                                                <span class="text-slate-500 dark:text-slate-400 text-[11px] truncate block" title="{{ $pay->notes }}">{{ $pay->notes ?: '—' }}</span>
+                                            @endif
                                         </td>
                                         <td class="py-4 px-4">
                                             <span class="inline-flex items-center gap-1.5 px-2 py-0.5 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-md text-[10px] text-slate-700 dark:text-slate-300 font-bold whitespace-nowrap">
@@ -2443,10 +2469,16 @@
                                             </span>
                                         </td>
                                         <td class="py-4 px-4 text-center">
-                                            <button type="button" wire:click="confirmVoidPayment('{{ $pay->id }}')" 
-                                                class="px-2.5 py-1.5 bg-rose-500/10 hover:bg-rose-500 text-rose-600 hover:text-white rounded-xl text-[10px] font-bold transition-all whitespace-nowrap">
-                                                🗑️ Batalkan / Void
-                                            </button>
+                                            @if($method === 'gateway_duitku')
+                                                <span class="inline-flex items-center gap-1 px-2.5 py-1.5 bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 rounded-xl text-[9px] font-bold whitespace-nowrap cursor-not-allowed" title="Transaksi online tidak dapat di-void. Hubungi Duitku jika diperlukan.">
+                                                    🔒 Tidak Bisa Void
+                                                </span>
+                                            @else
+                                                <button type="button" wire:click="confirmVoidPayment('{{ $pay->id }}')" 
+                                                    class="px-2.5 py-1.5 bg-rose-500/10 hover:bg-rose-500 text-rose-600 hover:text-white rounded-xl text-[10px] font-bold transition-all whitespace-nowrap">
+                                                    🗑️ Batalkan / Void
+                                                </button>
+                                            @endif
                                         </td>
                                     </tr>
                                 @empty

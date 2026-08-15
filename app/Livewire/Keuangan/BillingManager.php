@@ -2623,9 +2623,11 @@ class BillingManager extends Component
 
         // Summary Statistics for the filtered log query
         $summaryBaseQuery = clone $paymentsLogQuery;
-        $payLogTotalCash = (float) (clone $summaryBaseQuery)->where('payment_method', 'cash')->sum('amount_paid');
+        $payLogTotalCash     = (float) (clone $summaryBaseQuery)->where('payment_method', 'cash')->sum('amount_paid');
         $payLogTotalTransfer = (float) (clone $summaryBaseQuery)->where('payment_method', 'transfer')->sum('amount_paid');
-        $payLogTotalCount = (int) (clone $summaryBaseQuery)->count();
+        $payLogTotalGateway  = (float) (clone $summaryBaseQuery)->where('payment_method', 'gateway_duitku')->sum('amount_paid');
+        $payLogTotalCount    = (int) (clone $summaryBaseQuery)->count();
+        $payLogGatewayCount  = (int) (clone $summaryBaseQuery)->where('payment_method', 'gateway_duitku')->count();
 
         $paymentsLog = $paymentsLogQuery->paginate(15, pageName: 'payLogPage');
         $generationHistory = $historyQuery->paginate(10, pageName: 'historyPage');
@@ -2682,6 +2684,8 @@ class BillingManager extends Component
             'paymentsLog'         => $paymentsLog,
             'payLogTotalCash'     => $payLogTotalCash,
             'payLogTotalTransfer' => $payLogTotalTransfer,
+            'payLogTotalGateway'  => $payLogTotalGateway,
+            'payLogGatewayCount'  => $payLogGatewayCount,
             'payLogTotalCount'    => $payLogTotalCount,
             'cashierUsers'        => $cashierUsers,
             'payLogConfigs'       => $payLogConfigs,
