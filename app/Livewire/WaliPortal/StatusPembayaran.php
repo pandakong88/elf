@@ -2,6 +2,7 @@
 
 namespace App\Livewire\WaliPortal;
 
+use App\Modules\Keuangan\Models\Bill;
 use App\Modules\Keuangan\Models\PaymentTransaction;
 use App\Modules\Keuangan\Services\DuitkuService;
 use Livewire\Attributes\Url;
