@@ -307,9 +307,10 @@ class DuitkuService
             return;
         }
 
-        // Idempotency check: jika sudah diproses, skip
+        // Idempotency check: jika sudah diproses dan BillPayment sudah ada, skip
         if ($transaction->status === 'success') {
-            Log::info('[Duitku] processCallback: Already processed (idempotent)', ['order_id' => $merchantOrderId]);
+            // Pastikan BillPayment benar-benar sudah ada
+            $this->handleSuccessfulPayment($transaction, $payload);
             return;
         }
 
@@ -346,7 +347,9 @@ class DuitkuService
     private function handleSuccessfulPayment(PaymentTransaction $transaction, array $payload): void
     {
         // Update status transaksi
-        $transaction->update(['status' => 'success']);
+        if ($transaction->status !== 'success') {
+            $transaction->update(['status' => 'success']);
+        }
 
         // Buat BillPayment untuk setiap bill dalam transaksi
         $billingService = app(BillingService::class);
@@ -354,7 +357,9 @@ class DuitkuService
 
         foreach ($breakdown as $item) {
             $billId    = $item['bill_id'];
-            $netAmount = (float) ($item['net_amount'] ?? $item['bill_remaining']);
+            $netAmount = (float) ($item['net_amount'] ?? $item['pay_portion'] ?? $item['bill_remaining'] ?? 0);
+
+            if ($netAmount <= 0) continue;
 
             try {
                 $billingService->recordGatewayPayment(
@@ -370,6 +375,7 @@ class DuitkuService
                 ]);
             }
         }
+
 
         Log::info('[Duitku] Payment successfully processed', [
             'merchant_order_id' => $transaction->merchant_order_id,

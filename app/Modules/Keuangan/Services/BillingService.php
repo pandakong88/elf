@@ -936,19 +936,29 @@ class BillingService
         }
 
         return DB::transaction(function () use ($bill, $amount, $transactionId) {
+            // Ambil user pencatat: created_by bill -> admin/bendahara pertama -> user pertama
+            $loggedBy = $bill->created_by;
+            if (!$loggedBy || !\App\Modules\Core\Models\User::where('id', $loggedBy)->exists()) {
+                $loggedBy = \App\Modules\Core\Models\User::whereHas('roles', function($q) {
+                    $q->whereIn('name', ['super-admin', 'admin', 'bendahara-putra', 'bendahara-putri']);
+                })->value('id') ?? \App\Modules\Core\Models\User::value('id');
+            }
+
             $payment = BillPayment::create([
                 'bill_id'        => $bill->id,
                 'amount_paid'    => $amount,
                 'payment_date'   => now()->toDateString(),
                 'payment_method' => 'gateway_duitku',
-                'logged_by'      => $bill->created_by, // System / bendahara yang buat tagihan
+                'logged_by'      => $loggedBy,
                 'notes'          => "Pembayaran otomatis via Duitku. Ref transaksi: {$transactionId}",
             ]);
 
-            // recalculateStatus() sudah dipanggil otomatis oleh BillPayment::booted()
+            // Panggil eksplisit recalculateStatus untuk memastikan status bill langsung terupdate
+            $bill->recalculateStatus();
 
             return $payment;
         });
     }
 }
+
 
