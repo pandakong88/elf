@@ -367,6 +367,14 @@ class DuitkuService
             $transaction->update(['status' => 'success']);
         }
 
+        // Ekstrak timestamp aktual pembayaran dari payload Duitku
+        // Duitku mengirim 'publishedDate' atau 'settledDate' di beberapa format
+        $paidAt = $payload['publishedDate']
+            ?? $payload['settledDate']
+            ?? $payload['transactionDate']
+            ?? $transaction->callback_received_at?->toDateTimeString()
+            ?? null;
+
         // Buat BillPayment untuk setiap bill dalam transaksi
         $billingService = app(BillingService::class);
         $breakdown      = $transaction->bill_breakdown ?? [];
@@ -382,6 +390,7 @@ class DuitkuService
                     billId:        $billId,
                     amount:        $netAmount,
                     transactionId: $transaction->id,
+                    paidAt:        $paidAt,
                 );
             } catch (\Exception $e) {
                 Log::error('[Duitku] handleSuccessfulPayment: Failed to record payment for bill', [
@@ -392,14 +401,14 @@ class DuitkuService
             }
         }
 
-
-
         Log::info('[Duitku] Payment successfully processed', [
             'merchant_order_id' => $transaction->merchant_order_id,
             'total_amount'      => $transaction->total_amount,
             'bill_count'        => count($breakdown),
+            'paid_at'           => $paidAt,
         ]);
     }
+
 
     /**
      * Bangun bill_breakdown: alokasi MDR per bill secara proporsional.

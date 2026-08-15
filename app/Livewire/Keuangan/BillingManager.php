@@ -17,6 +17,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 use App\Modules\Keuangan\Models\BillPayment;
+use App\Modules\Keuangan\Models\PaymentTransaction;
 use App\Traits\HasGenderScope;
 use App\Livewire\Concerns\SendsToast;
 
@@ -1902,6 +1903,12 @@ class BillingManager extends Component
             return;
         }
 
+        // ✅ SERVER-SIDE GUARD: Transaksi gateway tidak boleh di-void
+        if (strtolower($payment->payment_method) === 'gateway_duitku') {
+            $this->toastError('Transaksi yang dibayar via Duitku (QRIS/VA) tidak dapat dibatalkan dari sistem ini. Hubungi Duitku jika diperlukan.');
+            return;
+        }
+
         $canVoid = $isCentral 
             || ($user && $payment->logged_by === $user->id)
             || ($user && $user->hasPermissionTo('void-pembayaran'));
@@ -1964,6 +1971,13 @@ class BillingManager extends Component
         $payment = BillPayment::find($this->paymentToVoidId);
         if (!$payment) {
             $this->toastError('Data transaksi pembayaran tidak ditemukan.');
+            $this->closeVoidModal();
+            return;
+        }
+
+        // ✅ SERVER-SIDE GUARD: Double-check — transaksi gateway tidak boleh di-void
+        if (strtolower($payment->payment_method) === 'gateway_duitku') {
+            $this->toastError('Transaksi yang dibayar via Duitku tidak dapat dibatalkan dari sistem ini.');
             $this->closeVoidModal();
             return;
         }
@@ -2653,6 +2667,21 @@ class BillingManager extends Component
         }
         $registrationItems = $regItemsQuery->orderBy('is_active', 'desc')->orderBy('created_at', 'desc')->get();
 
+        // ─── Gateway Transactions ─────────────────────────────────────────────
+        $gatewayTransactions = PaymentTransaction::with('person')
+            ->when($this->genderScope(), fn($q, $g) => $q->whereHas('person', fn($pq) => $pq->where('gender', $g)))
+            ->orderBy('created_at', 'desc')
+            ->paginate(20, pageName: 'gatewayPage');
+
+        $gatewayStats = [
+            'success_count'  => PaymentTransaction::when($this->genderScope(), fn($q, $g) => $q->whereHas('person', fn($pq) => $pq->where('gender', $g)))->where('status', 'success')->count(),
+            'success_amount' => (float) PaymentTransaction::when($this->genderScope(), fn($q, $g) => $q->whereHas('person', fn($pq) => $pq->where('gender', $g)))->where('status', 'success')->sum('bill_amount'),
+            'pending_count'  => PaymentTransaction::when($this->genderScope(), fn($q, $g) => $q->whereHas('person', fn($pq) => $pq->where('gender', $g)))->where('status', 'pending')->count(),
+            'failed_count'   => PaymentTransaction::when($this->genderScope(), fn($q, $g) => $q->whereHas('person', fn($pq) => $pq->where('gender', $g)))->whereIn('status', ['failed', 'expired'])->count(),
+            'total_mdr'      => (float) PaymentTransaction::when($this->genderScope(), fn($q, $g) => $q->whereHas('person', fn($pq) => $pq->where('gender', $g)))->where('status', 'success')->sum('mdr_amount'),
+        ];
+        $gatewayPendingCount = $gatewayStats['pending_count'];
+
         return view('livewire.keuangan.billing-manager', [
             'registrationItems'   => $registrationItems,
             'santriSearchResults' => $santriSearch,
@@ -2691,6 +2720,9 @@ class BillingManager extends Component
             'payLogConfigs'       => $payLogConfigs,
             'payLogDormitories'   => $payLogDormitories,
             'payLogClasses'       => $payLogClasses,
+            'gatewayTransactions' => $gatewayTransactions,
+            'gatewayStats'        => $gatewayStats,
+            'gatewayPendingCount' => $gatewayPendingCount,
             'kpiStats'            => [
                 'total_count'         => $kpiTotalBillsCount,
                 'total_amount'        => $kpiTotalAmount,

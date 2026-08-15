@@ -914,7 +914,8 @@ class BillingService
     public function recordGatewayPayment(
         string $billId,
         float $amount,
-        string $transactionId
+        string $transactionId,
+        ?string $paidAt = null   // Timestamp aktual pembayaran dari callback Duitku
     ): BillPayment {
         $bill = Bill::find($billId);
 
@@ -935,7 +936,7 @@ class BillingService
             return $existing;
         }
 
-        return DB::transaction(function () use ($bill, $amount, $transactionId) {
+        return DB::transaction(function () use ($bill, $amount, $transactionId, $paidAt) {
             // Ambil user pencatat: created_by bill -> admin/bendahara pertama -> user pertama
             $loggedBy = $bill->created_by;
             if (!$loggedBy || !\App\Models\User::where('id', $loggedBy)->exists()) {
@@ -944,10 +945,15 @@ class BillingService
                 })->value('id') ?? \App\Models\User::value('id');
             }
 
+            // Gunakan timestamp aktual dari Duitku jika tersedia, fallback ke now()
+            $paymentDate = $paidAt
+                ? \Carbon\Carbon::parse($paidAt)->toDateString()
+                : now()->toDateString();
+
             $payment = BillPayment::create([
                 'bill_id'        => $bill->id,
                 'amount_paid'    => $amount,
-                'payment_date'   => now()->toDateString(),
+                'payment_date'   => $paymentDate,
                 'payment_method' => 'gateway_duitku',
                 'logged_by'      => $loggedBy,
                 'notes'          => "Pembayaran otomatis via Duitku. Ref transaksi: {$transactionId}",

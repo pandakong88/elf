@@ -293,6 +293,13 @@
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
                 <span>Cicilan Event</span>
             </button>
+            <button wire:click="$set('activeTab', 'gateway_transactions')" class="px-5 py-3 text-xs font-bold transition-all border-b-2 flex items-center gap-2 whitespace-nowrap {{ $activeTab === 'gateway_transactions' ? 'border-amber-500 text-amber-600 dark:text-amber-400' : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300' }}">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                <span>Transaksi Gateway</span>
+                @if(isset($gatewayPendingCount) && $gatewayPendingCount > 0)
+                    <span class="inline-flex items-center justify-center w-4 h-4 text-[9px] font-extrabold bg-amber-500 text-white rounded-full">{{ $gatewayPendingCount }}</span>
+                @endif
+            </button>
         </div>
 
         <!-- Tabs Contents -->
@@ -2512,7 +2519,162 @@
             </div>
         @endif
 
-        {{-- TAB: TARIF SANTRI BARU & KITAB --}}
+        {{-- TAB: TRANSAKSI GATEWAY DUITKU --}}
+        @if ($activeTab === 'gateway_transactions')
+            <div class="space-y-6 animate-fade-in">
+
+                {{-- KPI Cards --}}
+                <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div class="bg-gradient-to-br from-emerald-500/10 to-transparent border border-emerald-500/20 dark:border-emerald-500/30 p-4 rounded-2xl flex items-center gap-3 shadow-2xs">
+                        <div class="w-9 h-9 rounded-xl bg-emerald-500/20 text-emerald-600 flex items-center justify-center text-base shrink-0">✅</div>
+                        <div>
+                            <span class="block text-[9px] font-extrabold text-slate-400 uppercase tracking-wider">Sukses</span>
+                            <span class="text-sm font-extrabold text-emerald-600 dark:text-emerald-400">{{ $gatewayStats['success_count'] ?? 0 }}</span>
+                            <span class="text-[9px] text-slate-400 block">Rp {{ number_format($gatewayStats['success_amount'] ?? 0, 0, ',', '.') }}</span>
+                        </div>
+                    </div>
+                    <div class="bg-gradient-to-br from-amber-500/10 to-transparent border border-amber-500/20 dark:border-amber-500/30 p-4 rounded-2xl flex items-center gap-3 shadow-2xs">
+                        <div class="w-9 h-9 rounded-xl bg-amber-500/20 text-amber-600 flex items-center justify-center text-base shrink-0">⏳</div>
+                        <div>
+                            <span class="block text-[9px] font-extrabold text-slate-400 uppercase tracking-wider">Menunggu</span>
+                            <span class="text-sm font-extrabold text-amber-600 dark:text-amber-400">{{ $gatewayStats['pending_count'] ?? 0 }}</span>
+                            <span class="text-[9px] text-slate-400 block">transaksi aktif</span>
+                        </div>
+                    </div>
+                    <div class="bg-gradient-to-br from-rose-500/10 to-transparent border border-rose-500/20 dark:border-rose-500/30 p-4 rounded-2xl flex items-center gap-3 shadow-2xs">
+                        <div class="w-9 h-9 rounded-xl bg-rose-500/20 text-rose-600 flex items-center justify-center text-base shrink-0">❌</div>
+                        <div>
+                            <span class="block text-[9px] font-extrabold text-slate-400 uppercase tracking-wider">Gagal / Expired</span>
+                            <span class="text-sm font-extrabold text-rose-600 dark:text-rose-400">{{ $gatewayStats['failed_count'] ?? 0 }}</span>
+                            <span class="text-[9px] text-slate-400 block">tidak dibayar</span>
+                        </div>
+                    </div>
+                    <div class="bg-gradient-to-br from-indigo-500/10 to-transparent border border-indigo-500/20 dark:border-indigo-500/30 p-4 rounded-2xl flex items-center gap-3 shadow-2xs">
+                        <div class="w-9 h-9 rounded-xl bg-indigo-500/20 text-indigo-600 flex items-center justify-center text-base shrink-0">💸</div>
+                        <div>
+                            <span class="block text-[9px] font-extrabold text-slate-400 uppercase tracking-wider">Total MDR Dibayar</span>
+                            <span class="text-sm font-extrabold text-indigo-600 dark:text-indigo-400">Rp {{ number_format($gatewayStats['total_mdr'] ?? 0, 0, ',', '.') }}</span>
+                            <span class="text-[9px] text-slate-400 block">biaya gateway</span>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Table --}}
+                <div class="bg-white dark:bg-slate-900 border border-slate-200/50 dark:border-slate-800 rounded-3xl shadow-xs overflow-hidden">
+                    <div class="px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                        <div>
+                            <h3 class="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider font-serif-display">Log Transaksi Gateway Duitku</h3>
+                            <p class="text-[11px] text-slate-400 mt-0.5">Semua percobaan pembayaran wali santri via QRIS / Virtual Account — termasuk yang belum berhasil.</p>
+                        </div>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse text-xs min-w-[950px]">
+                            <thead>
+                                <tr class="bg-slate-50/80 dark:bg-slate-950 border-b border-slate-200 dark:border-slate-800 text-slate-500 font-extrabold uppercase tracking-wider text-[9px]">
+                                    <th class="py-4 px-4 w-36">Waktu</th>
+                                    <th class="py-4 px-4">Santri</th>
+                                    <th class="py-4 px-4 text-center">Channel</th>
+                                    <th class="py-4 px-4 text-right">Tagihan</th>
+                                    <th class="py-4 px-4 text-right">MDR</th>
+                                    <th class="py-4 px-4 text-right">Total Bayar</th>
+                                    <th class="py-4 px-4 text-center">Status</th>
+                                    <th class="py-4 px-4">Ref. Duitku</th>
+                                    <th class="py-4 px-4">Tagihan Terkait</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100 dark:divide-slate-800/50">
+                                @forelse($gatewayTransactions ?? [] as $trx)
+                                    <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/20 transition-colors">
+                                        <td class="py-3 px-4 text-slate-500 font-medium">
+                                            {{ $trx->created_at->translatedFormat('d M Y') }}
+                                            <span class="text-[9px] text-slate-400 block">{{ $trx->created_at->format('H:i') }} WIB</span>
+                                        </td>
+                                        <td class="py-3 px-4">
+                                            <span class="font-bold text-slate-800 dark:text-slate-200 block">{{ $trx->person?->name ?? '—' }}</span>
+                                            <span class="text-[9px] text-slate-400">{{ $trx->person?->gender === 'L' ? '👦' : '👧' }} {{ $trx->merchant_order_id }}</span>
+                                        </td>
+                                        <td class="py-3 px-4 text-center">
+                                            <span class="inline-block px-2 py-0.5 rounded-lg text-[9px] font-extrabold bg-amber-500/10 text-amber-700 dark:text-amber-400 uppercase">
+                                                {{ $trx->channel_label ?? $trx->payment_channel ?? '—' }}
+                                            </span>
+                                        </td>
+                                        <td class="py-3 px-4 text-right font-semibold text-slate-700 dark:text-slate-300">
+                                            Rp {{ number_format($trx->bill_amount, 0, ',', '.') }}
+                                        </td>
+                                        <td class="py-3 px-4 text-right text-rose-500 font-semibold text-[10px]">
+                                            + Rp {{ number_format($trx->mdr_amount, 0, ',', '.') }}
+                                        </td>
+                                        <td class="py-3 px-4 text-right font-extrabold text-slate-900 dark:text-white">
+                                            Rp {{ number_format($trx->total_amount, 0, ',', '.') }}
+                                        </td>
+                                        <td class="py-3 px-4 text-center">
+                                            @php $status = $trx->status; @endphp
+                                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[9px] font-extrabold uppercase
+                                                @if($status === 'success') bg-emerald-500/10 text-emerald-600 dark:text-emerald-400
+                                                @elseif($status === 'pending') bg-amber-500/10 text-amber-600 dark:text-amber-400
+                                                @elseif($status === 'expired') bg-slate-500/10 text-slate-500
+                                                @else bg-rose-500/10 text-rose-600 dark:text-rose-400 @endif">
+                                                @if($status === 'success') ✅ Sukses
+                                                @elseif($status === 'pending') ⏳ Menunggu
+                                                @elseif($status === 'expired') 🕐 Expired
+                                                @else ❌ Gagal @endif
+                                            </span>
+                                            @if($status === 'pending' && $trx->expires_at)
+                                                <span class="text-[9px] text-slate-400 block mt-0.5">
+                                                    exp: {{ $trx->expires_at->diffForHumans() }}
+                                                </span>
+                                            @endif
+                                        </td>
+                                        <td class="py-3 px-4">
+                                            @if($trx->duitku_reference)
+                                                <code class="text-[9px] font-mono bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 px-1.5 py-0.5 rounded">{{ $trx->duitku_reference }}</code>
+                                            @else
+                                                <span class="text-slate-400 text-[10px]">—</span>
+                                            @endif
+                                        </td>
+                                        <td class="py-3 px-4">
+                                            @php $breakdown = $trx->bill_breakdown ?? []; @endphp
+                                            <div class="space-y-0.5">
+                                                @foreach(array_slice($breakdown, 0, 3) as $item)
+                                                    <div class="text-[9px] text-slate-500 dark:text-slate-400 truncate max-w-[160px]" title="{{ $item['bill_label'] ?? '' }}">
+                                                        • {{ Str::limit($item['bill_label'] ?? $item['bill_id'] ?? '—', 35) }}
+                                                        <span class="text-slate-400">(Rp {{ number_format($item['pay_portion'] ?? $item['net_amount'] ?? 0, 0, ',', '.') }})</span>
+                                                    </div>
+                                                @endforeach
+                                                @if(count($breakdown) > 3)
+                                                    <span class="text-[9px] text-slate-400">+{{ count($breakdown) - 3 }} tagihan lainnya</span>
+                                                @endif
+                                            </div>
+                                        </td>
+                                    </tr>
+                                @empty
+                                    <tr>
+                                        <td colspan="9" class="py-16 text-center text-slate-400 font-semibold">
+                                            <div class="flex flex-col items-center gap-2">
+                                                <svg class="w-8 h-8 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                                                <span>Belum ada transaksi gateway yang tercatat.</span>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
+                    @if(isset($gatewayTransactions) && $gatewayTransactions->total() > 0)
+                        <div class="px-5 py-4 border-t border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-slate-50/50 dark:bg-slate-950/20">
+                            <div class="text-[11px] font-semibold text-slate-400">
+                                Menampilkan <span class="font-bold text-slate-700 dark:text-slate-300">{{ $gatewayTransactions->firstItem() ?? 0 }}</span> s.d. <span class="font-bold text-slate-700 dark:text-slate-300">{{ $gatewayTransactions->lastItem() ?? 0 }}</span> dari <span class="font-bold text-amber-600">{{ $gatewayTransactions->total() }}</span> transaksi
+                            </div>
+                            @if($gatewayTransactions->hasPages())
+                                <div>{{ $gatewayTransactions->links(data: ['scrollTo' => false]) }}</div>
+                            @endif
+                        </div>
+                    @endif
+                </div>
+            </div>
+        @endif
+
+
         @if ($activeTab === 'registration_rates')
             <div class="space-y-6">
                 {{-- Header Actions --}}
