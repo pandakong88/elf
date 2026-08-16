@@ -424,6 +424,9 @@ class DuitkuService
         $totalMdr        = $mdrData['mdr_amount'];
         $breakdown       = [];
 
+        $months = [1=>'Januari',2=>'Februari',3=>'Maret',4=>'April',5=>'Mei',6=>'Juni',
+                   7=>'Juli',8=>'Agustus',9=>'September',10=>'Oktober',11=>'November',12=>'Desember'];
+
         foreach ($bills as $bill) {
             $maxRemaining = max(0, (float) $bill->amount - (float) $bill->amount_paid);
             $payPortion   = isset($customAmounts[$bill->id]) && is_numeric($customAmounts[$bill->id]) && (float)$customAmounts[$bill->id] > 0
@@ -435,13 +438,27 @@ class DuitkuService
                 ? round(($payPortion / $totalBillAmount) * $totalMdr, 2)
                 : 0;
 
+            // --- Build human-readable label & period ---
+            $configLabel = $bill->config?->label ?? ucwords(str_replace('_', ' ', $bill->bill_type ?? ''));
+            $interval    = $bill->config?->interval ?? '';
+            if ($interval === 'semester') {
+                $periodLabel = 'Semester ' . $bill->period_month . '/' . $bill->period_year;
+            } elseif (in_array($interval, ['once', 'insidental', 'event', 'sekali'])) {
+                $periodLabel = 'Event ' . $bill->period_year;
+            } else {
+                $periodLabel = ($months[$bill->period_month] ?? $bill->period_month) . ' ' . $bill->period_year
+                    . ($bill->period_sub ? ' (Gel.' . $bill->period_sub . ')' : '');
+            }
+
             $breakdown[] = [
                 'bill_id'        => $bill->id,
                 'bill_type'      => $bill->bill_type,
+                'config_label'   => $configLabel,
+                'period_label'   => $periodLabel,
                 'bill_remaining' => $maxRemaining,
                 'pay_portion'    => $payPortion,
                 'mdr_portion'    => $mdrPortion,
-                'net_amount'     => $payPortion, // Net amount yang dicatat ke kas
+                'net_amount'     => $payPortion,
                 'total_charged'  => $payPortion + $mdrPortion,
                 'is_partial'     => ($payPortion < $maxRemaining),
             ];

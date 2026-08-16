@@ -2561,14 +2561,64 @@
 
                 {{-- Table --}}
                 <div class="bg-white dark:bg-slate-900 border border-slate-200/50 dark:border-slate-800 rounded-3xl shadow-xs overflow-hidden">
-                    <div class="px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+
+                    {{-- Filter Bar --}}
+                    <div class="px-5 py-4 border-b border-slate-100 dark:border-slate-800 space-y-3">
+                        <div class="flex flex-col lg:flex-row lg:items-center gap-3">
+                            {{-- Search --}}
+                            <div class="relative flex-1 min-w-0">
+                                <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                                <input wire:model.live.debounce.300ms="gatewaySearch" type="text" placeholder="Cari nama santri, no. order, atau ref Duitku…" class="w-full pl-8 pr-3 py-2 text-xs bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-700 dark:text-slate-300 placeholder-slate-400 focus:ring-1 focus:ring-amber-400 focus:border-amber-400 outline-none transition"/>
+                            </div>
+                            {{-- Status --}}
+                            <select wire:model.live="gatewayStatus" class="px-3 py-2 text-xs bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-600 dark:text-slate-300 focus:ring-1 focus:ring-amber-400 outline-none transition shrink-0">
+                                <option value="">Semua Status</option>
+                                <option value="success">✅ Sukses</option>
+                                <option value="pending">⏳ Menunggu</option>
+                                <option value="failed">❌ Gagal</option>
+                                <option value="expired">🕐 Expired</option>
+                            </select>
+                            {{-- Channel --}}
+                            <select wire:model.live="gatewayChannel" class="px-3 py-2 text-xs bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-600 dark:text-slate-300 focus:ring-1 focus:ring-amber-400 outline-none transition shrink-0">
+                                <option value="">Semua Channel</option>
+                                @foreach(config('duitku.payment_channels', []) as $code => $cfg)
+                                    <option value="{{ $code }}">{{ $cfg['name'] ?? $code }}</option>
+                                @endforeach
+                            </select>
+                            {{-- Date Range --}}
+                            <div class="flex items-center gap-2 shrink-0">
+                                <input wire:model.live="gatewayStartDate" type="date" class="px-2 py-2 text-xs bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-600 dark:text-slate-300 focus:ring-1 focus:ring-amber-400 outline-none transition w-32"/>
+                                <span class="text-slate-300 dark:text-slate-600 text-xs">—</span>
+                                <input wire:model.live="gatewayEndDate" type="date" class="px-2 py-2 text-xs bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-600 dark:text-slate-300 focus:ring-1 focus:ring-amber-400 outline-none transition w-32"/>
+                            </div>
+                        </div>
+                        {{-- Date Presets + Reset --}}
+                        <div class="flex flex-wrap items-center gap-2">
+                            <span class="text-[9px] font-extrabold text-slate-400 uppercase tracking-wider">Cepat:</span>
+                            @foreach(['today'=>'Hari Ini','yesterday'=>'Kemarin','7days'=>'7 Hari','this_month'=>'Bulan Ini','last_month'=>'Bln Lalu'] as $preset => $label)
+                                <button type="button" wire:click="setGatewayDatePreset('{{ $preset }}')"
+                                    class="px-2.5 py-1 text-[9px] font-bold rounded-lg transition-all
+                                    {{ ($gatewayStartDate && $gatewayEndDate) ? 'bg-amber-500/10 text-amber-700 dark:text-amber-400 hover:bg-amber-500/20' : 'bg-slate-100 dark:bg-slate-800 text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-700' }}">
+                                    {{ $label }}
+                                </button>
+                            @endforeach
+                            @if($gatewaySearch || $gatewayStatus || $gatewayChannel || $gatewayStartDate || $gatewayEndDate)
+                                <button type="button" wire:click="resetGatewayFilters" class="ml-auto flex items-center gap-1 px-2.5 py-1 text-[9px] font-bold text-rose-600 dark:text-rose-400 hover:bg-rose-500/10 rounded-lg transition-all">
+                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                                    Reset Filter
+                                </button>
+                            @endif
+                        </div>
+                    </div>
+
+                    <div class="px-6 py-3 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
                         <div>
                             <h3 class="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider font-serif-display">Log Transaksi Gateway Duitku</h3>
                             <p class="text-[11px] text-slate-400 mt-0.5">Semua percobaan pembayaran wali santri via QRIS / Virtual Account — termasuk yang belum berhasil.</p>
                         </div>
                     </div>
                     <div class="overflow-x-auto">
-                        <table class="w-full text-left border-collapse text-xs min-w-[950px]">
+                        <table class="w-full text-left border-collapse text-xs min-w-[900px]">
                             <thead>
                                 <tr class="bg-slate-50/80 dark:bg-slate-950 border-b border-slate-200 dark:border-slate-800 text-slate-500 font-extrabold uppercase tracking-wider text-[9px]">
                                     <th class="py-4 px-4 w-36">Waktu</th>
@@ -2579,7 +2629,7 @@
                                     <th class="py-4 px-4 text-right">Total Bayar</th>
                                     <th class="py-4 px-4 text-center">Status</th>
                                     <th class="py-4 px-4">Ref. Duitku</th>
-                                    <th class="py-4 px-4">Tagihan Terkait</th>
+                                    <th class="py-4 px-4 text-center">Tagihan</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-slate-100 dark:divide-slate-800/50">
@@ -2620,9 +2670,7 @@
                                                 @else ❌ Gagal @endif
                                             </span>
                                             @if($status === 'pending' && $trx->expires_at)
-                                                <span class="text-[9px] text-slate-400 block mt-0.5">
-                                                    exp: {{ $trx->expires_at->diffForHumans() }}
-                                                </span>
+                                                <span class="text-[9px] text-slate-400 block mt-0.5">exp: {{ $trx->expires_at->diffForHumans() }}</span>
                                             @endif
                                         </td>
                                         <td class="py-3 px-4">
@@ -2632,27 +2680,31 @@
                                                 <span class="text-slate-400 text-[10px]">—</span>
                                             @endif
                                         </td>
-                                        <td class="py-3 px-4">
-                                            @php $breakdown = $trx->bill_breakdown ?? []; @endphp
-                                            <div class="space-y-0.5">
-                                                @foreach(array_slice($breakdown, 0, 3) as $item)
-                                                    <div class="text-[9px] text-slate-500 dark:text-slate-400 truncate max-w-[160px]" title="{{ $item['bill_label'] ?? '' }}">
-                                                        • {{ Str::limit($item['bill_label'] ?? $item['bill_id'] ?? '—', 35) }}
-                                                        <span class="text-slate-400">(Rp {{ number_format($item['pay_portion'] ?? $item['net_amount'] ?? 0, 0, ',', '.') }})</span>
-                                                    </div>
-                                                @endforeach
-                                                @if(count($breakdown) > 3)
-                                                    <span class="text-[9px] text-slate-400">+{{ count($breakdown) - 3 }} tagihan lainnya</span>
-                                                @endif
-                                            </div>
+                                        {{-- Tagihan Terkait: tombol modal --}}
+                                        <td class="py-3 px-4 text-center">
+                                            @php $breakdownCount = count($trx->bill_breakdown ?? []); @endphp
+                                            @if($breakdownCount > 0)
+                                                <button type="button" wire:click="showGatewayBreakdown('{{ $trx->id }}')"
+                                                    class="inline-flex items-center gap-1 px-3 py-1.5 text-[9px] font-extrabold rounded-xl transition-all
+                                                    bg-indigo-500/10 text-indigo-700 dark:text-indigo-400 hover:bg-indigo-500/20 border border-indigo-500/20 dark:border-indigo-500/30">
+                                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/></svg>
+                                                    {{ $breakdownCount }} Tagihan
+                                                    <svg class="w-2.5 h-2.5 opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                                                </button>
+                                            @else
+                                                <span class="text-slate-400 text-[10px]">—</span>
+                                            @endif
                                         </td>
                                     </tr>
                                 @empty
                                     <tr>
                                         <td colspan="9" class="py-16 text-center text-slate-400 font-semibold">
-                                            <div class="flex flex-col items-center gap-2">
-                                                <svg class="w-8 h-8 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
-                                                <span>Belum ada transaksi gateway yang tercatat.</span>
+                                            <div class="flex flex-col items-center gap-3">
+                                                <svg class="w-10 h-10 text-slate-200 dark:text-slate-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                                                <span class="text-sm">Tidak ada transaksi yang cocok dengan filter ini.</span>
+                                                @if($gatewaySearch || $gatewayStatus || $gatewayChannel || $gatewayStartDate || $gatewayEndDate)
+                                                    <button type="button" wire:click="resetGatewayFilters" class="text-xs text-amber-600 hover:underline font-semibold">Reset Filter</button>
+                                                @endif
                                             </div>
                                         </td>
                                     </tr>
@@ -2671,9 +2723,125 @@
                         </div>
                     @endif
                 </div>
+
+                {{-- ════ MODAL: Breakdown Tagihan ════ --}}
+                @if($showGatewayBreakdownModal && !empty($selectedGatewayTrxData))
+                    <div class="fixed inset-0 z-[999] flex items-center justify-center p-4" x-data x-init="document.body.style.overflow='hidden'" x-destroy="document.body.style.overflow=''"
+                        wire:click.self="closeGatewayBreakdownModal">
+                        {{-- Backdrop --}}
+                        <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" wire:click="closeGatewayBreakdownModal"></div>
+
+                        {{-- Modal Panel --}}
+                        <div class="relative z-10 bg-white dark:bg-slate-900 rounded-3xl shadow-2xl w-full max-w-2xl max-h-[85vh] flex flex-col border border-slate-200/80 dark:border-slate-700 overflow-hidden">
+
+                            {{-- Modal Header --}}
+                            <div class="px-6 py-5 border-b border-slate-100 dark:border-slate-800 flex items-start justify-between gap-4 bg-gradient-to-r from-indigo-500/5 to-transparent shrink-0">
+                                <div class="min-w-0">
+                                    <div class="flex items-center gap-2 mb-1">
+                                        <span class="text-[9px] font-extrabold uppercase tracking-widest text-indigo-500">Detail Tagihan Terkait</span>
+                                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[9px] font-extrabold uppercase
+                                            @if($selectedGatewayTrxData['status'] === 'success') bg-emerald-500/10 text-emerald-600
+                                            @elseif($selectedGatewayTrxData['status'] === 'pending') bg-amber-500/10 text-amber-600
+                                            @else bg-rose-500/10 text-rose-600 @endif">
+                                            @if($selectedGatewayTrxData['status'] === 'success') ✅ Sukses
+                                            @elseif($selectedGatewayTrxData['status'] === 'pending') ⏳ Menunggu
+                                            @else ❌ Gagal/Expired @endif
+                                        </span>
+                                    </div>
+                                    <h3 class="text-base font-extrabold text-slate-900 dark:text-white truncate">{{ $selectedGatewayTrxData['santri_name'] }}</h3>
+                                    <p class="text-[10px] text-slate-400 mt-0.5">{{ $selectedGatewayTrxData['created_at'] }} &nbsp;·&nbsp; <span class="font-mono">{{ $selectedGatewayTrxData['merchant_order_id'] }}</span></p>
+                                </div>
+                                <button type="button" wire:click="closeGatewayBreakdownModal" class="shrink-0 w-8 h-8 flex items-center justify-center rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition text-slate-400 hover:text-slate-700 dark:hover:text-slate-200">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                                </button>
+                            </div>
+
+                            {{-- Summary Row --}}
+                            <div class="px-6 py-3 flex items-center gap-6 bg-slate-50/60 dark:bg-slate-950/40 border-b border-slate-100 dark:border-slate-800 shrink-0 text-xs">
+                                <div>
+                                    <span class="text-slate-400 text-[9px] uppercase font-bold block">Channel</span>
+                                    <span class="font-bold text-amber-600 dark:text-amber-400">{{ $selectedGatewayTrxData['channel_label'] ?? '—' }}</span>
+                                </div>
+                                <div>
+                                    <span class="text-slate-400 text-[9px] uppercase font-bold block">Total Tagihan</span>
+                                    <span class="font-bold text-slate-700 dark:text-slate-300">Rp {{ number_format($selectedGatewayTrxData['bill_amount'], 0, ',', '.') }}</span>
+                                </div>
+                                <div>
+                                    <span class="text-slate-400 text-[9px] uppercase font-bold block">Biaya MDR</span>
+                                    <span class="font-bold text-rose-500">+ Rp {{ number_format($selectedGatewayTrxData['mdr_amount'], 0, ',', '.') }}</span>
+                                </div>
+                                <div>
+                                    <span class="text-slate-400 text-[9px] uppercase font-bold block">Total Dibayar</span>
+                                    <span class="font-extrabold text-indigo-600 dark:text-indigo-400">Rp {{ number_format($selectedGatewayTrxData['total_amount'], 0, ',', '.') }}</span>
+                                </div>
+                                @if($selectedGatewayTrxData['duitku_reference'] !== '—')
+                                    <div class="ml-auto">
+                                        <span class="text-slate-400 text-[9px] uppercase font-bold block">Ref. Duitku</span>
+                                        <code class="text-[10px] font-mono text-slate-500 dark:text-slate-400">{{ $selectedGatewayTrxData['duitku_reference'] }}</code>
+                                    </div>
+                                @endif
+                            </div>
+
+                            {{-- Breakdown Table --}}
+                            <div class="overflow-y-auto flex-1">
+                                <table class="w-full text-xs border-collapse">
+                                    <thead class="sticky top-0 z-10">
+                                        <tr class="bg-slate-50/95 dark:bg-slate-950/95 border-b border-slate-200 dark:border-slate-800 text-slate-400 font-extrabold uppercase tracking-wider text-[9px]">
+                                            <th class="py-3 px-5 text-left">#</th>
+                                            <th class="py-3 px-4 text-left">Jenis Iuran</th>
+                                            <th class="py-3 px-4 text-left">Periode</th>
+                                            <th class="py-3 px-4 text-right">Nominal</th>
+                                            <th class="py-3 px-4 text-center">Cicilan</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-slate-100 dark:divide-slate-800/50">
+                                        @foreach($selectedGatewayTrxData['breakdown'] as $i => $item)
+                                            <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/20">
+                                                <td class="py-3 px-5 text-slate-400 font-bold text-center w-8">{{ $i + 1 }}</td>
+                                                <td class="py-3 px-4">
+                                                    <span class="font-bold text-slate-800 dark:text-slate-200 block">{{ $item['config_label'] ?? ucwords(str_replace('_', ' ', $item['bill_type'] ?? '')) }}</span>
+                                                    <span class="text-[9px] font-mono text-slate-300 dark:text-slate-600">{{ Str::limit($item['bill_id'], 20) }}</span>
+                                                </td>
+                                                <td class="py-3 px-4">
+                                                    <span class="text-slate-600 dark:text-slate-400 font-semibold">{{ $item['period_label'] ?? '—' }}</span>
+                                                </td>
+                                                <td class="py-3 px-4 text-right font-extrabold text-slate-900 dark:text-white">
+                                                    Rp {{ number_format($item['pay_portion'] ?? $item['net_amount'] ?? 0, 0, ',', '.') }}
+                                                </td>
+                                                <td class="py-3 px-4 text-center">
+                                                    @if($item['is_partial'] ?? false)
+                                                        <span class="inline-block px-2 py-0.5 rounded-lg text-[9px] font-extrabold bg-amber-500/10 text-amber-600">Sebagian</span>
+                                                    @else
+                                                        <span class="inline-block px-2 py-0.5 rounded-lg text-[9px] font-extrabold bg-emerald-500/10 text-emerald-600">Lunas</span>
+                                                    @endif
+                                                </td>
+                                            </tr>
+                                        @endforeach
+                                    </tbody>
+                                    <tfoot>
+                                        <tr class="bg-indigo-500/5 border-t-2 border-indigo-500/20">
+                                            <td colspan="3" class="py-3 px-5 text-xs font-extrabold text-slate-700 dark:text-slate-300 text-right">Total</td>
+                                            <td class="py-3 px-4 text-right text-sm font-extrabold text-indigo-600 dark:text-indigo-400">
+                                                Rp {{ number_format(collect($selectedGatewayTrxData['breakdown'])->sum(fn($i) => $i['pay_portion'] ?? $i['net_amount'] ?? 0), 0, ',', '.') }}
+                                            </td>
+                                            <td></td>
+                                        </tr>
+                                    </tfoot>
+                                </table>
+                            </div>
+
+                            {{-- Modal Footer --}}
+                            <div class="px-6 py-4 border-t border-slate-100 dark:border-slate-800 flex justify-end shrink-0">
+                                <button type="button" wire:click="closeGatewayBreakdownModal" class="px-5 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold rounded-xl text-xs transition">
+                                    Tutup
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                @endif
+
             </div>
         @endif
-
 
         @if ($activeTab === 'registration_rates')
             <div class="space-y-6">

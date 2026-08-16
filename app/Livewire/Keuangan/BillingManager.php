@@ -333,11 +333,23 @@ class BillingManager extends Component
     public string $exceptionSearch     = '';
     public string $exceptionTypeFilter = '';
 
+    // ── Gateway Transactions Tab ──────────────────────────────────────────────
+    public string $gatewaySearch    = '';
+    public string $gatewayStatus    = '';
+    public string $gatewayChannel   = '';
+    public string $gatewayStartDate = '';
+    public string $gatewayEndDate   = '';
+
+    // Gateway Breakdown Modal
+    public bool  $showGatewayBreakdownModal = false;
+    public array $selectedGatewayTrxData   = [];
+
     public function updatingActiveTab(): void
     {
         $this->resetPage();
         $this->resetPage('payLogPage');
         $this->resetPage('historyPage');
+        $this->resetPage('gatewayPage');
     }
 
     public function updatingPayLogSearch(): void { $this->resetPage('payLogPage'); }
@@ -392,6 +404,93 @@ class BillingManager extends Component
         $this->payLogDormitoryId = '';
         $this->payLogKelasId     = '';
         $this->resetPage('payLogPage');
+    }
+
+    // ── Gateway Filter Methods ────────────────────────────────────────────────
+
+    public function updatingGatewaySearch(): void    { $this->resetPage('gatewayPage'); }
+    public function updatingGatewayStatus(): void    { $this->resetPage('gatewayPage'); }
+    public function updatingGatewayChannel(): void   { $this->resetPage('gatewayPage'); }
+    public function updatingGatewayStartDate(): void { $this->resetPage('gatewayPage'); }
+    public function updatingGatewayEndDate(): void   { $this->resetPage('gatewayPage'); }
+
+    public function resetGatewayFilters(): void
+    {
+        $this->gatewaySearch    = '';
+        $this->gatewayStatus    = '';
+        $this->gatewayChannel   = '';
+        $this->gatewayStartDate = '';
+        $this->gatewayEndDate   = '';
+        $this->resetPage('gatewayPage');
+    }
+
+    public function setGatewayDatePreset(string $preset): void
+    {
+        match ($preset) {
+            'today'      => [$this->gatewayStartDate, $this->gatewayEndDate] = [now()->toDateString(), now()->toDateString()],
+            'yesterday'  => [$this->gatewayStartDate, $this->gatewayEndDate] = [now()->subDay()->toDateString(), now()->subDay()->toDateString()],
+            '7days'      => [$this->gatewayStartDate, $this->gatewayEndDate] = [now()->subDays(6)->toDateString(), now()->toDateString()],
+            'this_month' => [$this->gatewayStartDate, $this->gatewayEndDate] = [now()->startOfMonth()->toDateString(), now()->endOfMonth()->toDateString()],
+            'last_month' => [$this->gatewayStartDate, $this->gatewayEndDate] = [now()->subMonth()->startOfMonth()->toDateString(), now()->subMonth()->endOfMonth()->toDateString()],
+            'clear'      => [$this->gatewayStartDate, $this->gatewayEndDate] = ['', ''],
+            default      => null,
+        };
+        $this->resetPage('gatewayPage');
+    }
+
+    // ── Gateway Breakdown Modal ───────────────────────────────────────────────
+
+    public function showGatewayBreakdown(string $trxId): void
+    {
+        $trx = PaymentTransaction::with('person')->find($trxId);
+        if (!$trx) return;
+
+        $months = [1=>'Januari',2=>'Februari',3=>'Maret',4=>'April',5=>'Mei',6=>'Juni',
+                   7=>'Juli',8=>'Agustus',9=>'September',10=>'Oktober',11=>'November',12=>'Desember'];
+
+        $rawBreakdown = $trx->bill_breakdown ?? [];
+        $enriched = [];
+        foreach ($rawBreakdown as $item) {
+            // Pakai label yang sudah tersimpan jika ada (record baru)
+            if (!empty($item['config_label']) && !empty($item['period_label'])) {
+                $enriched[] = $item;
+                continue;
+            }
+            // Fallback: lazy-load dari DB untuk record lama
+            $bill = Bill::with('config')->find($item['bill_id']);
+            $interval = $bill?->config?->interval ?? '';
+            if ($interval === 'semester') {
+                $periodLabel = 'Semester ' . ($bill->period_month) . '/' . ($bill->period_year);
+            } elseif (in_array($interval, ['once', 'insidental', 'event', 'sekali'])) {
+                $periodLabel = 'Event ' . ($bill?->period_year ?? '');
+            } else {
+                $periodLabel = ($months[$bill?->period_month ?? 0] ?? '') . ' ' . ($bill?->period_year ?? '');
+            }
+            $enriched[] = array_merge($item, [
+                'config_label' => $bill?->config?->label ?? ucwords(str_replace('_', ' ', $item['bill_type'] ?? '')),
+                'period_label' => trim($periodLabel),
+            ]);
+        }
+
+        $this->selectedGatewayTrxData = [
+            'merchant_order_id' => $trx->merchant_order_id,
+            'santri_name'       => $trx->person?->name ?? '—',
+            'channel_label'     => $trx->channel_label,
+            'status'            => $trx->status,
+            'bill_amount'       => $trx->bill_amount,
+            'mdr_amount'        => $trx->mdr_amount,
+            'total_amount'      => $trx->total_amount,
+            'created_at'        => $trx->created_at->translatedFormat('d M Y, H:i') . ' WIB',
+            'duitku_reference'  => $trx->duitku_reference ?? '—',
+            'breakdown'         => $enriched,
+        ];
+        $this->showGatewayBreakdownModal = true;
+    }
+
+    public function closeGatewayBreakdownModal(): void
+    {
+        $this->showGatewayBreakdownModal = false;
+        $this->selectedGatewayTrxData   = [];
     }
 
     protected $queryString = [
@@ -2668,19 +2767,34 @@ class BillingManager extends Component
         $registrationItems = $regItemsQuery->orderBy('is_active', 'desc')->orderBy('created_at', 'desc')->get();
 
         // ─── Gateway Transactions ─────────────────────────────────────────────
-        $gatewayTransactions = PaymentTransaction::with('person')
+        $gatewayBaseQuery = PaymentTransaction::with('person')
             ->when($this->genderScope(), fn($q, $g) => $q->whereHas('person', fn($pq) => $pq->where('gender', $g)))
-            ->orderBy('created_at', 'desc')
-            ->paginate(20, pageName: 'gatewayPage');
+            ->when($this->gatewaySearch, function ($q) {
+                $s = $this->gatewaySearch;
+                $q->where(function ($sub) use ($s) {
+                    $sub->whereHas('person', fn($pq) => $pq->where('name', 'like', "%{$s}%"))
+                        ->orWhere('merchant_order_id', 'like', "%{$s}%")
+                        ->orWhere('duitku_reference', 'like', "%{$s}%");
+                });
+            })
+            ->when($this->gatewayStatus, fn($q) => $q->where('status', $this->gatewayStatus))
+            ->when($this->gatewayChannel, fn($q) => $q->where('payment_channel', $this->gatewayChannel))
+            ->when($this->gatewayStartDate, fn($q) => $q->whereDate('created_at', '>=', $this->gatewayStartDate))
+            ->when($this->gatewayEndDate, fn($q) => $q->whereDate('created_at', '<=', $this->gatewayEndDate));
 
+        $gatewayTransactions = (clone $gatewayBaseQuery)->orderBy('created_at', 'desc')->paginate(20, pageName: 'gatewayPage');
+
+        // KPI stats menggunakan data yang sudah terfilter (agar konsisten dengan tabel)
         $gatewayStats = [
-            'success_count'  => PaymentTransaction::when($this->genderScope(), fn($q, $g) => $q->whereHas('person', fn($pq) => $pq->where('gender', $g)))->where('status', 'success')->count(),
-            'success_amount' => (float) PaymentTransaction::when($this->genderScope(), fn($q, $g) => $q->whereHas('person', fn($pq) => $pq->where('gender', $g)))->where('status', 'success')->sum('bill_amount'),
-            'pending_count'  => PaymentTransaction::when($this->genderScope(), fn($q, $g) => $q->whereHas('person', fn($pq) => $pq->where('gender', $g)))->where('status', 'pending')->count(),
-            'failed_count'   => PaymentTransaction::when($this->genderScope(), fn($q, $g) => $q->whereHas('person', fn($pq) => $pq->where('gender', $g)))->whereIn('status', ['failed', 'expired'])->count(),
-            'total_mdr'      => (float) PaymentTransaction::when($this->genderScope(), fn($q, $g) => $q->whereHas('person', fn($pq) => $pq->where('gender', $g)))->where('status', 'success')->sum('mdr_amount'),
+            'success_count'  => (clone $gatewayBaseQuery)->where('status', 'success')->count(),
+            'success_amount' => (float) (clone $gatewayBaseQuery)->where('status', 'success')->sum('bill_amount'),
+            'pending_count'  => (clone $gatewayBaseQuery)->where('status', 'pending')->count(),
+            'failed_count'   => (clone $gatewayBaseQuery)->whereIn('status', ['failed', 'expired'])->count(),
+            'total_mdr'      => (float) (clone $gatewayBaseQuery)->where('status', 'success')->sum('mdr_amount'),
         ];
-        $gatewayPendingCount = $gatewayStats['pending_count'];
+        // Badge count di tab selalu pakai angka global (semua, bukan terfilter)
+        $gatewayPendingCount = PaymentTransaction::when($this->genderScope(), fn($q, $g) => $q->whereHas('person', fn($pq) => $pq->where('gender', $g)))->where('status', 'pending')->count();
+
 
         return view('livewire.keuangan.billing-manager', [
             'registrationItems'   => $registrationItems,
