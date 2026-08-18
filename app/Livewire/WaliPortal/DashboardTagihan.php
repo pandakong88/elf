@@ -3,15 +3,26 @@
 namespace App\Livewire\WaliPortal;
 
 use Livewire\Component;
+use Livewire\Attributes\Url;
 use App\Modules\Core\Models\Person;
 use App\Modules\Core\Models\LandingPageContent;
 use App\Modules\Keuangan\Models\Bill;
+use App\Modules\Keuangan\Models\BillPayment;
+use App\Modules\Keuangan\Models\PaymentTransaction;
 use App\Modules\Keuangan\Services\DuitkuService;
 
 class DashboardTagihan extends Component
 {
     public string $personId;
     public string $activeSection = 'ringkasan';
+
+    // Tab Utama Portal: 'tagihan' (Tagihan & Pembayaran) | 'riwayat' (Riwayat Pembayaran)
+    #[Url(as: 'tab')]
+    public string $portalTab = 'tagihan';
+
+    // Filter Riwayat Pembayaran
+    public string $historyMethod = ''; // '' (Semua) | 'gateway' (Online) | 'kasir' (Kasir)
+    public string $historyYear   = ''; // '' (Semua Tahun) | '2026'
 
     // Simulasi Checklist — array of bill IDs yang dipilih wali
     public array $selectedBillIds = [];
@@ -39,6 +50,12 @@ class DashboardTagihan extends Component
     {
         $this->personId = $personId;
     }
+
+    public function setPortalTab(string $tab): void
+    {
+        $this->portalTab = in_array($tab, ['tagihan', 'riwayat']) ? $tab : 'tagihan';
+    }
+
 
     public function getBillTypeLabel(string $type): string
     {
@@ -542,6 +559,99 @@ class DashboardTagihan extends Component
             ? \Carbon\Carbon::parse($latestTimestamp)->locale('id')->translatedFormat('d M Y • H:i') . ' WIB'
             : 'Hari ini (Sistem Real-Time)';
 
+        // ─── Payment History Aggregation (Gateway + Kasir) ───────────────────
+        $gatewayQuery = PaymentTransaction::where('person_id', $this->personId)
+            ->where('status', 'success');
+
+        if ($this->historyYear) {
+            $gatewayQuery->whereYear('created_at', (int)$this->historyYear);
+        }
+
+        $gatewayList = ($this->historyMethod === 'kasir') ? collect() : $gatewayQuery->orderBy('created_at', 'desc')->get()->map(function ($trx) {
+            $breakdown = collect($trx->bill_breakdown ?? [])->map(function ($item) {
+                if (!empty($item['config_label']) && !empty($item['period_label'])) {
+                    return $item;
+                }
+                $bill = Bill::with('config')->find($item['bill_id'] ?? null);
+                return array_merge($item, [
+                    'config_label' => $bill?->config?->label ?? ucwords(str_replace('_', ' ', $item['bill_type'] ?? '')),
+                    'period_label' => $bill ? $this->getBillPeriodLabel($bill) : '',
+                ]);
+            })->all();
+
+            return [
+                'id'           => $trx->id,
+                'source'       => 'gateway',
+                'order_id'     => $trx->merchant_order_id,
+                'method_label' => ($trx->channel_label ?? $trx->payment_channel ?? 'Online') . ' (Duitku)',
+                'channel_code' => $trx->payment_channel,
+                'amount'       => (float) $trx->total_amount,
+                'bill_amount'  => (float) $trx->bill_amount,
+                'mdr_amount'   => (float) $trx->mdr_amount,
+                'date'         => $trx->created_at,
+                'date_fmt'     => $trx->created_at->locale('id')->translatedFormat('d M Y • H:i') . ' WIB',
+                'breakdown'    => $breakdown,
+                'pdf_url'      => route('bukti-bayar.gateway', $trx->id),
+                'status'       => 'Lunas (Online)',
+            ];
+        });
+
+        $kasirQuery = BillPayment::whereHas('bill', fn($q) => $q->where('person_id', $this->personId))
+            ->where('payment_method', '!=', 'gateway_duitku')
+            ->with(['bill.config', 'logger']);
+
+        if ($this->historyYear) {
+            $kasirQuery->whereYear('payment_date', (int)$this->historyYear);
+        }
+
+        $kasirList = ($this->historyMethod === 'gateway') ? collect() : $kasirQuery->orderBy('payment_date', 'desc')->orderBy('created_at', 'desc')->get()->map(function ($pay) {
+            $bill = $pay->bill;
+            $periodLabel = $bill ? $this->getBillPeriodLabel($bill) : '';
+            $methodName = match(strtolower($pay->payment_method ?? '')) {
+                'cash'     => '💵 Tunai (Kasir)',
+                'transfer' => '🏦 Transfer Bank',
+                default    => strtoupper($pay->payment_method ?? 'Kasir'),
+            };
+
+            $isPartial = (float)$pay->amount_paid < (float)($bill?->amount ?? 0);
+
+            return [
+                'id'           => $pay->id,
+                'source'       => 'kasir',
+                'order_id'     => 'KSR-' . strtoupper(substr($pay->id, 0, 8)),
+                'method_label' => $methodName,
+                'channel_code' => $pay->payment_method,
+                'amount'       => (float) $pay->amount_paid,
+                'bill_amount'  => (float) $pay->amount_paid,
+                'mdr_amount'   => 0,
+                'date'         => $pay->payment_date ? \Carbon\Carbon::parse($pay->payment_date) : $pay->created_at,
+                'date_fmt'     => $pay->payment_date ? \Carbon\Carbon::parse($pay->payment_date)->locale('id')->translatedFormat('d M Y') : '—',
+                'breakdown'    => [[
+                    'config_label' => $bill?->config?->label ?? ucwords(str_replace('_', ' ', $bill?->bill_type ?? '')),
+                    'period_label' => $periodLabel,
+                    'pay_portion'  => (float) $pay->amount_paid,
+                    'is_partial'   => $isPartial,
+                ]],
+                'notes'        => $pay->notes,
+                'logger_name'  => $pay->logger?->name ?? 'Kasir Pesantren',
+                'pdf_url'      => route('bukti-bayar.kasir', $pay->id),
+                'status'       => $isPartial ? 'Cicilan Kasir' : 'Lunas (Kasir)',
+            ];
+        });
+
+        $paymentHistory = $gatewayList->concat($kasirList)->sortByDesc(fn($item) => $item['date'] ? $item['date']->timestamp : 0)->values();
+
+        // Calculate available years for filter
+        $gatewayYears = PaymentTransaction::where('person_id', $this->personId)->where('status', 'success')->pluck('created_at')->map(fn($d) => (int)$d->format('Y'));
+        $kasirYears   = BillPayment::whereHas('bill', fn($q) => $q->where('person_id', $this->personId))->pluck('payment_date')->filter()->map(fn($d) => (int)\Carbon\Carbon::parse($d)->format('Y'));
+        $historyYears = $gatewayYears->concat($kasirYears)->filter()->unique()->sortDesc()->values();
+
+        // Overall stats for santri
+        $historyTotalAmount = (float) $paymentHistory->sum('amount');
+        $historyTotalTrx    = $paymentHistory->count();
+        $historyGatewayTrx  = $paymentHistory->where('source', 'gateway')->count();
+        $historyKasirTrx    = $paymentHistory->where('source', 'kasir')->count();
+
         return view('livewire.wali-portal.dashboard-tagihan', [
             'santri'                  => $santri,
             'isPutri'                 => $isPutri,
@@ -580,6 +690,12 @@ class DashboardTagihan extends Component
             'mandatoryBillIds'        => $mandatoryBillIds,
             'pastBillIdsOnly'         => $pastBillIdsOnly,
             'lastUpdatedLabel'        => $lastUpdatedLabel,
+            'paymentHistory'          => $paymentHistory,
+            'historyYears'            => $historyYears,
+            'historyTotalAmount'      => $historyTotalAmount,
+            'historyTotalTrx'         => $historyTotalTrx,
+            'historyGatewayTrx'       => $historyGatewayTrx,
+            'historyKasirTrx'         => $historyKasirTrx,
         ])->layout('layouts.wali-portal', ['title' => 'Dashboard Tagihan — ' . $santri->name]);
     }
 }

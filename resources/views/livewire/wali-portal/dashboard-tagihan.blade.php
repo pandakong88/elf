@@ -117,8 +117,32 @@
         </div>
     </div>
 
-    <!-- HERO CARD RINGKASAN TAGIHAN HARUS DIBAYAR -->
-    @if($totalHarusDibayarNow == 0)
+    <!-- TAB SWITCHER: Tagihan & Bayar vs Riwayat Pembayaran -->
+    <div class="grid grid-cols-2 gap-1.5 p-1.5 bg-slate-200/80 dark:bg-slate-900/90 rounded-2xl border border-slate-300/80 dark:border-slate-800 shadow-inner">
+        <button type="button" wire:click="setPortalTab('tagihan')"
+                class="py-2.5 px-3 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-2 {{ $portalTab === 'tagihan' ? 'bg-white dark:bg-slate-800 text-emerald-700 dark:text-emerald-400 shadow-md border border-slate-200 dark:border-slate-700' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200' }}">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+            <span>Tagihan & Bayar</span>
+            @if($totalHarusDibayarNow > 0)
+                <span class="w-2 h-2 rounded-full bg-rose-500 animate-pulse"></span>
+            @endif
+        </button>
+
+        <button type="button" wire:click="setPortalTab('riwayat')"
+                class="py-2.5 px-3 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-2 {{ $portalTab === 'riwayat' ? 'bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-md border border-slate-200 dark:border-slate-700' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200' }}">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            <span>Riwayat Bayar</span>
+            @if($historyTotalTrx > 0)
+                <span class="px-1.5 py-0.5 rounded-full text-[9px] font-black {{ $portalTab === 'riwayat' ? 'bg-indigo-100 dark:bg-indigo-500/20 text-indigo-700 dark:text-indigo-300' : 'bg-slate-300 dark:bg-slate-700 text-slate-700 dark:text-slate-300' }}">
+                    {{ $historyTotalTrx }}
+                </span>
+            @endif
+        </button>
+    </div>
+
+    @if($portalTab === 'tagihan')
+        <!-- HERO CARD RINGKASAN TAGIHAN HARUS DIBAYAR -->
+        @if($totalHarusDibayarNow == 0)
         <!-- Kondisi LUNAS / TIDAK ADA TAGIHAN SEKARANG -->
         <div class="bg-emerald-50 dark:bg-emerald-950/40 border-2 border-emerald-300 dark:border-emerald-700 rounded-3xl p-5 text-center space-y-2 shadow-sm transition-colors">
             <div class="w-12 h-12 rounded-full bg-emerald-600 dark:bg-emerald-500 text-white flex items-center justify-center mx-auto shadow-md">
@@ -897,6 +921,193 @@
                         </a>
                     @endif
                 </div>
+            </div>
+        </div>
+    @else
+        <!-- ================================================================= -->
+        <!-- TAB 2: RIWAYAT PEMBAYARAN SANTRI                                 -->
+        <!-- ================================================================= -->
+        <div class="space-y-4">
+            <!-- Hero Summary Riwayat -->
+            <div class="bg-gradient-to-br from-indigo-700 via-indigo-800 to-slate-900 text-white rounded-3xl p-5 shadow-lg border border-indigo-600/30 relative overflow-hidden">
+                <div class="absolute -right-6 -bottom-6 w-32 h-32 bg-white/5 rounded-full blur-xl pointer-events-none"></div>
+                
+                <div class="flex items-center justify-between gap-2 pb-2 border-b border-indigo-500/30">
+                    <span class="text-[10px] font-black uppercase tracking-wider text-indigo-200 flex items-center gap-1.5">
+                        <svg class="w-3.5 h-3.5 text-indigo-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        <span>Total Akumulasi Pembayaran</span>
+                    </span>
+                    <span class="text-[10px] font-extrabold bg-indigo-500/30 text-indigo-100 px-2.5 py-0.5 rounded-full border border-indigo-400/20">
+                        {{ $historyTotalTrx }} Transaksi
+                    </span>
+                </div>
+
+                <div class="pt-3">
+                    <div class="text-2xl sm:text-3xl font-black tracking-tight text-white font-mono">
+                        Rp {{ number_format($historyTotalAmount, 0, ',', '.') }}
+                    </div>
+                    <div class="flex items-center gap-3 text-[11px] text-indigo-200 mt-2">
+                        <span class="inline-flex items-center gap-1">
+                            <span class="w-2 h-2 rounded-full bg-sky-400"></span>
+                            <span>Online Duitku: <strong>{{ $historyGatewayTrx }}</strong></span>
+                        </span>
+                        <span class="inline-flex items-center gap-1">
+                            <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+                            <span>Kasir: <strong>{{ $historyKasirTrx }}</strong></span>
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Filter Bar Riwayat -->
+            <div class="bg-white dark:bg-slate-900 p-3 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs space-y-2">
+                <div class="flex items-center justify-between text-xs">
+                    <span class="font-extrabold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                        <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/></svg>
+                        <span>Filter Riwayat</span>
+                    </span>
+                    @if($historyMethod !== '' || $historyYear !== '')
+                        <button type="button" wire:click="$set('historyMethod', ''); $set('historyYear', '');"
+                                class="text-[10px] text-rose-500 hover:text-rose-600 font-bold">
+                            Reset Filter
+                        </button>
+                    @endif
+                </div>
+
+                <div class="grid grid-cols-2 gap-2">
+                    {{-- Filter Metode --}}
+                    <div>
+                        <select wire:model.live="historyMethod"
+                                class="w-full text-xs font-semibold rounded-xl bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 py-2 px-2.5 focus:ring-indigo-500 focus:border-indigo-500">
+                            <option value="">Semua Metode</option>
+                            <option value="gateway">⚡ Online (Gateway)</option>
+                            <option value="kasir">💵 Kasir (Tunai / Bank)</option>
+                        </select>
+                    </div>
+
+                    {{-- Filter Tahun --}}
+                    <div>
+                        <select wire:model.live="historyYear"
+                                class="w-full text-xs font-semibold rounded-xl bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 py-2 px-2.5 focus:ring-indigo-500 focus:border-indigo-500">
+                            <option value="">Semua Tahun</option>
+                            @foreach($historyYears as $y)
+                                <option value="{{ $y }}">Tahun {{ $y }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- List Kartu Riwayat Pembayaran -->
+            <div class="space-y-3">
+                @forelse($paymentHistory as $item)
+                    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-4 shadow-sm space-y-3 transition-all hover:border-indigo-300 dark:hover:border-indigo-700">
+                        {{-- Header Item --}}
+                        <div class="flex items-start justify-between gap-2 pb-2.5 border-b border-slate-100 dark:border-slate-800">
+                            <div class="flex items-center gap-2.5 min-w-0">
+                                <div class="w-9 h-9 rounded-2xl flex items-center justify-center shrink-0 {{ $item['source'] === 'gateway' ? 'bg-sky-500/10 text-sky-600 dark:text-sky-400 border border-sky-500/20' : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20' }}">
+                                    @if($item['source'] === 'gateway')
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                                    @else
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+                                    @endif
+                                </div>
+                                <div class="min-w-0">
+                                    <div class="text-xs font-black text-slate-800 dark:text-slate-100 truncate">
+                                        {{ $item['method_label'] }}
+                                    </div>
+                                    <div class="text-[10px] text-slate-400 dark:text-slate-500 flex items-center gap-1.5 mt-0.5">
+                                        <span>📅 {{ $item['date_fmt'] }}</span>
+                                        <span>•</span>
+                                        <span class="font-mono text-slate-600 dark:text-slate-400 font-bold">{{ $item['order_id'] }}</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <span class="px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-wider shrink-0 {{ str_contains($item['status'], 'Cicilan') ? 'bg-amber-100 dark:bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-300/40' : 'bg-emerald-100 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-300/40' }}">
+                                {{ $item['status'] }}
+                            </span>
+                        </div>
+
+                        {{-- Rincian Tagihan yang Dibayarkan --}}
+                        <div class="space-y-1.5 bg-slate-50 dark:bg-slate-950/60 p-3 rounded-2xl border border-slate-100 dark:border-slate-800/80">
+                            <span class="text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-wider block">
+                                Rincian Alokasi Tagihan:
+                            </span>
+                            <div class="space-y-1.5">
+                                @foreach($item['breakdown'] as $b)
+                                    <div class="flex items-center justify-between text-xs">
+                                        <div class="min-w-0 pr-2">
+                                            <span class="font-bold text-slate-700 dark:text-slate-300 block truncate">
+                                                {{ $b['config_label'] ?? '—' }}
+                                            </span>
+                                            @if(!empty($b['period_label']))
+                                                <span class="text-[10px] text-slate-400 dark:text-slate-500 block">
+                                                    {{ $b['period_label'] }}
+                                                </span>
+                                            @endif
+                                        </div>
+                                        <span class="font-mono font-bold text-slate-800 dark:text-slate-200 shrink-0 text-xs">
+                                            Rp {{ number_format($b['pay_portion'] ?? $b['net_amount'] ?? 0, 0, ',', '.') }}
+                                        </span>
+                                    </div>
+                                @endforeach
+                            </div>
+
+                            @if(!empty($item['notes']))
+                                <div class="pt-1.5 mt-1.5 border-t border-slate-200/60 dark:border-slate-800 text-[10px] text-slate-500 dark:text-slate-400 italic">
+                                    💬 {{ $item['notes'] }}
+                                </div>
+                            @endif
+
+                            @if(!empty($item['logger_name']) && $item['source'] === 'kasir')
+                                <div class="text-[9px] text-slate-400 dark:text-slate-500 pt-0.5">
+                                    Petugas: {{ $item['logger_name'] }}
+                                </div>
+                            @endif
+                        </div>
+
+                        {{-- Footer Total & Download PDF --}}
+                        <div class="flex items-center justify-between pt-1">
+                            <div>
+                                <span class="text-[9px] font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-wider block">
+                                    Total Dibayar
+                                </span>
+                                <div class="text-sm font-black text-slate-900 dark:text-white font-mono">
+                                    Rp {{ number_format($item['amount'], 0, ',', '.') }}
+                                </div>
+                                @if(($item['mdr_amount'] ?? 0) > 0)
+                                    <span class="text-[9px] text-amber-600 dark:text-amber-400 block">
+                                        (Termasuk biaya layanan Rp {{ number_format($item['mdr_amount'], 0, ',', '.') }})
+                                    </span>
+                                @endif
+                            </div>
+
+                            {{-- Tombol Unduh PDF --}}
+                            <a href="{{ $item['pdf_url'] }}" target="_blank"
+                               class="inline-flex items-center gap-1.5 px-3.5 py-2 bg-indigo-50 dark:bg-indigo-950/40 hover:bg-indigo-600 text-indigo-600 dark:text-indigo-400 hover:text-white rounded-2xl text-xs font-extrabold transition-all border border-indigo-200 dark:border-indigo-800 shadow-xs active:scale-95">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                                <span>Unduh PDF</span>
+                            </a>
+                        </div>
+                    </div>
+                @empty
+                    <div class="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 p-8 text-center space-y-3">
+                        <div class="w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-400 flex items-center justify-center mx-auto">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                        </div>
+                        <div>
+                            <h4 class="text-xs font-bold text-slate-800 dark:text-slate-200">Belum Ada Riwayat</h4>
+                            <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-1 max-w-xs mx-auto leading-relaxed">
+                                @if($historyMethod !== '' || $historyYear !== '')
+                                    Tidak ada riwayat pembayaran yang cocok dengan filter yang dipilih.
+                                @else
+                                    Belum ada transaksi pembayaran yang tercatat untuk santri ini.
+                                @endif
+                            </p>
+                        </div>
+                    </div>
+                @endforelse
             </div>
         </div>
     @endif
