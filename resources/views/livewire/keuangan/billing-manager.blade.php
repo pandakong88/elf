@@ -2747,10 +2747,9 @@
 
                 {{-- ════ MODAL: Breakdown Tagihan ════ --}}
                 @if($showGatewayBreakdownModal && !empty($selectedGatewayTrxData))
-                    <div class="fixed inset-0 z-[999] flex items-center justify-center p-4" x-data x-init="document.body.style.overflow='hidden'" x-destroy="document.body.style.overflow=''"
-                        wire:click.self="closeGatewayBreakdownModal">
+                    <div class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
                         {{-- Backdrop --}}
-                        <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" wire:click="closeGatewayBreakdownModal"></div>
+                        <div class="fixed inset-0" wire:click="closeGatewayBreakdownModal"></div>
 
                         {{-- Modal Panel --}}
                         <div class="relative z-10 bg-white dark:bg-slate-900 rounded-3xl shadow-2xl w-full max-w-2xl max-h-[85vh] flex flex-col border border-slate-200/80 dark:border-slate-700 overflow-hidden">
@@ -3259,9 +3258,9 @@
 
                 {{-- 7. MODAL: Drill-down Santri per Komplek --}}
                 @if($showDormitoryModal && !empty($modalDormitoryData))
-                    <div class="fixed inset-0 z-[999] flex items-center justify-center p-4" x-data x-init="document.body.style.overflow='hidden'" x-destroy="document.body.style.overflow=''">
+                    <div class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
                         {{-- Backdrop --}}
-                        <div class="absolute inset-0 bg-black/60 backdrop-blur-xs" wire:click="closeDormitoryDetailModal"></div>
+                        <div class="fixed inset-0" wire:click="closeDormitoryDetailModal"></div>
 
                         {{-- Modal Content --}}
                         <div class="relative z-10 bg-white dark:bg-slate-900 rounded-3xl shadow-2xl w-full max-w-2xl max-h-[85vh] flex flex-col border border-slate-200 dark:border-slate-800 overflow-hidden">
