@@ -409,26 +409,13 @@ class DuitkuService
             'paid_at'           => $paidAt,
         ]);
 
-        // ── Kirim notifikasi WhatsApp ke grup admin/bendahara ─────────────────
+        // ── Dispatch Job Notifikasi WhatsApp (Grup Bendahara & Wali Santri) via Queue ──
         try {
-            $transaction->loadMissing('person');
-            $channelLabel = $transaction->channel_label ?? $transaction->payment_channel ?? '—';
-            $formattedAt  = $transaction->created_at->locale('id')->translatedFormat('d F Y, H:i') . ' WIB';
-
-            app(WhatsAppService::class)->notifyGatewayPayment(
-                santriName:   $transaction->person?->name ?? '—',
-                orderId:      $transaction->merchant_order_id,
-                channelLabel: $channelLabel,
-                paidAt:       $formattedAt,
-                billAmount:   (float) $transaction->bill_amount,
-                mdrAmount:    (float) $transaction->mdr_amount,
-                totalAmount:  (float) $transaction->total_amount,
-                breakdown:    $breakdown,
-            );
+            \App\Jobs\SendWhatsAppPaymentNotificationJob::dispatch($transaction->id);
         } catch (\Throwable $e) {
-            Log::warning('[WhatsApp] Gagal kirim notifikasi gateway payment', ['error' => $e->getMessage()]);
+            Log::warning('[WhatsApp] Gagal dispatch queue notifikasi payment', ['error' => $e->getMessage()]);
         }
-        // ─────────────────────────────────────────────────────────────────────
+        // ─────────────────────────────────────────────────────────────────────────────
     }
 
 
