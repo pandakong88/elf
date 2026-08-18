@@ -131,13 +131,14 @@ class WhatsAppService
      * Kirim kuitansi pelunasan digital ke WhatsApp Wali Santri.
      */
     public function notifyWaliPaymentReceipt(
-        string $phone,
-        string $santriName,
-        string $orderId,
-        string $channelLabel,
-        string $paidAt,
-        float  $totalAmount,
-        array  $breakdown = []
+        string  $phone,
+        string  $santriName,
+        string  $orderId,
+        string  $channelLabel,
+        string  $paidAt,
+        float   $totalAmount,
+        array   $breakdown = [],
+        ?string $roomLocation = null
     ): bool {
         if (!config('whatsapp.notify_wali', true)) {
             return false;
@@ -150,20 +151,33 @@ class WhatsAppService
             $label   = $item['config_label'] ?? ucwords(str_replace('_', ' ', $item['bill_type'] ?? ''));
             $period  = $item['period_label'] ?? '';
             $amount  = number_format($item['pay_portion'] ?? $item['net_amount'] ?? 0, 0, ',', '.');
-            $rincian .= "• {$label} ({$period}) : Rp {$amount}\n";
+            
+            $isPartial = !empty($item['is_partial']);
+            $remaining = max(0, ((float)($item['bill_remaining'] ?? 0)) - ((float)($item['pay_portion'] ?? $item['net_amount'] ?? 0)));
+
+            if ($isPartial && $remaining > 0) {
+                $remFmt = number_format($remaining, 0, ',', '.');
+                $statusTag = " ⏳ *(Cicilan - Sisa: Rp {$remFmt})*";
+            } else {
+                $statusTag = " 🟢 *(Lunas)*";
+            }
+
+            $rincian .= "• {$label} ({$period}) : Rp {$amount}{$statusTag}\n";
         }
 
         $totalFmt = number_format($totalAmount, 0, ',', '.');
+        $locationLine = !empty($roomLocation) ? "\n🏠 *Komplek/Kamar:* {$roomLocation}" : '';
 
         $message = "Assalamu'alaikum Warahmatullahi Wabarakatuh.\n\n"
             . "Terima kasih, pembayaran administrasi pesantren untuk santri:\n"
-            . "👤 *Nama:* {$santriName}\n"
+            . "👤 *Nama:* {$santriName}"
+            . $locationLine . "\n"
             . "🧾 *No. Transaksi:* {$orderId}\n"
             . "💳 *Metode:* {$channelLabel}\n"
             . "📅 *Waktu:* {$paidAt}\n\n"
             . "📦 *Rincian Pelunasan:*\n"
             . ($rincian ?: "• (rincian umum)\n")
-            . "\n💰 *Total Diterima:* *Rp {$totalFmt}* (LUNAS)\n\n"
+            . "\n💰 *Total Diterima:* *Rp {$totalFmt}*\n\n"
             . "Semoga barokah dan bermanfaat bagi kelancaran tholabul 'ilmi ananda. Aamiin.\n\n"
             . "— *Pengurus Keuangan {$appName}*";
 
@@ -174,14 +188,15 @@ class WhatsAppService
      * Notifikasi pembayaran gateway (Duitku).
      */
     public function notifyGatewayPayment(
-        string $santriName,
-        string $orderId,
-        string $channelLabel,
-        string $paidAt,
-        float  $billAmount,
-        float  $mdrAmount,
-        float  $totalAmount,
-        array  $breakdown = []
+        string  $santriName,
+        string  $orderId,
+        string  $channelLabel,
+        string  $paidAt,
+        float   $billAmount,
+        float   $mdrAmount,
+        float   $totalAmount,
+        array   $breakdown = [],
+        ?string $roomLocation = null
     ): bool {
         if (!config('whatsapp.notify_gateway', true)) {
             return false;
@@ -194,17 +209,31 @@ class WhatsAppService
             $label   = $item['config_label'] ?? ucwords(str_replace('_', ' ', $item['bill_type'] ?? ''));
             $period  = $item['period_label'] ?? '';
             $amount  = number_format($item['pay_portion'] ?? $item['net_amount'] ?? 0, 0, ',', '.');
-            $rincian .= "• {$label} – {$period} → Rp {$amount}\n";
+
+            // Deteksi cicilan / sebagian
+            $isPartial = !empty($item['is_partial']);
+            $remaining = max(0, ((float)($item['bill_remaining'] ?? 0)) - ((float)($item['pay_portion'] ?? $item['net_amount'] ?? 0)));
+
+            if ($isPartial && $remaining > 0) {
+                $remFmt = number_format($remaining, 0, ',', '.');
+                $statusTag = " ⏳ *(Cicilan - Sisa: Rp {$remFmt})*";
+            } else {
+                $statusTag = "";
+            }
+
+            $rincian .= "• {$label} – {$period} → Rp {$amount}{$statusTag}\n";
         }
 
         $totalFmt = number_format($totalAmount, 0, ',', '.');
+        $locationLine = !empty($roomLocation) ? "\n🏠 *Komplek/Kamar:* {$roomLocation}" : '';
         $mdrInfo  = $mdrAmount > 0
             ? "\n💸 *Biaya Layanan:* Rp " . number_format($mdrAmount, 0, ',', '.') . " (ditanggung wali)"
             : '';
 
         $message = "✅ *PEMBAYARAN DITERIMA*\n"
             . "━━━━━━━━━━━━━━━━━\n\n"
-            . "📋 *Santri:* {$santriName}\n"
+            . "📋 *Santri:* {$santriName}"
+            . $locationLine . "\n"
             . "🏷 *No. Order:* {$orderId}\n"
             . "💳 *Metode:* {$channelLabel} (Online)\n"
             . "📅 *Waktu:* {$paidAt}"

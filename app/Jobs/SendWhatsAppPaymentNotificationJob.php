@@ -43,7 +43,10 @@ class SendWhatsAppPaymentNotificationJob implements ShouldQueue
      */
     public function handle(WhatsAppService $whatsAppService): void
     {
-        $transaction = PaymentTransaction::with(['person.santriProfile'])->find($this->transactionId);
+        $transaction = PaymentTransaction::with([
+            'person.roomAssignments' => fn($q) => $q->active()->with('room.dormitory'),
+            'person.santriProfile',
+        ])->find($this->transactionId);
 
         if (!$transaction) {
             Log::warning("[SendWhatsAppPaymentNotificationJob] Transaksi {$this->transactionId} tidak ditemukan.");
@@ -56,6 +59,14 @@ class SendWhatsAppPaymentNotificationJob implements ShouldQueue
         $paidAt       = ($transaction->callback_received_at ?? $transaction->created_at)->locale('id')->translatedFormat('d F Y, H:i') . ' WIB';
         $breakdown    = $transaction->bill_breakdown ?? [];
 
+        // Ambil Komplek & Kamar Santri
+        $activeAssignment = $person?->roomAssignments?->first();
+        $dormName         = $activeAssignment?->room?->dormitory?->name;
+        $roomName         = $activeAssignment?->room?->name;
+        $roomLocation     = ($dormName && $roomName) 
+            ? "{$dormName} – {$roomName}" 
+            : ($dormName ?: ($roomName ?: null));
+
         // 1. Kirim notifikasi ke Grup WhatsApp Bendahara
         try {
             $whatsAppService->notifyGatewayPayment(
@@ -67,6 +78,7 @@ class SendWhatsAppPaymentNotificationJob implements ShouldQueue
                 mdrAmount:    (float) $transaction->mdr_amount,
                 totalAmount:  (float) $transaction->total_amount,
                 breakdown:    $breakdown,
+                roomLocation: $roomLocation,
             );
         } catch (\Throwable $e) {
             Log::warning("[SendWhatsAppPaymentNotificationJob] Gagal kirim ke grup: " . $e->getMessage());
@@ -88,6 +100,7 @@ class SendWhatsAppPaymentNotificationJob implements ShouldQueue
                     paidAt:       $paidAt,
                     totalAmount:  (float) $transaction->total_amount,
                     breakdown:    $breakdown,
+                    roomLocation: $roomLocation,
                 );
             }
         } catch (\Throwable $e) {
