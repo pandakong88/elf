@@ -112,7 +112,7 @@ class SettlementReportController extends Controller
                     $amt = (float) ($item['pay_portion'] ?? $item['net_amount'] ?? 0);
                     $type = $item['bill_type'] ?? '';
 
-                    $this->allocateToCategory($categories, $type, $amt, $person?->gender);
+                    $this->allocateToCategory($categories, $type, $amt, $person?->gender, $item['config_label'] ?? null);
 
                     if ($type === 'kas_komplek' && $dormId && isset($dormBreakdown[$dormId])) {
                         $dormBreakdown[$dormId]['total_amount'] += $amt;
@@ -131,7 +131,7 @@ class SettlementReportController extends Controller
             $kasirQuery = BillPayment::where('payment_method', '!=', 'gateway_duitku')
                 ->whereBetween('payment_date', [$dateFrom, $dateTo])
                 ->when($targetGender, fn($q, $g) => $q->whereHas('bill.person', fn($pq) => $pq->where('gender', $g)))
-                ->with(['bill.person.roomAssignments' => fn($q) => $q->active()->with('room.dormitory')]);
+                ->with(['bill.person.roomAssignments' => fn($q) => $q->active()->with('room.dormitory'), 'bill.config']);
 
             $kasirPayments = $kasirQuery->get();
             if ($source === 'kasir') {
@@ -152,7 +152,7 @@ class SettlementReportController extends Controller
                 $type = $bill?->bill_type ?? '';
 
                 if ($source === 'kasir') {
-                    $this->allocateToCategory($categories, $type, $amt, $person?->gender);
+                    $this->allocateToCategory($categories, $type, $amt, $person?->gender, $bill?->config?->label ?? null);
                 }
 
                 if ($type === 'kas_komplek' && $dormId && isset($dormBreakdown[$dormId])) {
@@ -228,21 +228,21 @@ class SettlementReportController extends Controller
                 ->whereHas('person.roomAssignments', function ($q) use ($dormitoryId) {
                     $q->active()->whereHas('room', fn($r) => $r->where('dormitory_id', $dormitoryId));
                 })
-                ->with(['person.roomAssignments' => fn($q) => $q->active()->with('room')])
-                ->get();
+                ->with(['person.roomAssignments' => fn($q) => $q->active()->with('room')]);
 
             foreach ($gatewayTrx as $trx) {
+                $person = $trx->person;
+                $activeAssignment = $person?->roomAssignments?->first();
+
                 foreach ($trx->bill_breakdown ?? [] as $item) {
                     if (($item['bill_type'] ?? '') === 'kas_komplek') {
                         $amt = (float) ($item['pay_portion'] ?? $item['net_amount'] ?? 0);
                         $totalAmount += $amt;
-                        $room = $trx->person?->roomAssignments?->first()?->room;
-
                         $santriList[] = [
-                            'nis'       => $trx->person?->nis ?? '-',
-                            'name'      => $trx->person?->name ?? '—',
-                            'room_name' => $room?->name ?? '-',
-                            'paid_date' => $trx->created_at->format('d/m/Y H:i'),
+                            'nis'       => $person->nis ?? '-',
+                            'name'      => $person->name ?? '—',
+                            'room_name' => $activeAssignment?->room?->name ?? '-',
+                            'paid_date' => $trx->created_at->locale('id')->translatedFormat('d M Y, H:i'),
                             'method'    => ($trx->channel_label ?? $trx->payment_channel ?? 'Online') . ' (Duitku)',
                             'amount'    => $amt,
                         ];
@@ -255,24 +255,27 @@ class SettlementReportController extends Controller
         if ($source === 'kasir' || $source === 'all') {
             $kasirPayments = BillPayment::where('payment_method', '!=', 'gateway_duitku')
                 ->whereBetween('payment_date', [$dateFrom, $dateTo])
-                ->whereHas('bill', fn($b) => $b->where('bill_type', 'kas_komplek'))
-                ->whereHas('bill.person.roomAssignments', function ($q) use ($dormitoryId) {
-                    $q->active()->whereHas('room', fn($r) => $r->where('dormitory_id', $dormitoryId));
+                ->whereHas('bill', function ($q) use ($dormitoryId) {
+                    $q->where('bill_type', 'kas_komplek')
+                        ->whereHas('person.roomAssignments', function ($rq) use ($dormitoryId) {
+                            $rq->active()->whereHas('room', fn($r) => $r->where('dormitory_id', $dormitoryId));
+                        });
                 })
                 ->with(['bill.person.roomAssignments' => fn($q) => $q->active()->with('room')])
                 ->get();
 
             foreach ($kasirPayments as $pay) {
+                $bill = $pay->bill;
+                $person = $bill?->person;
+                $activeAssignment = $person?->roomAssignments?->first();
                 $amt = (float) $pay->amount_paid;
-                $totalAmount += $amt;
-                $person = $pay->bill?->person;
-                $room = $person?->roomAssignments?->first()?->room;
 
+                $totalAmount += $amt;
                 $santriList[] = [
-                    'nis'       => $person?->nis ?? '-',
-                    'name'      => $person?->name ?? '—',
-                    'room_name' => $room?->name ?? '-',
-                    'paid_date' => $pay->payment_date ? Carbon::parse($pay->payment_date)->format('d/m/Y') : '-',
+                    'nis'       => $person->nis ?? '-',
+                    'name'      => $person->name ?? '—',
+                    'room_name' => $activeAssignment?->room?->name ?? '-',
+                    'paid_date' => $pay->payment_date ? Carbon::parse($pay->payment_date)->locale('id')->translatedFormat('d M Y') : '-',
                     'method'    => strtoupper($pay->payment_method ?? 'Kasir'),
                     'amount'    => $amt,
                 ];
@@ -285,8 +288,8 @@ class SettlementReportController extends Controller
             'app_name'     => $appName,
             'dormitory'    => $dormitory,
             'period_label' => $periodLabel,
-            'santri_list'  => $santriList,
             'total_amount' => $totalAmount,
+            'santri_list'  => $santriList,
             'generated_at' => now()->locale('id')->translatedFormat('d F Y, H:i') . ' WIB',
             'generated_by' => auth()->user()?->name ?? 'Bendahara Pusat',
         ];
@@ -296,7 +299,7 @@ class SettlementReportController extends Controller
         return $pdf->stream('Slip-Kas-Komplek-' . str_replace(' ', '-', $dormitory->name) . '.pdf');
     }
 
-    private function allocateToCategory(array &$categories, string $type, float $amt, ?string $gender = null): void
+    private function allocateToCategory(array &$categories, string $type, float $amt, ?string $gender = null, ?string $customLabel = null): void
     {
         switch ($type) {
             case 'syahriah_pondok':
@@ -329,8 +332,18 @@ class SettlementReportController extends Controller
                 $categories['kas_komplek']['count']++;
                 break;
             default:
-                $categories['lainnya']['amount'] += $amt;
-                $categories['lainnya']['count']++;
+                $key = !empty($type) ? $type : 'lainnya';
+                if (!isset($categories[$key])) {
+                    $label = $customLabel ?: ucwords(str_replace('_', ' ', $key));
+                    $categories[$key] = [
+                        'label'  => $label,
+                        'desc'   => 'Pos Tagihan ' . $label,
+                        'amount' => 0.0,
+                        'count'  => 0,
+                    ];
+                }
+                $categories[$key]['amount'] += $amt;
+                $categories[$key]['count']++;
                 break;
         }
     }

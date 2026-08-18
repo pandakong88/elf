@@ -2460,7 +2460,7 @@ class BillingManager extends Component
                     $amt = (float) ($item['pay_portion'] ?? $item['net_amount'] ?? 0);
                     $type = $item['bill_type'] ?? '';
 
-                    $this->allocateCategory($categories, $type, $amt, $person?->gender);
+                    $this->allocateCategory($categories, $type, $amt, $person?->gender, $item['config_label'] ?? null);
 
                     if ($type === 'kas_komplek' && $dormId && isset($dormBreakdown[$dormId])) {
                         $dormBreakdown[$dormId]['total_amount'] += $amt;
@@ -2487,7 +2487,7 @@ class BillingManager extends Component
             $kasirQuery = BillPayment::where('payment_method', '!=', 'gateway_duitku')
                 ->whereBetween('payment_date', [$dateFrom, $dateTo])
                 ->when($targetGender, fn($q, $g) => $q->whereHas('bill.person', fn($pq) => $pq->where('gender', $g)))
-                ->with(['bill.person.roomAssignments' => fn($q) => $q->active()->with('room.dormitory')]);
+                ->with(['bill.person.roomAssignments' => fn($q) => $q->active()->with('room.dormitory'), 'bill.config']);
 
             $kasirPayments = $kasirQuery->get();
             if ($source === 'kasir') {
@@ -2508,7 +2508,7 @@ class BillingManager extends Component
                 $type = $bill?->bill_type ?? '';
 
                 if ($source === 'kasir') {
-                    $this->allocateCategory($categories, $type, $amt, $person?->gender);
+                    $this->allocateCategory($categories, $type, $amt, $person?->gender, $bill?->config?->label ?? null);
                 }
 
                 if ($type === 'kas_komplek' && $dormId && isset($dormBreakdown[$dormId])) {
@@ -2545,7 +2545,7 @@ class BillingManager extends Component
         ];
     }
 
-    private function allocateCategory(array &$categories, string $type, float $amt, ?string $gender = null): void
+    private function allocateCategory(array &$categories, string $type, float $amt, ?string $gender = null, ?string $customLabel = null): void
     {
         switch ($type) {
             case 'syahriah_pondok':
@@ -2578,8 +2578,21 @@ class BillingManager extends Component
                 $categories['kas_komplek']['count']++;
                 break;
             default:
-                $categories['lainnya']['amount'] += $amt;
-                $categories['lainnya']['count']++;
+                $key = !empty($type) ? $type : 'lainnya';
+                if (!isset($categories[$key])) {
+                    $label = $customLabel ?: ucwords(str_replace('_', ' ', $key));
+                    $categories[$key] = [
+                        'key'    => $key,
+                        'label'  => $label,
+                        'desc'   => 'Pos Tagihan ' . $label,
+                        'amount' => 0.0,
+                        'count'  => 0,
+                        'icon'   => '🏷️',
+                        'color'  => 'slate',
+                    ];
+                }
+                $categories[$key]['amount'] += $amt;
+                $categories[$key]['count']++;
                 break;
         }
     }
