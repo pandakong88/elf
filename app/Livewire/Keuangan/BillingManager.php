@@ -2440,7 +2440,13 @@ class BillingManager extends Component
         // 1. Gateway
         if ($source === 'gateway' || $source === 'all') {
             $gatewayQuery = PaymentTransaction::where('status', 'success')
-                ->whereBetween('created_at', [$fromCarbon, $toCarbon])
+                ->where(function ($q) use ($fromCarbon, $toCarbon) {
+                    $q->whereBetween('callback_received_at', [$fromCarbon, $toCarbon])
+                      ->orWhere(function ($oq) use ($fromCarbon, $toCarbon) {
+                          $oq->whereNull('callback_received_at')
+                             ->whereBetween('created_at', [$fromCarbon, $toCarbon]);
+                      });
+                })
                 ->when($targetGender, fn($q, $g) => $q->whereHas('person', fn($pq) => $pq->where('gender', $g)))
                 ->with(['person.roomAssignments' => fn($q) => $q->active()->with('room.dormitory')]);
 
