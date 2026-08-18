@@ -85,6 +85,10 @@ Route::middleware('auth')->group(function () {
     Route::get('/keuangan/majek', \App\Livewire\Keuangan\MajekManager::class)->name('keuangan.majek');
     Route::get('/keuangan/tarif-pendaftaran', \App\Livewire\Keuangan\RegistrationTariffManager::class)->name('keuangan.tarif-pendaftaran');
 
+    // Rekonsiliasi & Settlement Reports (PDF)
+    Route::get('/keuangan/settlement/pdf', [\App\Http\Controllers\SettlementReportController::class, 'downloadSettlementPdf'])->name('keuangan.settlement.pdf');
+    Route::get('/keuangan/settlement/slip-komplek/{dormitoryId}', [\App\Http\Controllers\SettlementReportController::class, 'downloadSlipKomplekPdf'])->name('keuangan.settlement.slip-komplek');
+
 
 
     // Printable Checklists (No Auth Layout)
