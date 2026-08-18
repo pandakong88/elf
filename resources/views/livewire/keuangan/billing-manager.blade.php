@@ -2634,11 +2634,17 @@
                         </div>
                     </div>
 
-                    <div class="px-6 py-3 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                    <div class="px-6 py-3.5 border-b border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                         <div>
                             <h3 class="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider font-serif-display">Log Transaksi Gateway Duitku</h3>
                             <p class="text-[11px] text-slate-400 mt-0.5">Semua percobaan pembayaran wali santri via QRIS / Virtual Account — termasuk yang belum berhasil.</p>
                         </div>
+                        <button type="button" wire:click="syncAllPendingGateway" wire:loading.attr="disabled"
+                            class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-amber-500/10 hover:bg-amber-500/20 text-amber-700 dark:text-amber-300 rounded-xl text-xs font-extrabold border border-amber-500/30 transition shrink-0 active:scale-95">
+                            <svg wire:loading.class="animate-spin" wire:target="syncAllPendingGateway" class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                            <span wire:loading.remove wire:target="syncAllPendingGateway">🔄 Sinkronkan Status Pending</span>
+                            <span wire:loading wire:target="syncAllPendingGateway">Menghubungi Duitku...</span>
+                        </button>
                     </div>
                     <div class="overflow-x-auto">
                         <table class="w-full text-left border-collapse text-xs min-w-[900px]">
@@ -2652,7 +2658,7 @@
                                     <th class="py-4 px-4 text-right">Total Bayar</th>
                                     <th class="py-4 px-4 text-center">Status</th>
                                     <th class="py-4 px-4">Ref. Duitku</th>
-                                    <th class="py-4 px-4 text-center">Tagihan</th>
+                                    <th class="py-4 px-4 text-center">Aksi &amp; Rincian</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-slate-100 dark:divide-slate-800/50">
@@ -2703,20 +2709,32 @@
                                                 <span class="text-slate-400 text-[10px]">—</span>
                                             @endif
                                         </td>
-                                        {{-- Tagihan Terkait: tombol modal --}}
+                                        {{-- Aksi & Tagihan Terkait --}}
                                         <td class="py-3 px-4 text-center">
-                                            @php $breakdownCount = count($trx->bill_breakdown ?? []); @endphp
-                                            @if($breakdownCount > 0)
-                                                <button type="button" wire:click="showGatewayBreakdown('{{ $trx->id }}')"
-                                                    class="inline-flex items-center gap-1 px-3 py-1.5 text-[9px] font-extrabold rounded-xl transition-all
-                                                    bg-indigo-500/10 text-indigo-700 dark:text-indigo-400 hover:bg-indigo-500/20 border border-indigo-500/20 dark:border-indigo-500/30">
-                                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/></svg>
-                                                    {{ $breakdownCount }} Tagihan
-                                                    <svg class="w-2.5 h-2.5 opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-                                                </button>
-                                            @else
-                                                <span class="text-slate-400 text-[10px]">—</span>
-                                            @endif
+                                            <div class="inline-flex items-center justify-center gap-1.5 flex-wrap">
+                                                @if($status === 'pending')
+                                                    <button type="button" 
+                                                            wire:click="syncGatewayStatus('{{ $trx->id }}')" 
+                                                            wire:loading.attr="disabled"
+                                                            class="inline-flex items-center gap-1 px-2.5 py-1 text-[9px] font-black rounded-xl bg-amber-500 hover:bg-amber-600 text-white shadow-xs transition active:scale-95"
+                                                            title="Cek status pembayaran ke Duitku secara real-time">
+                                                        <svg wire:loading.class="animate-spin" wire:target="syncGatewayStatus('{{ $trx->id }}')" class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                                                        <span>Cek Status</span>
+                                                    </button>
+                                                @endif
+
+                                                @php $breakdownCount = count($trx->bill_breakdown ?? []); @endphp
+                                                @if($breakdownCount > 0)
+                                                    <button type="button" wire:click="showGatewayBreakdown('{{ $trx->id }}')"
+                                                        class="inline-flex items-center gap-1 px-2.5 py-1 text-[9px] font-extrabold rounded-xl transition-all
+                                                        bg-indigo-500/10 text-indigo-700 dark:text-indigo-400 hover:bg-indigo-500/20 border border-indigo-500/20 dark:border-indigo-500/30">
+                                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/></svg>
+                                                        {{ $breakdownCount }} Tagihan
+                                                    </button>
+                                                @else
+                                                    <span class="text-slate-400 text-[10px]">—</span>
+                                                @endif
+                                            </div>
                                         </td>
                                     </tr>
                                 @empty

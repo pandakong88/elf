@@ -503,6 +503,100 @@ class BillingManager extends Component
         $this->selectedGatewayTrxData   = [];
     }
 
+    /**
+     * Cek & sinkronkan status transaksi spesifik langsung ke API Duitku.
+     */
+    public function syncGatewayStatus(string $trxId): void
+    {
+        $trx = PaymentTransaction::find($trxId);
+        if (!$trx) {
+            $this->toastError('Transaksi tidak ditemukan.');
+            return;
+        }
+
+        try {
+            $duitku = app(\App\Modules\Keuangan\Services\DuitkuService::class);
+            $res = $duitku->checkTransactionStatus($trx->merchant_order_id);
+
+            $statusCode    = (string) ($res['statusCode'] ?? ($res['status_code'] ?? ''));
+            $statusMessage = (string) ($res['statusMessage'] ?? ($res['status_message'] ?? 'Status tidak diketahui'));
+
+            if ($statusCode === '00') {
+                // ✅ SUKSES
+                $trx->update([
+                    'status'               => 'success',
+                    'callback_received_at' => $trx->callback_received_at ?: now(),
+                    'duitku_reference'     => $res['reference'] ?? $trx->duitku_reference,
+                ]);
+                $duitku->handleSuccessfulPayment($trx, $res);
+                $this->toastSuccess("Transaksi {$trx->merchant_order_id} berhasil disinkronkan: SUKSES (LUNAS)!");
+            } elseif ($statusCode === '01') {
+                $this->toastWarning("Status transaksi di Duitku masih PENDING (Menunggu Pembayaran).");
+            } elseif ($statusCode === '02') {
+                $trx->update([
+                    'status'         => 'failed',
+                    'failure_reason' => $statusMessage,
+                ]);
+                $this->toastInfo("Status transaksi di Duitku: GAGAL / EXPIRED ({$statusMessage}).");
+            } else {
+                $this->toastWarning("Respon dari Duitku: [{$statusCode}] {$statusMessage}");
+            }
+        } catch (\Throwable $e) {
+            $this->toastError("Gagal menghubungi API Duitku: " . $e->getMessage());
+        }
+    }
+
+    /**
+     * Sinkronkan semua transaksi yang masih berstatus pending ke API Duitku.
+     */
+    public function syncAllPendingGateway(): void
+    {
+        $pendingTransactions = PaymentTransaction::where('status', 'pending')
+            ->orderBy('created_at', 'desc')
+            ->limit(30)
+            ->get();
+
+        if ($pendingTransactions->isEmpty()) {
+            $this->toastInfo('Tidak ada transaksi berstatus pending saat ini.');
+            return;
+        }
+
+        $duitku       = app(\App\Modules\Keuangan\Services\DuitkuService::class);
+        $successCount = 0;
+        $failedCount  = 0;
+
+        foreach ($pendingTransactions as $trx) {
+            try {
+                $res = $duitku->checkTransactionStatus($trx->merchant_order_id);
+                $statusCode = (string) ($res['statusCode'] ?? ($res['status_code'] ?? ''));
+
+                if ($statusCode === '00') {
+                    $trx->update([
+                        'status'               => 'success',
+                        'callback_received_at' => $trx->callback_received_at ?: now(),
+                        'duitku_reference'     => $res['reference'] ?? $trx->duitku_reference,
+                    ]);
+                    $duitku->handleSuccessfulPayment($trx, $res);
+                    $successCount++;
+                } elseif ($statusCode === '02') {
+                    $trx->update([
+                        'status'         => 'failed',
+                        'failure_reason' => $res['statusMessage'] ?? 'Expired',
+                    ]);
+                    $failedCount++;
+                }
+            } catch (\Throwable $e) {
+                // Continue to next transaction
+            }
+        }
+
+        if ($successCount > 0) {
+            $this->toastSuccess("{$successCount} transaksi berhasil disinkronkan menjadi SUKSES (LUNAS)!");
+        } else {
+            $this->toastInfo("Pengecekan selesai. Semua transaksi pending masih belum dibayar oleh wali.");
+        }
+    }
+
     protected $queryString = [
         'activeTab' => ['as' => 'tab', 'except' => 'generate'],
         'filterSearch' => ['except' => ''],
