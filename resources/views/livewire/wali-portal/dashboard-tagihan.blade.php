@@ -207,12 +207,12 @@
     </div>
     @endif
 
-    <!-- KALKULATOR SIMULASI PEMBAYARAN — CHECKLIST PILIH TAGIHAN (ACCORDION) -->
+    <!-- PEMBAYARAN TAGIHAN — CHECKLIST PILIH & BAYAR TAGIHAN (ACCORDION) -->
     <div id="simulasiAccordionBox" class="bg-white dark:bg-slate-900 border-2 border-emerald-600/30 dark:border-slate-800 rounded-3xl p-4 shadow-md space-y-3 transition-colors">
         <button type="button" @click="openSimulasi = !openSimulasi" class="w-full flex items-center justify-between text-xs font-black text-slate-800 dark:text-slate-200 uppercase tracking-wider py-1">
             <span class="flex items-center gap-2 text-emerald-700 dark:text-emerald-400">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
-                <span>Simulasi Pembayaran (Hitung Cicilan / Pilihan Tagihan)</span>
+                <span>💳 Pilih &amp; Bayar Tagihan (Bisa Dicicil)</span>
                 @if(count($selectedBillIds) > 0)
                     <span class="bg-emerald-100 dark:bg-emerald-500/20 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-500/30 px-2 py-0.5 rounded-full text-[10px] font-black">
                         {{ count($selectedBillIds) }} Dipilih (Rp {{ number_format($simulasiTotal, 0, ',', '.') }})
@@ -224,7 +224,7 @@
 
         <div x-show="openSimulasi" x-collapse class="pt-2 border-t border-slate-100 dark:border-slate-800 space-y-4">
             <p class="text-xs text-slate-500 dark:text-slate-400">
-                Centang tagihan di bawah ini yang ingin Bapak/Ibu bayar — total otomatis dihitung dan rinciannya bisa langsung dikirim ke WA Bendahara:
+                Centang tagihan di bawah ini yang ingin Bapak/Ibu bayar sekarang — bisa bayar langsung via <strong>⚡ Online (QRIS / Virtual Account)</strong> atau transfer manual ke rekening pondok:
             </p>
 
             @if($simulasiBillOptions->count() > 0)
@@ -234,20 +234,20 @@
                         <button type="button"
                                 wire:click="$set('selectedBillIds', {{ json_encode($mandatoryBillIds) }})"
                                 class="px-2.5 py-1 text-[11px] font-extrabold bg-emerald-100 dark:bg-emerald-500/20 text-emerald-800 dark:text-emerald-300 rounded-xl hover:bg-emerald-200 transition-all border border-emerald-300 dark:border-emerald-500/30">
-                            ✨ Centang Tagihan Wajib
+                            ✨ Tagihan Wajib @if($totalCurrentMonthUnpaid > 0) (Rp {{ number_format($totalCurrentMonthUnpaid, 0, ',', '.') }}) @endif
                         </button>
                     @endif
                     @if(count($pastBillIdsOnly) > 0)
                         <button type="button"
                                 wire:click="$set('selectedBillIds', {{ json_encode($pastBillIdsOnly) }})"
                                 class="px-2.5 py-1 text-[11px] font-extrabold bg-rose-100 dark:bg-rose-500/20 text-rose-800 dark:text-rose-300 rounded-xl hover:bg-rose-200 transition-all border border-rose-300 dark:border-rose-500/30">
-                            🔴 Tunggakan Saja
+                            🔴 Tunggakan Saja (Rp {{ number_format($totalPastTunggakan, 0, ',', '.') }})
                         </button>
                     @endif
                     <button type="button"
                             wire:click="$set('selectedBillIds', {{ json_encode($simulasiBillOptions->pluck('id')->toArray()) }})"
                             class="px-2.5 py-1 text-[11px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-xl hover:bg-slate-200 transition-all border border-slate-200 dark:border-slate-700">
-                        ☑️ Pilih Semua
+                        ☑️ Pilih Semua (Rp {{ number_format($totalHarusDibayarNow, 0, ',', '.') }})
                     </button>
                     <button type="button"
                             wire:click="$set('selectedBillIds', [])"
@@ -405,7 +405,7 @@
 
                         {{-- Total --}}
                         <div class="flex items-center justify-between pt-2 border-t border-emerald-700/60">
-                            <span class="text-xs font-bold text-emerald-300">Total yang Perlu Ditransfer</span>
+                            <span class="text-xs font-bold text-emerald-300">Total Pembayaran Terpilih</span>
                             <span class="text-xl font-black text-white">Rp {{ number_format($simulasiTotal, 0, ',', '.') }}</span>
                         </div>
 
@@ -415,7 +415,7 @@
                                     onclick='generateAndDownloadSimulasiImage({{ json_encode($santri->name) }}, {{ (float) $simulasiTotal }}, {{ json_encode($simulasiHasil) }})'
                                     class="w-full py-2.5 px-3 bg-slate-800 hover:bg-slate-700 text-white font-extrabold rounded-xl transition-all flex items-center justify-center gap-1.5 text-xs active:scale-95 border border-slate-700">
                                 <svg class="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-                                <span>Simpan PNG</span>
+                                <span>Simpan Rincian (PNG)</span>
                             </button>
 
                             @if($simulasiWaUrl)
@@ -431,7 +431,7 @@
                     <div class="text-center text-xs text-slate-400 py-2">Menghitung...</div>
                 @else
                     <div class="bg-slate-50 dark:bg-slate-950 rounded-2xl p-3 text-center text-xs text-slate-400 dark:text-slate-500 border border-slate-200 dark:border-slate-800">
-                        ☝️ Centang tagihan di atas untuk melihat simulasi total pembayaran.
+                        ☝️ Centang tagihan di atas untuk melanjutkan pembayaran.
                     </div>
                 @endif
 
@@ -883,14 +883,14 @@
         </div>
     </div>
 
-    <!-- FLOATING STICKY BAR KALKULATOR SIMULASI (MOBILE & DESKTOP) -->
+    <!-- FLOATING STICKY BAR PEMBAYARAN (MOBILE & DESKTOP) -->
     @if(count($selectedBillIds) > 0 && $simulasiTotal > 0)
         <div class="fixed bottom-4 left-3 right-3 sm:left-auto sm:right-6 sm:max-w-md z-40 transition-all duration-300">
             <div class="bg-slate-900/95 dark:bg-slate-950/95 backdrop-blur-md text-white p-3.5 rounded-2xl shadow-2xl border-2 border-emerald-500/80 flex items-center justify-between gap-3">
                 <div class="min-w-0 flex-1">
                     <div class="flex items-center gap-1.5 text-[10px] font-black uppercase text-emerald-400">
                         <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                        <span>Simulasi ({{ count($selectedBillIds) }} Tagihan)</span>
+                        <span>Rencana Bayar ({{ count($selectedBillIds) }} Tagihan)</span>
                     </div>
                     <div class="text-base font-black text-white truncate font-mono">
                         Rp {{ number_format($simulasiTotal, 0, ',', '.') }}
