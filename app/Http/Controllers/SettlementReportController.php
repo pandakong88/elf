@@ -83,6 +83,7 @@ class SettlementReportController extends Controller
                 'dormitory_name' => $d->name,
                 'gender'         => $d->gender,
                 'count_santri'   => 0,
+                'count_bills'    => 0,
                 'total_amount'   => 0.0,
                 'santri_ids'     => [],
             ];
@@ -115,7 +116,8 @@ class SettlementReportController extends Controller
 
                     if ($type === 'kas_komplek' && $dormId && isset($dormBreakdown[$dormId])) {
                         $dormBreakdown[$dormId]['total_amount'] += $amt;
-                        if (!in_array($person->id, $dormBreakdown[$dormId]['santri_ids'])) {
+                        $dormBreakdown[$dormId]['count_bills']++;
+                        if ($person && !in_array($person->id, $dormBreakdown[$dormId]['santri_ids'])) {
                             $dormBreakdown[$dormId]['santri_ids'][] = $person->id;
                             $dormBreakdown[$dormId]['count_santri']++;
                         }
@@ -156,7 +158,8 @@ class SettlementReportController extends Controller
                 if ($type === 'kas_komplek' && $dormId && isset($dormBreakdown[$dormId])) {
                     if ($source === 'kasir') {
                         $dormBreakdown[$dormId]['total_amount'] += $amt;
-                        if (!in_array($person->id, $dormBreakdown[$dormId]['santri_ids'])) {
+                        $dormBreakdown[$dormId]['count_bills']++;
+                        if ($person && !in_array($person->id, $dormBreakdown[$dormId]['santri_ids'])) {
                             $dormBreakdown[$dormId]['santri_ids'][] = $person->id;
                             $dormBreakdown[$dormId]['count_santri']++;
                         }

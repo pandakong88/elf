@@ -2430,7 +2430,9 @@ class BillingManager extends Component
                 'dormitory_name' => $d->name,
                 'gender'         => $d->gender,
                 'count_santri'   => 0,
+                'count_bills'    => 0,
                 'total_amount'   => 0.0,
+                'santri_ids'     => [],
                 'santri_list'    => [],
             ];
         }
@@ -2462,6 +2464,10 @@ class BillingManager extends Component
 
                     if ($type === 'kas_komplek' && $dormId && isset($dormBreakdown[$dormId])) {
                         $dormBreakdown[$dormId]['total_amount'] += $amt;
+                        $dormBreakdown[$dormId]['count_bills']++;
+                        if ($person && !in_array($person->id, $dormBreakdown[$dormId]['santri_ids'])) {
+                            $dormBreakdown[$dormId]['santri_ids'][] = $person->id;
+                        }
                         $dormBreakdown[$dormId]['santri_list'][] = [
                             'nis'       => $person->nis ?? '-',
                             'name'      => $person->name ?? '—',
@@ -2470,7 +2476,7 @@ class BillingManager extends Component
                             'method'    => ($trx->channel_label ?? $trx->payment_channel ?? 'Online') . ' (Duitku)',
                             'amount'    => $amt,
                         ];
-                        $dormBreakdown[$dormId]['count_santri'] = count($dormBreakdown[$dormId]['santri_list']);
+                        $dormBreakdown[$dormId]['count_santri'] = count($dormBreakdown[$dormId]['santri_ids']);
                     }
                 }
             }
@@ -2508,6 +2514,10 @@ class BillingManager extends Component
                 if ($type === 'kas_komplek' && $dormId && isset($dormBreakdown[$dormId])) {
                     if ($source === 'kasir') {
                         $dormBreakdown[$dormId]['total_amount'] += $amt;
+                        $dormBreakdown[$dormId]['count_bills']++;
+                        if ($person && !in_array($person->id, $dormBreakdown[$dormId]['santri_ids'])) {
+                            $dormBreakdown[$dormId]['santri_ids'][] = $person->id;
+                        }
                         $dormBreakdown[$dormId]['santri_list'][] = [
                             'nis'       => $person->nis ?? '-',
                             'name'      => $person->name ?? '—',
@@ -2516,7 +2526,7 @@ class BillingManager extends Component
                             'method'    => strtoupper($pay->payment_method ?? 'Kasir'),
                             'amount'    => $amt,
                         ];
-                        $dormBreakdown[$dormId]['count_santri'] = count($dormBreakdown[$dormId]['santri_list']);
+                        $dormBreakdown[$dormId]['count_santri'] = count($dormBreakdown[$dormId]['santri_ids']);
                     }
                 }
             }

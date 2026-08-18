@@ -3128,7 +3128,7 @@
                                 <tr class="bg-slate-50/80 dark:bg-slate-950/80 text-slate-400 uppercase font-black text-[9px] tracking-wider border-b border-slate-100 dark:border-slate-800">
                                     <th class="py-3 px-6">Nama Komplek Asrama</th>
                                     <th class="py-3 px-4">Unit</th>
-                                    <th class="py-3 px-4 text-center">Jumlah Santri Membayar</th>
+                                    <th class="py-3 px-4 text-center">Jumlah Santri / Tagihan</th>
                                     <th class="py-3 px-6 text-right">Total Kas Terkumpul</th>
                                     <th class="py-3 px-6 text-center">Aksi Dokumen &amp; Rincian</th>
                                 </tr>
@@ -3148,8 +3148,9 @@
                                                 {{ $dorm['gender'] === 'L' ? 'Putra' : 'Putri' }}
                                             </span>
                                         </td>
-                                        <td class="py-3.5 px-4 text-center font-bold text-slate-700 dark:text-slate-300">
-                                            {{ $dorm['count_santri'] }} Santri
+                                        <td class="py-3.5 px-4 text-center">
+                                            <strong class="font-black text-slate-700 dark:text-slate-300">{{ $dorm['count_santri'] }} Santri</strong>
+                                            <span class="text-[10px] font-bold text-slate-400 block">({{ $dorm['count_bills'] ?? $dorm['count_santri'] }} Tagihan)</span>
                                         </td>
                                         <td class="py-3.5 px-6 text-right font-black text-sm text-emerald-600 dark:text-emerald-400 font-mono">
                                             Rp {{ number_format($dorm['total_amount'], 0, ',', '.') }}
@@ -3189,6 +3190,7 @@
                                     <td colspan="2" class="py-3.5 px-6 text-slate-800 dark:text-slate-200">TOTAL KAS SELURUH KOMPLEK:</td>
                                     <td class="py-3.5 px-4 text-center text-slate-800 dark:text-slate-200">
                                         {{ collect($settlementReport['dormitory_breakdown'])->sum('count_santri') }} Santri
+                                        <span class="text-[10px] text-slate-500 block">({{ collect($settlementReport['dormitory_breakdown'])->sum('count_bills') }} Tagihan)</span>
                                     </td>
                                     <td class="py-3.5 px-6 text-right text-base text-emerald-600 dark:text-emerald-400 font-mono">
                                         Rp {{ number_format(collect($settlementReport['dormitory_breakdown'])->sum('total_amount'), 0, ',', '.') }}

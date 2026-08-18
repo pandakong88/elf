@@ -194,17 +194,18 @@
                 <th style="width: 5%;">#</th>
                 <th>Nama Komplek Asrama</th>
                 <th style="width: 15%;">Unit</th>
-                <th class="right" style="width: 20%;">Jumlah Santri Bayar</th>
-                <th class="right" style="width: 25%;">Total Kas Komplek</th>
+                <th class="right" style="width: 25%;">Jumlah Santri / Tagihan</th>
+                <th class="right" style="width: 22%;">Total Kas Komplek</th>
                 <th class="right" style="width: 15%;">Status Alokasi</th>
             </tr>
         </thead>
         <tbody>
-            @php $dormIdx = 1; $totalKasKomplek = 0; $totalSantriKomplek = 0; @endphp
+            @php $dormIdx = 1; $totalKasKomplek = 0; $totalSantriKomplek = 0; $totalBillsKomplek = 0; @endphp
             @forelse($dormitory_breakdown as $dorm)
             @php 
                 $totalKasKomplek += $dorm['total_amount']; 
                 $totalSantriKomplek += $dorm['count_santri'];
+                $totalBillsKomplek += ($dorm['count_bills'] ?? $dorm['count_santri']);
             @endphp
             <tr>
                 <td style="text-align: center; color: #94a3b8;">{{ $dormIdx++ }}</td>
@@ -216,7 +217,10 @@
                         {{ $dorm['gender'] === 'L' ? 'Komplek Putra' : 'Komplek Putri' }}
                     </span>
                 </td>
-                <td class="right">{{ $dorm['count_santri'] }} Santri</td>
+                <td class="right">
+                    <strong>{{ $dorm['count_santri'] }} Santri</strong>
+                    <span style="font-size: 8px; color: #64748b;">({{ $dorm['count_bills'] ?? $dorm['count_santri'] }} Tagihan)</span>
+                </td>
                 <td class="right"><strong>Rp {{ number_format($dorm['total_amount'], 0, ',', '.') }}</strong></td>
                 <td class="right" style="color: #059669; font-weight: bold; font-size: 8.5px;">Siap Diserahkan</td>
             </tr>
@@ -230,7 +234,7 @@
             @if(count($dormitory_breakdown) > 0)
             <tr class="total-row">
                 <td colspan="3" style="text-align: right;">TOTAL KAS SELURUH KOMPLEK:</td>
-                <td class="right"><strong>{{ $totalSantriKomplek }} Santri</strong></td>
+                <td class="right"><strong>{{ $totalSantriKomplek }} Santri ({{ $totalBillsKomplek }} Tagihan)</strong></td>
                 <td class="right"><strong>Rp {{ number_format($totalKasKomplek, 0, ',', '.') }}</strong></td>
                 <td class="right">—</td>
             </tr>
