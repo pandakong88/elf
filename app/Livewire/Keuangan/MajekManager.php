@@ -1449,16 +1449,14 @@ class MajekManager extends Component
 
             $allocate = min($remainingToPay, $billRemaining);
 
-            BillPayment::create([
-                'bill_id'        => $bill->id,
-                'amount_paid'    => $allocate,
-                'payment_date'   => now()->toDateString(),
-                'payment_method' => $this->payMethod,
-                'logged_by'      => auth()->id(),
-                'notes'          => 'Setoran Majek ' . $this->monthLabel . ($allocate < $billRemaining ? ' (Cicilan)' : ''),
-            ]);
+            app(\App\Modules\Keuangan\Services\BillingService::class)->recordPayment(
+                billId:         $bill->id,
+                amount:         $allocate,
+                method:         $this->payMethod,
+                notes:          'Setoran Majek ' . $this->monthLabel . ($allocate < $billRemaining ? ' (Cicilan)' : ''),
+                loggedByUserId: (string) auth()->id(),
+            );
 
-            $bill->recalculateStatus();
             $remainingToPay -= $allocate;
         }
     }
