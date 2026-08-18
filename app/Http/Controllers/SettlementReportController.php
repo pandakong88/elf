@@ -15,13 +15,39 @@ use Illuminate\Http\Response;
 class SettlementReportController extends Controller
 {
     /**
+     * Resolve gender scope based on user roles or abort if unauthorized.
+     */
+    private function resolveGenderScope(): ?string
+    {
+        $user = auth()->user();
+        if (!$user) abort(401);
+
+        if ($user->hasRole(['super-admin', 'manajemen', 'pengasuh', 'bendahara-pondok', 'bendahara-pusat'])) {
+            return null; // All access
+        }
+
+        if ($user->hasRole(['bendahara-putra', 'lurah-putra'])) {
+            return 'L';
+        }
+
+        if ($user->hasRole(['bendahara-putri', 'lurah-putri'])) {
+            return 'P';
+        }
+
+        abort(403, 'Akses ditolak: Anda tidak memiliki wewenang untuk melihat rekonsiliasi keuangan.');
+    }
+
+    /**
      * Download PDF Rekap Settlement & Distribusi Dana per Pos Anggaran.
      */
     public function downloadSettlementPdf(Request $request): Response
     {
+        $genderScope = $this->resolveGenderScope();
+
         $dateFrom = $request->query('date_from', now()->startOfMonth()->toDateString());
         $dateTo   = $request->query('date_to', now()->toDateString());
         $source   = $request->query('source', 'gateway'); // 'gateway' | 'kasir' | 'all'
+        $targetGender = $genderScope ?: $request->query('gender', null);
 
         $fromCarbon = Carbon::parse($dateFrom)->startOfDay();
         $toCarbon   = Carbon::parse($dateTo)->endOfDay();
@@ -47,7 +73,9 @@ class SettlementReportController extends Controller
         ];
 
         // Dormitories breakdown
-        $dormitories = Dormitory::active()->orderByRaw("gender ASC, name ASC")->get();
+        $dormitories = Dormitory::active()
+            ->when($targetGender, fn($q, $g) => $q->where('gender', $g))
+            ->orderByRaw("gender ASC, name ASC")->get();
         $dormBreakdown = [];
         foreach ($dormitories as $d) {
             $dormBreakdown[$d->id] = [
@@ -64,6 +92,7 @@ class SettlementReportController extends Controller
         if ($source === 'gateway' || $source === 'all') {
             $gatewayQuery = PaymentTransaction::where('status', 'success')
                 ->whereBetween('created_at', [$fromCarbon, $toCarbon])
+                ->when($targetGender, fn($q, $g) => $q->whereHas('person', fn($pq) => $pq->where('gender', $g)))
                 ->with(['person.roomAssignments' => fn($q) => $q->active()->with('room.dormitory')]);
 
             $gatewayTrx = $gatewayQuery->get();
@@ -99,6 +128,7 @@ class SettlementReportController extends Controller
         if ($source === 'kasir' || $source === 'all') {
             $kasirQuery = BillPayment::where('payment_method', '!=', 'gateway_duitku')
                 ->whereBetween('payment_date', [$dateFrom, $dateTo])
+                ->when($targetGender, fn($q, $g) => $q->whereHas('bill.person', fn($pq) => $pq->where('gender', $g)))
                 ->with(['bill.person.roomAssignments' => fn($q) => $q->active()->with('room.dormitory')]);
 
             $kasirPayments = $kasirQuery->get();
@@ -169,7 +199,14 @@ class SettlementReportController extends Controller
      */
     public function downloadSlipKomplekPdf(Request $request, string $dormitoryId): Response
     {
+        $genderScope = $this->resolveGenderScope();
+
         $dormitory = Dormitory::findOrFail($dormitoryId);
+
+        if ($genderScope && $dormitory->gender !== $genderScope) {
+            abort(403, 'Akses ditolak: Anda tidak memiliki wewenang untuk mengunduh slip kas komplek unit ini.');
+        }
+
         $dateFrom  = $request->query('date_from', now()->startOfMonth()->toDateString());
         $dateTo    = $request->query('date_to', now()->toDateString());
         $source    = $request->query('source', 'gateway');

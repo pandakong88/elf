@@ -284,11 +284,13 @@
                     <span class="inline-flex items-center justify-center w-4 h-4 text-[9px] font-extrabold bg-amber-500 text-white rounded-full">{{ $gatewayPendingCount }}</span>
                 @endif
             </button>
-            <button wire:click="$set('activeTab', 'settlement')" class="px-5 py-3 text-xs font-bold transition-all border-b-2 flex items-center gap-2 whitespace-nowrap {{ $activeTab === 'settlement' ? 'border-sky-500 text-sky-600 dark:text-sky-400' : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300' }}">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3"/></svg>
-                <span>Rekonsiliasi &amp; Settlement</span>
-                <span class="inline-flex items-center justify-center px-1.5 py-0.5 text-[9px] font-black bg-sky-500/10 text-sky-600 dark:text-sky-400 border border-sky-500/30 rounded-full">Fase 4</span>
-            </button>
+            @if($this->canViewSettlementTab())
+                <button wire:click="$set('activeTab', 'settlement')" class="px-5 py-3 text-xs font-bold transition-all border-b-2 flex items-center gap-2 whitespace-nowrap {{ $activeTab === 'settlement' ? 'border-sky-500 text-sky-600 dark:text-sky-400' : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300' }}">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3"/></svg>
+                    <span>Rekonsiliasi &amp; Settlement</span>
+                    <span class="inline-flex items-center justify-center px-1.5 py-0.5 text-[9px] font-black bg-sky-500/10 text-sky-600 dark:text-sky-400 border border-sky-500/30 rounded-full">Fase 4</span>
+                </button>
+            @endif
             <button wire:click="$set('activeTab', 'payments_log')" class="px-5 py-3 text-xs font-bold transition-all border-b-2 flex items-center gap-2 whitespace-nowrap {{ $activeTab === 'payments_log' ? 'border-emerald-500 text-emerald-600 dark:text-emerald-400' : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300' }}">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/></svg>
                 <span>Riwayat Setoran (Log)</span>
@@ -2892,14 +2894,16 @@
                             <span>Cetak Rekap PDF</span>
                         </a>
 
-                        {{-- Tombol Kunci & Simpan Distribusi --}}
-                        <button type="button" 
-                                wire:click="saveSettlementSnapshot"
-                                wire:confirm="Apakah Anda yakin ingin menyimpan dan mengunci snapshot distribusi dana periode ini ke audit log pembukuan?"
-                                class="inline-flex items-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-xs rounded-2xl shadow-sm transition-all active:scale-95">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"/></svg>
-                            <span>Kunci &amp; Simpan Rekap</span>
-                        </button>
+                        {{-- Tombol Kunci & Simpan Distribusi (Khusus Pusat / Admin) --}}
+                        @if($this->canLockSettlement())
+                            <button type="button" 
+                                    wire:click="saveSettlementSnapshot"
+                                    wire:confirm="Apakah Anda yakin ingin menyimpan dan mengunci snapshot distribusi dana periode ini ke audit log pembukuan?"
+                                    class="inline-flex items-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-xs rounded-2xl shadow-sm transition-all active:scale-95">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"/></svg>
+                                <span>Kunci &amp; Simpan Rekap</span>
+                            </button>
+                        @endif
                     </div>
                 </div>
 

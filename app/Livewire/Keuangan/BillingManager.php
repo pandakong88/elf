@@ -2287,6 +2287,35 @@ class BillingManager extends Component
     // Rekonsiliasi & Settlement Logic (Fase 4)
     // =========================================================================
 
+    public function canViewSettlementTab(): bool
+    {
+        $user = auth()->user();
+        if (!$user) return false;
+
+        return $user->hasRole([
+            'super-admin',
+            'manajemen',
+            'pengasuh',
+            'bendahara-pondok',
+            'bendahara-pusat',
+            'bendahara-putra',
+            'bendahara-putri',
+        ]);
+    }
+
+    public function canLockSettlement(): bool
+    {
+        $user = auth()->user();
+        if (!$user) return false;
+
+        return $user->hasRole([
+            'super-admin',
+            'manajemen',
+            'bendahara-pondok',
+            'bendahara-pusat',
+        ]);
+    }
+
     public function setSettlementQuickDate(string $preset): void
     {
         match ($preset) {
@@ -2324,6 +2353,11 @@ class BillingManager extends Component
 
     public function saveSettlementSnapshot(): void
     {
+        if (!$this->canLockSettlement()) {
+            $this->toastError('Anda tidak memiliki wewenang untuk mengunci rekonsiliasi.');
+            return;
+        }
+
         $report = $this->settlementReport;
 
         if ($report['total_net'] <= 0) {
@@ -2335,7 +2369,7 @@ class BillingManager extends Component
             'id'             => Str::uuid()->toString(),
             'period_from'    => $this->settlementDateFrom ?: now()->startOfMonth()->toDateString(),
             'period_to'      => $this->settlementDateTo ?: now()->toDateString(),
-            'gender'         => $this->settlementGender ?: null,
+            'gender'         => $this->genderScope() ?: ($this->settlementGender ?: null),
             'total_gross'    => $report['total_gross'],
             'total_mdr'      => $report['total_mdr'],
             'total_net'      => $report['total_net'],
@@ -2363,6 +2397,9 @@ class BillingManager extends Component
         $dateTo   = $this->settlementDateTo ?: now()->toDateString();
         $source   = $this->settlementSource ?: 'gateway';
 
+        $genderScope  = $this->genderScope();
+        $targetGender = $genderScope ?: $this->settlementGender;
+
         $fromCarbon = \Carbon\Carbon::parse($dateFrom)->startOfDay();
         $toCarbon   = \Carbon\Carbon::parse($dateTo)->endOfDay();
 
@@ -2382,7 +2419,10 @@ class BillingManager extends Component
             'lainnya'        => ['key' => 'lainnya', 'label' => 'Iuran Lainnya / Insidental', 'desc' => 'Pendaftaran, kebersihan, & event', 'amount' => 0.0, 'count' => 0, 'icon' => '🏷️', 'color' => 'slate'],
         ];
 
-        $dormitories = Dormitory::active()->orderByRaw("gender ASC, name ASC")->get();
+        $dormitories = Dormitory::active()
+            ->when($targetGender, fn($q, $g) => $q->where('gender', $g))
+            ->orderByRaw("gender ASC, name ASC")->get();
+
         $dormBreakdown = [];
         foreach ($dormitories as $d) {
             $dormBreakdown[$d->id] = [
@@ -2399,11 +2439,8 @@ class BillingManager extends Component
         if ($source === 'gateway' || $source === 'all') {
             $gatewayQuery = PaymentTransaction::where('status', 'success')
                 ->whereBetween('created_at', [$fromCarbon, $toCarbon])
+                ->when($targetGender, fn($q, $g) => $q->whereHas('person', fn($pq) => $pq->where('gender', $g)))
                 ->with(['person.roomAssignments' => fn($q) => $q->active()->with('room.dormitory')]);
-
-            if ($this->settlementGender) {
-                $gatewayQuery->whereHas('person', fn($q) => $q->where('gender', $this->settlementGender));
-            }
 
             $gatewayTrx = $gatewayQuery->get();
             $totalTrx += $gatewayTrx->count();
@@ -2443,11 +2480,8 @@ class BillingManager extends Component
         if ($source === 'kasir' || $source === 'all') {
             $kasirQuery = BillPayment::where('payment_method', '!=', 'gateway_duitku')
                 ->whereBetween('payment_date', [$dateFrom, $dateTo])
+                ->when($targetGender, fn($q, $g) => $q->whereHas('bill.person', fn($pq) => $pq->where('gender', $g)))
                 ->with(['bill.person.roomAssignments' => fn($q) => $q->active()->with('room.dormitory')]);
-
-            if ($this->settlementGender) {
-                $kasirQuery->whereHas('bill.person', fn($q) => $q->where('gender', $this->settlementGender));
-            }
 
             $kasirPayments = $kasirQuery->get();
             if ($source === 'kasir') {
