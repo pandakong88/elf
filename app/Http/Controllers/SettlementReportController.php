@@ -135,7 +135,10 @@ class SettlementReportController extends Controller
         // 2. Process Cashier Payments
         if ($source === 'kasir' || $source === 'all') {
             $kasirQuery = BillPayment::where('payment_method', '!=', 'gateway_duitku')
-                ->whereBetween('payment_date', [$dateFrom, $dateTo])
+                ->where(function ($q) use ($dateFrom, $dateTo, $fromCarbon, $toCarbon) {
+                    $q->whereBetween('payment_date', [$dateFrom, $dateTo])
+                      ->orWhereBetween('created_at', [$fromCarbon, $toCarbon]);
+                })
                 ->when($targetGender, fn($q, $g) => $q->whereHas('bill.person', fn($pq) => $pq->where('gender', $g)))
                 ->with(['bill.person.roomAssignments' => fn($q) => $q->active()->with('room.dormitory'), 'bill.config']);
 
@@ -330,7 +333,7 @@ class SettlementReportController extends Controller
                 $categories['kas_komplek']['count']++;
                 break;
             default:
-                $key = !empty($type) ? $type : 'lainnya';
+                $key = !empty($customLabel) ? \Illuminate\Support\Str::slug($customLabel, '_') : (!empty($type) ? $type : 'lainnya');
                 if (!isset($categories[$key])) {
                     $label = $customLabel ?: ucwords(str_replace('_', ' ', $key));
                     $categories[$key] = [
