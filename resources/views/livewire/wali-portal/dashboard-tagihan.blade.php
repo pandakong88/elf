@@ -1130,7 +1130,8 @@
         <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" @click="openBayarModal = false"></div>
 
         {{-- Modal Content --}}
-        <div class="relative w-full sm:max-w-md bg-white dark:bg-slate-900 rounded-t-3xl sm:rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden"
+        <div class="relative w-full sm:max-w-lg bg-white dark:bg-slate-900 rounded-t-3xl sm:rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden"
+             x-data="{ showBillDetails: false }"
              x-transition:enter="transition ease-out duration-300"
              x-transition:enter-start="translate-y-full sm:translate-y-4 opacity-0"
              x-transition:enter-end="translate-y-0 opacity-100"
@@ -1139,108 +1140,211 @@
              x-transition:leave-end="translate-y-full sm:translate-y-4 opacity-0">
 
             {{-- Header Modal --}}
-            <div class="h-1 w-full bg-gradient-to-r from-sky-500 via-blue-500 to-indigo-500"></div>
-            <div class="p-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+            <div class="h-1.5 w-full bg-gradient-to-r from-emerald-500 via-sky-500 to-indigo-600"></div>
+            <div class="p-4 sm:p-5 border-b border-slate-100 dark:border-slate-800 flex items-start justify-between gap-3">
                 <div>
-                    <h3 class="text-sm font-black text-slate-900 dark:text-white">⚡ Pilih Metode Pembayaran</h3>
-                    <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
-                        Total: <strong class="text-sky-600 dark:text-sky-400 font-black">Rp {{ number_format($simulasiTotal, 0, ',', '.') }}</strong>
-                        <span class="text-slate-400">+ biaya layanan</span>
-                    </p>
+                    <div class="flex items-center gap-2">
+                        <span class="p-1.5 bg-sky-500/10 text-sky-600 dark:text-sky-400 rounded-xl">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                        </span>
+                        <h3 class="text-base font-black text-slate-900 dark:text-white">Pilih Metode Pembayaran</h3>
+                    </div>
+                    <div class="mt-2 flex items-center gap-2 flex-wrap">
+                        <span class="text-xs text-slate-500 dark:text-slate-400">Total Tagihan:</span>
+                        <span class="text-base font-black text-sky-600 dark:text-sky-400 font-mono">Rp {{ number_format($simulasiTotal, 0, ',', '.') }}</span>
+                        <span class="text-[10px] font-bold px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
+                            {{ count($simulasiHasil) }} Tagihan Dipilih
+                        </span>
+                    </div>
                 </div>
-                <button @click="openBayarModal = false" class="p-1.5 rounded-xl text-slate-500 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all">
+                <button @click="openBayarModal = false" class="p-2 rounded-xl text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
                 </button>
             </div>
 
-            {{-- Error Message --}}
-            @if($paymentError)
-                <div class="mx-4 mt-3 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/40 rounded-2xl flex items-center gap-2">
-                    <svg class="w-4 h-4 text-red-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                    <p class="text-xs text-red-700 dark:text-red-400 font-semibold">{{ $paymentError }}</p>
+            {{-- Accordion Rincian Tagihan --}}
+            @if(!empty($simulasiHasil))
+                <div class="bg-slate-50/80 dark:bg-slate-950/60 border-b border-slate-100 dark:border-slate-800 px-4 py-2.5">
+                    <button type="button" @click="showBillDetails = !showBillDetails" class="w-full flex items-center justify-between text-left text-xs font-bold text-slate-600 dark:text-slate-300 hover:text-sky-600 dark:hover:text-sky-400 transition">
+                        <span class="flex items-center gap-1.5">
+                            <span>📦 Rincian Tagihan yang Dibayar</span>
+                        </span>
+                        <span class="flex items-center gap-1 text-[11px] text-sky-600 dark:text-sky-400">
+                            <span x-text="showBillDetails ? 'Sembunyikan' : 'Lihat Rincian'"></span>
+                            <svg class="w-3.5 h-3.5 transition-transform" :class="showBillDetails ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                        </span>
+                    </button>
+                    <div x-show="showBillDetails" x-collapse class="mt-2.5 pt-2.5 border-t border-slate-200/60 dark:border-slate-800 space-y-1.5 text-xs">
+                        @foreach($simulasiHasil as $item)
+                            <div class="flex items-center justify-between gap-2 py-0.5">
+                                <span class="text-slate-700 dark:text-slate-300 truncate">
+                                    • {{ $item['label'] }}
+                                    @if($item['is_partial'] ?? false)
+                                        <span class="text-[9px] font-bold text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/50 px-1.5 py-0.5 rounded ml-1">Cicilan</span>
+                                    @endif
+                                </span>
+                                <span class="font-extrabold text-slate-900 dark:text-white font-mono shrink-0">
+                                    Rp {{ number_format($item['terbayar'], 0, ',', '.') }}
+                                </span>
+                            </div>
+                        @endforeach
+                    </div>
                 </div>
             @endif
 
-            {{-- Daftar Channel --}}
-            <div class="p-4 space-y-2.5 max-h-[60vh] overflow-y-auto">
+            {{-- Error Message --}}
+            @if($paymentError)
+                <div class="mx-4 mt-3 p-3 bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-800/40 rounded-2xl flex items-center gap-2">
+                    <svg class="w-4 h-4 text-rose-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    <p class="text-xs text-rose-700 dark:text-rose-400 font-semibold">{{ $paymentError }}</p>
+                </div>
+            @endif
+
+            {{-- Daftar Channel Pembayaran --}}
+            <div class="p-4 space-y-4 max-h-[60vh] overflow-y-auto">
                 @php
                     $channels = config('duitku.enabled_channels', []);
+                    $qrisChannels = collect($channels)->filter(fn($c) => ($c['group'] ?? '') === 'qris');
+                    $vaChannels   = collect($channels)->filter(fn($c) => ($c['group'] ?? '') !== 'qris');
                     $channelIcons = [
-                        'SP' => '📱', 'BR' => '🏦', 'BT' => '🕌',
-                        'I1' => '🏦', 'M2' => '🏦',
+                        'SP' => '📱', 'BR' => '🏦', 'BS' => '🕌',
+                        'I1' => '🏦', 'M2' => '🏦', 'BT' => '🏦',
                     ];
                 @endphp
 
-                @foreach($channels as $code => $channel)
-                    @php
-                        $mdrAmount  = $simulasiTotal * ($channel['mdr_rate'] ?? 0) + ($channel['mdr_fixed'] ?? 0);
-                        $totalBayar = $simulasiTotal + $mdrAmount;
-                        $icon       = $channelIcons[$code] ?? '💳';
-                    @endphp
-
-                    <button type="button"
-                            wire:click="initiateBayarOnline('{{ $code }}')"
-                            wire:loading.attr="disabled"
-                            @click="processingChannel = '{{ $code }}'"
-                            :disabled="$wire.isProcessingPayment"
-                            class="w-full text-left bg-white dark:bg-slate-800/60 hover:bg-sky-50 dark:hover:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 hover:border-sky-400 dark:hover:border-sky-600 rounded-2xl p-3.5 transition-all group disabled:opacity-60 disabled:cursor-not-allowed">
-
-                        <div class="flex items-center gap-3">
-                            {{-- Icon --}}
-                            <div class="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-700 flex items-center justify-center text-xl shrink-0 group-hover:bg-sky-100 dark:group-hover:bg-sky-900/30 transition-colors">
-                                <span x-show="processingChannel !== '{{ $code }}' || !$wire.isProcessingPayment">{{ $icon }}</span>
-                                <span x-show="processingChannel === '{{ $code }}' && $wire.isProcessingPayment">
-                                    <svg class="w-5 h-5 animate-spin text-sky-500" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path></svg>
-                                </span>
-                            </div>
-
-                            {{-- Info Channel --}}
-                            <div class="flex-1 min-w-0">
-                                <div class="text-sm font-extrabold text-slate-900 dark:text-slate-100 group-hover:text-sky-700 dark:group-hover:text-sky-400 transition-colors">
-                                    {{ $channel['name'] }}
-                                </div>
-                                <div class="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">
-                                    @if($mdrAmount > 0)
-                                        Biaya layanan:
-                                        @if(($channel['mdr_rate'] ?? 0) > 0)
-                                            {{ ($channel['mdr_rate'] * 100) }}%
-                                        @else
-                                            Rp {{ number_format($channel['mdr_fixed'], 0, ',', '.') }}
-                                        @endif
-                                    @else
-                                        Tanpa biaya layanan
-                                    @endif
-                                </div>
-                            </div>
-
-                            {{-- Total Bayar --}}
-                            <div class="text-right shrink-0">
-                                <div class="text-xs font-black text-slate-800 dark:text-slate-200 group-hover:text-sky-700 dark:group-hover:text-sky-400 transition-colors">
-                                    Rp {{ number_format($totalBayar, 0, ',', '.') }}
-                                </div>
-                                @if($mdrAmount > 0)
-                                    <div class="text-[10px] text-slate-400 dark:text-slate-500">
-                                        +Rp {{ number_format($mdrAmount, 0, ',', '.') }}
-                                    </div>
-                                @endif
-                            </div>
-
-                            {{-- Arrow --}}
-                            <svg class="w-4 h-4 text-slate-400 group-hover:text-sky-500 shrink-0 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg>
+                {{-- Group 1: QRIS --}}
+                @if($qrisChannels->isNotEmpty())
+                    <div class="space-y-2">
+                        <div class="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
+                            <span>⚡ QRIS &amp; E-WALLET</span>
+                            <span class="h-px bg-slate-100 dark:bg-slate-800 flex-1"></span>
                         </div>
-                    </button>
-                @endforeach
+
+                        @foreach($qrisChannels as $code => $channel)
+                            @php
+                                $mdrAmount  = $simulasiTotal * ($channel['mdr_rate'] ?? 0) + ($channel['mdr_fixed'] ?? 0);
+                                $totalBayar = $simulasiTotal + $mdrAmount;
+                                $icon       = $channelIcons[$code] ?? '📱';
+                            @endphp
+
+                            <button type="button"
+                                    wire:click="initiateBayarOnline('{{ $code }}')"
+                                    wire:loading.attr="disabled"
+                                    @click="processingChannel = '{{ $code }}'"
+                                    :disabled="$wire.isProcessingPayment"
+                                    class="w-full text-left bg-gradient-to-r from-emerald-500/5 via-sky-500/5 to-transparent hover:from-emerald-500/10 hover:via-sky-500/10 dark:bg-slate-800/80 border-2 border-emerald-400/40 dark:border-emerald-600/40 hover:border-emerald-500 rounded-2xl p-3.5 transition-all group disabled:opacity-60 disabled:cursor-not-allowed shadow-xs">
+
+                                <div class="flex items-center gap-3">
+                                    <div class="w-11 h-11 rounded-2xl bg-emerald-500/10 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-2xl shrink-0 group-hover:scale-105 transition-transform">
+                                        <span x-show="processingChannel !== '{{ $code }}' || !$wire.isProcessingPayment">{{ $icon }}</span>
+                                        <span x-show="processingChannel === '{{ $code }}' && $wire.isProcessingPayment">
+                                            <svg class="w-5 h-5 animate-spin text-emerald-600" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path></svg>
+                                        </span>
+                                    </div>
+
+                                    <div class="flex-1 min-w-0">
+                                        <div class="flex items-center gap-1.5 flex-wrap">
+                                            <span class="text-sm font-black text-slate-900 dark:text-slate-100 group-hover:text-emerald-700 dark:group-hover:text-emerald-400 transition-colors">
+                                                {{ $channel['name'] }}
+                                            </span>
+                                            @if(!empty($channel['badge']))
+                                                <span class="px-2 py-0.5 rounded-full text-[9px] font-black bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300">
+                                                    {{ $channel['badge'] }}
+                                                </span>
+                                            @endif
+                                        </div>
+                                        <div class="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">
+                                            Scan dari m-Banking (BCA, BRI, Mandiri, BSI, Dana, GoPay, dll)
+                                        </div>
+                                    </div>
+
+                                    <div class="text-right shrink-0">
+                                        <div class="text-xs font-black text-slate-900 dark:text-slate-100 group-hover:text-emerald-700 dark:group-hover:text-emerald-400 transition-colors font-mono">
+                                            Rp {{ number_format($totalBayar, 0, ',', '.') }}
+                                        </div>
+                                        <div class="text-[9px] text-slate-400 dark:text-slate-500">
+                                            +Biaya 0.7% (Rp {{ number_format($mdrAmount, 0, ',', '.') }})
+                                        </div>
+                                    </div>
+
+                                    <svg class="w-4 h-4 text-slate-400 group-hover:text-emerald-600 shrink-0 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg>
+                                </div>
+                            </button>
+                        @endforeach
+                    </div>
+                @endif
+
+                {{-- Group 2: Virtual Account Bank --}}
+                @if($vaChannels->isNotEmpty())
+                    <div class="space-y-2">
+                        <div class="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
+                            <span>🏦 VIRTUAL ACCOUNT (TRANSFER OTOMATIS)</span>
+                            <span class="h-px bg-slate-100 dark:bg-slate-800 flex-1"></span>
+                        </div>
+
+                        @foreach($vaChannels as $code => $channel)
+                            @php
+                                $mdrAmount  = $simulasiTotal * ($channel['mdr_rate'] ?? 0) + ($channel['mdr_fixed'] ?? 0);
+                                $totalBayar = $simulasiTotal + $mdrAmount;
+                                $icon       = $channelIcons[$code] ?? '💳';
+                            @endphp
+
+                            <button type="button"
+                                    wire:click="initiateBayarOnline('{{ $code }}')"
+                                    wire:loading.attr="disabled"
+                                    @click="processingChannel = '{{ $code }}'"
+                                    :disabled="$wire.isProcessingPayment"
+                                    class="w-full text-left bg-white dark:bg-slate-800/60 hover:bg-sky-50 dark:hover:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 hover:border-sky-400 dark:hover:border-sky-600 rounded-2xl p-3.5 transition-all group disabled:opacity-60 disabled:cursor-not-allowed">
+
+                                <div class="flex items-center gap-3">
+                                    <div class="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-700 flex items-center justify-center text-xl shrink-0 group-hover:bg-sky-100 dark:group-hover:bg-sky-900/30 transition-colors">
+                                        <span x-show="processingChannel !== '{{ $code }}' || !$wire.isProcessingPayment">{{ $icon }}</span>
+                                        <span x-show="processingChannel === '{{ $code }}' && $wire.isProcessingPayment">
+                                            <svg class="w-5 h-5 animate-spin text-sky-500" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path></svg>
+                                        </span>
+                                    </div>
+
+                                    <div class="flex-1 min-w-0">
+                                        <div class="flex items-center gap-1.5">
+                                            <span class="text-sm font-extrabold text-slate-900 dark:text-slate-100 group-hover:text-sky-700 dark:group-hover:text-sky-400 transition-colors">
+                                                {{ $channel['name'] }}
+                                            </span>
+                                            @if(!empty($channel['badge']))
+                                                <span class="px-1.5 py-0.5 rounded text-[9px] font-black bg-teal-100 dark:bg-teal-950 text-teal-700 dark:text-teal-300">
+                                                    {{ $channel['badge'] }}
+                                                </span>
+                                            @endif
+                                        </div>
+                                        <div class="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5">
+                                            Biaya layanan: Rp {{ number_format($channel['mdr_fixed'], 0, ',', '.') }}
+                                        </div>
+                                    </div>
+
+                                    <div class="text-right shrink-0">
+                                        <div class="text-xs font-black text-slate-800 dark:text-slate-200 group-hover:text-sky-700 dark:group-hover:text-sky-400 transition-colors font-mono">
+                                            Rp {{ number_format($totalBayar, 0, ',', '.') }}
+                                        </div>
+                                        <div class="text-[10px] text-slate-400 dark:text-slate-500">
+                                            +Rp {{ number_format($mdrAmount, 0, ',', '.') }}
+                                        </div>
+                                    </div>
+
+                                    <svg class="w-4 h-4 text-slate-400 group-hover:text-sky-500 shrink-0 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg>
+                                </div>
+                            </button>
+                        @endforeach
+                    </div>
+                @endif
             </div>
 
             {{-- Footer Info --}}
-            <div class="px-4 pb-4 pt-1">
-                <p class="text-[10px] text-slate-400 dark:text-slate-500 text-center leading-relaxed">
-                    🔒 Pembayaran diproses secara aman oleh <strong>Duitku</strong>.
-                    Setelah membayar, status tagihan akan otomatis diperbarui.
+            <div class="px-4 pb-4 pt-2 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/30">
+                <p class="text-[10px] text-slate-400 dark:text-slate-500 text-center leading-relaxed flex items-center justify-center gap-1">
+                    <span>🔒</span>
+                    <span>Diproses secara resmi &amp; otomatis oleh <strong>Duitku Payment Gateway</strong>.</span>
                 </p>
             </div>
         </div>
     </div>
 
-</div>
 

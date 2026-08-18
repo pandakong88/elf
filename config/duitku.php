@@ -37,42 +37,40 @@ return [
     | Daftar kode channel Duitku yang dibuka untuk wali santri.
     | Kode referensi: https://docs.duitku.com/api/id/#payment-method
     |
-    | SP  = QRIS (semua e-wallet, scan satu QR)
+    | SP  = QRIS (semua e-wallet & m-banking, scan satu QR)
     | BR  = VA BRI
-    | BT  = VA BSI (Bank Syariah Indonesia)
+    | BS  = VA BSI (Bank Syariah Indonesia)
     | I1  = VA BNI
     | M2  = VA Mandiri (via ATM / Livin)
-    | FT  = Minimarket (Alfamart/Indomaret) — opsional
+    | BT  = VA Bank Permata
     |
     */
     'enabled_channels' => [
         'SP' => [
-            'name'       => 'QRIS',
+            'name'       => 'QRIS (Semua Bank & E-Wallet)',
             'icon'       => 'qris',
+            'group'      => 'qris',
+            'badge'      => '⭐ Rekomendasi',
             'mdr_rate'   => 0.007,   // 0.7% — rata-rata MDR QRIS Duitku
             'mdr_fixed'  => 0,
             'min_amount' => 1000,
             'max_amount' => 5000000,
         ],
-        'BR' => [
-            'name'       => 'Virtual Account BRI',
-            'icon'       => 'bri',
+        'BS' => [
+            'name'       => 'Virtual Account BSI',
+            'icon'       => 'bsi',
+            'group'      => 'va',
+            'badge'      => 'Syariah',
             'mdr_rate'   => 0,
             'mdr_fixed'  => 4000,    // Rp 4.000 flat per transaksi
             'min_amount' => 10000,
             'max_amount' => 100000000,
         ],
-        'BT' => [
-            'name'       => 'Virtual Account BSI',
-            'icon'       => 'bsi',
-            'mdr_rate'   => 0,
-            'mdr_fixed'  => 4000,
-            'min_amount' => 10000,
-            'max_amount' => 100000000,
-        ],
-        'I1' => [
-            'name'       => 'Virtual Account BNI',
-            'icon'       => 'bni',
+        'BR' => [
+            'name'       => 'Virtual Account BRI',
+            'icon'       => 'bri',
+            'group'      => 'va',
+            'badge'      => '',
             'mdr_rate'   => 0,
             'mdr_fixed'  => 4000,
             'min_amount' => 10000,
@@ -81,6 +79,28 @@ return [
         'M2' => [
             'name'       => 'Virtual Account Mandiri',
             'icon'       => 'mandiri',
+            'group'      => 'va',
+            'badge'      => '',
+            'mdr_rate'   => 0,
+            'mdr_fixed'  => 4000,
+            'min_amount' => 10000,
+            'max_amount' => 100000000,
+        ],
+        'I1' => [
+            'name'       => 'Virtual Account BNI',
+            'icon'       => 'bni',
+            'group'      => 'va',
+            'badge'      => '',
+            'mdr_rate'   => 0,
+            'mdr_fixed'  => 4000,
+            'min_amount' => 10000,
+            'max_amount' => 100000000,
+        ],
+        'BT' => [
+            'name'       => 'Virtual Account Permata',
+            'icon'       => 'permata',
+            'group'      => 'va',
+            'badge'      => '',
             'mdr_rate'   => 0,
             'mdr_fixed'  => 4000,
             'min_amount' => 10000,
