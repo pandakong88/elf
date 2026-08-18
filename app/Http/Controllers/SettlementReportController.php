@@ -140,16 +140,12 @@ class SettlementReportController extends Controller
                 ->with(['bill.person.roomAssignments' => fn($q) => $q->active()->with('room.dormitory'), 'bill.config']);
 
             $kasirPayments = $kasirQuery->get();
-            if ($source === 'kasir') {
-                $totalTrx += $kasirPayments->count();
-            }
+            $totalTrx += $kasirPayments->count();
 
             foreach ($kasirPayments as $pay) {
                 $amt = (float) $pay->amount_paid;
-                if ($source === 'kasir') {
-                    $totalGross += $amt;
-                    $totalNet   += $amt;
-                }
+                $totalGross += $amt;
+                $totalNet   += $amt;
 
                 $bill = $pay->bill;
                 $person = $bill?->person;
@@ -157,18 +153,14 @@ class SettlementReportController extends Controller
                 $dormId = $activeAssignment?->room?->dormitory_id;
                 $type = $bill?->bill_type ?? '';
 
-                if ($source === 'kasir') {
-                    $this->allocateToCategory($categories, $type, $amt, $person?->gender, $bill?->config?->label ?? null);
-                }
+                $this->allocateToCategory($categories, $type, $amt, $person?->gender, $bill?->config?->label ?? null);
 
                 if ($type === 'kas_komplek' && $dormId && isset($dormBreakdown[$dormId])) {
-                    if ($source === 'kasir') {
-                        $dormBreakdown[$dormId]['total_amount'] += $amt;
-                        $dormBreakdown[$dormId]['count_bills']++;
-                        if ($person && !in_array($person->id, $dormBreakdown[$dormId]['santri_ids'])) {
-                            $dormBreakdown[$dormId]['santri_ids'][] = $person->id;
-                            $dormBreakdown[$dormId]['count_santri']++;
-                        }
+                    $dormBreakdown[$dormId]['total_amount'] += $amt;
+                    $dormBreakdown[$dormId]['count_bills']++;
+                    if ($person && !in_array($person->id, $dormBreakdown[$dormId]['santri_ids'])) {
+                        $dormBreakdown[$dormId]['santri_ids'][] = $person->id;
+                        $dormBreakdown[$dormId]['count_santri']++;
                     }
                 }
             }

@@ -2590,16 +2590,12 @@ class BillingManager extends Component
                 ->with(['bill.person.roomAssignments' => fn($q) => $q->active()->with('room.dormitory'), 'bill.config']);
 
             $kasirPayments = $kasirQuery->get();
-            if ($source === 'kasir') {
-                $totalTrx += $kasirPayments->count();
-            }
+            $totalTrx += $kasirPayments->count();
 
             foreach ($kasirPayments as $pay) {
                 $amt = (float) $pay->amount_paid;
-                if ($source === 'kasir') {
-                    $totalGross += $amt;
-                    $totalNet   += $amt;
-                }
+                $totalGross += $amt;
+                $totalNet   += $amt;
 
                 $bill = $pay->bill;
                 $person = $bill?->person;
@@ -2607,27 +2603,23 @@ class BillingManager extends Component
                 $dormId = $activeAssignment?->room?->dormitory_id;
                 $type = $bill?->bill_type ?? '';
 
-                if ($source === 'kasir') {
-                    $this->allocateCategory($categories, $type, $amt, $person?->gender, $bill?->config?->label ?? null);
-                }
+                $this->allocateCategory($categories, $type, $amt, $person?->gender, $bill?->config?->label ?? null);
 
                 if ($type === 'kas_komplek' && $dormId && isset($dormBreakdown[$dormId])) {
-                    if ($source === 'kasir') {
-                        $dormBreakdown[$dormId]['total_amount'] += $amt;
-                        $dormBreakdown[$dormId]['count_bills']++;
-                        if ($person && !in_array($person->id, $dormBreakdown[$dormId]['santri_ids'])) {
-                            $dormBreakdown[$dormId]['santri_ids'][] = $person->id;
-                        }
-                        $dormBreakdown[$dormId]['santri_list'][] = [
-                            'nis'       => $person->nis ?? '-',
-                            'name'      => $person->name ?? '—',
-                            'room_name' => $activeAssignment?->room?->name ?? '-',
-                            'paid_date' => $pay->payment_date ? \Carbon\Carbon::parse($pay->payment_date)->locale('id')->translatedFormat('d M Y') : '-',
-                            'method'    => strtoupper($pay->payment_method ?? 'Kasir'),
-                            'amount'    => $amt,
-                        ];
-                        $dormBreakdown[$dormId]['count_santri'] = count($dormBreakdown[$dormId]['santri_ids']);
+                    $dormBreakdown[$dormId]['total_amount'] += $amt;
+                    $dormBreakdown[$dormId]['count_bills']++;
+                    if ($person && !in_array($person->id, $dormBreakdown[$dormId]['santri_ids'])) {
+                        $dormBreakdown[$dormId]['santri_ids'][] = $person->id;
                     }
+                    $dormBreakdown[$dormId]['santri_list'][] = [
+                        'nis'       => $person->nis ?? '-',
+                        'name'      => $person->name ?? '—',
+                        'room_name' => $activeAssignment?->room?->name ?? '-',
+                        'paid_date' => $pay->payment_date ? \Carbon\Carbon::parse($pay->payment_date)->locale('id')->translatedFormat('d M Y') : '-',
+                        'method'    => strtoupper($pay->payment_method ?? 'Kasir'),
+                        'amount'    => $amt,
+                    ];
+                    $dormBreakdown[$dormId]['count_santri'] = count($dormBreakdown[$dormId]['santri_ids']);
                 }
             }
         }
