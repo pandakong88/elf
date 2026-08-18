@@ -1130,7 +1130,7 @@
         <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" @click="openBayarModal = false"></div>
 
         {{-- Modal Content --}}
-        <div class="relative w-full sm:max-w-lg bg-white dark:bg-slate-900 rounded-t-3xl sm:rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden"
+        <div class="relative w-full sm:max-w-lg max-h-[90vh] sm:max-h-[85vh] flex flex-col bg-white dark:bg-slate-900 rounded-t-3xl sm:rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden"
              x-data="{ showBillDetails: false }"
              x-transition:enter="transition ease-out duration-300"
              x-transition:enter-start="translate-y-full sm:translate-y-4 opacity-0"
@@ -1140,8 +1140,8 @@
              x-transition:leave-end="translate-y-full sm:translate-y-4 opacity-0">
 
             {{-- Header Modal --}}
-            <div class="h-1.5 w-full bg-gradient-to-r from-emerald-500 via-sky-500 to-indigo-600"></div>
-            <div class="p-4 sm:p-5 border-b border-slate-100 dark:border-slate-800 flex items-start justify-between gap-3">
+            <div class="h-1.5 w-full bg-gradient-to-r from-emerald-500 via-sky-500 to-indigo-600 shrink-0"></div>
+            <div class="p-4 sm:p-5 border-b border-slate-100 dark:border-slate-800 flex items-start justify-between gap-3 shrink-0">
                 <div>
                     <div class="flex items-center gap-2">
                         <span class="p-1.5 bg-sky-500/10 text-sky-600 dark:text-sky-400 rounded-xl">
@@ -1164,7 +1164,7 @@
 
             {{-- Accordion Rincian Tagihan --}}
             @if(!empty($simulasiHasil))
-                <div class="bg-slate-50/80 dark:bg-slate-950/60 border-b border-slate-100 dark:border-slate-800 px-4 py-2.5">
+                <div class="bg-slate-50/80 dark:bg-slate-950/60 border-b border-slate-100 dark:border-slate-800 px-4 py-2.5 shrink-0">
                     <button type="button" @click="showBillDetails = !showBillDetails" class="w-full flex items-center justify-between text-left text-xs font-bold text-slate-600 dark:text-slate-300 hover:text-sky-600 dark:hover:text-sky-400 transition">
                         <span class="flex items-center gap-1.5">
                             <span>📦 Rincian Tagihan yang Dibayar</span>
@@ -1174,7 +1174,7 @@
                             <svg class="w-3.5 h-3.5 transition-transform" :class="showBillDetails ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
                         </span>
                     </button>
-                    <div x-show="showBillDetails" x-collapse class="mt-2.5 pt-2.5 border-t border-slate-200/60 dark:border-slate-800 space-y-1.5 text-xs">
+                    <div x-show="showBillDetails" x-collapse class="mt-2.5 pt-2.5 border-t border-slate-200/60 dark:border-slate-800 space-y-1.5 text-xs max-h-36 overflow-y-auto">
                         @foreach($simulasiHasil as $item)
                             <div class="flex items-center justify-between gap-2 py-0.5">
                                 <span class="text-slate-700 dark:text-slate-300 truncate">
@@ -1194,14 +1194,14 @@
 
             {{-- Error Message --}}
             @if($paymentError)
-                <div class="mx-4 mt-3 p-3 bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-800/40 rounded-2xl flex items-center gap-2">
+                <div class="mx-4 mt-3 p-3 bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-800/40 rounded-2xl flex items-center gap-2 shrink-0">
                     <svg class="w-4 h-4 text-rose-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                     <p class="text-xs text-rose-700 dark:text-rose-400 font-semibold">{{ $paymentError }}</p>
                 </div>
             @endif
 
             {{-- Daftar Channel Pembayaran --}}
-            <div class="p-4 space-y-4 max-h-[60vh] overflow-y-auto">
+            <div class="p-4 space-y-4 flex-1 overflow-y-auto min-h-0 overscroll-contain">
                 @php
                     $channels = config('duitku.enabled_channels', []);
                     $qrisChannels = collect($channels)->filter(fn($c) => ($c['group'] ?? '') === 'qris');
