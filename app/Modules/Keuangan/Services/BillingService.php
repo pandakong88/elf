@@ -9,6 +9,7 @@ use App\Modules\Keuangan\Models\BillingConfiguration;
 use App\Modules\Keuangan\Models\BillingException;
 use App\Modules\Kepengasuhan\Models\RoomAssignment;
 use App\Modules\Kepengasuhan\Models\Dormitory;
+use App\Services\WhatsAppService;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
 
@@ -214,17 +215,17 @@ class BillingService
      */
     public function recordPayment(string $billId, float $amount, string $method, ?string $notes, string $loggedByUserId): BillPayment
     {
-        return DB::transaction(function () use ($billId, $amount, $method, $notes, $loggedByUserId) {
+        $payment = DB::transaction(function () use ($billId, $amount, $method, $notes, $loggedByUserId) {
             $bill = Bill::findOrFail($billId);
 
             $payment = BillPayment::create([
-                'id' => Str::uuid()->toString(),
-                'bill_id' => $bill->id,
-                'amount_paid' => $amount,
-                'payment_date' => now()->toDateString(),
+                'id'             => Str::uuid()->toString(),
+                'bill_id'        => $bill->id,
+                'amount_paid'    => $amount,
+                'payment_date'   => now()->toDateString(),
                 'payment_method' => strtolower($method),
-                'logged_by' => $loggedByUserId,
-                'notes' => $notes,
+                'logged_by'      => $loggedByUserId,
+                'notes'          => $notes,
             ]);
 
             // recalculate status
@@ -232,6 +233,38 @@ class BillingService
 
             return $payment;
         });
+
+        // ── Notifikasi WA grup admin (non-blocking) ─────────────────────────
+        if (strtolower($method) !== 'gateway_duitku') {
+            try {
+                $payment->loadMissing(['bill.config', 'bill.person', 'logger']);
+                $bill     = $payment->bill;
+                $months   = [1=>'Januari',2=>'Februari',3=>'Maret',4=>'April',5=>'Mei',6=>'Juni',
+                             7=>'Juli',8=>'Agustus',9=>'September',10=>'Oktober',11=>'November',12=>'Desember'];
+                $interval = $bill?->config?->interval ?? '';
+                $period   = match(true) {
+                    $interval === 'semester'                                       => 'Semester '.$bill->period_month.'/'.$bill->period_year,
+                    in_array($interval, ['once','insidental','event','sekali'])   => 'Event '.($bill->period_year ?? ''),
+                    default                                                        => ($months[$bill?->period_month ?? 0] ?? '').' '.($bill?->period_year ?? ''),
+                };
+
+                app(WhatsAppService::class)->notifyKasirPayment(
+                    santriName:   $bill?->person?->name ?? '—',
+                    billLabel:    $bill?->config?->label ?? ucwords(str_replace('_',' ',$bill?->bill_type ?? '')),
+                    periodLabel:  trim($period),
+                    method:       $method,
+                    paidAt:       now()->locale('id')->translatedFormat('d F Y, H:i').' WIB',
+                    amount:       $amount,
+                    loggedByName: $payment->logger?->name ?? 'Sistem',
+                    notes:        $notes,
+                );
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::warning('[WhatsApp] Gagal kirim notifikasi kasir', ['error' => $e->getMessage()]);
+            }
+        }
+        // ───────────────────────────────────────────────
+
+        return $payment;
     }
 
     /**

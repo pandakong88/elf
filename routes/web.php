@@ -25,7 +25,18 @@ Route::get('/portal-wali/payment/return', \App\Livewire\WaliPortal\StatusPembaya
 Route::post('/duitku/callback', [\App\Http\Controllers\DuitkuCallbackController::class, 'handle'])
     ->name('duitku.callback')
     ->withoutMiddleware([\Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class]);
+
+// ─── Bukti Pembayaran PDF ─────────────────────────────────────────────────────
+// Wali portal — unduh PDF bukti bayar gateway (auth check di controller)
+Route::get('/portal-wali/bukti-bayar/gateway/{trxId}', [\App\Http\Controllers\BuktiBayarController::class, 'gateway'])
+    ->name('bukti-bayar.gateway');
+
+// Admin/Bendahara — unduh PDF bukti bayar kasir
+Route::get('/keuangan/bukti-bayar/kasir/{paymentId}', [\App\Http\Controllers\BuktiBayarController::class, 'kasir'])
+    ->name('bukti-bayar.kasir')
+    ->middleware('auth');
 // ─────────────────────────────────────────────────────────────────────────────
+
 
 
 Route::middleware('auth')->group(function () {

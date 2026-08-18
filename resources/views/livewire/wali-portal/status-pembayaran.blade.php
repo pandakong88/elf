@@ -259,13 +259,20 @@
                     </div>
                 </div>
 
-                {{-- Action Buttons: Cetak & Kembali --}}
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 w-full">
-                    <button type="button"
-                            onclick="window.print()"
-                            class="w-full inline-flex items-center justify-center gap-2 px-4 py-3 bg-slate-800 hover:bg-slate-700 text-white font-extrabold rounded-2xl text-xs transition-all shadow-md active:scale-95 border border-slate-700">
-                        <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
-                        <span>Cetak Bukti Pembayaran</span>
+                {{-- Action Buttons: Download PDF, Cetak & Kembali --}}
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5 w-full">
+                    {{-- ⬇ Download PDF --}}
+                    <a href="{{ route('bukti-bayar.gateway', $transaction->id) }}" target="_blank"
+                       class="w-full inline-flex items-center justify-center gap-2 px-4 py-3 bg-indigo-600 hover:bg-indigo-500 text-white font-extrabold rounded-2xl text-xs transition-all shadow-md active:scale-95">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                        <span>Unduh PDF</span>
+                    </a>
+
+                    {{-- 🖨 Cetak Browser --}}
+                    <button type="button" onclick="window.print()"
+                            class="w-full inline-flex items-center justify-center gap-2 px-4 py-3 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-extrabold rounded-2xl text-xs transition-all shadow-sm active:scale-95 border border-slate-200 dark:border-slate-700">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+                        <span>Cetak</span>
                     </button>
 
                     @if($santri)
@@ -276,6 +283,7 @@
                         </a>
                     @endif
                 </div>
+
             @endif
         </div>
 

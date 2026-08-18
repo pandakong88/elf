@@ -2476,17 +2476,33 @@
                                             </span>
                                         </td>
                                         <td class="py-4 px-4 text-center">
-                                            @if($method === 'gateway_duitku')
-                                                <span class="inline-flex items-center gap-1 px-2.5 py-1.5 bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 rounded-xl text-[9px] font-bold whitespace-nowrap cursor-not-allowed" title="Transaksi online tidak dapat di-void. Hubungi Duitku jika diperlukan.">
-                                                    🔒 Tidak Bisa Void
-                                                </span>
-                                            @else
-                                                <button type="button" wire:click="confirmVoidPayment('{{ $pay->id }}')" 
-                                                    class="px-2.5 py-1.5 bg-rose-500/10 hover:bg-rose-500 text-rose-600 hover:text-white rounded-xl text-[10px] font-bold transition-all whitespace-nowrap">
-                                                    🗑️ Batalkan / Void
-                                                </button>
-                                            @endif
+                                            <div class="flex items-center justify-center gap-1.5">
+                                                {{-- ⬇ PDF Download --}}
+                                                @if($method === 'gateway_duitku')
+                                                    {{-- Gateway: cari PaymentTransaction via reference di notes --}}
+                                                @else
+                                                    <a href="{{ route('bukti-bayar.kasir', $pay->id) }}" target="_blank"
+                                                       class="inline-flex items-center gap-1 px-2 py-1.5 bg-indigo-500/10 hover:bg-indigo-500 text-indigo-600 hover:text-white rounded-xl text-[9px] font-bold transition-all whitespace-nowrap"
+                                                       title="Unduh PDF Bukti Bayar">
+                                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                                                        PDF
+                                                    </a>
+                                                @endif
+
+                                                {{-- 🗑 Void Button --}}
+                                                @if($method === 'gateway_duitku')
+                                                    <span class="inline-flex items-center gap-1 px-2.5 py-1.5 bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 rounded-xl text-[9px] font-bold whitespace-nowrap cursor-not-allowed" title="Transaksi online tidak dapat di-void. Hubungi Duitku jika diperlukan.">
+                                                        🔒 Tidak Bisa Void
+                                                    </span>
+                                                @else
+                                                    <button type="button" wire:click="confirmVoidPayment('{{ $pay->id }}')"
+                                                        class="px-2.5 py-1.5 bg-rose-500/10 hover:bg-rose-500 text-rose-600 hover:text-white rounded-xl text-[9px] font-bold transition-all whitespace-nowrap">
+                                                        🗑️ Void
+                                                    </button>
+                                                @endif
+                                            </div>
                                         </td>
+
                                     </tr>
                                 @empty
                                     <tr>

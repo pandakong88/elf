@@ -5,6 +5,7 @@ namespace App\Modules\Keuangan\Services;
 use App\Modules\Keuangan\Models\Bill;
 use App\Modules\Keuangan\Models\BillPayment;
 use App\Modules\Keuangan\Models\PaymentTransaction;
+use App\Services\WhatsAppService;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
@@ -407,6 +408,27 @@ class DuitkuService
             'bill_count'        => count($breakdown),
             'paid_at'           => $paidAt,
         ]);
+
+        // ── Kirim notifikasi WhatsApp ke grup admin/bendahara ─────────────────
+        try {
+            $transaction->loadMissing('person');
+            $channelLabel = $transaction->channel_label ?? $transaction->payment_channel ?? '—';
+            $formattedAt  = $transaction->created_at->locale('id')->translatedFormat('d F Y, H:i') . ' WIB';
+
+            app(WhatsAppService::class)->notifyGatewayPayment(
+                santriName:   $transaction->person?->name ?? '—',
+                orderId:      $transaction->merchant_order_id,
+                channelLabel: $channelLabel,
+                paidAt:       $formattedAt,
+                billAmount:   (float) $transaction->bill_amount,
+                mdrAmount:    (float) $transaction->mdr_amount,
+                totalAmount:  (float) $transaction->total_amount,
+                breakdown:    $breakdown,
+            );
+        } catch (\Throwable $e) {
+            Log::warning('[WhatsApp] Gagal kirim notifikasi gateway payment', ['error' => $e->getMessage()]);
+        }
+        // ─────────────────────────────────────────────────────────────────────
     }
 
 
