@@ -256,8 +256,11 @@
                 </div>
 
                 <div>
-                    <label class="block text-[10px] font-extrabold text-slate-400 uppercase tracking-wider mb-2">Nama / Keterangan Potongan (Nama Kelompok)</label>
-                    <input type="text" wire:model.live.debounce.300ms="excNotes" placeholder="Contoh: Diskon Kakak-Adik, Beasiswa Abdi Dalem, Yatim Piatu..." class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200/60 dark:border-slate-800 text-slate-800 dark:text-slate-200 rounded-xl px-4 py-2.5 text-xs focus:ring-emerald-500 font-bold">
+                    <label class="block text-[10px] font-extrabold text-slate-400 uppercase tracking-wider mb-2">
+                        Nama / Keterangan Potongan (Nama Kelompok) <span class="text-rose-500 font-bold">*</span>
+                    </label>
+                    <input type="text" wire:model.live.debounce.300ms="excNotes" placeholder="Contoh: Diskon Kakak-Adik, Beasiswa Abdi Dalem, Yatim Piatu..." class="w-full bg-slate-50 dark:bg-slate-950 border @error('excNotes') border-rose-500 ring-1 ring-rose-500 @else border-slate-200/60 dark:border-slate-800 @enderror text-slate-800 dark:text-slate-200 rounded-xl px-4 py-2.5 text-xs focus:ring-emerald-500 font-bold">
+                    @error('excNotes') <span class="text-xs text-rose-500 font-semibold mt-1 block">{{ $message }}</span> @enderror
                     <p class="text-[9px] text-slate-400 mt-1.5">Alasan/Keterangan ini wajib diisi dengan seragam untuk mengelompokkan dispensasi dalam satu baris kelompok.</p>
                 </div>
             </div>
