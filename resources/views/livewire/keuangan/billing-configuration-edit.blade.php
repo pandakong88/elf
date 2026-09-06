@@ -708,7 +708,7 @@
                                     </div>
 
                                     @php
-                                        // Group kelas by jenjang
+                                        // Group kelas by jenjang with explicit priority order: Awaliyah -> Wustho -> Ulya -> Tahasus
                                         $groupedKelas = $kelasList->groupBy(function($k) {
                                             $name = strtolower($k->name ?? '');
                                             $jenjang = strtolower($k->jenjang ?? '');
@@ -726,6 +726,14 @@
                                                 return 'Jenjang Ulya';
                                             }
                                             return 'Program Khusus / Lainnya';
+                                        })->sortBy(function($classes, $key) {
+                                            return match($key) {
+                                                'Jenjang Awaliyah / Ula' => 1,
+                                                'Jenjang Wustho' => 2,
+                                                'Jenjang Ulya' => 3,
+                                                'Program Khusus / Tahasus' => 4,
+                                                default => 5,
+                                            };
                                         });
                                     @endphp
 
