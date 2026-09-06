@@ -314,7 +314,7 @@ class DashboardTagihan extends Component
 
         $allBills = Bill::with('config')
             ->where('person_id', $this->personId)
-            ->whereNotIn('status', ['refund_requested', 'refunded', 'cancelled'])
+            ->whereNotIn('status', ['refund_requested', 'refunded', 'cancelled', 'exempt'])
             ->get();
 
         // Priority Order untuk Jenis Tagihan Utama

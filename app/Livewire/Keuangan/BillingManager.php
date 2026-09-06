@@ -8,6 +8,7 @@ use App\Modules\Core\Models\Person;
 use App\Modules\Keuangan\Models\Bill;
 use App\Modules\Keuangan\Models\BillingConfiguration;
 use App\Modules\Keuangan\Models\BillingException;
+use App\Modules\Keuangan\Models\SantriLeave;
 use App\Modules\Kepengasuhan\Models\Dormitory;
 use App\Modules\Kepengasuhan\Models\Room;
 use App\Modules\Keuangan\Services\BillingService;
@@ -102,6 +103,17 @@ class BillingManager extends Component
     public array   $recentSantriIds  = [];
     public bool    $showPaymentConfirmModal = false;
     public array   $previousSelectedBillIds = [];
+
+    // Kasir: Pengelolaan Cuti / Bebas Tagihan Santri
+    public bool    $showLeaveModal      = false;
+    public int     $leaveYear;
+    public array   $leaveSelectedMonths = [];
+    public string  $leaveScopeType      = 'all'; // 'all' | 'specific'
+    public array   $leaveConfigIds      = [];
+    public string  $leaveReason         = '';
+    public bool    $showDeleteLeaveConfirmModal = false;
+    public ?string $deleteLeaveTargetId = null;
+    public array   $deleteLeaveData     = [];
 
     // Tab: Tarif Pendaftaran Santri Baru & Kitab
     public string  $activeRegSubTab = 'items'; // 'items' | 'kitab'
@@ -617,6 +629,7 @@ class BillingManager extends Component
 
         $this->newConfigEffectiveFrom = now()->toDateString();
         $this->cashierYear = (int) now()->format('Y');
+        $this->leaveYear   = (int) now()->format('Y');
 
         $this->settlementDateFrom = now()->startOfMonth()->toDateString();
         $this->settlementDateTo   = now()->toDateString();
@@ -857,6 +870,187 @@ class BillingManager extends Component
         $this->kasirSelectedPeriods  = [];
         $this->kasirAvailablePeriods = [];
         $this->selectSantri($this->selectedSantriId);
+    }
+
+    // =====================================================================
+    // Kasir: Pengelolaan Cuti / Bebas Tagihan Santri
+    // =====================================================================
+    public function openLeaveModal(): void
+    {
+        if (!$this->selectedSantriId) {
+            $this->toastError('Pilih santri terlebih dahulu.');
+            return;
+        }
+
+        $this->leaveYear = $this->cashierYear;
+        $this->leaveSelectedMonths = [];
+        $this->leaveScopeType = 'all';
+        $this->leaveConfigIds = [];
+        $this->leaveReason = '';
+        $this->showLeaveModal = true;
+    }
+
+    public function closeLeaveModal(): void
+    {
+        $this->showLeaveModal = false;
+    }
+
+    public function toggleLeaveMonth(int $month): void
+    {
+        if (in_array($month, $this->leaveSelectedMonths)) {
+            $this->leaveSelectedMonths = array_values(array_diff($this->leaveSelectedMonths, [$month]));
+        } else {
+            $this->leaveSelectedMonths[] = $month;
+            sort($this->leaveSelectedMonths);
+        }
+    }
+
+    public function selectAllLeaveMonths(): void
+    {
+        $this->leaveSelectedMonths = range(1, 12);
+    }
+
+    public function clearAllLeaveMonths(): void
+    {
+        $this->leaveSelectedMonths = [];
+    }
+
+    public function selectLeaveQuarter(int $quarter): void
+    {
+        $start = ($quarter - 1) * 3 + 1;
+        $quarterMonths = range($start, $start + 2);
+        
+        $alreadyAll = empty(array_diff($quarterMonths, $this->leaveSelectedMonths));
+        if ($alreadyAll) {
+            $this->leaveSelectedMonths = array_values(array_diff($this->leaveSelectedMonths, $quarterMonths));
+        } else {
+            $this->leaveSelectedMonths = array_values(array_unique(array_merge($this->leaveSelectedMonths, $quarterMonths)));
+            sort($this->leaveSelectedMonths);
+        }
+    }
+
+    public function selectLeaveSemester(int $semester): void
+    {
+        $start = ($semester - 1) * 6 + 1;
+        $semMonths = range($start, $start + 5);
+
+        $alreadyAll = empty(array_diff($semMonths, $this->leaveSelectedMonths));
+        if ($alreadyAll) {
+            $this->leaveSelectedMonths = array_values(array_diff($this->leaveSelectedMonths, $semMonths));
+        } else {
+            $this->leaveSelectedMonths = array_values(array_unique(array_merge($this->leaveSelectedMonths, $semMonths)));
+            sort($this->leaveSelectedMonths);
+        }
+    }
+
+    public function saveSantriLeaveAction(BillingService $billingService): void
+    {
+        if (!$this->selectedSantriId) {
+            $this->toastError('Santri belum dipilih.');
+            return;
+        }
+
+        $this->validate([
+            'leaveYear'           => 'required|integer|min:2020|max:2050',
+            'leaveSelectedMonths' => 'required|array|min:1',
+            'leaveScopeType'      => 'required|in:all,specific',
+            'leaveReason'         => 'nullable|string|max:255',
+        ], [
+            'leaveSelectedMonths.min' => 'Silakan pilih minimal satu bulan cuti.',
+        ]);
+
+        if ($this->leaveScopeType === 'specific' && empty($this->leaveConfigIds)) {
+            $this->toastError('Silakan pilih minimal satu jenis iuran yang dibebaskan.');
+            return;
+        }
+
+        $configIds = $this->leaveScopeType === 'specific' ? $this->leaveConfigIds : null;
+
+        $billingService->saveSantriLeave(
+            personId: $this->selectedSantriId,
+            year: $this->leaveYear,
+            months: $this->leaveSelectedMonths,
+            scopeType: $this->leaveScopeType,
+            configIds: $configIds,
+            reason: $this->leaveReason,
+            createdByUserId: auth()->id()
+        );
+
+        // Deselect any selected bills that became exempt
+        $this->selectedBillIds = array_values(array_intersect(
+            $this->selectedBillIds,
+            $this->unpaidBills->pluck('id')->toArray()
+        ));
+        $this->previousSelectedBillIds = $this->selectedBillIds;
+        $this->payAmount = $this->selectedBillsTotal;
+
+        $this->showLeaveModal = false;
+        $this->toastSuccess('Status cuti / bebas tagihan santri berhasil disimpan!');
+    }
+
+    public function confirmDeleteSantriLeave(string $leaveId): void
+    {
+        $leave = SantriLeave::find($leaveId);
+        if (!$leave) {
+            $this->toastError('Data cuti tidak ditemukan.');
+            return;
+        }
+
+        $this->deleteLeaveTargetId = $leaveId;
+        $this->deleteLeaveData = [
+            'santri_name' => $leave->person?->name ?? 'Santri',
+            'nis'         => $leave->person?->nis ?? '-',
+            'period'      => $leave->period_description,
+            'scope'       => $leave->scope_type === 'all' ? 'Semua Iuran Bulanan' : 'Iuran Pilihan Khusus',
+            'reason'      => $leave->reason ?: 'Izin Cuti',
+        ];
+        $this->showDeleteLeaveConfirmModal = true;
+    }
+
+    public function cancelDeleteSantriLeave(): void
+    {
+        $this->showDeleteLeaveConfirmModal = false;
+        $this->deleteLeaveTargetId = null;
+        $this->deleteLeaveData = [];
+    }
+
+    public function executeDeleteSantriLeave(BillingService $billingService): void
+    {
+        if (!$this->deleteLeaveTargetId) return;
+
+        $billingService->deleteSantriLeave($this->deleteLeaveTargetId);
+        $this->showDeleteLeaveConfirmModal = false;
+        $this->deleteLeaveTargetId = null;
+        $this->deleteLeaveData = [];
+
+        $this->toastSuccess('Status cuti berhasil dibatalkan, tagihan terkait telah dikembalikan ke status belum bayar.');
+    }
+
+    public function getActiveSantriLeavesProperty()
+    {
+        if (!$this->selectedSantriId) return collect();
+        return SantriLeave::where('person_id', $this->selectedSantriId)
+            ->where('year', $this->cashierYear)
+            ->orderBy('start_month', 'asc')
+            ->get();
+    }
+
+    public function getMonthlyConfigsForLeaveProperty()
+    {
+        if (!$this->selectedSantriId) {
+            return collect();
+        }
+
+        $billingService = app(BillingService::class);
+        $configs = BillingConfiguration::where('interval', 'monthly')
+            ->where('is_active', true)
+            ->with('dormitory')
+            ->orderBy('type')
+            ->get();
+
+        return $configs->filter(function($config) use ($billingService) {
+            return $billingService->isSantriInTargetForConfig($config, $this->selectedSantriId);
+        })->values();
     }
 
     public function openDeleteUnpaidModal(string $configId): void
@@ -1905,18 +2099,50 @@ class BillingManager extends Component
         $query = $this->applyManagerRoleScope($query);
         $bills = $query->get();
 
+        // Load active santri leaves for this year
+        $santriLeaves = SantriLeave::where('person_id', $this->selectedSantriId)
+            ->where('year', $year)
+            ->get();
+
         // Group: configId -> month -> bill
         $configs = [];
         foreach ($bills as $bill) {
             $cid = $bill->billing_config_id ?: 'custom_' . $bill->bill_type;
             if (!isset($configs[$cid])) {
                 $configs[$cid] = [
-                    'label'  => $bill->config?->label ?? str_replace('_', ' ', $bill->bill_type),
-                    'months' => array_fill(1, 12, null),
+                    'label'     => $bill->config?->label ?? str_replace('_', ' ', $bill->bill_type),
+                    'config_id' => $bill->billing_config_id,
+                    'months'    => array_fill(1, 12, null),
+                    'leaves'    => array_fill(1, 12, null),
                 ];
             }
             $configs[$cid]['months'][$bill->period_month] = $bill;
         }
+
+        // Attach leave information to each month
+        foreach ($configs as $cid => &$cdata) {
+            for ($m = 1; $m <= 12; $m++) {
+                $b = $cdata['months'][$m] ?? null;
+                if ($b && $b->status === 'exempt') {
+                    $cdata['leaves'][$m] = [
+                        'is_leave' => true,
+                        'reason'   => $b->notes ? trim(str_replace(['[CUTI:', ']'], '', $b->notes)) : 'Izin Cuti',
+                    ];
+                } else {
+                    foreach ($santriLeaves as $sl) {
+                        if ($sl->coversMonth($m, $cdata['config_id'])) {
+                            $cdata['leaves'][$m] = [
+                                'is_leave' => true,
+                                'reason'   => $sl->reason ?: 'Izin Cuti',
+                                'leave_id' => $sl->id,
+                            ];
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+        unset($cdata);
 
         return $configs;
     }
