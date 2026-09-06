@@ -3436,6 +3436,7 @@ class BillingManager extends Component
         $receiptsLog = null;
         if ($this->cashierHistoryMode === 'receipt') {
             $receiptGroupQuery = (clone $paymentsLogQuery)
+                ->reorder()
                 ->selectRaw('COALESCE(receipt_no, id) as group_key, MAX(id) as latest_id, MAX(created_at) as latest_created')
                 ->groupBy(DB::raw('COALESCE(receipt_no, id)'))
                 ->orderBy(DB::raw('MAX(created_at)'), 'desc');
