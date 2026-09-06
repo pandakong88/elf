@@ -18,6 +18,25 @@ Route::post('/logout', [WebAuthController::class, 'logout'])->name('logout');
 // Public Portal Wali (Tanpa Login)
 Route::get('/portal-wali', \App\Livewire\WaliPortal\SantriSearch::class)->name('portal-wali.search');
 Route::get('/portal-wali/{personId}', \App\Livewire\WaliPortal\DashboardTagihan::class)->name('portal-wali.dashboard');
+Route::get('/portal-wali/payment/return', \App\Livewire\WaliPortal\StatusPembayaran::class)->name('portal-wali.payment.return');
+
+// ─── Duitku Payment Gateway ───────────────────────────────────────────────────
+// Webhook callback dari Duitku — publik, tanpa auth, tanpa CSRF
+Route::post('/duitku/callback', [\App\Http\Controllers\DuitkuCallbackController::class, 'handle'])
+    ->name('duitku.callback')
+    ->withoutMiddleware([\Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class]);
+
+// ─── Bukti Pembayaran PDF ─────────────────────────────────────────────────────
+// Wali portal — unduh PDF bukti bayar gateway (auth check di controller)
+Route::get('/portal-wali/bukti-bayar/gateway/{trxId}', [\App\Http\Controllers\BuktiBayarController::class, 'gateway'])
+    ->name('bukti-bayar.gateway');
+
+// Admin/Bendahara — unduh PDF bukti bayar kasir
+Route::get('/keuangan/bukti-bayar/kasir/{paymentId}', [\App\Http\Controllers\BuktiBayarController::class, 'kasir'])
+    ->name('bukti-bayar.kasir')
+    ->middleware('auth');
+// ─────────────────────────────────────────────────────────────────────────────
+
 
 
 Route::middleware('auth')->group(function () {
@@ -65,6 +84,10 @@ Route::middleware('auth')->group(function () {
     Route::get('/keuangan/lembar-setoran', \App\Livewire\Keuangan\LembarSetoranKolektif::class)->name('keuangan.lembar-setoran');
     Route::get('/keuangan/majek', \App\Livewire\Keuangan\MajekManager::class)->name('keuangan.majek');
     Route::get('/keuangan/tarif-pendaftaran', \App\Livewire\Keuangan\RegistrationTariffManager::class)->name('keuangan.tarif-pendaftaran');
+
+    // Rekonsiliasi & Settlement Reports (PDF)
+    Route::get('/keuangan/settlement/pdf', [\App\Http\Controllers\SettlementReportController::class, 'downloadSettlementPdf'])->name('keuangan.settlement.pdf');
+    Route::get('/keuangan/settlement/slip-komplek/{dormitoryId}', [\App\Http\Controllers\SettlementReportController::class, 'downloadSlipKomplekPdf'])->name('keuangan.settlement.slip-komplek');
 
 
 

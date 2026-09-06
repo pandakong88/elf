@@ -17,6 +17,8 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 use App\Modules\Keuangan\Models\BillPayment;
+use App\Modules\Keuangan\Models\PaymentTransaction;
+use App\Modules\Keuangan\Models\FundDistribution;
 use App\Traits\HasGenderScope;
 use App\Livewire\Concerns\SendsToast;
 
@@ -26,6 +28,15 @@ class BillingManager extends Component
 
     // Tabs
     public string $activeTab = 'generate';
+
+    // Tab: Rekonsiliasi & Settlement (Fase 4)
+    public string $settlementDateFrom = '';
+    public string $settlementDateTo = '';
+    public string $settlementSource = 'gateway'; // 'gateway' | 'kasir' | 'all'
+    public string $settlementGender = ''; // '' | 'L' | 'P'
+    public string $settlementNotes = '';
+    public bool $showDormitoryModal = false;
+    public ?string $modalDormitoryId = null;
 
     // Tab: Dynamic Billing Generator
     public ?string $genConfigId = null;
@@ -332,11 +343,23 @@ class BillingManager extends Component
     public string $exceptionSearch     = '';
     public string $exceptionTypeFilter = '';
 
+    // ── Gateway Transactions Tab ──────────────────────────────────────────────
+    public string $gatewaySearch    = '';
+    public string $gatewayStatus    = '';
+    public string $gatewayChannel   = '';
+    public string $gatewayStartDate = '';
+    public string $gatewayEndDate   = '';
+
+    // Gateway Breakdown Modal
+    public bool  $showGatewayBreakdownModal = false;
+    public array $selectedGatewayTrxData   = [];
+
     public function updatingActiveTab(): void
     {
         $this->resetPage();
         $this->resetPage('payLogPage');
         $this->resetPage('historyPage');
+        $this->resetPage('gatewayPage');
     }
 
     public function updatingPayLogSearch(): void { $this->resetPage('payLogPage'); }
@@ -393,6 +416,187 @@ class BillingManager extends Component
         $this->resetPage('payLogPage');
     }
 
+    // ── Gateway Filter Methods ────────────────────────────────────────────────
+
+    public function updatingGatewaySearch(): void    { $this->resetPage('gatewayPage'); }
+    public function updatingGatewayStatus(): void    { $this->resetPage('gatewayPage'); }
+    public function updatingGatewayChannel(): void   { $this->resetPage('gatewayPage'); }
+    public function updatingGatewayStartDate(): void { $this->resetPage('gatewayPage'); }
+    public function updatingGatewayEndDate(): void   { $this->resetPage('gatewayPage'); }
+
+    public function resetGatewayFilters(): void
+    {
+        $this->gatewaySearch    = '';
+        $this->gatewayStatus    = '';
+        $this->gatewayChannel   = '';
+        $this->gatewayStartDate = '';
+        $this->gatewayEndDate   = '';
+        $this->resetPage('gatewayPage');
+    }
+
+    public function setGatewayDatePreset(string $preset): void
+    {
+        match ($preset) {
+            'today'      => [$this->gatewayStartDate, $this->gatewayEndDate] = [now()->toDateString(), now()->toDateString()],
+            'yesterday'  => [$this->gatewayStartDate, $this->gatewayEndDate] = [now()->subDay()->toDateString(), now()->subDay()->toDateString()],
+            '7days'      => [$this->gatewayStartDate, $this->gatewayEndDate] = [now()->subDays(6)->toDateString(), now()->toDateString()],
+            'this_month' => [$this->gatewayStartDate, $this->gatewayEndDate] = [now()->startOfMonth()->toDateString(), now()->endOfMonth()->toDateString()],
+            'last_month' => [$this->gatewayStartDate, $this->gatewayEndDate] = [now()->subMonth()->startOfMonth()->toDateString(), now()->subMonth()->endOfMonth()->toDateString()],
+            'clear'      => [$this->gatewayStartDate, $this->gatewayEndDate] = ['', ''],
+            default      => null,
+        };
+        $this->resetPage('gatewayPage');
+    }
+
+    // ── Gateway Breakdown Modal ───────────────────────────────────────────────
+
+    public function showGatewayBreakdown(string $trxId): void
+    {
+        $trx = PaymentTransaction::with('person')->find($trxId);
+        if (!$trx) return;
+
+        $months = [1=>'Januari',2=>'Februari',3=>'Maret',4=>'April',5=>'Mei',6=>'Juni',
+                   7=>'Juli',8=>'Agustus',9=>'September',10=>'Oktober',11=>'November',12=>'Desember'];
+
+        $rawBreakdown = $trx->bill_breakdown ?? [];
+        $enriched = [];
+        foreach ($rawBreakdown as $item) {
+            // Pakai label yang sudah tersimpan jika ada (record baru)
+            if (!empty($item['config_label']) && !empty($item['period_label'])) {
+                $enriched[] = $item;
+                continue;
+            }
+            // Fallback: lazy-load dari DB untuk record lama
+            $bill = Bill::with('config')->find($item['bill_id']);
+            $interval = $bill?->config?->interval ?? '';
+            if ($interval === 'semester') {
+                $periodLabel = 'Semester ' . ($bill->period_month) . '/' . ($bill->period_year);
+            } elseif (in_array($interval, ['once', 'insidental', 'event', 'sekali'])) {
+                $periodLabel = 'Event ' . ($bill?->period_year ?? '');
+            } else {
+                $periodLabel = ($months[$bill?->period_month ?? 0] ?? '') . ' ' . ($bill?->period_year ?? '');
+            }
+            $enriched[] = array_merge($item, [
+                'config_label' => $bill?->config?->label ?? ucwords(str_replace('_', ' ', $item['bill_type'] ?? '')),
+                'period_label' => trim($periodLabel),
+            ]);
+        }
+
+        $this->selectedGatewayTrxData = [
+            'merchant_order_id' => $trx->merchant_order_id,
+            'santri_name'       => $trx->person?->name ?? '—',
+            'channel_label'     => $trx->channel_label,
+            'status'            => $trx->status,
+            'bill_amount'       => $trx->bill_amount,
+            'mdr_amount'        => $trx->mdr_amount,
+            'total_amount'      => $trx->total_amount,
+            'created_at'        => $trx->created_at->translatedFormat('d M Y, H:i') . ' WIB',
+            'duitku_reference'  => $trx->duitku_reference ?? '—',
+            'breakdown'         => $enriched,
+        ];
+        $this->showGatewayBreakdownModal = true;
+    }
+
+    public function closeGatewayBreakdownModal(): void
+    {
+        $this->showGatewayBreakdownModal = false;
+        $this->selectedGatewayTrxData   = [];
+    }
+
+    /**
+     * Cek & sinkronkan status transaksi spesifik langsung ke API Duitku.
+     */
+    public function syncGatewayStatus(string $trxId): void
+    {
+        $trx = PaymentTransaction::find($trxId);
+        if (!$trx) {
+            $this->toastError('Transaksi tidak ditemukan.');
+            return;
+        }
+
+        try {
+            $duitku = app(\App\Modules\Keuangan\Services\DuitkuService::class);
+            $res = $duitku->checkTransactionStatus($trx->merchant_order_id);
+
+            $statusCode    = (string) ($res['statusCode'] ?? ($res['status_code'] ?? ''));
+            $statusMessage = (string) ($res['statusMessage'] ?? ($res['status_message'] ?? 'Status tidak diketahui'));
+
+            if ($statusCode === '00') {
+                // ✅ SUKSES
+                $trx->update([
+                    'status'               => 'success',
+                    'callback_received_at' => $trx->callback_received_at ?: now(),
+                    'duitku_reference'     => $res['reference'] ?? $trx->duitku_reference,
+                ]);
+                $duitku->handleSuccessfulPayment($trx, $res);
+                $this->toastSuccess("Transaksi {$trx->merchant_order_id} berhasil disinkronkan: SUKSES (LUNAS)!");
+            } elseif ($statusCode === '01') {
+                $this->toastWarning("Status transaksi di Duitku masih PENDING (Menunggu Pembayaran).");
+            } elseif ($statusCode === '02') {
+                $trx->update([
+                    'status'         => 'failed',
+                    'failure_reason' => $statusMessage,
+                ]);
+                $this->toastInfo("Status transaksi di Duitku: GAGAL / EXPIRED ({$statusMessage}).");
+            } else {
+                $this->toastWarning("Respon dari Duitku: [{$statusCode}] {$statusMessage}");
+            }
+        } catch (\Throwable $e) {
+            $this->toastError("Gagal menghubungi API Duitku: " . $e->getMessage());
+        }
+    }
+
+    /**
+     * Sinkronkan semua transaksi yang masih berstatus pending ke API Duitku.
+     */
+    public function syncAllPendingGateway(): void
+    {
+        $pendingTransactions = PaymentTransaction::where('status', 'pending')
+            ->orderBy('created_at', 'desc')
+            ->limit(30)
+            ->get();
+
+        if ($pendingTransactions->isEmpty()) {
+            $this->toastInfo('Tidak ada transaksi berstatus pending saat ini.');
+            return;
+        }
+
+        $duitku       = app(\App\Modules\Keuangan\Services\DuitkuService::class);
+        $successCount = 0;
+        $failedCount  = 0;
+
+        foreach ($pendingTransactions as $trx) {
+            try {
+                $res = $duitku->checkTransactionStatus($trx->merchant_order_id);
+                $statusCode = (string) ($res['statusCode'] ?? ($res['status_code'] ?? ''));
+
+                if ($statusCode === '00') {
+                    $trx->update([
+                        'status'               => 'success',
+                        'callback_received_at' => $trx->callback_received_at ?: now(),
+                        'duitku_reference'     => $res['reference'] ?? $trx->duitku_reference,
+                    ]);
+                    $duitku->handleSuccessfulPayment($trx, $res);
+                    $successCount++;
+                } elseif ($statusCode === '02') {
+                    $trx->update([
+                        'status'         => 'failed',
+                        'failure_reason' => $res['statusMessage'] ?? 'Expired',
+                    ]);
+                    $failedCount++;
+                }
+            } catch (\Throwable $e) {
+                // Continue to next transaction
+            }
+        }
+
+        if ($successCount > 0) {
+            $this->toastSuccess("{$successCount} transaksi berhasil disinkronkan menjadi SUKSES (LUNAS)!");
+        } else {
+            $this->toastInfo("Pengecekan selesai. Semua transaksi pending masih belum dibayar oleh wali.");
+        }
+    }
+
     protected $queryString = [
         'activeTab' => ['as' => 'tab', 'except' => 'generate'],
         'filterSearch' => ['except' => ''],
@@ -413,6 +617,9 @@ class BillingManager extends Component
 
         $this->newConfigEffectiveFrom = now()->toDateString();
         $this->cashierYear = (int) now()->format('Y');
+
+        $this->settlementDateFrom = now()->startOfMonth()->toDateString();
+        $this->settlementDateTo   = now()->toDateString();
 
         $this->loadKitabPrices();
     }
@@ -1902,6 +2109,12 @@ class BillingManager extends Component
             return;
         }
 
+        // ✅ SERVER-SIDE GUARD: Transaksi gateway tidak boleh di-void
+        if (strtolower($payment->payment_method) === 'gateway_duitku') {
+            $this->toastError('Transaksi yang dibayar via Duitku (QRIS/VA) tidak dapat dibatalkan dari sistem ini. Hubungi Duitku jika diperlukan.');
+            return;
+        }
+
         $canVoid = $isCentral 
             || ($user && $payment->logged_by === $user->id)
             || ($user && $user->hasPermissionTo('void-pembayaran'));
@@ -1964,6 +2177,13 @@ class BillingManager extends Component
         $payment = BillPayment::find($this->paymentToVoidId);
         if (!$payment) {
             $this->toastError('Data transaksi pembayaran tidak ditemukan.');
+            $this->closeVoidModal();
+            return;
+        }
+
+        // ✅ SERVER-SIDE GUARD: Double-check — transaksi gateway tidak boleh di-void
+        if (strtolower($payment->payment_method) === 'gateway_duitku') {
+            $this->toastError('Transaksi yang dibayar via Duitku tidak dapat dibatalkan dari sistem ini.');
             $this->closeVoidModal();
             return;
         }
@@ -2155,6 +2375,321 @@ class BillingManager extends Component
         $this->instTotalAmount = 0.00;
 
         session()->flash('message', "Tagihan cicilan berhasil dibuat sebanyak {$result['terms']} termin.");
+    }
+
+    // =========================================================================
+    // Rekonsiliasi & Settlement Logic (Fase 4)
+    // =========================================================================
+
+    public function canViewSettlementTab(): bool
+    {
+        $user = auth()->user();
+        if (!$user) return false;
+
+        return $user->hasRole([
+            'super-admin',
+            'manajemen',
+            'pengasuh',
+            'bendahara-pondok',
+            'bendahara-pusat',
+            'bendahara-putra',
+            'bendahara-putri',
+        ]);
+    }
+
+    public function canLockSettlement(): bool
+    {
+        $user = auth()->user();
+        if (!$user) return false;
+
+        return $user->hasRole([
+            'super-admin',
+            'manajemen',
+            'bendahara-pondok',
+            'bendahara-pusat',
+        ]);
+    }
+
+    public function setSettlementQuickDate(string $preset): void
+    {
+        match ($preset) {
+            'today' => [
+                $this->settlementDateFrom = now()->toDateString(),
+                $this->settlementDateTo   = now()->toDateString(),
+            ],
+            'last_7_days' => [
+                $this->settlementDateFrom = now()->subDays(6)->toDateString(),
+                $this->settlementDateTo   = now()->toDateString(),
+            ],
+            'this_month' => [
+                $this->settlementDateFrom = now()->startOfMonth()->toDateString(),
+                $this->settlementDateTo   = now()->toDateString(),
+            ],
+            'last_month' => [
+                $this->settlementDateFrom = now()->subMonth()->startOfMonth()->toDateString(),
+                $this->settlementDateTo   = now()->subMonth()->endOfMonth()->toDateString(),
+            ],
+            default => null,
+        };
+    }
+
+    public function openDormitoryDetailModal(string $dormitoryId): void
+    {
+        $this->modalDormitoryId   = $dormitoryId;
+        $this->showDormitoryModal = true;
+    }
+
+    public function closeDormitoryDetailModal(): void
+    {
+        $this->showDormitoryModal = false;
+        $this->modalDormitoryId   = null;
+    }
+
+    public function saveSettlementSnapshot(): void
+    {
+        if (!$this->canLockSettlement()) {
+            $this->toastError('Anda tidak memiliki wewenang untuk mengunci rekonsiliasi.');
+            return;
+        }
+
+        $report = $this->settlementReport;
+
+        if ($report['total_net'] <= 0) {
+            $this->toastWarning('Tidak ada dana untuk direkonsiliasi pada periode ini.');
+            return;
+        }
+
+        FundDistribution::create([
+            'id'             => Str::uuid()->toString(),
+            'period_from'    => $this->settlementDateFrom ?: now()->startOfMonth()->toDateString(),
+            'period_to'      => $this->settlementDateTo ?: now()->toDateString(),
+            'gender'         => $this->genderScope() ?: ($this->settlementGender ?: null),
+            'total_gross'    => $report['total_gross'],
+            'total_mdr'      => $report['total_mdr'],
+            'total_net'      => $report['total_net'],
+            'breakdown'      => [
+                'categories'  => $report['category_breakdown'],
+                'dormitories' => $report['dormitory_breakdown'],
+            ],
+            'online_amount'  => $report['total_net'],
+            'manual_amount'  => 0,
+            'online_count'   => $report['total_trx'],
+            'manual_count'   => 0,
+            'status'         => 'distributed',
+            'distributed_at' => now(),
+            'distributed_by' => auth()->id(),
+            'notes'          => $this->settlementNotes ?: 'Rekonsiliasi & Distribusi Periode ' . $report['period_label'],
+        ]);
+
+        $this->settlementNotes = '';
+        $this->toastSuccess('Rekonsiliasi & Distribusi Dana berhasil disimpan ke audit log pembukuan.');
+    }
+
+    public function getSettlementReportProperty(): array
+    {
+        $dateFrom = $this->settlementDateFrom ?: now()->startOfMonth()->toDateString();
+        $dateTo   = $this->settlementDateTo ?: now()->toDateString();
+        $source   = $this->settlementSource ?: 'gateway';
+
+        $genderScope  = $this->genderScope();
+        $targetGender = $genderScope ?: $this->settlementGender;
+
+        $fromCarbon = \Carbon\Carbon::parse($dateFrom)->startOfDay();
+        $toCarbon   = \Carbon\Carbon::parse($dateTo)->endOfDay();
+
+        $totalGross = 0.0;
+        $totalMdr   = 0.0;
+        $totalNet   = 0.0;
+        $totalTrx   = 0;
+
+        $categories = [
+            'syahriah_putra' => ['key' => 'syahriah_putra', 'label' => 'Syahriah / SPP Pondok Putra', 'desc' => 'Operasional pesantren unit putra', 'amount' => 0.0, 'count' => 0, 'icon' => '🕌', 'color' => 'blue'],
+            'syahriah_putri' => ['key' => 'syahriah_putri', 'label' => 'Syahriah / SPP Pondok Putri', 'desc' => 'Operasional pesantren unit putri', 'amount' => 0.0, 'count' => 0, 'icon' => '🕌', 'color' => 'pink'],
+            'madrasah'       => ['key' => 'madrasah', 'label' => 'Syahriah Madrasah', 'desc' => 'Operasional pendidikan formal/diniyah', 'amount' => 0.0, 'count' => 0, 'icon' => '🏫', 'color' => 'emerald'],
+            'kitab'          => ['key' => 'kitab', 'label' => 'Biaya Kitab / Buku', 'desc' => 'Pengadaan sarana belajar santri', 'amount' => 0.0, 'count' => 0, 'icon' => '📚', 'color' => 'amber'],
+            'majek_pagi'     => ['key' => 'majek_pagi', 'label' => 'Katering Majek (Pagi)', 'desc' => 'Logistik konsumsi makan pagi santri', 'amount' => 0.0, 'count' => 0, 'icon' => '🍲', 'color' => 'orange'],
+            'majek_sore'     => ['key' => 'majek_sore', 'label' => 'Katering Majek (Sore)', 'desc' => 'Logistik konsumsi makan sore santri', 'amount' => 0.0, 'count' => 0, 'icon' => '🍲', 'color' => 'orange'],
+            'kas_komplek'    => ['key' => 'kas_komplek', 'label' => 'Kas Komplek / Asrama (Total)', 'desc' => 'Dana titipan kebersihan & kegiatan asrama', 'amount' => 0.0, 'count' => 0, 'icon' => '🏠', 'color' => 'indigo'],
+            'lainnya'        => ['key' => 'lainnya', 'label' => 'Iuran Lainnya / Insidental', 'desc' => 'Pendaftaran, kebersihan, & event', 'amount' => 0.0, 'count' => 0, 'icon' => '🏷️', 'color' => 'slate'],
+        ];
+
+        $dormitories = Dormitory::active()
+            ->when($targetGender, fn($q, $g) => $q->where('gender', $g))
+            ->orderByRaw("gender ASC, name ASC")->get();
+
+        $dormBreakdown = [];
+        foreach ($dormitories as $d) {
+            $dormBreakdown[$d->id] = [
+                'dormitory_id'   => $d->id,
+                'dormitory_name' => $d->name,
+                'gender'         => $d->gender,
+                'count_santri'   => 0,
+                'count_bills'    => 0,
+                'total_amount'   => 0.0,
+                'santri_ids'     => [],
+                'santri_list'    => [],
+            ];
+        }
+
+        // 1. Gateway
+        if ($source === 'gateway' || $source === 'all') {
+            $gatewayQuery = PaymentTransaction::where('status', 'success')
+                ->where(function ($q) use ($fromCarbon, $toCarbon) {
+                    $q->whereBetween('callback_received_at', [$fromCarbon, $toCarbon])
+                      ->orWhere(function ($oq) use ($fromCarbon, $toCarbon) {
+                          $oq->whereNull('callback_received_at')
+                             ->whereBetween('created_at', [$fromCarbon, $toCarbon]);
+                      });
+                })
+                ->when($targetGender, fn($q, $g) => $q->whereHas('person', fn($pq) => $pq->where('gender', $g)))
+                ->with(['person.roomAssignments' => fn($q) => $q->active()->with('room.dormitory')]);
+
+            $gatewayTrx = $gatewayQuery->get();
+            $totalTrx += $gatewayTrx->count();
+
+            foreach ($gatewayTrx as $trx) {
+                $totalGross += (float) $trx->total_amount;
+                $totalMdr   += (float) $trx->mdr_amount;
+                $totalNet   += (float) $trx->bill_amount;
+
+                $person = $trx->person;
+                $activeAssignment = $person?->roomAssignments?->first();
+                $dormId = $activeAssignment?->room?->dormitory_id;
+
+                foreach ($trx->bill_breakdown ?? [] as $item) {
+                    $amt = (float) ($item['pay_portion'] ?? $item['net_amount'] ?? 0);
+                    $type = $item['bill_type'] ?? '';
+
+                    $this->allocateCategory($categories, $type, $amt, $person?->gender, $item['config_label'] ?? null);
+
+                    if ($type === 'kas_komplek' && $dormId && isset($dormBreakdown[$dormId])) {
+                        $dormBreakdown[$dormId]['total_amount'] += $amt;
+                        $dormBreakdown[$dormId]['count_bills']++;
+                        if ($person && !in_array($person->id, $dormBreakdown[$dormId]['santri_ids'])) {
+                            $dormBreakdown[$dormId]['santri_ids'][] = $person->id;
+                        }
+                        $dormBreakdown[$dormId]['santri_list'][] = [
+                            'nis'       => $person->nis ?? '-',
+                            'name'      => $person->name ?? '—',
+                            'room_name' => $activeAssignment?->room?->name ?? '-',
+                            'paid_date' => $trx->created_at->locale('id')->translatedFormat('d M, H:i'),
+                            'method'    => ($trx->channel_label ?? $trx->payment_channel ?? 'Online') . ' (Duitku)',
+                            'amount'    => $amt,
+                        ];
+                        $dormBreakdown[$dormId]['count_santri'] = count($dormBreakdown[$dormId]['santri_ids']);
+                    }
+                }
+            }
+        }
+
+        // 2. Kasir
+        if ($source === 'kasir' || $source === 'all') {
+            $kasirQuery = BillPayment::where('payment_method', '!=', 'gateway_duitku')
+                ->where(function ($q) use ($dateFrom, $dateTo, $fromCarbon, $toCarbon) {
+                    $q->whereBetween('payment_date', [$dateFrom, $dateTo])
+                      ->orWhereBetween('created_at', [$fromCarbon, $toCarbon]);
+                })
+                ->when($targetGender, fn($q, $g) => $q->whereHas('bill.person', fn($pq) => $pq->where('gender', $g)))
+                ->with(['bill.person.roomAssignments' => fn($q) => $q->active()->with('room.dormitory'), 'bill.config']);
+
+            $kasirPayments = $kasirQuery->get();
+            $totalTrx += $kasirPayments->count();
+
+            foreach ($kasirPayments as $pay) {
+                $amt = (float) $pay->amount_paid;
+                $totalGross += $amt;
+                $totalNet   += $amt;
+
+                $bill = $pay->bill;
+                $person = $bill?->person;
+                $activeAssignment = $person?->roomAssignments?->first();
+                $dormId = $activeAssignment?->room?->dormitory_id;
+                $type = $bill?->bill_type ?? '';
+
+                $this->allocateCategory($categories, $type, $amt, $person?->gender, $bill?->config?->label ?? null);
+
+                if ($type === 'kas_komplek' && $dormId && isset($dormBreakdown[$dormId])) {
+                    $dormBreakdown[$dormId]['total_amount'] += $amt;
+                    $dormBreakdown[$dormId]['count_bills']++;
+                    if ($person && !in_array($person->id, $dormBreakdown[$dormId]['santri_ids'])) {
+                        $dormBreakdown[$dormId]['santri_ids'][] = $person->id;
+                    }
+                    $dormBreakdown[$dormId]['santri_list'][] = [
+                        'nis'       => $person->nis ?? '-',
+                        'name'      => $person->name ?? '—',
+                        'room_name' => $activeAssignment?->room?->name ?? '-',
+                        'paid_date' => $pay->payment_date ? \Carbon\Carbon::parse($pay->payment_date)->locale('id')->translatedFormat('d M Y') : '-',
+                        'method'    => strtoupper($pay->payment_method ?? 'Kasir'),
+                        'amount'    => $amt,
+                    ];
+                    $dormBreakdown[$dormId]['count_santri'] = count($dormBreakdown[$dormId]['santri_ids']);
+                }
+            }
+        }
+
+        $periodLabel = \Carbon\Carbon::parse($dateFrom)->locale('id')->translatedFormat('d M Y') . ' s/d ' . \Carbon\Carbon::parse($dateTo)->locale('id')->translatedFormat('d M Y');
+
+        return [
+            'period_label'        => $periodLabel,
+            'total_gross'         => $totalGross,
+            'total_mdr'           => $totalMdr,
+            'total_net'           => $totalNet,
+            'total_trx'           => $totalTrx,
+            'category_breakdown'  => array_values(array_filter($categories, fn($c) => $c['amount'] > 0)),
+            'dormitory_breakdown' => array_values(array_filter($dormBreakdown, fn($d) => $d['total_amount'] > 0)),
+        ];
+    }
+
+    private function allocateCategory(array &$categories, string $type, float $amt, ?string $gender = null, ?string $customLabel = null): void
+    {
+        switch ($type) {
+            case 'syahriah_pondok':
+                if ($gender === 'P') {
+                    $categories['syahriah_putri']['amount'] += $amt;
+                    $categories['syahriah_putri']['count']++;
+                } else {
+                    $categories['syahriah_putra']['amount'] += $amt;
+                    $categories['syahriah_putra']['count']++;
+                }
+                break;
+            case 'syahriah_madrasah':
+                $categories['madrasah']['amount'] += $amt;
+                $categories['madrasah']['count']++;
+                break;
+            case 'kitab':
+                $categories['kitab']['amount'] += $amt;
+                $categories['kitab']['count']++;
+                break;
+            case 'majek_pagi':
+                $categories['majek_pagi']['amount'] += $amt;
+                $categories['majek_pagi']['count']++;
+                break;
+            case 'majek_sore':
+                $categories['majek_sore']['amount'] += $amt;
+                $categories['majek_sore']['count']++;
+                break;
+            case 'kas_komplek':
+                $categories['kas_komplek']['amount'] += $amt;
+                $categories['kas_komplek']['count']++;
+                break;
+            default:
+                $key = !empty($customLabel) ? Str::slug($customLabel, '_') : (!empty($type) ? $type : 'lainnya');
+                if (!isset($categories[$key])) {
+                    $label = $customLabel ?: ucwords(str_replace('_', ' ', $key));
+                    $categories[$key] = [
+                        'key'    => $key,
+                        'label'  => $label,
+                        'desc'   => 'Pos Tagihan ' . $label,
+                        'amount' => 0.0,
+                        'count'  => 0,
+                        'icon'   => '🏷️',
+                        'color'  => 'slate',
+                    ];
+                }
+                $categories[$key]['amount'] += $amt;
+                $categories[$key]['count']++;
+                break;
+        }
     }
 
     public function render()
@@ -2623,9 +3158,11 @@ class BillingManager extends Component
 
         // Summary Statistics for the filtered log query
         $summaryBaseQuery = clone $paymentsLogQuery;
-        $payLogTotalCash = (float) (clone $summaryBaseQuery)->where('payment_method', 'cash')->sum('amount_paid');
+        $payLogTotalCash     = (float) (clone $summaryBaseQuery)->where('payment_method', 'cash')->sum('amount_paid');
         $payLogTotalTransfer = (float) (clone $summaryBaseQuery)->where('payment_method', 'transfer')->sum('amount_paid');
-        $payLogTotalCount = (int) (clone $summaryBaseQuery)->count();
+        $payLogTotalGateway  = (float) (clone $summaryBaseQuery)->where('payment_method', 'gateway_duitku')->sum('amount_paid');
+        $payLogTotalCount    = (int) (clone $summaryBaseQuery)->count();
+        $payLogGatewayCount  = (int) (clone $summaryBaseQuery)->where('payment_method', 'gateway_duitku')->count();
 
         $paymentsLog = $paymentsLogQuery->paginate(15, pageName: 'payLogPage');
         $generationHistory = $historyQuery->paginate(10, pageName: 'historyPage');
@@ -2651,7 +3188,54 @@ class BillingManager extends Component
         }
         $registrationItems = $regItemsQuery->orderBy('is_active', 'desc')->orderBy('created_at', 'desc')->get();
 
+        // ─── Gateway Transactions ─────────────────────────────────────────────
+        $gatewayBaseQuery = PaymentTransaction::with('person')
+            ->when($this->genderScope(), fn($q, $g) => $q->whereHas('person', fn($pq) => $pq->where('gender', $g)))
+            ->when($this->gatewaySearch, function ($q) {
+                $s = $this->gatewaySearch;
+                $q->where(function ($sub) use ($s) {
+                    $sub->whereHas('person', fn($pq) => $pq->where('name', 'like', "%{$s}%"))
+                        ->orWhere('merchant_order_id', 'like', "%{$s}%")
+                        ->orWhere('duitku_reference', 'like', "%{$s}%");
+                });
+            })
+            ->when($this->gatewayStatus, fn($q) => $q->where('status', $this->gatewayStatus))
+            ->when($this->gatewayChannel, fn($q) => $q->where('payment_channel', $this->gatewayChannel))
+            ->when($this->gatewayStartDate, fn($q) => $q->whereDate('created_at', '>=', $this->gatewayStartDate))
+            ->when($this->gatewayEndDate, fn($q) => $q->whereDate('created_at', '<=', $this->gatewayEndDate));
+
+        $gatewayTransactions = (clone $gatewayBaseQuery)->orderBy('created_at', 'desc')->paginate(20, pageName: 'gatewayPage');
+
+        // KPI stats menggunakan data yang sudah terfilter (agar konsisten dengan tabel)
+        $gatewayStats = [
+            'success_count'  => (clone $gatewayBaseQuery)->where('status', 'success')->count(),
+            'success_amount' => (float) (clone $gatewayBaseQuery)->where('status', 'success')->sum('bill_amount'),
+            'pending_count'  => (clone $gatewayBaseQuery)->where('status', 'pending')->count(),
+            'failed_count'   => (clone $gatewayBaseQuery)->whereIn('status', ['failed', 'expired'])->count(),
+            'total_mdr'      => (float) (clone $gatewayBaseQuery)->where('status', 'success')->sum('mdr_amount'),
+        ];
+        // Badge count di tab selalu pakai angka global (semua, bukan terfilter)
+        $gatewayPendingCount = PaymentTransaction::when($this->genderScope(), fn($q, $g) => $q->whereHas('person', fn($pq) => $pq->where('gender', $g)))->where('status', 'pending')->count();
+
+        // Settlement data (Fase 4)
+        $settlementReport = $this->settlementReport;
+        $savedDistributions = FundDistribution::with('distributor')->orderBy('distributed_at', 'desc')->paginate(5, ['*'], 'distPage');
+
+        // Modal dormitory santri list
+        $modalDormitoryData = null;
+        if ($this->showDormitoryModal && $this->modalDormitoryId) {
+            foreach ($settlementReport['dormitory_breakdown'] as $db) {
+                if ($db['dormitory_id'] === $this->modalDormitoryId) {
+                    $modalDormitoryData = $db;
+                    break;
+                }
+            }
+        }
+
         return view('livewire.keuangan.billing-manager', [
+            'settlementReport'    => $settlementReport,
+            'savedDistributions'  => $savedDistributions,
+            'modalDormitoryData'  => $modalDormitoryData,
             'registrationItems'   => $registrationItems,
             'santriSearchResults' => $santriSearch,
             'recentSantri'        => $recentSantri,
@@ -2682,11 +3266,16 @@ class BillingManager extends Component
             'paymentsLog'         => $paymentsLog,
             'payLogTotalCash'     => $payLogTotalCash,
             'payLogTotalTransfer' => $payLogTotalTransfer,
+            'payLogTotalGateway'  => $payLogTotalGateway,
+            'payLogGatewayCount'  => $payLogGatewayCount,
             'payLogTotalCount'    => $payLogTotalCount,
             'cashierUsers'        => $cashierUsers,
             'payLogConfigs'       => $payLogConfigs,
             'payLogDormitories'   => $payLogDormitories,
             'payLogClasses'       => $payLogClasses,
+            'gatewayTransactions' => $gatewayTransactions,
+            'gatewayStats'        => $gatewayStats,
+            'gatewayPendingCount' => $gatewayPendingCount,
             'kpiStats'            => [
                 'total_count'         => $kpiTotalBillsCount,
                 'total_amount'        => $kpiTotalAmount,

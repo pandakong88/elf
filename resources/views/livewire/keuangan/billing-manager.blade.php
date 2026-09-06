@@ -277,6 +277,20 @@
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
                 <span>Kasir Utama (12 Bulan)</span>
             </button>
+            <button wire:click="$set('activeTab', 'gateway_transactions')" class="px-5 py-3 text-xs font-bold transition-all border-b-2 flex items-center gap-2 whitespace-nowrap {{ $activeTab === 'gateway_transactions' ? 'border-amber-500 text-amber-600 dark:text-amber-400' : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300' }}">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                <span>Transaksi Gateway</span>
+                @if(isset($gatewayPendingCount) && $gatewayPendingCount > 0)
+                    <span class="inline-flex items-center justify-center w-4 h-4 text-[9px] font-extrabold bg-amber-500 text-white rounded-full">{{ $gatewayPendingCount }}</span>
+                @endif
+            </button>
+            @if($this->canViewSettlementTab())
+                <button wire:click="$set('activeTab', 'settlement')" class="px-5 py-3 text-xs font-bold transition-all border-b-2 flex items-center gap-2 whitespace-nowrap {{ $activeTab === 'settlement' ? 'border-sky-500 text-sky-600 dark:text-sky-400' : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300' }}">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3"/></svg>
+                    <span>Rekonsiliasi &amp; Settlement</span>
+                    <span class="inline-flex items-center justify-center px-1.5 py-0.5 text-[9px] font-black bg-sky-500/10 text-sky-600 dark:text-sky-400 border border-sky-500/30 rounded-full">Fase 4</span>
+                </button>
+            @endif
             <button wire:click="$set('activeTab', 'payments_log')" class="px-5 py-3 text-xs font-bold transition-all border-b-2 flex items-center gap-2 whitespace-nowrap {{ $activeTab === 'payments_log' ? 'border-emerald-500 text-emerald-600 dark:text-emerald-400' : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300' }}">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/></svg>
                 <span>Riwayat Setoran (Log)</span>
@@ -2209,33 +2223,44 @@
         @if ($activeTab === 'payments_log')
             <div class="space-y-8 animate-fade-in">
                 <!-- Real-time KPI Summary Cards for Filtered Results -->
-                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                     <div class="bg-gradient-to-br from-emerald-500/10 via-emerald-500/5 to-transparent border border-emerald-500/20 dark:border-emerald-500/30 p-4 rounded-2xl flex items-center gap-3.5 shadow-2xs">
-                        <div class="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-lg font-bold">
+                        <div class="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-lg font-bold shrink-0">
                             💵
                         </div>
                         <div>
-                            <span class="block text-[10px] font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Total Setor Tunai (Cash)</span>
+                            <span class="block text-[10px] font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Total Tunai (Cash)</span>
                             <span class="text-base font-extrabold text-emerald-600 dark:text-emerald-400">Rp {{ number_format($payLogTotalCash, 0, ',', '.') }}</span>
                         </div>
                     </div>
 
                     <div class="bg-gradient-to-br from-blue-500/10 via-blue-500/5 to-transparent border border-blue-500/20 dark:border-blue-500/30 p-4 rounded-2xl flex items-center gap-3.5 shadow-2xs">
-                        <div class="w-10 h-10 rounded-xl bg-blue-500/20 text-blue-600 dark:text-blue-400 flex items-center justify-center text-lg font-bold">
-                            💳
+                        <div class="w-10 h-10 rounded-xl bg-blue-500/20 text-blue-600 dark:text-blue-400 flex items-center justify-center text-lg font-bold shrink-0">
+                            🏦
                         </div>
                         <div>
-                            <span class="block text-[10px] font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Total Setor Transfer</span>
+                            <span class="block text-[10px] font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Total Transfer Bank</span>
                             <span class="text-base font-extrabold text-blue-600 dark:text-blue-400">Rp {{ number_format($payLogTotalTransfer, 0, ',', '.') }}</span>
                         </div>
                     </div>
 
+                    <div class="bg-gradient-to-br from-amber-500/10 via-amber-500/5 to-transparent border border-amber-500/20 dark:border-amber-500/30 p-4 rounded-2xl flex items-center gap-3.5 shadow-2xs">
+                        <div class="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-600 dark:text-amber-400 flex items-center justify-center text-lg font-bold shrink-0">
+                            ⚡
+                        </div>
+                        <div>
+                            <span class="block text-[10px] font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Via Gateway Duitku</span>
+                            <span class="text-base font-extrabold text-amber-600 dark:text-amber-400">Rp {{ number_format($payLogTotalGateway, 0, ',', '.') }}</span>
+                            <span class="text-[9px] text-slate-400">{{ $payLogGatewayCount }} transaksi online</span>
+                        </div>
+                    </div>
+
                     <div class="bg-gradient-to-br from-indigo-500/10 via-indigo-500/5 to-transparent border border-indigo-500/20 dark:border-indigo-500/30 p-4 rounded-2xl flex items-center gap-3.5 shadow-2xs">
-                        <div class="w-10 h-10 rounded-xl bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 flex items-center justify-center text-lg font-bold">
+                        <div class="w-10 h-10 rounded-xl bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 flex items-center justify-center text-lg font-bold shrink-0">
                             🧾
                         </div>
                         <div>
-                            <span class="block text-[10px] font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Jumlah Transaksi Terfilter</span>
+                            <span class="block text-[10px] font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Total Transaksi Terfilter</span>
                             <span class="text-base font-extrabold text-indigo-600 dark:text-indigo-400">{{ $payLogTotalCount }} <span class="text-xs font-semibold text-slate-500">Transaksi</span></span>
                         </div>
                     </div>
@@ -2352,9 +2377,9 @@
                                 <label class="block text-[9px] font-extrabold text-slate-400 uppercase tracking-wider mb-1.5">Metode Setoran</label>
                                 <select wire:model.live="payLogMethod" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-100 rounded-xl px-3 py-2 text-xs font-bold focus:ring-2 focus:ring-emerald-500 shadow-2xs">
                                     <option value="">-- Semua Metode --</option>
-                                    <option value="CASH">💵 Tunai (Cash)</option>
-                                    <option value="TRANSFER">🏦 Transfer Bank</option>
-                                    <option value="EWALLET">📱 E-Wallet / Digital</option>
+                                    <option value="cash">💵 Tunai (Cash)</option>
+                                    <option value="transfer">🏦 Transfer Bank</option>
+                                    <option value="gateway_duitku">⚡ Gateway Duitku (QRIS/VA)</option>
                                 </select>
                             </div>
                         </div>
@@ -2425,17 +2450,32 @@
                                             Rp {{ number_format($pay->amount_paid, 0, ',', '.') }}
                                         </td>
                                         <td class="py-4 px-4 text-center">
-                                            <span class="inline-block px-2.5 py-1 rounded-lg text-[9px] font-extrabold uppercase tracking-wider
-                                                @if(strtoupper($pay->payment_method) === 'CASH') bg-teal-500/10 text-teal-600 dark:text-teal-400
-                                                @elseif(strtoupper($pay->payment_method) === 'TRANSFER') bg-blue-500/10 text-blue-600 dark:text-blue-400
-                                                @else bg-purple-500/10 text-purple-600 dark:text-purple-400 @endif">
-                                                @if(strtoupper($pay->payment_method) === 'CASH') 💵 Tunai
-                                                @elseif(strtoupper($pay->payment_method) === 'TRANSFER') 🏦 Transfer
-                                                @else 📱 E-Wallet @endif
+                                            @php $method = strtolower($pay->payment_method); @endphp
+                                            <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[9px] font-extrabold uppercase tracking-wider
+                                                @if($method === 'cash') bg-teal-500/10 text-teal-600 dark:text-teal-400
+                                                @elseif($method === 'transfer') bg-blue-500/10 text-blue-600 dark:text-blue-400
+                                                @elseif($method === 'gateway_duitku') bg-amber-500/10 text-amber-600 dark:text-amber-400
+                                                @else bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400 @endif">
+                                                @if($method === 'cash') 💵 Tunai
+                                                @elseif($method === 'transfer') 🏦 Transfer
+                                                @elseif($method === 'gateway_duitku') ⚡ Duitku Online
+                                                @else 💳 {{ $pay->payment_method }} @endif
                                             </span>
                                         </td>
-                                        <td class="py-4 px-4 text-slate-505 max-w-[150px] truncate" title="{{ $pay->notes }}">
-                                            {{ $pay->notes ?: '—' }}
+                                        <td class="py-4 px-4 max-w-[180px]">
+                                            @if($method === 'gateway_duitku')
+                                                @php
+                                                    // Ekstrak nomor referensi dari catatan
+                                                    preg_match('/Ref transaksi:\s*(\S+)/', $pay->notes ?? '', $refMatch);
+                                                    $refCode = $refMatch[1] ?? null;
+                                                @endphp
+                                                <span class="text-[10px] text-slate-500 dark:text-slate-400 block">Bayar mandiri via Duitku</span>
+                                                @if($refCode)
+                                                    <code class="text-[9px] font-mono bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 px-1.5 py-0.5 rounded mt-0.5 block truncate" title="{{ $refCode }}">{{ $refCode }}</code>
+                                                @endif
+                                            @else
+                                                <span class="text-slate-500 dark:text-slate-400 text-[11px] truncate block" title="{{ $pay->notes }}">{{ $pay->notes ?: '—' }}</span>
+                                            @endif
                                         </td>
                                         <td class="py-4 px-4">
                                             <span class="inline-flex items-center gap-1.5 px-2 py-0.5 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-md text-[10px] text-slate-700 dark:text-slate-300 font-bold whitespace-nowrap">
@@ -2443,11 +2483,33 @@
                                             </span>
                                         </td>
                                         <td class="py-4 px-4 text-center">
-                                            <button type="button" wire:click="confirmVoidPayment('{{ $pay->id }}')" 
-                                                class="px-2.5 py-1.5 bg-rose-500/10 hover:bg-rose-500 text-rose-600 hover:text-white rounded-xl text-[10px] font-bold transition-all whitespace-nowrap">
-                                                🗑️ Batalkan / Void
-                                            </button>
+                                            <div class="flex items-center justify-center gap-1.5">
+                                                {{-- ⬇ PDF Download --}}
+                                                @if($method === 'gateway_duitku')
+                                                    {{-- Gateway: cari PaymentTransaction via reference di notes --}}
+                                                @else
+                                                    <a href="{{ route('bukti-bayar.kasir', $pay->id) }}" target="_blank"
+                                                       class="inline-flex items-center gap-1 px-2 py-1.5 bg-indigo-500/10 hover:bg-indigo-500 text-indigo-600 hover:text-white rounded-xl text-[9px] font-bold transition-all whitespace-nowrap"
+                                                       title="Unduh PDF Bukti Bayar">
+                                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                                                        PDF
+                                                    </a>
+                                                @endif
+
+                                                {{-- 🗑 Void Button --}}
+                                                @if($method === 'gateway_duitku')
+                                                    <span class="inline-flex items-center gap-1 px-2.5 py-1.5 bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 rounded-xl text-[9px] font-bold whitespace-nowrap cursor-not-allowed" title="Transaksi online tidak dapat di-void. Hubungi Duitku jika diperlukan.">
+                                                        🔒 Tidak Bisa Void
+                                                    </span>
+                                                @else
+                                                    <button type="button" wire:click="confirmVoidPayment('{{ $pay->id }}')"
+                                                        class="px-2.5 py-1.5 bg-rose-500/10 hover:bg-rose-500 text-rose-600 hover:text-white rounded-xl text-[9px] font-bold transition-all whitespace-nowrap">
+                                                        🗑️ Void
+                                                    </button>
+                                                @endif
+                                            </div>
                                         </td>
+
                                     </tr>
                                 @empty
                                     <tr>
@@ -2480,7 +2542,828 @@
             </div>
         @endif
 
-        {{-- TAB: TARIF SANTRI BARU & KITAB --}}
+        {{-- TAB: TRANSAKSI GATEWAY DUITKU --}}
+        @if ($activeTab === 'gateway_transactions')
+            <div class="space-y-6 animate-fade-in">
+
+                {{-- KPI Cards --}}
+                <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div class="bg-gradient-to-br from-emerald-500/10 to-transparent border border-emerald-500/20 dark:border-emerald-500/30 p-4 rounded-2xl flex items-center gap-3 shadow-2xs">
+                        <div class="w-9 h-9 rounded-xl bg-emerald-500/20 text-emerald-600 flex items-center justify-center text-base shrink-0">✅</div>
+                        <div>
+                            <span class="block text-[9px] font-extrabold text-slate-400 uppercase tracking-wider">Sukses</span>
+                            <span class="text-sm font-extrabold text-emerald-600 dark:text-emerald-400">{{ $gatewayStats['success_count'] ?? 0 }}</span>
+                            <span class="text-[9px] text-slate-400 block">Rp {{ number_format($gatewayStats['success_amount'] ?? 0, 0, ',', '.') }}</span>
+                        </div>
+                    </div>
+                    <div class="bg-gradient-to-br from-amber-500/10 to-transparent border border-amber-500/20 dark:border-amber-500/30 p-4 rounded-2xl flex items-center gap-3 shadow-2xs">
+                        <div class="w-9 h-9 rounded-xl bg-amber-500/20 text-amber-600 flex items-center justify-center text-base shrink-0">⏳</div>
+                        <div>
+                            <span class="block text-[9px] font-extrabold text-slate-400 uppercase tracking-wider">Menunggu</span>
+                            <span class="text-sm font-extrabold text-amber-600 dark:text-amber-400">{{ $gatewayStats['pending_count'] ?? 0 }}</span>
+                            <span class="text-[9px] text-slate-400 block">transaksi aktif</span>
+                        </div>
+                    </div>
+                    <div class="bg-gradient-to-br from-rose-500/10 to-transparent border border-rose-500/20 dark:border-rose-500/30 p-4 rounded-2xl flex items-center gap-3 shadow-2xs">
+                        <div class="w-9 h-9 rounded-xl bg-rose-500/20 text-rose-600 flex items-center justify-center text-base shrink-0">❌</div>
+                        <div>
+                            <span class="block text-[9px] font-extrabold text-slate-400 uppercase tracking-wider">Gagal / Expired</span>
+                            <span class="text-sm font-extrabold text-rose-600 dark:text-rose-400">{{ $gatewayStats['failed_count'] ?? 0 }}</span>
+                            <span class="text-[9px] text-slate-400 block">tidak dibayar</span>
+                        </div>
+                    </div>
+                    <div class="bg-gradient-to-br from-indigo-500/10 to-transparent border border-indigo-500/20 dark:border-indigo-500/30 p-4 rounded-2xl flex items-center gap-3 shadow-2xs">
+                        <div class="w-9 h-9 rounded-xl bg-indigo-500/20 text-indigo-600 flex items-center justify-center text-base shrink-0">💸</div>
+                        <div>
+                            <span class="block text-[9px] font-extrabold text-slate-400 uppercase tracking-wider">Total MDR Dibayar</span>
+                            <span class="text-sm font-extrabold text-indigo-600 dark:text-indigo-400">Rp {{ number_format($gatewayStats['total_mdr'] ?? 0, 0, ',', '.') }}</span>
+                            <span class="text-[9px] text-slate-400 block">biaya gateway</span>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Table --}}
+                <div class="bg-white dark:bg-slate-900 border border-slate-200/50 dark:border-slate-800 rounded-3xl shadow-xs overflow-hidden">
+
+                    {{-- Filter Bar --}}
+                    <div class="px-5 py-4 border-b border-slate-100 dark:border-slate-800 space-y-3">
+                        <div class="flex flex-col lg:flex-row lg:items-center gap-3">
+                            {{-- Search --}}
+                            <div class="relative flex-1 min-w-0">
+                                <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                                <input wire:model.live.debounce.300ms="gatewaySearch" type="text" placeholder="Cari nama santri, no. order, atau ref Duitku…" class="w-full pl-8 pr-3 py-2 text-xs bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-700 dark:text-slate-300 placeholder-slate-400 focus:ring-1 focus:ring-amber-400 focus:border-amber-400 outline-none transition"/>
+                            </div>
+                            {{-- Status --}}
+                            <select wire:model.live="gatewayStatus" class="px-3 py-2 text-xs bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-600 dark:text-slate-300 focus:ring-1 focus:ring-amber-400 outline-none transition shrink-0">
+                                <option value="">Semua Status</option>
+                                <option value="success">✅ Sukses</option>
+                                <option value="pending">⏳ Menunggu</option>
+                                <option value="failed">❌ Gagal</option>
+                                <option value="expired">🕐 Expired</option>
+                            </select>
+                            {{-- Channel --}}
+                            <select wire:model.live="gatewayChannel" class="px-3 py-2 text-xs bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-600 dark:text-slate-300 focus:ring-1 focus:ring-amber-400 outline-none transition shrink-0">
+                                <option value="">Semua Channel</option>
+                                @foreach(config('duitku.payment_channels', []) as $code => $cfg)
+                                    <option value="{{ $code }}">{{ $cfg['name'] ?? $code }}</option>
+                                @endforeach
+                            </select>
+                            {{-- Date Range --}}
+                            <div class="flex items-center gap-2 shrink-0">
+                                <input wire:model.live="gatewayStartDate" type="date" class="px-2 py-2 text-xs bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-600 dark:text-slate-300 focus:ring-1 focus:ring-amber-400 outline-none transition w-32"/>
+                                <span class="text-slate-300 dark:text-slate-600 text-xs">—</span>
+                                <input wire:model.live="gatewayEndDate" type="date" class="px-2 py-2 text-xs bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-600 dark:text-slate-300 focus:ring-1 focus:ring-amber-400 outline-none transition w-32"/>
+                            </div>
+                        </div>
+                        {{-- Date Presets + Reset --}}
+                        <div class="flex flex-wrap items-center gap-2">
+                            <span class="text-[9px] font-extrabold text-slate-400 uppercase tracking-wider">Cepat:</span>
+                            @foreach(['today'=>'Hari Ini','yesterday'=>'Kemarin','7days'=>'7 Hari','this_month'=>'Bulan Ini','last_month'=>'Bln Lalu'] as $preset => $label)
+                                <button type="button" wire:click="setGatewayDatePreset('{{ $preset }}')"
+                                    class="px-2.5 py-1 text-[9px] font-bold rounded-lg transition-all
+                                    {{ ($gatewayStartDate && $gatewayEndDate) ? 'bg-amber-500/10 text-amber-700 dark:text-amber-400 hover:bg-amber-500/20' : 'bg-slate-100 dark:bg-slate-800 text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-700' }}">
+                                    {{ $label }}
+                                </button>
+                            @endforeach
+                            @if($gatewaySearch || $gatewayStatus || $gatewayChannel || $gatewayStartDate || $gatewayEndDate)
+                                <button type="button" wire:click="resetGatewayFilters" class="ml-auto flex items-center gap-1 px-2.5 py-1 text-[9px] font-bold text-rose-600 dark:text-rose-400 hover:bg-rose-500/10 rounded-lg transition-all">
+                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                                    Reset Filter
+                                </button>
+                            @endif
+                        </div>
+                    </div>
+
+                    <div class="px-6 py-3.5 border-b border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <div>
+                            <h3 class="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider font-serif-display">Log Transaksi Gateway Duitku</h3>
+                            <p class="text-[11px] text-slate-400 mt-0.5">Semua percobaan pembayaran wali santri via QRIS / Virtual Account — termasuk yang belum berhasil.</p>
+                        </div>
+                        <button type="button" wire:click="syncAllPendingGateway" wire:loading.attr="disabled"
+                            class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-amber-500/10 hover:bg-amber-500/20 text-amber-700 dark:text-amber-300 rounded-xl text-xs font-extrabold border border-amber-500/30 transition shrink-0 active:scale-95">
+                            <svg wire:loading.class="animate-spin" wire:target="syncAllPendingGateway" class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                            <span wire:loading.remove wire:target="syncAllPendingGateway">🔄 Sinkronkan Status Pending</span>
+                            <span wire:loading wire:target="syncAllPendingGateway">Menghubungi Duitku...</span>
+                        </button>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse text-xs min-w-[900px]">
+                            <thead>
+                                <tr class="bg-slate-50/80 dark:bg-slate-950 border-b border-slate-200 dark:border-slate-800 text-slate-500 font-extrabold uppercase tracking-wider text-[9px]">
+                                    <th class="py-4 px-4 w-36">Waktu</th>
+                                    <th class="py-4 px-4">Santri</th>
+                                    <th class="py-4 px-4 text-center">Channel</th>
+                                    <th class="py-4 px-4 text-right">Tagihan</th>
+                                    <th class="py-4 px-4 text-right">MDR</th>
+                                    <th class="py-4 px-4 text-right">Total Bayar</th>
+                                    <th class="py-4 px-4 text-center">Status</th>
+                                    <th class="py-4 px-4">Ref. Duitku</th>
+                                    <th class="py-4 px-4 text-center">Aksi &amp; Rincian</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100 dark:divide-slate-800/50">
+                                @forelse($gatewayTransactions ?? [] as $trx)
+                                    <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/20 transition-colors">
+                                        <td class="py-3 px-4 text-slate-500 font-medium">
+                                            {{ $trx->created_at->translatedFormat('d M Y') }}
+                                            <span class="text-[9px] text-slate-400 block">{{ $trx->created_at->format('H:i') }} WIB</span>
+                                        </td>
+                                        <td class="py-3 px-4">
+                                            <span class="font-bold text-slate-800 dark:text-slate-200 block">{{ $trx->person?->name ?? '—' }}</span>
+                                            <span class="text-[9px] text-slate-400">{{ $trx->person?->gender === 'L' ? '👦' : '👧' }} {{ $trx->merchant_order_id }}</span>
+                                        </td>
+                                        <td class="py-3 px-4 text-center">
+                                            <span class="inline-block px-2 py-0.5 rounded-lg text-[9px] font-extrabold bg-amber-500/10 text-amber-700 dark:text-amber-400 uppercase">
+                                                {{ $trx->channel_label ?? $trx->payment_channel ?? '—' }}
+                                            </span>
+                                        </td>
+                                        <td class="py-3 px-4 text-right font-semibold text-slate-700 dark:text-slate-300">
+                                            Rp {{ number_format($trx->bill_amount, 0, ',', '.') }}
+                                        </td>
+                                        <td class="py-3 px-4 text-right text-rose-500 font-semibold text-[10px]">
+                                            + Rp {{ number_format($trx->mdr_amount, 0, ',', '.') }}
+                                        </td>
+                                        <td class="py-3 px-4 text-right font-extrabold text-slate-900 dark:text-white">
+                                            Rp {{ number_format($trx->total_amount, 0, ',', '.') }}
+                                        </td>
+                                        <td class="py-3 px-4 text-center">
+                                            @php $status = $trx->status; @endphp
+                                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[9px] font-extrabold uppercase
+                                                @if($status === 'success') bg-emerald-500/10 text-emerald-600 dark:text-emerald-400
+                                                @elseif($status === 'pending') bg-amber-500/10 text-amber-600 dark:text-amber-400
+                                                @elseif($status === 'expired') bg-slate-500/10 text-slate-500
+                                                @else bg-rose-500/10 text-rose-600 dark:text-rose-400 @endif">
+                                                @if($status === 'success') ✅ Sukses
+                                                @elseif($status === 'pending') ⏳ Menunggu
+                                                @elseif($status === 'expired') 🕐 Expired
+                                                @else ❌ Gagal @endif
+                                            </span>
+                                            @if($status === 'pending' && $trx->expires_at)
+                                                <span class="text-[9px] text-slate-400 block mt-0.5">exp: {{ $trx->expires_at->diffForHumans() }}</span>
+                                            @endif
+                                        </td>
+                                        <td class="py-3 px-4">
+                                            @if($trx->duitku_reference)
+                                                <code class="text-[9px] font-mono bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 px-1.5 py-0.5 rounded">{{ $trx->duitku_reference }}</code>
+                                            @else
+                                                <span class="text-slate-400 text-[10px]">—</span>
+                                            @endif
+                                        </td>
+                                        {{-- Aksi & Tagihan Terkait --}}
+                                        <td class="py-3 px-4 text-center">
+                                            <div class="inline-flex items-center justify-center gap-1.5 flex-wrap">
+                                                @if($status === 'pending')
+                                                    <button type="button" 
+                                                            wire:click="syncGatewayStatus('{{ $trx->id }}')" 
+                                                            wire:loading.attr="disabled"
+                                                            class="inline-flex items-center gap-1 px-2.5 py-1 text-[9px] font-black rounded-xl bg-amber-500 hover:bg-amber-600 text-white shadow-xs transition active:scale-95"
+                                                            title="Cek status pembayaran ke Duitku secara real-time">
+                                                        <svg wire:loading.class="animate-spin" wire:target="syncGatewayStatus('{{ $trx->id }}')" class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                                                        <span>Cek Status</span>
+                                                    </button>
+                                                @endif
+
+                                                @php $breakdownCount = count($trx->bill_breakdown ?? []); @endphp
+                                                @if($breakdownCount > 0)
+                                                    <button type="button" wire:click="showGatewayBreakdown('{{ $trx->id }}')"
+                                                        class="inline-flex items-center gap-1 px-2.5 py-1 text-[9px] font-extrabold rounded-xl transition-all
+                                                        bg-indigo-500/10 text-indigo-700 dark:text-indigo-400 hover:bg-indigo-500/20 border border-indigo-500/20 dark:border-indigo-500/30">
+                                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/></svg>
+                                                        {{ $breakdownCount }} Tagihan
+                                                    </button>
+                                                @else
+                                                    <span class="text-slate-400 text-[10px]">—</span>
+                                                @endif
+                                            </div>
+                                        </td>
+                                    </tr>
+                                @empty
+                                    <tr>
+                                        <td colspan="9" class="py-16 text-center text-slate-400 font-semibold">
+                                            <div class="flex flex-col items-center gap-3">
+                                                <svg class="w-10 h-10 text-slate-200 dark:text-slate-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                                                <span class="text-sm">Tidak ada transaksi yang cocok dengan filter ini.</span>
+                                                @if($gatewaySearch || $gatewayStatus || $gatewayChannel || $gatewayStartDate || $gatewayEndDate)
+                                                    <button type="button" wire:click="resetGatewayFilters" class="text-xs text-amber-600 hover:underline font-semibold">Reset Filter</button>
+                                                @endif
+                                            </div>
+                                        </td>
+                                    </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
+                    @if(isset($gatewayTransactions) && $gatewayTransactions->total() > 0)
+                        <div class="px-5 py-4 border-t border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-slate-50/50 dark:bg-slate-950/20">
+                            <div class="text-[11px] font-semibold text-slate-400">
+                                Menampilkan <span class="font-bold text-slate-700 dark:text-slate-300">{{ $gatewayTransactions->firstItem() ?? 0 }}</span> s.d. <span class="font-bold text-slate-700 dark:text-slate-300">{{ $gatewayTransactions->lastItem() ?? 0 }}</span> dari <span class="font-bold text-amber-600">{{ $gatewayTransactions->total() }}</span> transaksi
+                            </div>
+                            @if($gatewayTransactions->hasPages())
+                                <div>{{ $gatewayTransactions->links(data: ['scrollTo' => false]) }}</div>
+                            @endif
+                        </div>
+                    @endif
+                </div>
+
+                {{-- ════ MODAL: Breakdown Tagihan ════ --}}
+                @if($showGatewayBreakdownModal && !empty($selectedGatewayTrxData))
+                    <div class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+                        {{-- Backdrop --}}
+                        <div class="fixed inset-0" wire:click="closeGatewayBreakdownModal"></div>
+
+                        {{-- Modal Panel --}}
+                        <div class="relative z-10 bg-white dark:bg-slate-900 rounded-3xl shadow-2xl w-full max-w-2xl max-h-[85vh] flex flex-col border border-slate-200/80 dark:border-slate-700 overflow-hidden">
+
+                            {{-- Modal Header --}}
+                            <div class="px-6 py-5 border-b border-slate-100 dark:border-slate-800 flex items-start justify-between gap-4 bg-gradient-to-r from-indigo-500/5 to-transparent shrink-0">
+                                <div class="min-w-0">
+                                    <div class="flex items-center gap-2 mb-1">
+                                        <span class="text-[9px] font-extrabold uppercase tracking-widest text-indigo-500">Detail Tagihan Terkait</span>
+                                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[9px] font-extrabold uppercase
+                                            @if($selectedGatewayTrxData['status'] === 'success') bg-emerald-500/10 text-emerald-600
+                                            @elseif($selectedGatewayTrxData['status'] === 'pending') bg-amber-500/10 text-amber-600
+                                            @else bg-rose-500/10 text-rose-600 @endif">
+                                            @if($selectedGatewayTrxData['status'] === 'success') ✅ Sukses
+                                            @elseif($selectedGatewayTrxData['status'] === 'pending') ⏳ Menunggu
+                                            @else ❌ Gagal/Expired @endif
+                                        </span>
+                                    </div>
+                                    <h3 class="text-base font-extrabold text-slate-900 dark:text-white truncate">{{ $selectedGatewayTrxData['santri_name'] }}</h3>
+                                    <p class="text-[10px] text-slate-400 mt-0.5">{{ $selectedGatewayTrxData['created_at'] }} &nbsp;·&nbsp; <span class="font-mono">{{ $selectedGatewayTrxData['merchant_order_id'] }}</span></p>
+                                </div>
+                                <button type="button" wire:click="closeGatewayBreakdownModal" class="shrink-0 w-8 h-8 flex items-center justify-center rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition text-slate-400 hover:text-slate-700 dark:hover:text-slate-200">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                                </button>
+                            </div>
+
+                            {{-- Summary Row --}}
+                            <div class="px-6 py-3 flex items-center gap-6 bg-slate-50/60 dark:bg-slate-950/40 border-b border-slate-100 dark:border-slate-800 shrink-0 text-xs">
+                                <div>
+                                    <span class="text-slate-400 text-[9px] uppercase font-bold block">Channel</span>
+                                    <span class="font-bold text-amber-600 dark:text-amber-400">{{ $selectedGatewayTrxData['channel_label'] ?? '—' }}</span>
+                                </div>
+                                <div>
+                                    <span class="text-slate-400 text-[9px] uppercase font-bold block">Total Tagihan</span>
+                                    <span class="font-bold text-slate-700 dark:text-slate-300">Rp {{ number_format($selectedGatewayTrxData['bill_amount'], 0, ',', '.') }}</span>
+                                </div>
+                                <div>
+                                    <span class="text-slate-400 text-[9px] uppercase font-bold block">Biaya MDR</span>
+                                    <span class="font-bold text-rose-500">+ Rp {{ number_format($selectedGatewayTrxData['mdr_amount'], 0, ',', '.') }}</span>
+                                </div>
+                                <div>
+                                    <span class="text-slate-400 text-[9px] uppercase font-bold block">Total Dibayar</span>
+                                    <span class="font-extrabold text-indigo-600 dark:text-indigo-400">Rp {{ number_format($selectedGatewayTrxData['total_amount'], 0, ',', '.') }}</span>
+                                </div>
+                                @if($selectedGatewayTrxData['duitku_reference'] !== '—')
+                                    <div class="ml-auto">
+                                        <span class="text-slate-400 text-[9px] uppercase font-bold block">Ref. Duitku</span>
+                                        <code class="text-[10px] font-mono text-slate-500 dark:text-slate-400">{{ $selectedGatewayTrxData['duitku_reference'] }}</code>
+                                    </div>
+                                @endif
+                            </div>
+
+                            {{-- Breakdown Table --}}
+                            <div class="overflow-y-auto flex-1">
+                                <table class="w-full text-xs border-collapse">
+                                    <thead class="sticky top-0 z-10">
+                                        <tr class="bg-slate-50/95 dark:bg-slate-950/95 border-b border-slate-200 dark:border-slate-800 text-slate-400 font-extrabold uppercase tracking-wider text-[9px]">
+                                            <th class="py-3 px-5 text-left">#</th>
+                                            <th class="py-3 px-4 text-left">Jenis Iuran</th>
+                                            <th class="py-3 px-4 text-left">Periode</th>
+                                            <th class="py-3 px-4 text-right">Nominal</th>
+                                            <th class="py-3 px-4 text-center">Cicilan</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-slate-100 dark:divide-slate-800/50">
+                                        @foreach($selectedGatewayTrxData['breakdown'] as $i => $item)
+                                            <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/20">
+                                                <td class="py-3 px-5 text-slate-400 font-bold text-center w-8">{{ $i + 1 }}</td>
+                                                <td class="py-3 px-4">
+                                                    <span class="font-bold text-slate-800 dark:text-slate-200 block">{{ $item['config_label'] ?? ucwords(str_replace('_', ' ', $item['bill_type'] ?? '')) }}</span>
+                                                    <span class="text-[9px] font-mono text-slate-300 dark:text-slate-600">{{ Str::limit($item['bill_id'], 20) }}</span>
+                                                </td>
+                                                <td class="py-3 px-4">
+                                                    <span class="text-slate-600 dark:text-slate-400 font-semibold">{{ $item['period_label'] ?? '—' }}</span>
+                                                </td>
+                                                <td class="py-3 px-4 text-right font-extrabold text-slate-900 dark:text-white">
+                                                    Rp {{ number_format($item['pay_portion'] ?? $item['net_amount'] ?? 0, 0, ',', '.') }}
+                                                </td>
+                                                <td class="py-3 px-4 text-center">
+                                                    @if($item['is_partial'] ?? false)
+                                                        <span class="inline-block px-2 py-0.5 rounded-lg text-[9px] font-extrabold bg-amber-500/10 text-amber-600">Sebagian</span>
+                                                    @else
+                                                        <span class="inline-block px-2 py-0.5 rounded-lg text-[9px] font-extrabold bg-emerald-500/10 text-emerald-600">Lunas</span>
+                                                    @endif
+                                                </td>
+                                            </tr>
+                                        @endforeach
+                                    </tbody>
+                                    <tfoot>
+                                        <tr class="bg-indigo-500/5 border-t-2 border-indigo-500/20">
+                                            <td colspan="3" class="py-3 px-5 text-xs font-extrabold text-slate-700 dark:text-slate-300 text-right">Total</td>
+                                            <td class="py-3 px-4 text-right text-sm font-extrabold text-indigo-600 dark:text-indigo-400">
+                                                Rp {{ number_format(collect($selectedGatewayTrxData['breakdown'])->sum(fn($i) => $i['pay_portion'] ?? $i['net_amount'] ?? 0), 0, ',', '.') }}
+                                            </td>
+                                            <td></td>
+                                        </tr>
+                                    </tfoot>
+                                </table>
+                            </div>
+
+                            {{-- Modal Footer --}}
+                            <div class="px-6 py-4 border-t border-slate-100 dark:border-slate-800 flex justify-end shrink-0">
+                                <button type="button" wire:click="closeGatewayBreakdownModal" class="px-5 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold rounded-xl text-xs transition">
+                                    Tutup
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                @endif
+
+            </div>
+        @endif
+
+        {{-- ═══════════════════════════════════════════════════════════════════════ --}}
+        {{-- TAB: REKONSILIASI & SETTLEMENT GATEWAY (FASE 4)                        --}}
+        {{-- ═══════════════════════════════════════════════════════════════════════ --}}
+        @if ($activeTab === 'settlement')
+            <div class="space-y-6">
+                {{-- 1. Header Banner & Actions --}}
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-gradient-to-r from-sky-900/10 via-indigo-900/5 to-slate-900/0 dark:from-sky-950/40 dark:via-indigo-950/20 dark:to-slate-900 border border-sky-200/80 dark:border-sky-800/40 p-6 rounded-3xl shadow-sm backdrop-blur-xs">
+                    <div>
+                        <div class="flex items-center gap-2 mb-1">
+                            <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-sky-500/10 text-sky-600 dark:text-sky-400 border border-sky-500/20">
+                                🏦 Rekonsiliasi &amp; Distribusi Dana
+                            </span>
+                            <span class="text-xs text-slate-400 font-semibold">• Periode: <strong class="text-slate-700 dark:text-slate-200">{{ $settlementReport['period_label'] }}</strong></span>
+                        </div>
+                        <h2 class="font-black text-xl text-slate-900 dark:text-slate-100 tracking-tight">Settlement Report &amp; Alokasi Kas Komplek</h2>
+                        <p class="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-2xl">
+                            Pencocokan arus dana masuk dari Duitku ke rekening pondok serta pemisahan porsi anggaran per unit (Pondok, Madrasah, Dapur Majek, dan Kas per Komplek Asrama).
+                        </p>
+                    </div>
+
+                    <div class="flex flex-wrap items-center gap-2 shrink-0">
+                        {{-- Tombol Cetak PDF Rekap --}}
+                        <a href="{{ route('keuangan.settlement.pdf', ['date_from' => $settlementDateFrom, 'date_to' => $settlementDateTo, 'source' => $settlementSource]) }}" 
+                           target="_blank"
+                           class="inline-flex items-center gap-2 px-4 py-2.5 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-extrabold text-xs rounded-2xl border border-slate-200 dark:border-slate-700 shadow-xs transition-all active:scale-95">
+                            <svg class="w-4 h-4 text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                            <span>Cetak Rekap PDF</span>
+                        </a>
+
+                        {{-- Tombol Kunci & Simpan Distribusi (Khusus Pusat / Admin) --}}
+                        @if($this->canLockSettlement())
+                            <button type="button" 
+                                    wire:click="saveSettlementSnapshot"
+                                    wire:confirm="Apakah Anda yakin ingin menyimpan dan mengunci snapshot distribusi dana periode ini ke audit log pembukuan?"
+                                    class="inline-flex items-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-xs rounded-2xl shadow-sm transition-all active:scale-95">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"/></svg>
+                                <span>Kunci &amp; Simpan Rekap</span>
+                            </button>
+                        @endif
+                    </div>
+                </div>
+
+                {{-- 2. Filter & Rentang Tanggal --}}
+                <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 p-5 rounded-3xl shadow-xs space-y-4">
+                    <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                        {{-- Presets --}}
+                        <div class="flex items-center gap-1.5 flex-wrap">
+                            <span class="text-[11px] font-bold text-slate-400 mr-1">Preset Cepat:</span>
+                            <button type="button" wire:click="setSettlementQuickDate('today')" 
+                                    class="px-2.5 py-1 rounded-xl text-xs font-bold bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 transition">
+                                Hari Ini
+                            </button>
+                            <button type="button" wire:click="setSettlementQuickDate('last_7_days')" 
+                                    class="px-2.5 py-1 rounded-xl text-xs font-bold bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 transition">
+                                7 Hari Terakhir
+                            </button>
+                            <button type="button" wire:click="setSettlementQuickDate('this_month')" 
+                                    class="px-2.5 py-1 rounded-xl text-xs font-bold bg-sky-100 dark:bg-sky-500/20 text-sky-700 dark:text-sky-300 border border-sky-300 dark:border-sky-500/30 transition">
+                                Bulan Ini
+                            </button>
+                            <button type="button" wire:click="setSettlementQuickDate('last_month')" 
+                                    class="px-2.5 py-1 rounded-xl text-xs font-bold bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 transition">
+                                Bulan Lalu
+                            </button>
+                        </div>
+
+                        {{-- Date Inputs & Source Selector --}}
+                        <div class="flex items-center gap-3 flex-wrap">
+                            {{-- Date From --}}
+                            <div class="flex items-center gap-1.5">
+                                <span class="text-[11px] font-bold text-slate-400">Dari:</span>
+                                <input type="date" wire:model.live="settlementDateFrom" 
+                                       class="text-xs font-bold rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white px-2.5 py-1.5 focus:ring-2 focus:ring-sky-500">
+                            </div>
+
+                            {{-- Date To --}}
+                            <div class="flex items-center gap-1.5">
+                                <span class="text-[11px] font-bold text-slate-400">Sampai:</span>
+                                <input type="date" wire:model.live="settlementDateTo" 
+                                       class="text-xs font-bold rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white px-2.5 py-1.5 focus:ring-2 focus:ring-sky-500">
+                            </div>
+
+                            {{-- Source Selector --}}
+                            <div class="flex items-center gap-1.5">
+                                <span class="text-[11px] font-bold text-slate-400">Sumber:</span>
+                                <select wire:model.live="settlementSource" 
+                                        class="text-xs font-bold rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white px-2.5 py-1.5 focus:ring-2 focus:ring-sky-500">
+                                    <option value="gateway">⚡ Khusus Online (Duitku)</option>
+                                    <option value="kasir">💵 Khusus Kasir Manual</option>
+                                    <option value="all">🌐 Semua Pembayaran</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- 3. KPI Cards: Arus Kas & Rekonsiliasi --}}
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    {{-- Card 1: Gross --}}
+                    <div class="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-xs space-y-1">
+                        <div class="flex items-center justify-between text-slate-400">
+                            <span class="text-[11px] font-extrabold uppercase tracking-wider">Total Uang Diterima (Gross)</span>
+                            <span class="p-1.5 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-xl">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                            </span>
+                        </div>
+                        <div class="text-2xl font-black text-slate-900 dark:text-slate-100 font-mono">
+                            Rp {{ number_format($settlementReport['total_gross'], 0, ',', '.') }}
+                        </div>
+                        <div class="text-[11px] text-slate-400">
+                            Dibayar oleh wali via QRIS &amp; VA
+                        </div>
+                    </div>
+
+                    {{-- Card 2: MDR Fee --}}
+                    <div class="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-rose-200/60 dark:border-rose-900/40 shadow-xs space-y-1">
+                        <div class="flex items-center justify-between text-rose-500">
+                            <span class="text-[11px] font-extrabold uppercase tracking-wider">Biaya Layanan (MDR)</span>
+                            <span class="p-1.5 bg-rose-100 dark:bg-rose-500/20 text-rose-600 dark:text-rose-400 rounded-xl">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6"/></svg>
+                            </span>
+                        </div>
+                        <div class="text-2xl font-black text-rose-600 dark:text-rose-400 font-mono">
+                            - Rp {{ number_format($settlementReport['total_mdr'], 0, ',', '.') }}
+                        </div>
+                        <div class="text-[11px] text-rose-500/80">
+                            Fee Duitku (Ditanggung Wali)
+                        </div>
+                    </div>
+
+                    {{-- Card 3: Net Settlement --}}
+                    <div class="bg-gradient-to-br from-emerald-500/10 to-transparent dark:from-emerald-950/40 dark:to-slate-900 p-5 rounded-3xl border-2 border-emerald-500/60 dark:border-emerald-500/40 shadow-sm space-y-1">
+                        <div class="flex items-center justify-between text-emerald-600 dark:text-emerald-400">
+                            <span class="text-[11px] font-black uppercase tracking-wider">Dana Bersih Cair (Net)</span>
+                            <span class="p-1.5 bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 rounded-xl">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                            </span>
+                        </div>
+                        <div class="text-2xl font-black text-emerald-700 dark:text-emerald-300 font-mono">
+                            Rp {{ number_format($settlementReport['total_net'], 0, ',', '.') }}
+                        </div>
+                        <div class="text-[11px] font-bold text-emerald-600 dark:text-emerald-400">
+                            Dana masuk ke rekening pondok
+                        </div>
+                    </div>
+
+                    {{-- Card 4: Volume Trx --}}
+                    <div class="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-xs space-y-1">
+                        <div class="flex items-center justify-between text-sky-500">
+                            <span class="text-[11px] font-extrabold uppercase tracking-wider">Total Transaksi</span>
+                            <span class="p-1.5 bg-sky-100 dark:bg-sky-500/20 text-sky-600 dark:text-sky-400 rounded-xl">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+                            </span>
+                        </div>
+                        <div class="text-2xl font-black text-slate-900 dark:text-slate-100">
+                            {{ $settlementReport['total_trx'] }} <span class="text-xs font-normal text-slate-400">Trx</span>
+                        </div>
+                        <div class="text-[11px] text-slate-400">
+                            Status Berhasil (Success)
+                        </div>
+                    </div>
+                </div>
+
+                {{-- 4. SECTION 1: Alokasi Pembagian Pos Anggaran Utama --}}
+                <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-3xl shadow-sm overflow-hidden">
+                    <div class="px-6 py-4 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/40 flex items-center justify-between">
+                        <div class="flex items-center gap-2">
+                            <span class="p-1.5 bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 rounded-xl">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z"/></svg>
+                            </span>
+                            <div>
+                                <h3 class="font-extrabold text-sm text-slate-900 dark:text-slate-100">1. Alokasi Pembagian Pos Anggaran Utama</h3>
+                                <p class="text-[11px] text-slate-400">Distribusi dana bersih ke kas operasional masing-masing unit</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-xs text-left border-collapse">
+                            <thead>
+                                <tr class="bg-slate-50/80 dark:bg-slate-950/80 text-slate-400 uppercase font-black text-[9px] tracking-wider border-b border-slate-100 dark:border-slate-800">
+                                    <th class="py-3 px-6">Pos Anggaran / Unit</th>
+                                    <th class="py-3 px-4 text-center">Jumlah Tagihan</th>
+                                    <th class="py-3 px-4">Porsi (%)</th>
+                                    <th class="py-3 px-6 text-right">Total Dana Bersih</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+                                @forelse($settlementReport['category_breakdown'] as $cat)
+                                    @php
+                                        $percent = $settlementReport['total_net'] > 0 
+                                            ? round(($cat['amount'] / $settlementReport['total_net']) * 100, 1) 
+                                            : 0;
+                                    @endphp
+                                    <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/20 transition-colors">
+                                        <td class="py-3.5 px-6">
+                                            <div class="flex items-center gap-2.5">
+                                                <span class="text-base">{{ $cat['icon'] ?? '🏷️' }}</span>
+                                                <div>
+                                                    <span class="font-extrabold text-slate-900 dark:text-slate-100 block">{{ $cat['label'] }}</span>
+                                                    <span class="text-[10px] text-slate-400">{{ $cat['desc'] }}</span>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td class="py-3.5 px-4 text-center font-bold text-slate-600 dark:text-slate-300">
+                                            {{ $cat['count'] }} item
+                                        </td>
+                                        <td class="py-3.5 px-4 w-48">
+                                            <div class="flex items-center gap-2">
+                                                <div class="flex-1 h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                                                    <div class="h-full bg-indigo-500 rounded-full" style="width: {{ min(100, $percent) }}%"></div>
+                                                </div>
+                                                <span class="text-[11px] font-black text-slate-700 dark:text-slate-300 font-mono w-10 text-right">{{ $percent }}%</span>
+                                            </div>
+                                        </td>
+                                        <td class="py-3.5 px-6 text-right font-black text-sm text-slate-900 dark:text-white font-mono">
+                                            Rp {{ number_format($cat['amount'], 0, ',', '.') }}
+                                        </td>
+                                    </tr>
+                                @empty
+                                    <tr>
+                                        <td colspan="4" class="py-10 text-center text-slate-400 font-semibold">
+                                            Belum ada data pembayaran dalam rentang tanggal ini.
+                                        </td>
+                                    </tr>
+                                @endforelse
+                            </tbody>
+                            <tfoot>
+                                <tr class="bg-indigo-500/5 dark:bg-indigo-950/20 border-t-2 border-indigo-500/20 font-black">
+                                    <td class="py-3.5 px-6 text-slate-800 dark:text-slate-200">TOTAL SELURUH POS ANGGARAN:</td>
+                                    <td class="py-3.5 px-4 text-center text-slate-800 dark:text-slate-200">
+                                        {{ collect($settlementReport['category_breakdown'])->sum('count') }} item
+                                    </td>
+                                    <td class="py-3.5 px-4 text-slate-500 font-mono">100.0%</td>
+                                    <td class="py-3.5 px-6 text-right text-base text-indigo-600 dark:text-indigo-400 font-mono">
+                                        Rp {{ number_format($settlementReport['total_net'], 0, ',', '.') }}
+                                    </td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+
+                {{-- 5. SECTION 2: Rincian Kas Komplek per Asrama (Drill-down) --}}
+                <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-3xl shadow-sm overflow-hidden">
+                    <div class="px-6 py-4 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/40 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <div class="flex items-center gap-2">
+                            <span class="p-1.5 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-xl">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+                            </span>
+                            <div>
+                                <h3 class="font-extrabold text-sm text-slate-900 dark:text-slate-100">2. Rincian Alokasi Kas Komplek Asrama (Per Asrama/Komplek)</h3>
+                                <p class="text-[11px] text-slate-400">Porsi dana kas komplek santri yang dialokasikan ke masing-masing bendahara komplek</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-xs text-left border-collapse">
+                            <thead>
+                                <tr class="bg-slate-50/80 dark:bg-slate-950/80 text-slate-400 uppercase font-black text-[9px] tracking-wider border-b border-slate-100 dark:border-slate-800">
+                                    <th class="py-3 px-6">Nama Komplek Asrama</th>
+                                    <th class="py-3 px-4">Unit</th>
+                                    <th class="py-3 px-4 text-center">Jumlah Santri / Tagihan</th>
+                                    <th class="py-3 px-6 text-right">Total Kas Terkumpul</th>
+                                    <th class="py-3 px-6 text-center">Aksi Dokumen &amp; Rincian</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+                                @forelse($settlementReport['dormitory_breakdown'] as $dorm)
+                                    <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/20 transition-colors">
+                                        <td class="py-3.5 px-6">
+                                            <div class="flex items-center gap-2">
+                                                <span class="text-base">🏠</span>
+                                                <span class="font-extrabold text-slate-900 dark:text-slate-100">{{ $dorm['dormitory_name'] }}</span>
+                                            </div>
+                                        </td>
+                                        <td class="py-3.5 px-4">
+                                            <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-black uppercase
+                                                {{ $dorm['gender'] === 'L' ? 'bg-sky-100 text-sky-700 dark:bg-sky-950/60 dark:text-sky-300' : 'bg-pink-100 text-pink-700 dark:bg-pink-950/60 dark:text-pink-300' }}">
+                                                {{ $dorm['gender'] === 'L' ? 'Putra' : 'Putri' }}
+                                            </span>
+                                        </td>
+                                        <td class="py-3.5 px-4 text-center">
+                                            <strong class="font-black text-slate-700 dark:text-slate-300">{{ $dorm['count_santri'] }} Santri</strong>
+                                            <span class="text-[10px] font-bold text-slate-400 block">({{ $dorm['count_bills'] ?? $dorm['count_santri'] }} Tagihan)</span>
+                                        </td>
+                                        <td class="py-3.5 px-6 text-right font-black text-sm text-emerald-600 dark:text-emerald-400 font-mono">
+                                            Rp {{ number_format($dorm['total_amount'], 0, ',', '.') }}
+                                        </td>
+                                        <td class="py-3.5 px-6 text-center">
+                                            <div class="inline-flex items-center gap-1.5">
+                                                {{-- Tombol Lihat Santri Modal --}}
+                                                <button type="button" 
+                                                        wire:click="openDormitoryDetailModal('{{ $dorm['dormitory_id'] }}')"
+                                                        class="px-2.5 py-1.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-xl text-[11px] font-extrabold border border-slate-200 dark:border-slate-700 transition flex items-center gap-1">
+                                                    <svg class="w-3.5 h-3.5 text-sky-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                                                    <span>Lihat Santri</span>
+                                                </button>
+
+                                                {{-- Tombol Slip PDF --}}
+                                                <a href="{{ route('keuangan.settlement.slip-komplek', ['dormitoryId' => $dorm['dormitory_id'], 'date_from' => $settlementDateFrom, 'date_to' => $settlementDateTo, 'source' => $settlementSource]) }}" 
+                                                   target="_blank"
+                                                   class="px-2.5 py-1.5 bg-emerald-50 dark:bg-emerald-950/40 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 text-emerald-700 dark:text-emerald-300 rounded-xl text-[11px] font-extrabold border border-emerald-300 dark:border-emerald-700 transition flex items-center gap-1"
+                                                   title="Cetak Slip Serah Terima Kas Komplek">
+                                                    <svg class="w-3.5 h-3.5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                                                    <span>Slip PDF</span>
+                                                </a>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                @empty
+                                    <tr>
+                                        <td colspan="5" class="py-10 text-center text-slate-400 font-semibold">
+                                            Tidak ada pembayaran Kas Komplek dalam periode ini.
+                                        </td>
+                                    </tr>
+                                @endforelse
+                            </tbody>
+                            @if(count($settlementReport['dormitory_breakdown']) > 0)
+                            <tfoot>
+                                <tr class="bg-emerald-500/5 dark:bg-emerald-950/20 border-t-2 border-emerald-500/20 font-black">
+                                    <td colspan="2" class="py-3.5 px-6 text-slate-800 dark:text-slate-200">TOTAL KAS SELURUH KOMPLEK:</td>
+                                    <td class="py-3.5 px-4 text-center text-slate-800 dark:text-slate-200">
+                                        {{ collect($settlementReport['dormitory_breakdown'])->sum('count_santri') }} Santri
+                                        <span class="text-[10px] text-slate-500 block">({{ collect($settlementReport['dormitory_breakdown'])->sum('count_bills') }} Tagihan)</span>
+                                    </td>
+                                    <td class="py-3.5 px-6 text-right text-base text-emerald-600 dark:text-emerald-400 font-mono">
+                                        Rp {{ number_format(collect($settlementReport['dormitory_breakdown'])->sum('total_amount'), 0, ',', '.') }}
+                                    </td>
+                                    <td></td>
+                                </tr>
+                            </tfoot>
+                            @endif
+                        </table>
+                    </div>
+                </div>
+
+                {{-- 6. SECTION 3: Riwayat Rekonsiliasi Tersimpan (Audit Trail) --}}
+                <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-3xl shadow-sm p-6 space-y-4">
+                    <div class="flex items-center gap-2">
+                        <span class="p-1.5 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-xl">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        </span>
+                        <div>
+                            <h3 class="font-extrabold text-sm text-slate-900 dark:text-slate-100">Riwayat Audit Rekonsiliasi &amp; Distribusi Tersimpan</h3>
+                            <p class="text-[11px] text-slate-400">Snapshot data rekonsiliasi yang pernah dikunci dan dicatat sebelumnya</p>
+                        </div>
+                    </div>
+
+                    @if($savedDistributions->count() > 0)
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-xs text-left border-collapse">
+                                <thead>
+                                    <tr class="bg-slate-50/80 dark:bg-slate-950/80 text-slate-400 uppercase font-black text-[9px] tracking-wider border-b border-slate-100 dark:border-slate-800">
+                                        <th class="py-3 px-4">Periode</th>
+                                        <th class="py-3 px-4">Dicatat Oleh</th>
+                                        <th class="py-3 px-4">Waktu Kunci</th>
+                                        <th class="py-3 px-4 text-right">Dana Bersih (Net)</th>
+                                        <th class="py-3 px-4">Catatan</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+                                    @foreach($savedDistributions as $dist)
+                                        <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/20">
+                                            <td class="py-3 px-4 font-bold text-slate-800 dark:text-slate-200">
+                                                {{ $dist->period_from?->locale('id')->translatedFormat('d M Y') }} s/d {{ $dist->period_to?->locale('id')->translatedFormat('d M Y') }}
+                                            </td>
+                                            <td class="py-3 px-4 text-slate-600 dark:text-slate-400 font-medium">
+                                                {{ $dist->distributor?->name ?? 'Bendahara Pusat' }}
+                                            </td>
+                                            <td class="py-3 px-4 text-slate-500 text-[11px]">
+                                                {{ $dist->distributed_at?->locale('id')->translatedFormat('d M Y, H:i') }} WIB
+                                            </td>
+                                            <td class="py-3 px-4 text-right font-black font-mono text-emerald-600 dark:text-emerald-400">
+                                                Rp {{ number_format($dist->total_net, 0, ',', '.') }}
+                                            </td>
+                                            <td class="py-3 px-4 text-slate-500 text-[11px]">
+                                                {{ $dist->notes ?? '—' }}
+                                            </td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                        @if($savedDistributions->hasPages())
+                            <div class="pt-2">
+                                {{ $savedDistributions->links(data: ['scrollTo' => false]) }}
+                            </div>
+                        @endif
+                    @else
+                        <div class="text-center py-6 text-slate-400 text-xs font-semibold bg-slate-50 dark:bg-slate-950/40 rounded-2xl border border-slate-100 dark:border-slate-800">
+                            Belum ada snapshot rekonsiliasi yang disimpan. Klik tombol <strong>"Kunci &amp; Simpan Rekap"</strong> di atas saat pencairan selesai.
+                        </div>
+                    @endif
+                </div>
+
+                {{-- 7. MODAL: Drill-down Santri per Komplek --}}
+                @if($showDormitoryModal && !empty($modalDormitoryData))
+                    <div class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+                        {{-- Backdrop --}}
+                        <div class="fixed inset-0" wire:click="closeDormitoryDetailModal"></div>
+
+                        {{-- Modal Content --}}
+                        <div class="relative z-10 bg-white dark:bg-slate-900 rounded-3xl shadow-2xl w-full max-w-2xl max-h-[85vh] flex flex-col border border-slate-200 dark:border-slate-800 overflow-hidden">
+                            {{-- Header --}}
+                            <div class="px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-emerald-500/5">
+                                <div>
+                                    <div class="flex items-center gap-2">
+                                        <span class="text-base">🏠</span>
+                                        <h3 class="font-extrabold text-base text-slate-900 dark:text-white">{{ $modalDormitoryData['dormitory_name'] }}</h3>
+                                        <span class="px-2 py-0.5 rounded-full text-[10px] font-black uppercase {{ $modalDormitoryData['gender'] === 'L' ? 'bg-sky-100 text-sky-700' : 'bg-pink-100 text-pink-700' }}">
+                                            {{ $modalDormitoryData['gender'] === 'L' ? 'Putra' : 'Putri' }}
+                                        </span>
+                                    </div>
+                                    <p class="text-xs text-slate-400 mt-0.5">Daftar {{ count($modalDormitoryData['santri_list']) }} santri yang telah membayar Kas Komplek</p>
+                                </div>
+                                <div class="text-right">
+                                    <span class="text-[10px] text-slate-400 uppercase font-bold block">Total Kas Terkumpul</span>
+                                    <span class="text-base font-black text-emerald-600 dark:text-emerald-400 font-mono">Rp {{ number_format($modalDormitoryData['total_amount'], 0, ',', '.') }}</span>
+                                </div>
+                            </div>
+
+                            {{-- Table Santri --}}
+                            <div class="overflow-y-auto flex-1 p-4">
+                                <table class="w-full text-xs text-left border-collapse">
+                                    <thead>
+                                        <tr class="bg-slate-50 dark:bg-slate-950 text-slate-400 uppercase font-black text-[9px] tracking-wider border-b border-slate-100 dark:border-slate-800">
+                                            <th class="py-2.5 px-3">#</th>
+                                            <th class="py-2.5 px-3">Nama Santri</th>
+                                            <th class="py-2.5 px-3">Kamar</th>
+                                            <th class="py-2.5 px-3">Waktu Bayar</th>
+                                            <th class="py-2.5 px-3">Metode</th>
+                                            <th class="py-2.5 px-3 text-right">Nominal</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+                                        @foreach($modalDormitoryData['santri_list'] as $idx => $santri)
+                                            <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/30">
+                                                <td class="py-2.5 px-3 text-slate-400 font-bold">{{ $idx + 1 }}</td>
+                                                <td class="py-2.5 px-3">
+                                                    <strong class="text-slate-800 dark:text-slate-200 block">{{ $santri['name'] }}</strong>
+                                                    <span class="text-[10px] font-mono text-slate-400">NIS: {{ $santri['nis'] }}</span>
+                                                </td>
+                                                <td class="py-2.5 px-3 text-slate-600 dark:text-slate-400 font-medium">
+                                                    {{ $santri['room_name'] }}
+                                                </td>
+                                                <td class="py-2.5 px-3 text-slate-500 text-[11px]">
+                                                    {{ $santri['paid_date'] }}
+                                                </td>
+                                                <td class="py-2.5 px-3 text-[10px] text-slate-500 font-bold">
+                                                    {{ $santri['method'] }}
+                                                </td>
+                                                <td class="py-2.5 px-3 text-right font-black font-mono text-slate-900 dark:text-white">
+                                                    Rp {{ number_format($santri['amount'], 0, ',', '.') }}
+                                                </td>
+                                            </tr>
+                                        @endforeach
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            {{-- Footer --}}
+                            <div class="px-6 py-3.5 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-950/40">
+                                <a href="{{ route('keuangan.settlement.slip-komplek', ['dormitoryId' => $modalDormitoryData['dormitory_id'], 'date_from' => $settlementDateFrom, 'date_to' => $settlementDateTo, 'source' => $settlementSource]) }}" 
+                                   target="_blank"
+                                   class="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition shadow-xs">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                                    <span>Cetak Slip Serah Terima (PDF)</span>
+                                </a>
+
+                                <button type="button" wire:click="closeDormitoryDetailModal" class="px-4 py-1.5 bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold rounded-xl text-xs transition">
+                                    Tutup
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                @endif
+            </div>
+        @endif
+
         @if ($activeTab === 'registration_rates')
             <div class="space-y-6">
                 {{-- Header Actions --}}

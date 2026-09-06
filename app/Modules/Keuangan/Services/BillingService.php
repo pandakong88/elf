@@ -9,6 +9,7 @@ use App\Modules\Keuangan\Models\BillingConfiguration;
 use App\Modules\Keuangan\Models\BillingException;
 use App\Modules\Kepengasuhan\Models\RoomAssignment;
 use App\Modules\Kepengasuhan\Models\Dormitory;
+use App\Services\WhatsAppService;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
 
@@ -214,17 +215,17 @@ class BillingService
      */
     public function recordPayment(string $billId, float $amount, string $method, ?string $notes, string $loggedByUserId): BillPayment
     {
-        return DB::transaction(function () use ($billId, $amount, $method, $notes, $loggedByUserId) {
+        $payment = DB::transaction(function () use ($billId, $amount, $method, $notes, $loggedByUserId) {
             $bill = Bill::findOrFail($billId);
 
             $payment = BillPayment::create([
-                'id' => Str::uuid()->toString(),
-                'bill_id' => $bill->id,
-                'amount_paid' => $amount,
-                'payment_date' => now()->toDateString(),
+                'id'             => Str::uuid()->toString(),
+                'bill_id'        => $bill->id,
+                'amount_paid'    => $amount,
+                'payment_date'   => now()->toDateString(),
                 'payment_method' => strtolower($method),
-                'logged_by' => $loggedByUserId,
-                'notes' => $notes,
+                'logged_by'      => $loggedByUserId,
+                'notes'          => $notes,
             ]);
 
             // recalculate status
@@ -232,6 +233,38 @@ class BillingService
 
             return $payment;
         });
+
+        // ── Notifikasi WA grup admin (non-blocking) ─────────────────────────
+        if (strtolower($method) !== 'gateway_duitku') {
+            try {
+                $payment->loadMissing(['bill.config', 'bill.person', 'logger']);
+                $bill     = $payment->bill;
+                $months   = [1=>'Januari',2=>'Februari',3=>'Maret',4=>'April',5=>'Mei',6=>'Juni',
+                             7=>'Juli',8=>'Agustus',9=>'September',10=>'Oktober',11=>'November',12=>'Desember'];
+                $interval = $bill?->config?->interval ?? '';
+                $period   = match(true) {
+                    $interval === 'semester'                                       => 'Semester '.$bill->period_month.'/'.$bill->period_year,
+                    in_array($interval, ['once','insidental','event','sekali'])   => 'Event '.($bill->period_year ?? ''),
+                    default                                                        => ($months[$bill?->period_month ?? 0] ?? '').' '.($bill?->period_year ?? ''),
+                };
+
+                app(WhatsAppService::class)->notifyKasirPayment(
+                    santriName:   $bill?->person?->name ?? '—',
+                    billLabel:    $bill?->config?->label ?? ucwords(str_replace('_',' ',$bill?->bill_type ?? '')),
+                    periodLabel:  trim($period),
+                    method:       $method,
+                    paidAt:       now()->locale('id')->translatedFormat('d F Y, H:i').' WIB',
+                    amount:       $amount,
+                    loggedByName: $payment->logger?->name ?? 'Sistem',
+                    notes:        $notes,
+                );
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::warning('[WhatsApp] Gagal kirim notifikasi kasir', ['error' => $e->getMessage()]);
+            }
+        }
+        // ───────────────────────────────────────────────
+
+        return $payment;
     }
 
     /**
@@ -895,4 +928,76 @@ class BillingService
 
         return $rawPeriods;
     }
+
+    /**
+     * Catat pembayaran yang berasal dari Duitku Payment Gateway.
+     *
+     * Method ini dipanggil oleh DuitkuService::handleSuccessfulPayment()
+     * setelah callback dari Duitku diterima dan diverifikasi.
+     *
+     * Idempotent: tidak akan membuat BillPayment duplikat
+     * untuk kombinasi bill_id + payment_transaction_id yang sama.
+     *
+     * @param  string  $billId         UUID Bill yang dibayar
+     * @param  float   $amount         Nominal yang dibayarkan (net, tanpa MDR)
+     * @param  string  $transactionId  UUID PaymentTransaction (untuk referensi)
+     * @return BillPayment
+     * @throws \Exception
+     */
+    public function recordGatewayPayment(
+        string $billId,
+        float $amount,
+        string $transactionId,
+        ?string $paidAt = null   // Timestamp aktual pembayaran dari callback Duitku
+    ): BillPayment {
+        $bill = Bill::find($billId);
+
+        if (!$bill) {
+            throw new \Exception("Bill not found: {$billId}");
+        }
+
+        // Idempotency check: cegah double-record untuk transaksi yang sama
+        $existing = BillPayment::where('bill_id', $billId)
+            ->where('notes', 'LIKE', "%{$transactionId}%")
+            ->first();
+
+        if ($existing) {
+            \Illuminate\Support\Facades\Log::info('[BillingService] recordGatewayPayment: Already recorded (idempotent)', [
+                'bill_id'        => $billId,
+                'transaction_id' => $transactionId,
+            ]);
+            return $existing;
+        }
+
+        return DB::transaction(function () use ($bill, $amount, $transactionId, $paidAt) {
+            // Ambil user pencatat: created_by bill -> admin/bendahara pertama -> user pertama
+            $loggedBy = $bill->created_by;
+            if (!$loggedBy || !\App\Models\User::where('id', $loggedBy)->exists()) {
+                $loggedBy = \App\Models\User::whereHas('roles', function($q) {
+                    $q->whereIn('name', ['super-admin', 'admin', 'bendahara-putra', 'bendahara-putri']);
+                })->value('id') ?? \App\Models\User::value('id');
+            }
+
+            // Gunakan timestamp aktual dari Duitku jika tersedia, fallback ke now()
+            $paymentDate = $paidAt
+                ? \Carbon\Carbon::parse($paidAt)->toDateString()
+                : now()->toDateString();
+
+            $payment = BillPayment::create([
+                'bill_id'        => $bill->id,
+                'amount_paid'    => $amount,
+                'payment_date'   => $paymentDate,
+                'payment_method' => 'gateway_duitku',
+                'logged_by'      => $loggedBy,
+                'notes'          => "Pembayaran otomatis via Duitku. Ref transaksi: {$transactionId}",
+            ]);
+
+            // Panggil eksplisit recalculateStatus untuk memastikan status bill langsung terupdate
+            $bill->recalculateStatus();
+
+            return $payment;
+        });
+    }
 }
+
+
