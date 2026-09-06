@@ -724,17 +724,22 @@
                                     @php
                                         // Group kelas by jenjang
                                         $groupedKelas = $kelasList->groupBy(function($k) {
+                                            $name = strtolower($k->name ?? '');
                                             $jenjang = strtolower($k->jenjang ?? '');
-                                            if (str_contains($jenjang, 'ula') || str_contains(strtolower($k->name), 'awaliyah')) {
+
+                                            if (str_contains($name, 'tahasus') || str_contains($jenjang, 'tahasus')) {
+                                                return 'Program Khusus / Tahasus';
+                                            }
+                                            if (str_contains($jenjang, 'ula') || str_contains($name, 'awaliyah') || str_contains($name, 'ula')) {
                                                 return 'Jenjang Awaliyah / Ula';
                                             }
-                                            if (str_contains($jenjang, 'wustho') || str_contains(strtolower($k->name), 'wustho')) {
+                                            if (str_contains($jenjang, 'wustho') || str_contains($name, 'wustho')) {
                                                 return 'Jenjang Wustho';
                                             }
-                                            if (str_contains($jenjang, 'ulya') || str_contains(strtolower($k->name), 'ulya')) {
+                                            if (str_contains($jenjang, 'ulya') || str_contains($name, 'ulya')) {
                                                 return 'Jenjang Ulya';
                                             }
-                                            return 'Program Khusus / Tahasus';
+                                            return 'Program Khusus / Lainnya';
                                         });
                                     @endphp
 
