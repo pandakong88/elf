@@ -154,6 +154,16 @@ class BillingConfigurationEdit extends Component
         }
     }
 
+    public function toggleTargetFilterGroup(array $ids): void
+    {
+        $allSelected = count(array_intersect($ids, $this->newConfigTargetFilters)) === count($ids);
+        if ($allSelected) {
+            $this->newConfigTargetFilters = array_values(array_diff($this->newConfigTargetFilters, $ids));
+        } else {
+            $this->newConfigTargetFilters = array_values(array_unique(array_merge($this->newConfigTargetFilters, $ids)));
+        }
+    }
+
     public function clearAllTargetFilters(): void
     {
         $this->newConfigTargetFilters = [];

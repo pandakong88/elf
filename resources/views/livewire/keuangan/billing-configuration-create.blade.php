@@ -445,67 +445,120 @@
                     <div class="p-5 space-y-5">
 
                         {{-- Target Gender Santri --}}
-                        <div class="p-4 bg-slate-50/80 dark:bg-slate-950/40 border border-slate-200/80 dark:border-slate-800 rounded-xl">
-                            <label class="block text-[10px] font-extrabold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">
+                        <div class="p-4 bg-slate-50/80 dark:bg-slate-950/40 border border-slate-200/80 dark:border-slate-800 rounded-2xl">
+                            <label class="block text-[10px] font-extrabold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2.5">
                                 Target Gender Santri <span class="text-rose-400">*</span>
                             </label>
                             <div class="flex flex-wrap items-center gap-3">
-                                <label class="inline-flex items-center gap-2 px-3.5 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 cursor-pointer shadow-xs">
+                                <label class="inline-flex items-center gap-2.5 px-4 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700/80 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 cursor-pointer shadow-xs hover:border-sky-300 transition-all">
                                     <input type="checkbox" wire:model.live="newConfigGenderTargets" value="L"
                                            @if($this->genderScope() === 'P') disabled @endif
-                                           class="rounded text-emerald-600 focus:ring-emerald-500">
-                                    <span class="{{ $this->genderScope() === 'P' ? 'opacity-40' : '' }}">👦 Santri Putra (L)</span>
+                                           class="rounded text-sky-600 focus:ring-sky-500">
+                                    <span class="flex items-center gap-1.5 {{ $this->genderScope() === 'P' ? 'opacity-40' : '' }}">
+                                        <span class="w-5 h-5 rounded-full bg-sky-100 dark:bg-sky-950/60 text-sky-600 dark:text-sky-400 flex items-center justify-center text-[10px] font-black">♂</span>
+                                        <span>Santri Putra (L)</span>
+                                    </span>
                                 </label>
-                                <label class="inline-flex items-center gap-2 px-3.5 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 cursor-pointer shadow-xs">
+                                <label class="inline-flex items-center gap-2.5 px-4 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700/80 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 cursor-pointer shadow-xs hover:border-rose-300 transition-all">
                                     <input type="checkbox" wire:model.live="newConfigGenderTargets" value="P"
                                            @if($this->genderScope() === 'L') disabled @endif
-                                           class="rounded text-emerald-600 focus:ring-emerald-500">
-                                    <span class="{{ $this->genderScope() === 'L' ? 'opacity-40' : '' }}">👧 Santri Putri (P)</span>
+                                           class="rounded text-rose-600 focus:ring-rose-500">
+                                    <span class="flex items-center gap-1.5 {{ $this->genderScope() === 'L' ? 'opacity-40' : '' }}">
+                                        <span class="w-5 h-5 rounded-full bg-rose-100 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 flex items-center justify-center text-[10px] font-black">♀</span>
+                                        <span>Santri Putri (P)</span>
+                                    </span>
                                 </label>
                             </div>
-                            <p class="text-[9px] text-slate-400 mt-1.5">Pilih Putra, Putri, atau keduanya. Opsi komplek dan kelas di bawah akan otomatis menyesuaikan gender yang dicentang.</p>
+                            <p class="text-[9px] text-slate-400 mt-2">Pilih Putra, Putri, atau keduanya. Opsi komplek dan kelas di bawah akan otomatis menyesuaikan gender yang dicentang.</p>
                             @error('newConfigGenderTargets') <span class="text-[10px] text-rose-500 mt-1 block font-semibold">{{ $message }}</span> @enderror
                         </div>
 
                         {{-- Target Status Residensi Santri --}}
-                        <div class="p-4 bg-slate-50/80 dark:bg-slate-950/40 border border-slate-200/80 dark:border-slate-800 rounded-xl">
-                            <label class="block text-[10px] font-extrabold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">
+                        <div class="p-4 bg-slate-50/80 dark:bg-slate-950/40 border border-slate-200/80 dark:border-slate-800 rounded-2xl">
+                            <label class="block text-[10px] font-extrabold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2.5">
                                 Target Status Residensi Santri <span class="text-rose-400">*</span>
                             </label>
                             <div class="flex flex-wrap items-center gap-3">
-                                <label class="inline-flex items-center gap-2 px-3.5 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 cursor-pointer shadow-xs">
+                                <label class="inline-flex items-center gap-2.5 px-4 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700/80 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 cursor-pointer shadow-xs hover:border-emerald-300 transition-all">
                                     <input type="checkbox" wire:model.live="newConfigResidenceTargets" value="mukim" class="rounded text-emerald-600 focus:ring-emerald-500">
-                                    <span>🏠 Santri Mukim (Menetap Asrama)</span>
+                                    <span class="flex items-center gap-1.5">
+                                        <svg class="w-4 h-4 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+                                        <span>Santri Mukim (Menetap Asrama)</span>
+                                    </span>
                                 </label>
-                                <label class="inline-flex items-center gap-2 px-3.5 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 cursor-pointer shadow-xs">
-                                    <input type="checkbox" wire:model.live="newConfigResidenceTargets" value="laju" class="rounded text-emerald-600 focus:ring-emerald-500">
-                                    <span>🚗 Santri Laju (Pulang Pergi / PP)</span>
+                                <label class="inline-flex items-center gap-2.5 px-4 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700/80 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 cursor-pointer shadow-xs hover:border-blue-300 transition-all">
+                                    <input type="checkbox" wire:model.live="newConfigResidenceTargets" value="laju" class="rounded text-blue-600 focus:ring-blue-500">
+                                    <span class="flex items-center gap-1.5">
+                                        <svg class="w-4 h-4 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
+                                        <span>Santri Laju (Pulang Pergi / PP)</span>
+                                    </span>
                                 </label>
                             </div>
-                            <p class="text-[9px] text-slate-400 mt-1.5">Centang <b>Santri Mukim</b> saja untuk tarif khusus pondok (seperti Syahriah Pondok / Kas Komplek). Hilangkan centang Santri Laju agar mereka tidak tertagih.</p>
+                            <p class="text-[9px] text-slate-400 mt-2">Centang <b>Santri Mukim</b> saja untuk tarif khusus pondok (seperti Syahriah Pondok / Kas Komplek). Hilangkan centang Santri Laju agar mereka tidak tertagih.</p>
                             @error('newConfigResidenceTargets') <span class="text-[10px] text-rose-500 mt-1 block font-semibold">{{ $message }}</span> @enderror
                         </div>
 
                         {{-- Radio Cards Target Type --}}
                         <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-                            @foreach([
-                                ['value' => 'all', 'icon' => '🌐', 'title' => 'Semua Santri', 'desc' => 'Seluruh santri aktif pondok'],
-                                ['value' => 'dormitory', 'icon' => '🏠', 'title' => 'Per Komplek', 'desc' => 'Pilih asrama tertentu'],
-                                ['value' => 'kelas', 'icon' => '📚', 'title' => 'Per Kelas', 'desc' => 'Pilih kelas madrasah'],
-                                ['value' => 'individual', 'icon' => '👤', 'title' => 'Santri Tertentu', 'desc' => 'Pilih nama per nama'],
-                            ] as $opt)
-                                <label class="cursor-pointer" wire:key="target-{{ $opt['value'] }}">
-                                    <input type="radio" wire:model.live="newConfigTargetType" value="{{ $opt['value'] }}" class="sr-only peer">
-                                    <div class="flex flex-col items-center text-center p-3.5 rounded-xl border-2 transition-all
-                                        peer-checked:border-emerald-500 peer-checked:bg-emerald-50 dark:peer-checked:bg-emerald-950/20
-                                        border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600
-                                        bg-white dark:bg-slate-950/30">
-                                        <span class="text-2xl mb-1.5">{{ $opt['icon'] }}</span>
-                                        <span class="text-[11px] font-extrabold text-slate-800 dark:text-slate-200 peer-checked:text-emerald-700 block leading-snug">{{ $opt['title'] }}</span>
-                                        <span class="text-[9px] text-slate-400 dark:text-slate-500 leading-tight mt-0.5">{{ $opt['desc'] }}</span>
+                            {{-- All --}}
+                            <label class="cursor-pointer" wire:key="target-all">
+                                <input type="radio" wire:model.live="newConfigTargetType" value="all" class="sr-only peer">
+                                <div class="flex flex-col items-center text-center p-4 rounded-2xl border-2 transition-all h-full
+                                    peer-checked:border-emerald-500 peer-checked:bg-emerald-50/60 dark:peer-checked:bg-emerald-950/20 peer-checked:shadow-sm
+                                    border-slate-200 dark:border-slate-700/80 hover:border-slate-300 dark:hover:border-slate-600
+                                    bg-white dark:bg-slate-950/30 group">
+                                    <div class="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 peer-checked:bg-emerald-500 peer-checked:text-white flex items-center justify-center mb-2.5 transition-colors">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
                                     </div>
-                                </label>
-                            @endforeach
+                                    <span class="text-xs font-extrabold text-slate-800 dark:text-slate-200 group-hover:text-emerald-600 block leading-snug">Semua Santri</span>
+                                    <span class="text-[9px] text-slate-400 dark:text-slate-500 leading-tight mt-1">Seluruh santri aktif pondok</span>
+                                </div>
+                            </label>
+
+                            {{-- Dormitory --}}
+                            <label class="cursor-pointer" wire:key="target-dormitory">
+                                <input type="radio" wire:model.live="newConfigTargetType" value="dormitory" class="sr-only peer">
+                                <div class="flex flex-col items-center text-center p-4 rounded-2xl border-2 transition-all h-full
+                                    peer-checked:border-amber-500 peer-checked:bg-amber-50/60 dark:peer-checked:bg-amber-950/20 peer-checked:shadow-sm
+                                    border-slate-200 dark:border-slate-700/80 hover:border-slate-300 dark:hover:border-slate-600
+                                    bg-white dark:bg-slate-950/30 group">
+                                    <div class="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 peer-checked:bg-amber-500 peer-checked:text-white flex items-center justify-center mb-2.5 transition-colors">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+                                    </div>
+                                    <span class="text-xs font-extrabold text-slate-800 dark:text-slate-200 group-hover:text-amber-600 block leading-snug">Per Komplek</span>
+                                    <span class="text-[9px] text-slate-400 dark:text-slate-500 leading-tight mt-1">Pilih asrama tertentu</span>
+                                </div>
+                            </label>
+
+                            {{-- Kelas --}}
+                            <label class="cursor-pointer" wire:key="target-kelas">
+                                <input type="radio" wire:model.live="newConfigTargetType" value="kelas" class="sr-only peer">
+                                <div class="flex flex-col items-center text-center p-4 rounded-2xl border-2 transition-all h-full
+                                    peer-checked:border-purple-500 peer-checked:bg-purple-50/60 dark:peer-checked:bg-purple-950/20 peer-checked:shadow-sm
+                                    border-slate-200 dark:border-slate-700/80 hover:border-slate-300 dark:hover:border-slate-600
+                                    bg-white dark:bg-slate-950/30 group">
+                                    <div class="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 peer-checked:bg-purple-500 peer-checked:text-white flex items-center justify-center mb-2.5 transition-colors">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+                                    </div>
+                                    <span class="text-xs font-extrabold text-slate-800 dark:text-slate-200 group-hover:text-purple-600 block leading-snug">Per Kelas</span>
+                                    <span class="text-[9px] text-slate-400 dark:text-slate-500 leading-tight mt-1">Pilih kelas madrasah</span>
+                                </div>
+                            </label>
+
+                            {{-- Individual --}}
+                            <label class="cursor-pointer" wire:key="target-individual">
+                                <input type="radio" wire:model.live="newConfigTargetType" value="individual" class="sr-only peer">
+                                <div class="flex flex-col items-center text-center p-4 rounded-2xl border-2 transition-all h-full
+                                    peer-checked:border-emerald-500 peer-checked:bg-emerald-50/60 dark:peer-checked:bg-emerald-950/20 peer-checked:shadow-sm
+                                    border-slate-200 dark:border-slate-700/80 hover:border-slate-300 dark:hover:border-slate-600
+                                    bg-white dark:bg-slate-950/30 group">
+                                    <div class="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 peer-checked:bg-emerald-500 peer-checked:text-white flex items-center justify-center mb-2.5 transition-colors">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                                    </div>
+                                    <span class="text-xs font-extrabold text-slate-800 dark:text-slate-200 group-hover:text-emerald-600 block leading-snug">Santri Tertentu</span>
+                                    <span class="text-[9px] text-slate-400 dark:text-slate-500 leading-tight mt-1">Pilih nama per nama</span>
+                                </div>
+                            </label>
                         </div>
 
                         @error('newConfigTargetFilters')
@@ -515,144 +568,270 @@
                             </div>
                         @enderror
 
-                        {{-- Conditional Sub-Filters --}}
+                        {{-- Conditional Sub-Filters: DORMITORY --}}
                         @if($newConfigTargetType === 'dormitory')
                             <div class="space-y-4">
-                                <div class="p-4 bg-amber-50/50 dark:bg-amber-950/10 border border-amber-200/50 dark:border-amber-800/30 rounded-xl space-y-3">
-                                    <div class="flex items-center justify-between">
-                                        <span class="block text-[10px] font-extrabold text-amber-700 dark:text-amber-400 uppercase tracking-wider">Pilih Komplek Asrama</span>
-                                        <div class="flex items-center gap-1.5 text-[9px] font-extrabold">
+                                <div class="p-5 bg-amber-50/40 dark:bg-amber-950/10 border border-amber-200/60 dark:border-amber-800/30 rounded-2xl space-y-4">
+                                    {{-- Header Controls --}}
+                                    <div class="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-amber-200/50 dark:border-amber-800/30">
+                                        <div class="flex items-center gap-2">
+                                            <div class="w-6 h-6 rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center">
+                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+                                            </div>
+                                            <span class="block text-[11px] font-extrabold text-amber-900 dark:text-amber-300 uppercase tracking-wider">Pilih Komplek Asrama</span>
+                                        </div>
+                                        <div class="flex items-center gap-2 text-[10px] font-bold">
                                             @if(in_array('L', $newConfigGenderTargets) && !$this->genderScope())
-                                                <button type="button" wire:click="selectAllTargetFilters('L')" class="text-cyan-600 dark:text-cyan-400 hover:underline">👦 All Putra</button>
-                                                <span class="text-amber-300 dark:text-amber-700">|</span>
+                                                <button type="button" wire:click="selectAllTargetFilters('L')" class="px-2.5 py-1 rounded-lg bg-sky-500/10 text-sky-700 dark:text-sky-300 hover:bg-sky-500/20 transition-all flex items-center gap-1">
+                                                    <span>♂ All Putra</span>
+                                                </button>
                                             @endif
                                             @if(in_array('P', $newConfigGenderTargets) && !$this->genderScope())
-                                                <button type="button" wire:click="selectAllTargetFilters('P')" class="text-pink-600 dark:text-pink-400 hover:underline">👧 All Putri</button>
-                                                <span class="text-amber-300 dark:text-amber-700">|</span>
+                                                <button type="button" wire:click="selectAllTargetFilters('P')" class="px-2.5 py-1 rounded-lg bg-rose-500/10 text-rose-700 dark:text-rose-300 hover:bg-rose-500/20 transition-all flex items-center gap-1">
+                                                    <span>♀ All Putri</span>
+                                                </button>
                                             @endif
-                                            <button type="button" wire:click="selectAllTargetFilters('all')" class="text-amber-700 dark:text-amber-300 hover:underline">⚡ Pilih Semua</button>
-                                            <span class="text-amber-300 dark:text-amber-700">|</span>
-                                            <button type="button" wire:click="clearAllTargetFilters" class="text-rose-500 hover:underline">❌ Kosongkan</button>
+                                            <button type="button" wire:click="selectAllTargetFilters('all')" class="px-2.5 py-1 rounded-lg bg-amber-500/15 text-amber-800 dark:text-amber-200 hover:bg-amber-500/25 transition-all">
+                                                Pilih Semua
+                                            </button>
+                                            <button type="button" wire:click="clearAllTargetFilters" class="px-2.5 py-1 rounded-lg bg-rose-500/10 text-rose-600 dark:text-rose-400 hover:bg-rose-500/20 transition-all">
+                                                Kosongkan
+                                            </button>
                                         </div>
                                     </div>
-                                    <div class="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
-                                        @foreach($dormitories as $d)
-                                            @php $isChecked = in_array($d->id, $newConfigTargetFilters); @endphp
-                                            <label class="cursor-pointer" wire:key="dorm-{{ $d->id }}">
-                                                <input type="checkbox" wire:model.live="newConfigTargetFilters" value="{{ $d->id }}" class="sr-only">
-                                                <div class="flex items-center gap-2.5 p-2.5 border-2 rounded-xl text-xs font-bold transition-all
-                                                    {{ $isChecked
-                                                        ? 'bg-amber-500 border-amber-500 text-white shadow-md shadow-amber-200 dark:shadow-amber-900'
-                                                        : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:border-amber-300 dark:hover:border-amber-700' }}">
-                                                    <span class="w-4 h-4 rounded border-2 flex items-center justify-center flex-shrink-0 transition-all
-                                                        {{ $isChecked ? 'bg-white/30 border-white' : 'border-current' }}">
-                                                        @if($isChecked)
-                                                            <svg class="w-2.5 h-2.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3.5" d="M5 13l4 4L19 7"/></svg>
-                                                        @endif
+
+                                    @php
+                                        $dormsByGender = $dormitories->groupBy(fn($d) => $d->gender === 'P' ? 'Putri' : 'Putra');
+                                    @endphp
+
+                                    @foreach($dormsByGender as $genderLabel => $dormsGroup)
+                                        @php
+                                            $isPutri = $genderLabel === 'Putri';
+                                            $groupDormIds = $dormsGroup->pluck('id')->toArray();
+                                            $allGroupSelected = count(array_intersect($groupDormIds, $newConfigTargetFilters)) === count($groupDormIds) && count($groupDormIds) > 0;
+                                        @endphp
+                                        <div class="space-y-2.5">
+                                            <div class="flex items-center justify-between">
+                                                <div class="flex items-center gap-2">
+                                                    <span class="w-2 h-2 rounded-full {{ $isPutri ? 'bg-rose-500' : 'bg-sky-500' }}"></span>
+                                                    <span class="text-[10px] font-extrabold uppercase tracking-wider {{ $isPutri ? 'text-rose-700 dark:text-rose-400' : 'text-sky-700 dark:text-sky-400' }}">
+                                                        Komplek Asrama {{ $genderLabel }} ({{ count($dormsGroup) }})
                                                     </span>
-                                                    {{ $d->name }}
                                                 </div>
-                                            </label>
-                                        @endforeach
-                                    </div>
+                                                <button type="button" wire:click="toggleTargetFilterGroup(@js($groupDormIds))" class="text-[10px] font-bold {{ $allGroupSelected ? 'text-rose-500 hover:text-rose-600' : 'text-amber-700 dark:text-amber-400 hover:underline' }}">
+                                                    {{ $allGroupSelected ? '✕ Batalkan Grup Ini' : '+ Pilih Semua ' . $genderLabel }}
+                                                </button>
+                                            </div>
+
+                                            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
+                                                @foreach($dormsGroup as $d)
+                                                    @php $isChecked = in_array($d->id, $newConfigTargetFilters); @endphp
+                                                    <label class="cursor-pointer select-none" wire:key="dorm-{{ $d->id }}">
+                                                        <input type="checkbox" wire:model.live="newConfigTargetFilters" value="{{ $d->id }}" class="sr-only">
+                                                        <div class="p-3 rounded-xl border-2 transition-all flex items-start gap-3
+                                                            {{ $isChecked
+                                                                ? 'bg-amber-500/10 border-amber-500 dark:bg-amber-950/30 shadow-xs'
+                                                                : 'bg-white dark:bg-slate-900 border-slate-200/80 dark:border-slate-800 hover:border-amber-300 dark:hover:border-amber-700' }}">
+                                                            <div class="w-4 h-4 rounded-md border-2 mt-0.5 flex items-center justify-center shrink-0 transition-all
+                                                                {{ $isChecked ? 'bg-amber-500 border-amber-500 text-white' : 'border-slate-300 dark:border-slate-600' }}">
+                                                                @if($isChecked)
+                                                                    <svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3.5" d="M5 13l4 4L19 7"/></svg>
+                                                                @endif
+                                                            </div>
+                                                            <div class="min-w-0 flex-1">
+                                                                <span class="block text-xs font-bold text-slate-800 dark:text-slate-200 leading-snug truncate">
+                                                                    {{ $d->name }}
+                                                                </span>
+                                                                <div class="flex items-center gap-1.5 mt-1.5 flex-wrap">
+                                                                    <span class="px-2 py-0.5 rounded-md text-[9px] font-bold {{ $isPutri ? 'bg-rose-50 text-rose-600 dark:bg-rose-950/40 dark:text-rose-400 border border-rose-200/60 dark:border-rose-900/40' : 'bg-sky-50 text-sky-600 dark:bg-sky-950/40 dark:text-sky-400 border border-sky-200/60 dark:border-sky-900/40' }}">
+                                                                        {{ $isPutri ? '♀ Putri' : '♂ Putra' }}
+                                                                    </span>
+                                                                    <span class="px-2 py-0.5 rounded-md text-[9px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400">
+                                                                        Asrama
+                                                                    </span>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </label>
+                                                @endforeach
+                                            </div>
+                                        </div>
+                                    @endforeach
                                 </div>
 
                                 {{-- Selected Summary: Dormitory --}}
                                 @if(!empty($newConfigTargetFilters))
-                                    <div class="p-3.5 bg-white dark:bg-slate-900 border border-amber-200 dark:border-amber-800/40 rounded-xl space-y-2">
+                                    <div class="p-4 bg-white dark:bg-slate-900 border border-amber-200 dark:border-amber-800/40 rounded-2xl space-y-2.5 shadow-xs">
                                         <div class="flex items-center justify-between">
-                                            <span class="text-[10px] font-extrabold text-amber-700 dark:text-amber-400 uppercase tracking-wider">
-                                                ✓ Komplek Terpilih ({{ count($newConfigTargetFilters) }})
+                                            <span class="text-[10px] font-extrabold text-amber-700 dark:text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
+                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+                                                Komplek Terpilih ({{ count($newConfigTargetFilters) }})
                                             </span>
                                             <button type="button" wire:click="$set('newConfigTargetFilters', [])"
-                                                class="text-[9px] font-bold text-rose-500 hover:text-rose-600 hover:underline transition-colors">
+                                                class="text-[10px] font-bold text-rose-500 hover:text-rose-600 hover:underline transition-colors">
                                                 Hapus Semua
                                             </button>
                                         </div>
                                         <div class="flex flex-wrap gap-2">
                                             @foreach($dormitories->whereIn('id', $newConfigTargetFilters) as $sel)
-                                                <span class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-amber-500 text-white rounded-xl text-[11px] font-bold shadow-sm">
-                                                    🏠 {{ $sel->name }}
+                                                <span class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-amber-500 text-white rounded-xl text-xs font-bold shadow-xs">
+                                                    <span>{{ $sel->name }}</span>
                                                     <button type="button" wire:click="removeTargetFilter('{{ $sel->id }}')"
-                                                        class="text-white/70 hover:text-white font-extrabold leading-none text-sm ml-0.5 transition-colors">&times;</button>
+                                                        class="text-white/80 hover:text-white font-extrabold leading-none text-sm ml-0.5 transition-colors">&times;</button>
                                                 </span>
                                             @endforeach
                                         </div>
                                     </div>
                                 @else
-                                    <div class="p-3 bg-amber-50/30 dark:bg-amber-950/5 border border-dashed border-amber-200 dark:border-amber-800/30 rounded-xl text-center">
-                                        <span class="text-[10px] text-amber-600/70 dark:text-amber-500/60 font-semibold">Belum ada komplek yang dipilih — centang di atas untuk menambahkan.</span>
+                                    <div class="p-3.5 bg-amber-50/30 dark:bg-amber-950/5 border border-dashed border-amber-200 dark:border-amber-800/30 rounded-xl text-center">
+                                        <span class="text-[10px] text-amber-600/80 dark:text-amber-500/70 font-semibold">Belum ada komplek yang dipilih — centang daftar di atas untuk menambahkan.</span>
                                     </div>
                                 @endif
                             </div>
 
+                        {{-- Conditional Sub-Filters: KELAS --}}
                         @elseif($newConfigTargetType === 'kelas')
                             <div class="space-y-4">
-                                <div class="p-4 bg-purple-50/50 dark:bg-purple-950/10 border border-purple-200/50 dark:border-purple-800/30 rounded-xl space-y-3">
-                                    <div class="flex items-center justify-between">
-                                        <span class="block text-[10px] font-extrabold text-purple-700 dark:text-purple-400 uppercase tracking-wider">Pilih Kelas Madrasah</span>
-                                        <div class="flex items-center gap-1.5 text-[9px] font-extrabold">
+                                <div class="p-5 bg-purple-50/40 dark:bg-purple-950/10 border border-purple-200/60 dark:border-purple-800/30 rounded-2xl space-y-5">
+                                    {{-- Header Controls --}}
+                                    <div class="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-purple-200/50 dark:border-purple-800/30">
+                                        <div class="flex items-center gap-2">
+                                            <div class="w-6 h-6 rounded-lg bg-purple-500/10 text-purple-600 dark:text-purple-400 flex items-center justify-center">
+                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+                                            </div>
+                                            <span class="block text-[11px] font-extrabold text-purple-900 dark:text-purple-300 uppercase tracking-wider">Pilih Kelas Madrasah Diniyyah</span>
+                                        </div>
+                                        <div class="flex items-center gap-2 text-[10px] font-bold">
                                             @if(in_array('L', $newConfigGenderTargets) && !$this->genderScope())
-                                                <button type="button" wire:click="selectAllTargetFilters('L')" class="text-cyan-600 dark:text-cyan-400 hover:underline">👦 All Putra</button>
-                                                <span class="text-purple-300 dark:text-purple-700">|</span>
+                                                <button type="button" wire:click="selectAllTargetFilters('L')" class="px-2.5 py-1 rounded-lg bg-sky-500/10 text-sky-700 dark:text-sky-300 hover:bg-sky-500/20 transition-all flex items-center gap-1">
+                                                    <span>♂ All Putra</span>
+                                                </button>
                                             @endif
                                             @if(in_array('P', $newConfigGenderTargets) && !$this->genderScope())
-                                                <button type="button" wire:click="selectAllTargetFilters('P')" class="text-pink-600 dark:text-pink-400 hover:underline">👧 All Putri</button>
-                                                <span class="text-purple-300 dark:text-purple-700">|</span>
+                                                <button type="button" wire:click="selectAllTargetFilters('P')" class="px-2.5 py-1 rounded-lg bg-rose-500/10 text-rose-700 dark:text-rose-300 hover:bg-rose-500/20 transition-all flex items-center gap-1">
+                                                    <span>♀ All Putri</span>
+                                                </button>
                                             @endif
-                                            <button type="button" wire:click="selectAllTargetFilters('all')" class="text-purple-700 dark:text-purple-300 hover:underline">⚡ Pilih Semua</button>
-                                            <span class="text-purple-300 dark:text-purple-700">|</span>
-                                            <button type="button" wire:click="clearAllTargetFilters" class="text-rose-500 hover:underline">❌ Kosongkan</button>
+                                            <button type="button" wire:click="selectAllTargetFilters('all')" class="px-2.5 py-1 rounded-lg bg-purple-500/15 text-purple-800 dark:text-purple-200 hover:bg-purple-500/25 transition-all">
+                                                Pilih Semua
+                                            </button>
+                                            <button type="button" wire:click="clearAllTargetFilters" class="px-2.5 py-1 rounded-lg bg-rose-500/10 text-rose-600 dark:text-rose-400 hover:bg-rose-500/20 transition-all">
+                                                Kosongkan
+                                            </button>
                                         </div>
                                     </div>
-                                    <div class="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
-                                        @foreach($kelasList as $kls)
-                                            @php $isChecked = in_array($kls->id, $newConfigTargetFilters); @endphp
-                                            <label class="cursor-pointer" wire:key="kelas-{{ $kls->id }}">
-                                                <input type="checkbox" wire:model.live="newConfigTargetFilters" value="{{ $kls->id }}" class="sr-only">
-                                                <div class="flex items-center gap-2 p-2.5 border-2 rounded-xl text-xs font-bold transition-all
-                                                    {{ $isChecked
-                                                        ? 'bg-purple-500 border-purple-500 text-white shadow-md shadow-purple-200 dark:shadow-purple-900'
-                                                        : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:border-purple-300 dark:hover:border-purple-700' }}">
-                                                    <span class="w-4 h-4 rounded border-2 flex items-center justify-center flex-shrink-0
-                                                        {{ $isChecked ? 'bg-white/30 border-white' : 'border-current' }}">
-                                                        @if($isChecked)
-                                                            <svg class="w-2.5 h-2.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3.5" d="M5 13l4 4L19 7"/></svg>
-                                                        @endif
+
+                                    @php
+                                        // Group kelas by jenjang
+                                        $groupedKelas = $kelasList->groupBy(function($k) {
+                                            $jenjang = strtolower($k->jenjang ?? '');
+                                            if (str_contains($jenjang, 'ula') || str_contains(strtolower($k->name), 'awaliyah')) {
+                                                return 'Jenjang Awaliyah / Ula';
+                                            }
+                                            if (str_contains($jenjang, 'wustho') || str_contains(strtolower($k->name), 'wustho')) {
+                                                return 'Jenjang Wustho';
+                                            }
+                                            if (str_contains($jenjang, 'ulya') || str_contains(strtolower($k->name), 'ulya')) {
+                                                return 'Jenjang Ulya';
+                                            }
+                                            return 'Program Khusus / Tahasus';
+                                        });
+                                    @endphp
+
+                                    @foreach($groupedKelas as $jenjangTitle => $classes)
+                                        @php
+                                            $jenjangIds = $classes->pluck('id')->toArray();
+                                            $allJenjangSelected = count(array_intersect($jenjangIds, $newConfigTargetFilters)) === count($jenjangIds) && count($jenjangIds) > 0;
+                                        @endphp
+                                        <div class="space-y-2.5">
+                                            <div class="flex items-center justify-between">
+                                                <div class="flex items-center gap-2">
+                                                    <span class="w-2 h-2 rounded-full bg-purple-500"></span>
+                                                    <span class="text-[10px] font-extrabold uppercase tracking-wider text-purple-900 dark:text-purple-300">
+                                                        {{ $jenjangTitle }} ({{ count($classes) }})
                                                     </span>
-                                                    <span class="truncate">{{ $kls->name }}</span>
-                                                    <span class="text-[9px] opacity-75 shrink-0">({{ $kls->academic_year }})</span>
                                                 </div>
-                                            </label>
-                                        @endforeach
-                                    </div>
+                                                <button type="button" wire:click="toggleTargetFilterGroup(@js($jenjangIds))" class="text-[10px] font-bold {{ $allJenjangSelected ? 'text-rose-500 hover:text-rose-600' : 'text-purple-700 dark:text-purple-300 hover:underline' }}">
+                                                    {{ $allJenjangSelected ? '✕ Batalkan Jenjang Ini' : '+ Pilih Semua di ' . $jenjangTitle }}
+                                                </button>
+                                            </div>
+
+                                            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
+                                                @foreach($classes as $kls)
+                                                    @php
+                                                        $isChecked = in_array($kls->id, $newConfigTargetFilters);
+                                                        $isPi = str_contains($kls->name, '(Pi)') || str_contains(strtolower($kls->name), 'putri');
+                                                        $isPa = str_contains($kls->name, '(Pa)') || str_contains(strtolower($kls->name), 'putra');
+                                                    @endphp
+                                                    <label class="cursor-pointer select-none" wire:key="kelas-{{ $kls->id }}">
+                                                        <input type="checkbox" wire:model.live="newConfigTargetFilters" value="{{ $kls->id }}" class="sr-only">
+                                                        <div class="p-3 rounded-xl border-2 transition-all flex items-start gap-3
+                                                            {{ $isChecked
+                                                                ? 'bg-purple-500/10 border-purple-500 dark:bg-purple-950/30 shadow-xs'
+                                                                : 'bg-white dark:bg-slate-900 border-slate-200/80 dark:border-slate-800 hover:border-purple-300 dark:hover:border-purple-700' }}">
+                                                            <div class="w-4 h-4 rounded-md border-2 mt-0.5 flex items-center justify-center shrink-0 transition-all
+                                                                {{ $isChecked ? 'bg-purple-500 border-purple-500 text-white' : 'border-slate-300 dark:border-slate-600' }}">
+                                                                @if($isChecked)
+                                                                    <svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3.5" d="M5 13l4 4L19 7"/></svg>
+                                                                @endif
+                                                            </div>
+                                                            <div class="min-w-0 flex-1">
+                                                                <span class="block text-xs font-bold text-slate-800 dark:text-slate-200 leading-snug truncate">
+                                                                    {{ $kls->name }}
+                                                                </span>
+                                                                <div class="flex items-center gap-1.5 mt-1.5 flex-wrap">
+                                                                    @if($isPi)
+                                                                        <span class="px-2 py-0.5 rounded-md text-[9px] font-bold bg-rose-50 text-rose-600 dark:bg-rose-950/40 dark:text-rose-400 border border-rose-200/60 dark:border-rose-900/40">
+                                                                            ♀ Putri
+                                                                        </span>
+                                                                    @elseif($isPa)
+                                                                        <span class="px-2 py-0.5 rounded-md text-[9px] font-bold bg-sky-50 text-sky-600 dark:bg-sky-950/40 dark:text-sky-400 border border-sky-200/60 dark:border-sky-900/40">
+                                                                            ♂ Putra
+                                                                        </span>
+                                                                    @endif
+
+                                                                    @if($kls->academic_year)
+                                                                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[9px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">
+                                                                            <svg class="w-2.5 h-2.5 opacity-70" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                                                                            {{ $kls->academic_year }}
+                                                                        </span>
+                                                                    @endif
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </label>
+                                                @endforeach
+                                            </div>
+                                        </div>
+                                    @endforeach
                                 </div>
 
                                 {{-- Selected Summary: Kelas --}}
                                 @if(!empty($newConfigTargetFilters))
-                                    <div class="p-3.5 bg-white dark:bg-slate-900 border border-purple-200 dark:border-purple-800/40 rounded-xl space-y-2">
+                                    <div class="p-4 bg-white dark:bg-slate-900 border border-purple-200 dark:border-purple-800/40 rounded-2xl space-y-2.5 shadow-xs">
                                         <div class="flex items-center justify-between">
-                                            <span class="text-[10px] font-extrabold text-purple-700 dark:text-purple-400 uppercase tracking-wider">
-                                                ✓ Kelas Terpilih ({{ count($newConfigTargetFilters) }})
+                                            <span class="text-[10px] font-extrabold text-purple-700 dark:text-purple-400 uppercase tracking-wider flex items-center gap-1.5">
+                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+                                                Kelas Terpilih ({{ count($newConfigTargetFilters) }})
                                             </span>
                                             <button type="button" wire:click="$set('newConfigTargetFilters', [])"
-                                                class="text-[9px] font-bold text-rose-500 hover:text-rose-600 hover:underline transition-colors">
+                                                class="text-[10px] font-bold text-rose-500 hover:text-rose-600 hover:underline transition-colors">
                                                 Hapus Semua
                                             </button>
                                         </div>
                                         <div class="flex flex-wrap gap-2">
                                             @foreach($kelasList->whereIn('id', $newConfigTargetFilters) as $sel)
-                                                <span class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-purple-500 text-white rounded-xl text-[11px] font-bold shadow-sm">
-                                                    📚 {{ $sel->name }} ({{ $sel->academic_year }})
+                                                <span class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-purple-600 text-white rounded-xl text-xs font-bold shadow-xs">
+                                                    <span>{{ $sel->name }}</span>
                                                     <button type="button" wire:click="removeTargetFilter('{{ $sel->id }}')"
-                                                        class="text-white/70 hover:text-white font-extrabold leading-none text-sm ml-0.5 transition-colors">&times;</button>
+                                                        class="text-white/80 hover:text-white font-extrabold leading-none text-sm ml-0.5 transition-colors">&times;</button>
                                                 </span>
                                             @endforeach
                                         </div>
                                     </div>
                                 @else
-                                    <div class="p-3 bg-purple-50/30 dark:bg-purple-950/5 border border-dashed border-purple-200 dark:border-purple-800/30 rounded-xl text-center">
-                                        <span class="text-[10px] text-purple-600/70 dark:text-purple-500/60 font-semibold">Belum ada kelas yang dipilih — centang di atas untuk menambahkan.</span>
+                                    <div class="p-3.5 bg-purple-50/30 dark:bg-purple-950/5 border border-dashed border-purple-200 dark:border-purple-800/30 rounded-xl text-center">
+                                        <span class="text-[10px] text-purple-600/80 dark:text-purple-500/70 font-semibold">Belum ada kelas yang dipilih — centang daftar di atas untuk menambahkan.</span>
                                     </div>
                                 @endif
                             </div>
