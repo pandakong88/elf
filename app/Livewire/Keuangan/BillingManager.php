@@ -101,8 +101,15 @@ class BillingManager extends Component
     public string  $payNotes         = '';
     public int     $cashierYear;
     public array   $recentSantriIds  = [];
-    public bool    $showPaymentConfirmModal = false;
     public array   $previousSelectedBillIds = [];
+
+    // Kasir: Modal Bukti Bayar / Kuitansi Kasir
+    public bool    $showReceiptModal        = false;
+    public ?string $lastReceiptNo           = null;
+    public ?string $lastPaymentGroupId      = null;
+    public float   $lastTotalPaid           = 0.00;
+    public ?string $lastSantriName          = null;
+    public int     $lastItemsCount          = 0;
 
     // Kasir: Pengelolaan Cuti / Bebas Tagihan Santri
     public bool    $showLeaveModal      = false;
@@ -2290,7 +2297,12 @@ class BillingManager extends Component
             return;
         }
 
-        DB::transaction(function () use ($billsToPay, $billingService) {
+        $receiptNo = $billingService->generateReceiptNumber();
+        $paymentGroupId = (string) Str::uuid();
+        $totalActuallyPaid = 0.0;
+        $itemsPaidCount = 0;
+
+        DB::transaction(function () use ($billsToPay, $billingService, $receiptNo, $paymentGroupId, &$totalActuallyPaid, &$itemsPaidCount) {
             $remainingAmount = $this->payAmount;
 
             foreach ($billsToPay as $bill) {
@@ -2306,17 +2318,39 @@ class BillingManager extends Component
                     $paymentForThisBill,
                     $this->payMethod,
                     $this->payNotes ?: 'Pembayaran Kasir',
-                    auth()->id() ?: User::first()?->id
+                    auth()->id() ?: User::first()?->id,
+                    $receiptNo,
+                    $paymentGroupId,
+                    $this->payAmount,
+                    0.00
                 );
 
+                $totalActuallyPaid += $paymentForThisBill;
+                $itemsPaidCount++;
                 $remainingAmount -= $paymentForThisBill;
             }
         });
 
-        session()->flash('message', 'Pembayaran berhasil dicatat.');
+        $santri = Person::find($this->selectedSantriId);
+
+        $this->lastReceiptNo = $receiptNo;
+        $this->lastPaymentGroupId = $paymentGroupId;
+        $this->lastTotalPaid = $totalActuallyPaid;
+        $this->lastSantriName = $santri?->name ?? 'Santri';
+        $this->lastItemsCount = $itemsPaidCount;
+        $this->showReceiptModal = true;
+
+        $msg = "Pembayaran {$itemsPaidCount} tagihan berhasil dicatat. No Kuitansi: {$receiptNo}";
+        session()->flash('message', $msg);
+        $this->toastSuccess($msg);
         $this->showPaymentConfirmModal = false;
         $this->previousSelectedBillIds = [];
         $this->selectSantri($this->selectedSantriId);
+    }
+
+    public function closeReceiptModal(): void
+    {
+        $this->showReceiptModal = false;
     }
 
     // Void Modal State

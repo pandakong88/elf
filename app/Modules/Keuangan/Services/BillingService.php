@@ -216,21 +216,50 @@ class BillingService
     }
 
     /**
+     * Generate a unique sequential receipt number for cashier transactions.
+     * Format: KSR-YYYYMMDD-XXXX (e.g. KSR-20260907-0001)
+     */
+    public function generateReceiptNumber(): string
+    {
+        $prefix = 'KSR-' . now()->format('Ymd') . '-';
+        $todayCount = BillPayment::where('receipt_no', 'like', $prefix . '%')
+            ->select('receipt_no')
+            ->distinct()
+            ->count();
+
+        $seq = str_pad((string)($todayCount + 1), 4, '0', STR_PAD_LEFT);
+        return $prefix . $seq;
+    }
+
+    /**
      * Record a new payment for a bill. Supports negative amount for refund.
      */
-    public function recordPayment(string $billId, float $amount, string $method, ?string $notes, string $loggedByUserId): BillPayment
-    {
-        $payment = DB::transaction(function () use ($billId, $amount, $method, $notes, $loggedByUserId) {
+    public function recordPayment(
+        string $billId,
+        float $amount,
+        string $method,
+        ?string $notes,
+        string $loggedByUserId,
+        ?string $receiptNo = null,
+        ?string $paymentGroupId = null,
+        ?float $tenderedAmount = null,
+        ?float $changeAmount = 0.0
+    ): BillPayment {
+        $payment = DB::transaction(function () use ($billId, $amount, $method, $notes, $loggedByUserId, $receiptNo, $paymentGroupId, $tenderedAmount, $changeAmount) {
             $bill = Bill::findOrFail($billId);
 
             $payment = BillPayment::create([
-                'id'             => Str::uuid()->toString(),
-                'bill_id'        => $bill->id,
-                'amount_paid'    => $amount,
-                'payment_date'   => now()->toDateString(),
-                'payment_method' => strtolower($method),
-                'logged_by'      => $loggedByUserId,
-                'notes'          => $notes,
+                'id'               => Str::uuid()->toString(),
+                'receipt_no'       => $receiptNo,
+                'payment_group_id' => $paymentGroupId,
+                'bill_id'          => $bill->id,
+                'amount_paid'      => $amount,
+                'tendered_amount'  => $tenderedAmount,
+                'change_amount'    => $changeAmount,
+                'payment_date'     => now()->toDateString(),
+                'payment_method'   => strtolower($method),
+                'logged_by'        => $loggedByUserId,
+                'notes'            => $notes,
             ]);
 
             // recalculate status

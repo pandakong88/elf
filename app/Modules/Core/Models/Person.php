@@ -104,9 +104,19 @@ class Person extends Model implements HasMedia
         return $this->hasMany(\App\Modules\Kepengasuhan\Models\RoomAssignment::class, 'person_id');
     }
 
+    public function activeRoomAssignment(): HasOne
+    {
+        return $this->hasOne(\App\Modules\Kepengasuhan\Models\RoomAssignment::class, 'person_id')->where('is_active', true);
+    }
+
     public function madrasahEnrollments(): HasMany
     {
         return $this->hasMany(\App\Modules\Madrasah\Models\MadrasahEnrollment::class, 'person_id');
+    }
+
+    public function activeMadrasahEnrollment(): HasOne
+    {
+        return $this->hasOne(\App\Modules\Madrasah\Models\MadrasahEnrollment::class, 'person_id')->where('is_active', true);
     }
 
     public function leaves(): HasMany

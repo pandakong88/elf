@@ -78,57 +78,152 @@ class BuktiBayarController extends Controller
     }
 
     /**
-     * Generate PDF bukti bayar untuk pembayaran kasir (BillPayment manual).
+     * Generate PDF bukti bayar kuitansi kasir (Multi-Item / Gabungan).
+     * Menerima receipt_no, payment_group_id, atau single paymentId.
      */
-    public function kasir(string $paymentId): Response
+    public function kuitansi(string $identifier): Response
     {
-        $payment = BillPayment::with(['bill.config', 'bill.person', 'logger'])->findOrFail($paymentId);
+        // Cari berdasarkan receipt_no, payment_group_id, atau id
+        $payments = BillPayment::with([
+            'bill.config',
+            'bill.person.activeMadrasahEnrollment.kelas',
+            'bill.person.activeRoomAssignment.room.dormitory',
+            'logger'
+        ])
+        ->where('receipt_no', $identifier)
+        ->orWhere('payment_group_id', $identifier)
+        ->orWhere('id', $identifier)
+        ->get();
 
-        $bill = $payment->bill;
+        if ($payments->isEmpty()) {
+            abort(404, 'Data kuitansi / pembayaran tidak ditemukan.');
+        }
+
+        $firstPayment = $payments->first();
+        $bill = $firstPayment->bill;
+        $santri = $bill?->person;
 
         $months = [1=>'Januari',2=>'Februari',3=>'Maret',4=>'April',5=>'Mei',6=>'Juni',
                    7=>'Juli',8=>'Agustus',9=>'September',10=>'Oktober',11=>'November',12=>'Desember'];
-        $interval = $bill?->config?->interval ?? '';
-        if ($interval === 'semester') {
-            $period = 'Semester ' . $bill->period_month . '/' . $bill->period_year;
-        } elseif (in_array($interval, ['once', 'insidental', 'event', 'sekali'])) {
-            $period = 'Event ' . ($bill->period_year ?? '');
-        } else {
-            $period = ($months[$bill?->period_month ?? 0] ?? '') . ' ' . ($bill?->period_year ?? '');
+
+        $breakdown = [];
+        $totalAmount = 0.0;
+
+        foreach ($payments as $p) {
+            $b = $p->bill;
+            $interval = $b?->config?->interval ?? '';
+            $period = match(true) {
+                $interval === 'semester'                                     => 'Semester ' . $b->period_month . '/' . $b->period_year,
+                in_array($interval, ['once', 'insidental', 'event', 'sekali']) => 'Event ' . ($b->period_year ?? ''),
+                default                                                      => ($months[$b?->period_month ?? 0] ?? '') . ' ' . ($b?->period_year ?? ''),
+            };
+
+            $amountPaid = (float) $p->amount_paid;
+            $totalAmount += $amountPaid;
+
+            $breakdown[] = [
+                'payment_id'   => $p->id,
+                'config_label' => $b?->config?->label ?? ucwords(str_replace('_', ' ', $b?->bill_type ?? '')),
+                'period_label' => trim($period),
+                'amount'       => $amountPaid,
+                'is_partial'   => $amountPaid < (float) ($b?->amount ?? 0),
+                'notes'        => $p->notes,
+            ];
         }
 
+        $receiptNo = $firstPayment->receipt_no ?: ('KSR-' . substr($firstPayment->id, 0, 8));
+        $paymentDate = $firstPayment->payment_date
+            ? $firstPayment->payment_date->translatedFormat('d F Y')
+            : now()->translatedFormat('d F Y');
+
+        $paymentTime = $firstPayment->created_at ? $firstPayment->created_at->format('H:i') . ' WIB' : '';
+
+        // Deteksi info kelas & komplek santri
+        $kelasName = $santri?->activeMadrasahEnrollment?->kelas?->name ?? '—';
+        $dormName  = $santri?->activeRoomAssignment?->room?->dormitory?->name ?? '—';
+        $roomName  = $santri?->activeRoomAssignment?->room?->name ?? '';
+        $dormFull  = $roomName ? ($dormName . ' - ' . $roomName) : $dormName;
+
+        $tendered = $firstPayment->tendered_amount ? (float) $firstPayment->tendered_amount : $totalAmount;
+        $change   = $firstPayment->change_amount ? (float) $firstPayment->change_amount : 0.0;
+
         $data = [
-            'type'           => 'kasir',
-            'app_name'       => config('app.name', 'Elvith'),
-            'no_bukti'       => $payment->id,
-            'santri_name'    => $bill?->person?->name ?? '—',
-            'payment_method' => match (strtolower($payment->payment_method ?? '')) {
+            'type'            => 'kuitansi_kasir',
+            'app_name'        => config('app.name', 'Elvith'),
+            'receipt_no'      => $receiptNo,
+            'payment_date'    => $paymentDate,
+            'payment_time'    => $paymentTime,
+            'santri_name'     => $santri?->name ?? '—',
+            'santri_gender'   => $santri?->gender === 'P' ? 'Putri' : 'Putra',
+            'kelas_name'      => $kelasName,
+            'dorm_name'       => $dormFull,
+            'cashier_name'    => $firstPayment->logger?->name ?? 'Kasir Pondok',
+            'payment_method'  => match (strtolower($firstPayment->payment_method ?? '')) {
                 'cash'            => 'Tunai',
                 'transfer'        => 'Transfer Bank',
-                'gateway_duitku'  => 'Duitku (Gateway)',
-                default           => strtoupper($payment->payment_method ?? '—'),
+                'gateway_duitku'  => 'Gateway Online (Duitku)',
+                default           => strtoupper($firstPayment->payment_method ?? '—'),
             },
-            'payment_date'   => $payment->payment_date
-                                    ? $payment->payment_date->translatedFormat('d F Y')
-                                    : '—',
-            'breakdown'      => [[
-                'config_label' => $bill?->config?->label ?? ucwords(str_replace('_', ' ', $bill?->bill_type ?? '')),
-                'period_label' => trim($period),
-                'pay_portion'  => (float) $payment->amount_paid,
-                'is_partial'   => (float) $payment->amount_paid < (float) ($bill?->amount ?? 0),
-            ]],
-            'bill_amount'    => (float) $payment->amount_paid,
-            'mdr_amount'     => 0.0,
-            'total_amount'   => (float) $payment->amount_paid,
-            'logged_by'      => $payment->logger?->name ?? 'Sistem',
-            'notes'          => $payment->notes,
-            'generated_at'   => now()->translatedFormat('d F Y, H:i') . ' WIB',
+            'breakdown'       => $breakdown,
+            'total_amount'    => $totalAmount,
+            'tendered_amount' => $tendered,
+            'change_amount'   => $change,
+            'terbilang'       => $this->terbilang($totalAmount),
+            'notes'           => $firstPayment->notes,
+            'generated_at'    => now()->translatedFormat('d F Y, H:i') . ' WIB',
         ];
 
-        $pdf = Pdf::loadView('pdf.bukti-pembayaran', $data)
+        $pdf = Pdf::loadView('pdf.kuitansi-kasir', $data)
                   ->setPaper('a4', 'portrait');
 
-        $filename = 'Bukti-Kasir-' . substr($payment->id, 0, 8) . '.pdf';
+        $filename = 'Kuitansi-' . $receiptNo . '.pdf';
         return $pdf->download($filename);
+    }
+
+    /**
+     * Generate PDF bukti bayar untuk pembayaran kasir legacy (BillPayment manual tunggal).
+     */
+    public function kasir(string $paymentId): Response
+    {
+        return $this->kuitansi($paymentId);
+    }
+
+    private function penyebut(float $nilai): string
+    {
+        $nilai = abs((int)$nilai);
+        $huruf = ["", "Satu", "Dua", "Tiga", "Empat", "Lima", "Enam", "Tujuh", "Delapan", "Sembilan", "Sepuluh", "Sebelas"];
+        $temp = "";
+        if ($nilai < 12) {
+            $temp = " " . $huruf[$nilai];
+        } else if ($nilai < 20) {
+            $temp = $this->penyebut($nilai - 10) . " Belas";
+        } else if ($nilai < 100) {
+            $temp = $this->penyebut((int)($nilai / 10)) . " Puluh" . $this->penyebut($nilai % 10);
+        } else if ($nilai < 200) {
+            $temp = " Seratus" . $this->penyebut($nilai - 100);
+        } else if ($nilai < 1000) {
+            $temp = $this->penyebut((int)($nilai / 100)) . " Ratus" . $this->penyebut($nilai % 100);
+        } else if ($nilai < 2000) {
+            $temp = " Seribu" . $this->penyebut($nilai - 1000);
+        } else if ($nilai < 1000000) {
+            $temp = $this->penyebut((int)($nilai / 1000)) . " Ribu" . $this->penyebut($nilai % 1000);
+        } else if ($nilai < 1000000000) {
+            $temp = $this->penyebut((int)($nilai / 1000000)) . " Juta" . $this->penyebut($nilai % 1000000);
+        } else if ($nilai < 1000000000000) {
+            $temp = $this->penyebut((int)($nilai / 1000000000)) . " Milyar" . $this->penyebut(fmod($nilai, 1000000000));
+        } else if ($nilai < 1000000000000000) {
+            $temp = $this->penyebut((int)($nilai / 1000000000000)) . " Trilyun" . $this->penyebut(fmod($nilai, 1000000000000));
+        }
+        return $temp;
+    }
+
+    public function terbilang(float $nilai): string
+    {
+        if ($nilai < 0) {
+            $hasil = "Minus " . trim($this->penyebut($nilai));
+        } else {
+            $hasil = trim($this->penyebut($nilai));
+        }
+        return $hasil . ($hasil ? " Rupiah" : "Nol Rupiah");
     }
 }

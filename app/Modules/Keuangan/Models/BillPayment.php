@@ -14,8 +14,12 @@ class BillPayment extends Model
     protected $table = 'bill_payments';
 
     protected $fillable = [
+        'receipt_no',
+        'payment_group_id',
         'bill_id',
         'amount_paid',
+        'tendered_amount',
+        'change_amount',
         'payment_date',
         'payment_method',
         'logged_by',
@@ -24,6 +28,8 @@ class BillPayment extends Model
 
     protected $casts = [
         'amount_paid' => 'decimal:2',
+        'tendered_amount' => 'decimal:2',
+        'change_amount' => 'decimal:2',
         'payment_date' => 'date',
     ];
 

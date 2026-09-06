@@ -1811,6 +1811,72 @@
                     </div>
                 </div>
             @endif
+
+            {{-- ===== RECEIPT SUCCESS MODAL ===== --}}
+            @if($showReceiptModal)
+                <div class="fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="receipt-modal-title">
+                    {{-- Backdrop --}}
+                    <div class="absolute inset-0 bg-slate-900/70 backdrop-blur-sm" wire:click="closeReceiptModal"></div>
+
+                    {{-- Modal Box --}}
+                    <div class="relative w-full max-w-md bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden text-center p-6 sm:p-8 space-y-6">
+                        {{-- Success Icon Animation --}}
+                        <div class="mx-auto w-16 h-16 bg-emerald-100 dark:bg-emerald-950/60 border-2 border-emerald-500/20 text-emerald-600 dark:text-emerald-400 rounded-2xl flex items-center justify-center shadow-lg shadow-emerald-500/10">
+                            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
+                            </svg>
+                        </div>
+
+                        {{-- Details Header --}}
+                        <div>
+                            <span class="inline-block px-3 py-1 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-full text-[10px] font-extrabold uppercase tracking-wider mb-2">
+                                Pembayaran Berhasil
+                            </span>
+                            <h3 id="receipt-modal-title" class="text-lg font-bold text-slate-900 dark:text-white">
+                                Kuitansi Transaksi Kasir
+                            </h3>
+                            <p class="text-xs text-slate-400 mt-1">
+                                Transaksi telah dibukukan ke dalam sistem kasir pondok.
+                            </p>
+                        </div>
+
+                        {{-- Receipt Info Card --}}
+                        <div class="bg-slate-50 dark:bg-slate-950/60 border border-slate-100 dark:border-slate-800 rounded-2xl p-4 text-left space-y-2.5">
+                            <div class="flex justify-between items-center text-xs">
+                                <span class="text-slate-400 font-medium">Nomor Kuitansi:</span>
+                                <code class="font-mono font-bold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/40 px-2 py-0.5 rounded text-[11px]">{{ $lastReceiptNo }}</code>
+                            </div>
+                            <div class="flex justify-between items-center text-xs">
+                                <span class="text-slate-400 font-medium">Nama Santri:</span>
+                                <span class="font-bold text-slate-800 dark:text-slate-200 truncate max-w-[200px]">{{ $lastSantriName }}</span>
+                            </div>
+                            <div class="flex justify-between items-center text-xs">
+                                <span class="text-slate-400 font-medium">Jumlah Tagihan:</span>
+                                <span class="font-bold text-slate-700 dark:text-slate-300">{{ $lastItemsCount }} Tagihan</span>
+                            </div>
+                            <div class="border-t border-slate-200/60 dark:border-slate-800 pt-2 flex justify-between items-center">
+                                <span class="text-xs text-slate-500 font-semibold">Total Dibayar:</span>
+                                <span class="text-sm font-extrabold text-emerald-600 dark:text-emerald-400">Rp {{ number_format($lastTotalPaid, 0, ',', '.') }}</span>
+                            </div>
+                        </div>
+
+                        {{-- Action Buttons --}}
+                        <div class="flex flex-col sm:flex-row items-center gap-3">
+                            <a href="{{ route('bukti-bayar.kuitansi', $lastReceiptNo) }}" target="_blank"
+                               class="w-full sm:w-1/2 py-3 px-4 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white rounded-2xl text-xs font-bold transition-all shadow-md shadow-indigo-600/20 flex items-center justify-center gap-2">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
+                                </svg>
+                                Cetak Kuitansi
+                            </a>
+                            <button type="button" wire:click="closeReceiptModal"
+                                class="w-full sm:w-1/2 py-3 px-4 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-750 text-slate-700 dark:text-slate-200 rounded-2xl text-xs font-bold transition-all flex items-center justify-center">
+                                Selesai
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            @endif
         @endif
 
 
@@ -2440,10 +2506,17 @@
                                         <td class="py-4 px-4">
                                             @if($santri)
                                                 <strong class="text-slate-800 dark:text-slate-200 block font-bold">{{ $santri->name }}</strong>
-                                                <span class="text-[9px] text-slate-400 block mt-0.5">
-                                                    NIS: {{ $santri->nis ?? '—' }} &nbsp;|&nbsp;
-                                                    {{ $santri->gender === 'L' ? '👦 L' : '👧 P' }}
-                                                </span>
+                                                <div class="flex flex-wrap items-center gap-1.5 mt-0.5">
+                                                    <span class="text-[9px] text-slate-400">
+                                                        NIS: {{ $santri->nis ?? '—' }} &nbsp;|&nbsp;
+                                                        {{ $santri->gender === 'L' ? '👦 L' : '👧 P' }}
+                                                    </span>
+                                                    @if($pay->receipt_no)
+                                                        <span class="inline-flex items-center text-[9px] font-mono font-bold bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 px-1.5 py-0.5 rounded border border-indigo-200/50 dark:border-indigo-800/50" title="Nomor Kuitansi">
+                                                            🧾 {{ $pay->receipt_no }}
+                                                        </span>
+                                                    @endif
+                                                </div>
                                             @else
                                                 <span class="text-slate-400 italic">Data Terhapus</span>
                                             @endif
@@ -2506,15 +2579,15 @@
                                         </td>
                                         <td class="py-4 px-4 text-center">
                                             <div class="flex items-center justify-center gap-1.5">
-                                                {{-- ⬇ PDF Download --}}
+                                                {{-- ⬇ PDF Download / Kuitansi --}}
                                                 @if($method === 'gateway_duitku')
                                                     {{-- Gateway: cari PaymentTransaction via reference di notes --}}
                                                 @else
-                                                    <a href="{{ route('bukti-bayar.kasir', $pay->id) }}" target="_blank"
-                                                       class="inline-flex items-center gap-1 px-2 py-1.5 bg-indigo-500/10 hover:bg-indigo-500 text-indigo-600 hover:text-white rounded-xl text-[9px] font-bold transition-all whitespace-nowrap"
-                                                       title="Unduh PDF Bukti Bayar">
-                                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-                                                        PDF
+                                                    <a href="{{ route('bukti-bayar.kuitansi', $pay->receipt_no ?: $pay->id) }}" target="_blank"
+                                                       class="inline-flex items-center gap-1 px-2.5 py-1.5 bg-indigo-500/10 hover:bg-indigo-500 text-indigo-600 hover:text-white rounded-xl text-[9px] font-bold transition-all whitespace-nowrap"
+                                                       title="{{ $pay->receipt_no ? ('Cetak Kuitansi ' . $pay->receipt_no) : 'Unduh Kuitansi PDF' }}">
+                                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+                                                        Kuitansi
                                                     </a>
                                                 @endif
 
