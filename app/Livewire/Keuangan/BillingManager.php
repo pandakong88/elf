@@ -3460,22 +3460,54 @@ class BillingManager extends Component
                     return $item->receipt_no ?: $item->id;
                 });
 
-            $receiptsPaginated->getCollection()->transform(function($group) use ($groupPayments) {
+            $months = [1=>'Jan',2=>'Feb',3=>'Mar',4=>'Apr',5=>'Mei',6=>'Jun',7=>'Jul',8=>'Agt',9=>'Sep',10=>'Okt',11=>'Nov',12=>'Des'];
+
+            $receiptsPaginated->getCollection()->transform(function($group) use ($groupPayments, $months) {
                 $items = $groupPayments->get($group->group_key, collect());
                 $first = $items->first();
+
+                $detailedItems = $items->map(function($p) use ($months) {
+                    $b = $p->bill;
+                    $cfg = $b?->config;
+                    $interval = $cfg?->interval ?? '';
+                    $period = match(true) {
+                        $interval === 'semester' => 'Sem ' . $b?->period_month . '/' . $b?->period_year,
+                        in_array($interval, ['once', 'insidental', 'event', 'sekali']) => 'Event ' . ($b?->period_year ?? ''),
+                        default => ($months[$b?->period_month ?? 0] ?? '') . ' ' . ($b?->period_year ?? ''),
+                    };
+                    return [
+                        'id'           => $p->id,
+                        'label'        => $cfg?->label ?? ($b?->bill_type ? str_replace('_', ' ', $b->bill_type) : 'Iuran'),
+                        'period'       => trim($period),
+                        'amount'       => (float) $p->amount_paid,
+                        'notes'        => $p->notes,
+                    ];
+                });
+
+                $groupedSummary = $detailedItems->groupBy('label')->map(function($subItems, $label) {
+                    return [
+                        'label'   => $label,
+                        'count'   => $subItems->count(),
+                        'total'   => (float) $subItems->sum('amount'),
+                        'periods' => $subItems->pluck('period')->filter()->unique()->values()->all(),
+                    ];
+                })->values();
+
                 return (object) [
-                    'group_key'       => $group->group_key,
-                    'receipt_no'      => $first?->receipt_no ?: ('KSR-' . substr($first?->id ?? '', 0, 8)),
-                    'is_legacy'       => empty($first?->receipt_no),
-                    'payment_date'    => $first?->payment_date ?: $first?->created_at,
-                    'created_at'      => $first?->created_at,
-                    'santri'          => $first?->bill?->person,
-                    'payment_method'  => $first?->payment_method ?? 'CASH',
-                    'logger'          => $first?->logger,
-                    'total_amount'    => $items->sum('amount_paid'),
-                    'items_count'     => $items->count(),
-                    'items'           => $items,
-                    'notes'           => $first?->notes,
+                    'group_key'        => $group->group_key,
+                    'receipt_no'       => $first?->receipt_no ?: ('KSR-' . substr($first?->id ?? '', 0, 8)),
+                    'is_legacy'        => empty($first?->receipt_no),
+                    'payment_date'     => $first?->payment_date ?: $first?->created_at,
+                    'created_at'       => $first?->created_at,
+                    'santri'           => $first?->bill?->person,
+                    'payment_method'   => $first?->payment_method ?? 'CASH',
+                    'logger'           => $first?->logger,
+                    'total_amount'     => (float) $items->sum('amount_paid'),
+                    'items_count'      => $items->count(),
+                    'items'            => $items,
+                    'detailed_items'   => $detailedItems,
+                    'grouped_summary'  => $groupedSummary,
+                    'notes'            => $first?->notes,
                 ];
             });
 

@@ -2552,7 +2552,7 @@
                                             </td>
 
                                             <!-- Santri Info -->
-                                            <td class="py-4 px-4">
+                                            <td class="py-3.5 px-4">
                                                 @if($santri)
                                                     <strong class="text-slate-800 dark:text-slate-200 block font-bold text-xs">{{ $santri->name }}</strong>
                                                     <div class="flex flex-wrap items-center gap-1 mt-0.5 text-[9px] text-slate-400">
@@ -2565,29 +2565,78 @@
                                                 @endif
                                             </td>
 
-                                            <!-- Rincian Tagihan Breakdown -->
-                                            <td class="py-4 px-4">
-                                                <div class="flex flex-wrap items-center gap-1.5 max-w-md">
-                                                    @foreach($rcpt->items as $item)
-                                                        @php
-                                                            $b = $item->bill;
-                                                            $label = $b?->config?->label ?? ($b?->bill_type ? str_replace('_', ' ', $b->bill_type) : 'Iuran');
-                                                        @endphp
-                                                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[10px] font-semibold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200/60 dark:border-slate-700/60">
-                                                            <span>{{ $label }}</span>
-                                                            <strong class="text-emerald-600 dark:text-emerald-400 font-mono">Rp {{ number_format($item->amount_paid, 0, ',', '.') }}</strong>
-                                                        </span>
-                                                    @endforeach
+                                            <!-- Rincian Tagihan Breakdown (Smart Compact Badges + Popover) -->
+                                            <td class="py-3.5 px-4" x-data="{ openDetail: false }">
+                                                <div class="relative">
+                                                    <div class="flex items-center gap-1.5 flex-wrap max-w-sm">
+                                                        @foreach(collect($rcpt->grouped_summary ?? [])->take(2) as $summary)
+                                                            <div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-slate-100 dark:bg-slate-800/90 border border-slate-200/80 dark:border-slate-700/80 text-[10px] text-slate-700 dark:text-slate-200 shadow-2xs whitespace-nowrap">
+                                                                <span class="font-bold truncate max-w-[130px]" title="{{ $summary['label'] }}">{{ $summary['label'] }}</span>
+                                                                @if($summary['count'] > 1)
+                                                                    <span class="px-1.5 py-0.2 bg-indigo-50 dark:bg-indigo-950/80 text-indigo-600 dark:text-indigo-400 font-extrabold rounded-md text-[9px] border border-indigo-200/40 dark:border-indigo-800/40">
+                                                                        {{ $summary['count'] }} Bln
+                                                                    </span>
+                                                                @endif
+                                                                <span class="text-emerald-600 dark:text-emerald-400 font-bold font-mono text-[11px]">Rp {{ number_format($summary['total'], 0, ',', '.') }}</span>
+                                                            </div>
+                                                        @endforeach
+
+                                                        @if($rcpt->items_count > 1)
+                                                            <button type="button" @click="openDetail = !openDetail"
+                                                                class="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-950/60 dark:hover:bg-indigo-900/60 text-indigo-600 dark:text-indigo-400 border border-indigo-200/60 dark:border-indigo-800/60 text-[10px] font-extrabold transition-all cursor-pointer shadow-2xs whitespace-nowrap"
+                                                                title="Lihat rincian lengkap seluruh {{ $rcpt->items_count }} item tagihan">
+                                                                <span>📋 {{ $rcpt->items_count }} Pos Tagihan</span>
+                                                                <svg class="w-3 h-3 transition-transform" :class="openDetail ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                                                            </button>
+                                                        @endif
+                                                    </div>
+
+                                                    <!-- Floating Popover Detail Breakdown (Modern & Elevated) -->
+                                                    <div x-show="openDetail" 
+                                                         x-cloak
+                                                         @click.outside="openDetail = false"
+                                                         x-transition:enter="transition ease-out duration-150"
+                                                         x-transition:enter-start="opacity-0 translate-y-2 scale-95"
+                                                         x-transition:enter-end="opacity-100 translate-y-0 scale-100"
+                                                         x-transition:leave="transition ease-in duration-100"
+                                                         x-transition:leave-start="opacity-100 translate-y-0 scale-100"
+                                                         x-transition:leave-end="opacity-0 translate-y-2 scale-95"
+                                                         class="absolute left-0 top-full mt-2 w-84 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl z-50 p-4 space-y-3 backdrop-blur-md">
+                                                        
+                                                        <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2.5">
+                                                            <div>
+                                                                <span class="text-[9px] font-extrabold uppercase tracking-widest text-indigo-500 block">Rincian Nota Kuitansi</span>
+                                                                <p class="text-xs font-bold text-slate-800 dark:text-slate-200">{{ $rcpt->items_count }} Item Tagihan Digabung</p>
+                                                            </div>
+                                                            <button type="button" @click="openDetail = false" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-sm font-bold leading-none p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800">&times;</button>
+                                                        </div>
+
+                                                        <div class="max-h-52 overflow-y-auto space-y-2 pr-1 divide-y divide-slate-100 dark:divide-slate-800/60">
+                                                            @foreach($rcpt->detailed_items ?? [] as $det)
+                                                                <div class="flex items-center justify-between text-xs pt-2 first:pt-0">
+                                                                    <div class="min-w-0 pr-2">
+                                                                        <span class="font-bold text-slate-700 dark:text-slate-200 block truncate">{{ $det['label'] }}</span>
+                                                                        @if($det['period'])
+                                                                            <span class="text-[10px] text-slate-400 block font-medium">Periode: {{ $det['period'] }}</span>
+                                                                        @endif
+                                                                    </div>
+                                                                    <span class="font-mono font-extrabold text-emerald-600 dark:text-emerald-400 shrink-0 text-[11px]">
+                                                                        Rp {{ number_format($det['amount'], 0, ',', '.') }}
+                                                                    </span>
+                                                                </div>
+                                                            @endforeach
+                                                        </div>
+
+                                                        <div class="border-t border-slate-100 dark:border-slate-800 pt-2.5 flex items-center justify-between text-xs bg-slate-50/50 dark:bg-slate-950/40 -mx-4 -mb-4 px-4 py-3 rounded-b-2xl">
+                                                            <span class="font-bold text-slate-500">Total Kuitansi:</span>
+                                                            <span class="font-extrabold font-mono text-sm text-emerald-600 dark:text-emerald-400">Rp {{ number_format($rcpt->total_amount, 0, ',', '.') }}</span>
+                                                        </div>
+                                                    </div>
                                                 </div>
-                                                @if($rcpt->items_count > 1)
-                                                    <span class="text-[9px] text-indigo-500 font-extrabold mt-1 block">
-                                                        ⚡ {{ $rcpt->items_count }} Tagihan digabung dalam 1 Kuitansi
-                                                    </span>
-                                                @endif
                                             </td>
 
                                             <!-- Total Dibayar -->
-                                            <td class="py-4 px-4 text-right font-mono font-extrabold text-sm text-emerald-600 dark:text-emerald-400">
+                                            <td class="py-3.5 px-4 text-right font-mono font-extrabold text-sm text-emerald-600 dark:text-emerald-400 whitespace-nowrap">
                                                 Rp {{ number_format($rcpt->total_amount, 0, ',', '.') }}
                                             </td>
 
