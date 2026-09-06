@@ -111,6 +111,7 @@ class BillingManager extends Component
     public float   $lastTotalPaid           = 0.00;
     public ?string $lastSantriName          = null;
     public int     $lastItemsCount          = 0;
+    public string  $cashierHistoryMode      = 'receipt'; // 'receipt' (default) | 'item'
 
     // Kasir: Pengelolaan Cuti / Bebas Tagihan Santri
     public bool    $showLeaveModal      = false;
@@ -2354,6 +2355,12 @@ class BillingManager extends Component
         $this->showReceiptModal = false;
     }
 
+    public function setCashierHistoryMode(string $mode): void
+    {
+        $this->cashierHistoryMode = in_array($mode, ['receipt', 'item']) ? $mode : 'receipt';
+        $this->resetPage('payLogPage');
+    }
+
     // Void Modal State
     public bool $showVoidModal = false;
     public ?string $paymentToVoidId = null;
@@ -3425,6 +3432,55 @@ class BillingManager extends Component
         $payLogTotalCount    = (int) (clone $summaryBaseQuery)->count();
         $payLogGatewayCount  = (int) (clone $summaryBaseQuery)->where('payment_method', 'gateway_duitku')->count();
 
+        // Mode Kuitansi vs Mode Log Item
+        $receiptsLog = null;
+        if ($this->cashierHistoryMode === 'receipt') {
+            $receiptGroupQuery = (clone $paymentsLogQuery)
+                ->selectRaw('COALESCE(receipt_no, id) as group_key, MAX(id) as latest_id, MAX(created_at) as latest_created')
+                ->groupBy(DB::raw('COALESCE(receipt_no, id)'))
+                ->orderBy(DB::raw('MAX(created_at)'), 'desc');
+
+            $receiptsPaginated = $receiptGroupQuery->paginate(15, pageName: 'payLogPage');
+            $groupKeys = $receiptsPaginated->pluck('group_key')->toArray();
+
+            $groupPayments = BillPayment::with([
+                    'bill.person.activeMadrasahEnrollment.kelas',
+                    'bill.person.activeRoomAssignment.room.dormitory',
+                    'bill.config',
+                    'logger'
+                ])
+                ->where(function($q) use ($groupKeys) {
+                    $q->whereIn('receipt_no', $groupKeys)
+                      ->orWhereIn('id', $groupKeys);
+                })
+                ->orderBy('created_at', 'asc')
+                ->get()
+                ->groupBy(function($item) {
+                    return $item->receipt_no ?: $item->id;
+                });
+
+            $receiptsPaginated->getCollection()->transform(function($group) use ($groupPayments) {
+                $items = $groupPayments->get($group->group_key, collect());
+                $first = $items->first();
+                return (object) [
+                    'group_key'       => $group->group_key,
+                    'receipt_no'      => $first?->receipt_no ?: ('KSR-' . substr($first?->id ?? '', 0, 8)),
+                    'is_legacy'       => empty($first?->receipt_no),
+                    'payment_date'    => $first?->payment_date ?: $first?->created_at,
+                    'created_at'      => $first?->created_at,
+                    'santri'          => $first?->bill?->person,
+                    'payment_method'  => $first?->payment_method ?? 'CASH',
+                    'logger'          => $first?->logger,
+                    'total_amount'    => $items->sum('amount_paid'),
+                    'items_count'     => $items->count(),
+                    'items'           => $items,
+                    'notes'           => $first?->notes,
+                ];
+            });
+
+            $receiptsLog = $receiptsPaginated;
+        }
+
         $paymentsLog = $paymentsLogQuery->paginate(15, pageName: 'payLogPage');
         $generationHistory = $historyQuery->paginate(10, pageName: 'historyPage');
 
@@ -3524,6 +3580,8 @@ class BillingManager extends Component
             'selectedParentBill'  => $selectedParentBill,
             'installmentChildBills' => $installmentChildBills,
             'generationHistory'   => $generationHistory,
+            'cashierHistoryMode'  => $this->cashierHistoryMode,
+            'receiptsLog'         => $receiptsLog,
             'paymentsLog'         => $paymentsLog,
             'payLogTotalCash'     => $payLogTotalCash,
             'payLogTotalTransfer' => $payLogTotalTransfer,

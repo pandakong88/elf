@@ -2359,17 +2359,43 @@
                     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-slate-100 dark:border-slate-800 pb-4">
                         <div>
                             <h3 class="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider block font-serif-display">Riwayat Setoran & Transaksi Kasir</h3>
-                            <p class="text-[11px] text-slate-400">Jejak pembayaran iuran santri yang dicatat oleh kasir. Anda dapat melakukan pembatalan pencatatan/void pembayaran jika terjadi kesalahan.</p>
+                            <p class="text-[11px] text-slate-400">Jejak transaksi pembayaran yang dicatat kasir. Pilih mode tampilan nota kuitansi atau rincian pos tagihan.</p>
                         </div>
-                        <div class="flex items-center gap-2">
+                        <div class="flex flex-wrap items-center gap-2">
+                            <!-- Toggle Mode Tampilan (Default: Per Kuitansi) -->
+                            <div class="inline-flex p-1 bg-slate-100 dark:bg-slate-800 rounded-2xl border border-slate-200/80 dark:border-slate-700/80 shadow-2xs">
+                                <button type="button" wire:click="setCashierHistoryMode('receipt')"
+                                    class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[11px] font-bold transition-all {{ $cashierHistoryMode === 'receipt' ? 'bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-xs' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200' }}"
+                                    title="Tampilkan 1 baris per lembar kuitansi / struk">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                                    </svg>
+                                    <span>Per Kuitansi (Nota)</span>
+                                    @if($cashierHistoryMode === 'receipt')
+                                        <span class="w-1.5 h-1.5 rounded-full bg-indigo-500"></span>
+                                    @endif
+                                </button>
+                                <button type="button" wire:click="setCashierHistoryMode('item')"
+                                    class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[11px] font-bold transition-all {{ $cashierHistoryMode === 'item' ? 'bg-white dark:bg-slate-900 text-emerald-600 dark:text-emerald-400 shadow-xs' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200' }}"
+                                    title="Tampilkan rincian terpisah per pos tagihan iuran">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"/>
+                                    </svg>
+                                    <span>Per Pos Tagihan (Audit)</span>
+                                    @if($cashierHistoryMode === 'item')
+                                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                                    @endif
+                                </button>
+                            </div>
+
                             <button type="button" wire:click="togglePayLogAdvancedFilters"
                                 class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl text-xs font-bold transition-all">
-                                🎛️ {{ $showPayLogAdvancedFilters ? 'Sembunyikan Filter' : 'Filter Lanjutan' }}
+                                🎛️ {{ $showPayLogAdvancedFilters ? 'Tutup Filter' : 'Filter' }}
                             </button>
                             @if($payLogSearch || $payLogMethod || $payLogDate || $payLogStartDate || $payLogEndDate || $payLogUser || $payLogConfigId || $payLogDormitoryId || $payLogKelasId)
                                 <button type="button" wire:click="resetPayLogFilters"
                                     class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-rose-500/10 hover:bg-rose-500 text-rose-600 hover:text-white rounded-xl text-xs font-bold transition-all">
-                                    ❌ Reset Filter
+                                    ❌ Reset
                                 </button>
                             @endif
                         </div>
@@ -2379,12 +2405,12 @@
                     <div class="grid grid-cols-1 md:grid-cols-12 gap-4">
                         <!-- Search Box (Santri / NIS / NIK) -->
                         <div class="md:col-span-5">
-                            <label class="block text-[9px] font-extrabold text-slate-400 uppercase tracking-wider mb-1.5">Cari Santri (Nama / NIS / NIK)</label>
+                            <label class="block text-[9px] font-extrabold text-slate-400 uppercase tracking-wider mb-1.5">Cari Santri / No. Kuitansi</label>
                             <div class="relative">
                                 <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
                                 </span>
-                                <input type="text" wire:model.live.debounce.300ms="payLogSearch" placeholder="Ketik nama santri, NIS, NIK, atau catatan..." 
+                                <input type="text" wire:model.live.debounce.300ms="payLogSearch" placeholder="Ketik nama santri, NIS, No Kuitansi (KSR-...), catatan..." 
                                     class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-100 rounded-2xl pl-10 pr-4 py-2 text-xs font-bold focus:ring-2 focus:ring-emerald-500 shadow-2xs">
                             </div>
                         </div>
@@ -2474,166 +2500,321 @@
                     @endif
                 </div>
 
-                <!-- Payment Logs Table -->
-                <div class="bg-white dark:bg-slate-900 border border-slate-200/50 dark:border-slate-800 rounded-3xl shadow-xs overflow-hidden">
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-left border-collapse text-xs min-w-[900px]">
-                            <thead>
-                                <tr class="bg-slate-50/80 dark:bg-slate-950 border-b border-slate-200 dark:border-slate-800 text-slate-500 font-extrabold uppercase tracking-wider text-[9px]">
-                                    <th class="py-4 px-4 w-32">Tanggal Setor</th>
-                                    <th class="py-4 px-4">Nama Santri</th>
-                                    <th class="py-4 px-4">Jenis Iuran</th>
-                                    <th class="py-4 px-4 text-center">Periode</th>
-                                    <th class="py-4 px-4 text-right">Jumlah Setor</th>
-                                    <th class="py-4 px-4 text-center">Metode</th>
-                                    <th class="py-4 px-4">Catatan</th>
-                                    <th class="py-4 px-4">Petugas</th>
-                                    <th class="py-4 px-4 text-center w-28">Aksi</th>
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y divide-slate-100 dark:divide-slate-800/50">
-                                @forelse($paymentsLog as $pay)
-                                    @php
-                                        $bill = $pay->bill;
-                                        $santri = $bill?->person;
-                                        $config = $bill?->config;
-                                    @endphp
-                                    <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/20 transition-colors">
-                                        <td class="py-4 px-4 font-medium text-slate-500">
-                                            {{ $pay->payment_date ? $pay->payment_date->translatedFormat('d M Y') : '—' }}
-                                            <span class="text-[9px] text-slate-400 block mt-0.5">{{ $pay->created_at->format('H:i') }} WIB</span>
-                                        </td>
-                                        <td class="py-4 px-4">
-                                            @if($santri)
-                                                <strong class="text-slate-800 dark:text-slate-200 block font-bold">{{ $santri->name }}</strong>
-                                                <div class="flex flex-wrap items-center gap-1.5 mt-0.5">
-                                                    <span class="text-[9px] text-slate-400">
-                                                        NIS: {{ $santri->nis ?? '—' }} &nbsp;|&nbsp;
-                                                        {{ $santri->gender === 'L' ? '👦 L' : '👧 P' }}
-                                                    </span>
-                                                    @if($pay->receipt_no)
-                                                        <span class="inline-flex items-center text-[9px] font-mono font-bold bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 px-1.5 py-0.5 rounded border border-indigo-200/50 dark:border-indigo-800/50" title="Nomor Kuitansi">
-                                                            🧾 {{ $pay->receipt_no }}
+                @if($cashierHistoryMode === 'receipt')
+                    <!-- ========================================== -->
+                    <!-- TABEL MODE 1: DAFTAR KUITANSI / NOTA (DEFAULT) -->
+                    <!-- ========================================== -->
+                    <div class="bg-white dark:bg-slate-900 border border-slate-200/50 dark:border-slate-800 rounded-3xl shadow-xs overflow-hidden">
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left border-collapse text-xs min-w-[950px]">
+                                <thead>
+                                    <tr class="bg-slate-50/80 dark:bg-slate-950 border-b border-slate-200 dark:border-slate-800 text-slate-500 font-extrabold uppercase tracking-wider text-[9px]">
+                                        <th class="py-4 px-4 w-44">No. Kuitansi</th>
+                                        <th class="py-4 px-4 w-36">Waktu Setor</th>
+                                        <th class="py-4 px-4">Santri</th>
+                                        <th class="py-4 px-4">Rincian Tagihan Terbayar</th>
+                                        <th class="py-4 px-4 text-right w-36">Total Dibayar</th>
+                                        <th class="py-4 px-4 text-center w-28">Metode</th>
+                                        <th class="py-4 px-4">Petugas</th>
+                                        <th class="py-4 px-4 text-center w-36">Aksi Kuitansi</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-100 dark:divide-slate-800/50">
+                                    @forelse($receiptsLog ?? [] as $rcpt)
+                                        @php
+                                            $santri = $rcpt->santri;
+                                            $method = strtolower($rcpt->payment_method);
+                                        @endphp
+                                        <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/20 transition-colors">
+                                            <!-- No Kuitansi -->
+                                            <td class="py-4 px-4">
+                                                <div class="flex items-center gap-2">
+                                                    <div class="w-7 h-7 rounded-lg bg-indigo-50 dark:bg-indigo-950/50 border border-indigo-200/60 dark:border-indigo-800/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0">
+                                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                                                        </svg>
+                                                    </div>
+                                                    <div>
+                                                        <span class="text-[11px] font-mono font-extrabold text-indigo-600 dark:text-indigo-400 block">{{ $rcpt->receipt_no }}</span>
+                                                        @if($rcpt->is_legacy)
+                                                            <span class="text-[8px] font-sans text-slate-400 uppercase tracking-wider block">Nota Tunggal</span>
+                                                        @else
+                                                            <span class="text-[8px] font-sans text-emerald-600 dark:text-emerald-400 uppercase tracking-wider font-extrabold block">Nota Kasir</span>
+                                                        @endif
+                                                    </div>
+                                                </div>
+                                            </td>
+
+                                            <!-- Waktu Setor -->
+                                            <td class="py-4 px-4 font-medium text-slate-500">
+                                                <span class="block font-bold text-slate-700 dark:text-slate-300">{{ $rcpt->payment_date ? \Carbon\Carbon::parse($rcpt->payment_date)->translatedFormat('d M Y') : '—' }}</span>
+                                                <span class="text-[9px] text-slate-400 block mt-0.5">{{ $rcpt->created_at ? \Carbon\Carbon::parse($rcpt->created_at)->format('H:i') . ' WIB' : '—' }}</span>
+                                            </td>
+
+                                            <!-- Santri Info -->
+                                            <td class="py-4 px-4">
+                                                @if($santri)
+                                                    <strong class="text-slate-800 dark:text-slate-200 block font-bold text-xs">{{ $santri->name }}</strong>
+                                                    <div class="flex flex-wrap items-center gap-1 mt-0.5 text-[9px] text-slate-400">
+                                                        <span>NIS: {{ $santri->nis ?? '—' }}</span>
+                                                        <span>&bull;</span>
+                                                        <span>{{ $santri->gender === 'L' ? '👦 Putra' : '👧 Putri' }}</span>
+                                                    </div>
+                                                @else
+                                                    <span class="text-slate-400 italic">Data Santri Terhapus</span>
+                                                @endif
+                                            </td>
+
+                                            <!-- Rincian Tagihan Breakdown -->
+                                            <td class="py-4 px-4">
+                                                <div class="flex flex-wrap items-center gap-1.5 max-w-md">
+                                                    @foreach($rcpt->items as $item)
+                                                        @php
+                                                            $b = $item->bill;
+                                                            $label = $b?->config?->label ?? ($b?->bill_type ? str_replace('_', ' ', $b->bill_type) : 'Iuran');
+                                                        @endphp
+                                                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[10px] font-semibold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200/60 dark:border-slate-700/60">
+                                                            <span>{{ $label }}</span>
+                                                            <strong class="text-emerald-600 dark:text-emerald-400 font-mono">Rp {{ number_format($item->amount_paid, 0, ',', '.') }}</strong>
                                                         </span>
+                                                    @endforeach
+                                                </div>
+                                                @if($rcpt->items_count > 1)
+                                                    <span class="text-[9px] text-indigo-500 font-extrabold mt-1 block">
+                                                        ⚡ {{ $rcpt->items_count }} Tagihan digabung dalam 1 Kuitansi
+                                                    </span>
+                                                @endif
+                                            </td>
+
+                                            <!-- Total Dibayar -->
+                                            <td class="py-4 px-4 text-right font-mono font-extrabold text-sm text-emerald-600 dark:text-emerald-400">
+                                                Rp {{ number_format($rcpt->total_amount, 0, ',', '.') }}
+                                            </td>
+
+                                            <!-- Metode -->
+                                            <td class="py-4 px-4 text-center">
+                                                <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[9px] font-extrabold uppercase tracking-wider
+                                                    @if($method === 'cash') bg-teal-500/10 text-teal-600 dark:text-teal-400
+                                                    @elseif($method === 'transfer') bg-blue-500/10 text-blue-600 dark:text-blue-400
+                                                    @elseif($method === 'gateway_duitku') bg-amber-500/10 text-amber-600 dark:text-amber-400
+                                                    @else bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400 @endif">
+                                                    @if($method === 'cash') 💵 Tunai
+                                                    @elseif($method === 'transfer') 🏦 Transfer
+                                                    @elseif($method === 'gateway_duitku') ⚡ Duitku
+                                                    @else 💳 {{ strtoupper($rcpt->payment_method) }} @endif
+                                                </span>
+                                            </td>
+
+                                            <!-- Petugas -->
+                                            <td class="py-4 px-4">
+                                                <span class="inline-flex items-center gap-1.5 px-2 py-0.5 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-md text-[10px] text-slate-700 dark:text-slate-300 font-bold whitespace-nowrap">
+                                                    👤 {{ $rcpt->logger?->name ?? 'Kasir Pondok' }}
+                                                </span>
+                                            </td>
+
+                                            <!-- Aksi Kuitansi -->
+                                            <td class="py-4 px-4 text-center">
+                                                <a href="{{ route('bukti-bayar.kuitansi', $rcpt->receipt_no ?: $rcpt->group_key) }}" target="_blank"
+                                                   class="inline-flex items-center gap-1.5 px-3 py-2 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white rounded-xl text-[10px] font-bold transition-all shadow-sm shadow-indigo-600/20 whitespace-nowrap"
+                                                   title="Cetak Lembar Kuitansi PDF">
+                                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
+                                                    </svg>
+                                                    Cetak Kuitansi
+                                                </a>
+                                            </td>
+                                        </tr>
+                                    @empty
+                                        <tr>
+                                            <td colspan="8" class="py-16 text-center text-slate-400 font-semibold">
+                                                <div class="flex flex-col items-center justify-center gap-2">
+                                                    <svg class="w-8 h-8 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                                                    <span>Tidak ada kuitansi pembayaran yang cocok dengan pencarian Anda.</span>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    @endforelse
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Pagination Footer for Receipts Log -->
+                        @if($receiptsLog && $receiptsLog->total() > 0)
+                            <div class="px-5 py-4 border-t border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-slate-50/50 dark:bg-slate-950/20">
+                                <div class="text-[11px] font-semibold text-slate-400">
+                                    Menampilkan <span class="font-bold text-slate-700 dark:text-slate-300">{{ $receiptsLog->firstItem() ?? 0 }}</span> s.d. <span class="font-bold text-slate-700 dark:text-slate-300">{{ $receiptsLog->lastItem() ?? 0 }}</span> dari <span class="font-bold text-indigo-600 dark:text-indigo-400">{{ $receiptsLog->total() }}</span> kuitansi transaksi
+                                </div>
+                                @if($receiptsLog->hasPages())
+                                    <div>
+                                        {{ $receiptsLog->links(data: ['scrollTo' => false]) }}
+                                    </div>
+                                @endif
+                            </div>
+                        @endif
+                    </div>
+                @else
+                    <!-- ========================================== -->
+                    <!-- TABEL MODE 2: RINCIAN PER POS TAGIHAN (ITEM AUDIT) -->
+                    <!-- ========================================== -->
+                    <div class="bg-white dark:bg-slate-900 border border-slate-200/50 dark:border-slate-800 rounded-3xl shadow-xs overflow-hidden">
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left border-collapse text-xs min-w-[900px]">
+                                <thead>
+                                    <tr class="bg-slate-50/80 dark:bg-slate-950 border-b border-slate-200 dark:border-slate-800 text-slate-500 font-extrabold uppercase tracking-wider text-[9px]">
+                                        <th class="py-4 px-4 w-32">Tanggal Setor</th>
+                                        <th class="py-4 px-4">Nama Santri</th>
+                                        <th class="py-4 px-4">Jenis Iuran</th>
+                                        <th class="py-4 px-4 text-center">Periode</th>
+                                        <th class="py-4 px-4 text-right">Jumlah Setor</th>
+                                        <th class="py-4 px-4 text-center">Metode</th>
+                                        <th class="py-4 px-4">Catatan</th>
+                                        <th class="py-4 px-4">Petugas</th>
+                                        <th class="py-4 px-4 text-center w-28">Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-100 dark:divide-slate-800/50">
+                                    @forelse($paymentsLog as $pay)
+                                        @php
+                                            $bill = $pay->bill;
+                                            $santri = $bill?->person;
+                                            $config = $bill?->config;
+                                        @endphp
+                                        <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/20 transition-colors">
+                                            <td class="py-4 px-4 font-medium text-slate-500">
+                                                {{ $pay->payment_date ? $pay->payment_date->translatedFormat('d M Y') : '—' }}
+                                                <span class="text-[9px] text-slate-400 block mt-0.5">{{ $pay->created_at->format('H:i') }} WIB</span>
+                                            </td>
+                                            <td class="py-4 px-4">
+                                                @if($santri)
+                                                    <strong class="text-slate-800 dark:text-slate-200 block font-bold">{{ $santri->name }}</strong>
+                                                    <div class="flex flex-wrap items-center gap-1.5 mt-0.5">
+                                                        <span class="text-[9px] text-slate-400">
+                                                            NIS: {{ $santri->nis ?? '—' }} &nbsp;|&nbsp;
+                                                            {{ $santri->gender === 'L' ? '👦 L' : '👧 P' }}
+                                                        </span>
+                                                        @if($pay->receipt_no)
+                                                            <span class="inline-flex items-center text-[9px] font-mono font-bold bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 px-1.5 py-0.5 rounded border border-indigo-200/50 dark:border-indigo-800/50" title="Nomor Kuitansi">
+                                                                🧾 {{ $pay->receipt_no }}
+                                                            </span>
+                                                        @endif
+                                                    </div>
+                                                @else
+                                                    <span class="text-slate-400 italic">Data Terhapus</span>
+                                                @endif
+                                            </td>
+                                            <td class="py-4 px-4 font-semibold text-slate-700 dark:text-slate-300">
+                                                {{ $config?->label ?? ($bill?->bill_type ? str_replace('_', ' ', $bill->bill_type) : '—') }}
+                                            </td>
+                                            <td class="py-4 px-4 text-center font-bold text-slate-600 dark:text-slate-350">
+                                                @if($bill)
+                                                    @if($config && $config->interval === 'semester')
+                                                        Sem {{ $bill->period_month }} / {{ $bill->period_year }}
+                                                    @elseif($config && in_array($config->interval, ['once', 'insidental', 'event', 'sekali']))
+                                                        Event / {{ $bill->period_year }}
+                                                    @else
+                                                        @php
+                                                            $months = [1=>'Jan',2=>'Feb',3=>'Mar',4=>'Apr',5=>'Mei',6=>'Jun',7=>'Jul',8=>'Agt',9=>'Sep',10=>'Okt',11=>'Nov',12=>'Des'];
+                                                            $mName = $months[$bill->period_month] ?? $bill->period_month;
+                                                        @endphp
+                                                        {{ $mName }} {{ $bill->period_year }} @if($bill->period_sub) <span class="text-[10px] font-semibold text-amber-600 dark:text-amber-400 block">(Gel. {{ $bill->period_sub }})</span> @endif
+                                                    @endif
+                                                @else
+                                                    —
+                                                @endif
+                                            </td>
+                                            <td class="py-4 px-4 text-right font-extrabold text-emerald-600 dark:text-emerald-400">
+                                                Rp {{ number_format($pay->amount_paid, 0, ',', '.') }}
+                                            </td>
+                                            <td class="py-4 px-4 text-center">
+                                                @php $method = strtolower($pay->payment_method); @endphp
+                                                <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[9px] font-extrabold uppercase tracking-wider
+                                                    @if($method === 'cash') bg-teal-500/10 text-teal-600 dark:text-teal-400
+                                                    @elseif($method === 'transfer') bg-blue-500/10 text-blue-600 dark:text-blue-400
+                                                    @elseif($method === 'gateway_duitku') bg-amber-500/10 text-amber-600 dark:text-amber-400
+                                                    @else bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400 @endif">
+                                                    @if($method === 'cash') 💵 Tunai
+                                                    @elseif($method === 'transfer') 🏦 Transfer
+                                                    @elseif($method === 'gateway_duitku') ⚡ Duitku Online
+                                                    @else 💳 {{ $pay->payment_method }} @endif
+                                                </span>
+                                            </td>
+                                            <td class="py-4 px-4 max-w-[180px]">
+                                                @if($method === 'gateway_duitku')
+                                                    @php
+                                                        // Ekstrak nomor referensi dari catatan
+                                                        preg_match('/Ref transaksi:\s*(\S+)/', $pay->notes ?? '', $refMatch);
+                                                        $refCode = $refMatch[1] ?? null;
+                                                    @endphp
+                                                    <span class="text-[10px] text-slate-500 dark:text-slate-400 block">Bayar mandiri via Duitku</span>
+                                                    @if($refCode)
+                                                        <code class="text-[9px] font-mono bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 px-1.5 py-0.5 rounded mt-0.5 block truncate" title="{{ $refCode }}">{{ $refCode }}</code>
+                                                    @endif
+                                                @else
+                                                    <span class="text-slate-500 dark:text-slate-400 text-[11px] truncate block" title="{{ $pay->notes }}">{{ $pay->notes ?: '—' }}</span>
+                                                @endif
+                                            </td>
+                                            <td class="py-4 px-4">
+                                                <span class="inline-flex items-center gap-1.5 px-2 py-0.5 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-md text-[10px] text-slate-700 dark:text-slate-300 font-bold whitespace-nowrap">
+                                                    👤 {{ $pay->logger?->name ?? 'Sistem' }}
+                                                </span>
+                                            </td>
+                                            <td class="py-4 px-4 text-center">
+                                                <div class="flex items-center justify-center gap-1.5">
+                                                    {{-- ⬇ PDF Download / Kuitansi --}}
+                                                    @if($method === 'gateway_duitku')
+                                                        {{-- Gateway: cari PaymentTransaction via reference di notes --}}
+                                                    @else
+                                                        <a href="{{ route('bukti-bayar.kuitansi', $pay->receipt_no ?: $pay->id) }}" target="_blank"
+                                                           class="inline-flex items-center gap-1 px-2.5 py-1.5 bg-indigo-500/10 hover:bg-indigo-500 text-indigo-600 hover:text-white rounded-xl text-[9px] font-bold transition-all whitespace-nowrap"
+                                                           title="{{ $pay->receipt_no ? ('Cetak Kuitansi ' . $pay->receipt_no) : 'Unduh Kuitansi PDF' }}">
+                                                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+                                                            Kuitansi
+                                                        </a>
+                                                    @endif
+
+                                                    {{-- 🗑 Void Button --}}
+                                                    @if($method === 'gateway_duitku')
+                                                        <span class="inline-flex items-center gap-1 px-2.5 py-1.5 bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 rounded-xl text-[9px] font-bold whitespace-nowrap cursor-not-allowed" title="Transaksi online tidak dapat di-void. Hubungi Duitku jika diperlukan.">
+                                                            🔒 Tidak Bisa Void
+                                                        </span>
+                                                    @else
+                                                        <button type="button" wire:click="confirmVoidPayment('{{ $pay->id }}')"
+                                                            class="px-2.5 py-1.5 bg-rose-500/10 hover:bg-rose-500 text-rose-600 hover:text-white rounded-xl text-[9px] font-bold transition-all whitespace-nowrap">
+                                                            🗑️ Void
+                                                        </button>
                                                     @endif
                                                 </div>
-                                            @else
-                                                <span class="text-slate-400 italic">Data Terhapus</span>
-                                            @endif
-                                        </td>
-                                        <td class="py-4 px-4 font-semibold text-slate-700 dark:text-slate-300">
-                                            {{ $config?->label ?? ($bill?->bill_type ? str_replace('_', ' ', $bill->bill_type) : '—') }}
-                                        </td>
-                                        <td class="py-4 px-4 text-center font-bold text-slate-600 dark:text-slate-350">
-                                            @if($bill)
-                                                @if($config && $config->interval === 'semester')
-                                                    Sem {{ $bill->period_month }} / {{ $bill->period_year }}
-                                                @elseif($config && in_array($config->interval, ['once', 'insidental', 'event', 'sekali']))
-                                                    Event / {{ $bill->period_year }}
-                                                @else
-                                                    @php
-                                                        $months = [1=>'Jan',2=>'Feb',3=>'Mar',4=>'Apr',5=>'Mei',6=>'Jun',7=>'Jul',8=>'Agt',9=>'Sep',10=>'Okt',11=>'Nov',12=>'Des'];
-                                                        $mName = $months[$bill->period_month] ?? $bill->period_month;
-                                                    @endphp
-                                                    {{ $mName }} {{ $bill->period_year }} @if($bill->period_sub) <span class="text-[10px] font-semibold text-amber-600 dark:text-amber-400 block">(Gel. {{ $bill->period_sub }})</span> @endif
-                                                @endif
-                                            @else
-                                                —
-                                            @endif
-                                        </td>
-                                        <td class="py-4 px-4 text-right font-extrabold text-emerald-600 dark:text-emerald-400">
-                                            Rp {{ number_format($pay->amount_paid, 0, ',', '.') }}
-                                        </td>
-                                        <td class="py-4 px-4 text-center">
-                                            @php $method = strtolower($pay->payment_method); @endphp
-                                            <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[9px] font-extrabold uppercase tracking-wider
-                                                @if($method === 'cash') bg-teal-500/10 text-teal-600 dark:text-teal-400
-                                                @elseif($method === 'transfer') bg-blue-500/10 text-blue-600 dark:text-blue-400
-                                                @elseif($method === 'gateway_duitku') bg-amber-500/10 text-amber-600 dark:text-amber-400
-                                                @else bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400 @endif">
-                                                @if($method === 'cash') 💵 Tunai
-                                                @elseif($method === 'transfer') 🏦 Transfer
-                                                @elseif($method === 'gateway_duitku') ⚡ Duitku Online
-                                                @else 💳 {{ $pay->payment_method }} @endif
-                                            </span>
-                                        </td>
-                                        <td class="py-4 px-4 max-w-[180px]">
-                                            @if($method === 'gateway_duitku')
-                                                @php
-                                                    // Ekstrak nomor referensi dari catatan
-                                                    preg_match('/Ref transaksi:\s*(\S+)/', $pay->notes ?? '', $refMatch);
-                                                    $refCode = $refMatch[1] ?? null;
-                                                @endphp
-                                                <span class="text-[10px] text-slate-500 dark:text-slate-400 block">Bayar mandiri via Duitku</span>
-                                                @if($refCode)
-                                                    <code class="text-[9px] font-mono bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 px-1.5 py-0.5 rounded mt-0.5 block truncate" title="{{ $refCode }}">{{ $refCode }}</code>
-                                                @endif
-                                            @else
-                                                <span class="text-slate-500 dark:text-slate-400 text-[11px] truncate block" title="{{ $pay->notes }}">{{ $pay->notes ?: '—' }}</span>
-                                            @endif
-                                        </td>
-                                        <td class="py-4 px-4">
-                                            <span class="inline-flex items-center gap-1.5 px-2 py-0.5 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-md text-[10px] text-slate-700 dark:text-slate-300 font-bold whitespace-nowrap">
-                                                👤 {{ $pay->logger?->name ?? 'Sistem' }}
-                                            </span>
-                                        </td>
-                                        <td class="py-4 px-4 text-center">
-                                            <div class="flex items-center justify-center gap-1.5">
-                                                {{-- ⬇ PDF Download / Kuitansi --}}
-                                                @if($method === 'gateway_duitku')
-                                                    {{-- Gateway: cari PaymentTransaction via reference di notes --}}
-                                                @else
-                                                    <a href="{{ route('bukti-bayar.kuitansi', $pay->receipt_no ?: $pay->id) }}" target="_blank"
-                                                       class="inline-flex items-center gap-1 px-2.5 py-1.5 bg-indigo-500/10 hover:bg-indigo-500 text-indigo-600 hover:text-white rounded-xl text-[9px] font-bold transition-all whitespace-nowrap"
-                                                       title="{{ $pay->receipt_no ? ('Cetak Kuitansi ' . $pay->receipt_no) : 'Unduh Kuitansi PDF' }}">
-                                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
-                                                        Kuitansi
-                                                    </a>
-                                                @endif
-
-                                                {{-- 🗑 Void Button --}}
-                                                @if($method === 'gateway_duitku')
-                                                    <span class="inline-flex items-center gap-1 px-2.5 py-1.5 bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 rounded-xl text-[9px] font-bold whitespace-nowrap cursor-not-allowed" title="Transaksi online tidak dapat di-void. Hubungi Duitku jika diperlukan.">
-                                                        🔒 Tidak Bisa Void
-                                                    </span>
-                                                @else
-                                                    <button type="button" wire:click="confirmVoidPayment('{{ $pay->id }}')"
-                                                        class="px-2.5 py-1.5 bg-rose-500/10 hover:bg-rose-500 text-rose-600 hover:text-white rounded-xl text-[9px] font-bold transition-all whitespace-nowrap">
-                                                        🗑️ Void
-                                                    </button>
-                                                @endif
-                                            </div>
-                                        </td>
-
-                                    </tr>
-                                @empty
-                                    <tr>
-                                        <td colspan="9" class="py-16 text-center text-slate-400 font-semibold">
-                                            <div class="flex flex-col items-center justify-center gap-2">
-                                                <svg class="w-8 h-8 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/></svg>
-                                                <span>Tidak ada riwayat setoran yang cocok dengan pencarian Anda.</span>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                @endforelse
-                            </tbody>
-                        </table>
-                    </div>
-
-                    <!-- Pagination Footer for Payments Log -->
-                    @if($paymentsLog->total() > 0)
-                        <div class="px-5 py-4 border-t border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-slate-50/50 dark:bg-slate-950/20">
-                            <div class="text-[11px] font-semibold text-slate-400">
-                                Menampilkan <span class="font-bold text-slate-700 dark:text-slate-300">{{ $paymentsLog->firstItem() ?? 0 }}</span> s.d. <span class="font-bold text-slate-700 dark:text-slate-300">{{ $paymentsLog->lastItem() ?? 0 }}</span> dari <span class="font-bold text-emerald-600 dark:text-emerald-400">{{ $paymentsLog->total() }}</span> pembayaran dicatat
-                            </div>
-                            @if($paymentsLog->hasPages())
-                                <div>
-                                    {{ $paymentsLog->links(data: ['scrollTo' => false]) }}
-                                </div>
-                            @endif
+                                            </td>
+                                        </tr>
+                                    @empty
+                                        <tr>
+                                            <td colspan="9" class="py-16 text-center text-slate-400 font-semibold">
+                                                <div class="flex flex-col items-center justify-center gap-2">
+                                                    <svg class="w-8 h-8 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/></svg>
+                                                    <span>Tidak ada riwayat setoran yang cocok dengan pencarian Anda.</span>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    @endforelse
+                                </tbody>
+                            </table>
                         </div>
-                    @endif
-                </div>
+
+                        <!-- Pagination Footer for Payments Log -->
+                        @if($paymentsLog->total() > 0)
+                            <div class="px-5 py-4 border-t border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-slate-50/50 dark:bg-slate-950/20">
+                                <div class="text-[11px] font-semibold text-slate-400">
+                                    Menampilkan <span class="font-bold text-slate-700 dark:text-slate-300">{{ $paymentsLog->firstItem() ?? 0 }}</span> s.d. <span class="font-bold text-slate-700 dark:text-slate-300">{{ $paymentsLog->lastItem() ?? 0 }}</span> dari <span class="font-bold text-emerald-600 dark:text-emerald-400">{{ $paymentsLog->total() }}</span> pembayaran dicatat
+                                </div>
+                                @if($paymentsLog->hasPages())
+                                    <div>
+                                        {{ $paymentsLog->links(data: ['scrollTo' => false]) }}
+                                    </div>
+                                @endif
+                            </div>
+                        @endif
+                    </div>
+                @endif
             </div>
         @endif
 
