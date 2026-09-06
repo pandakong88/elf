@@ -47,6 +47,17 @@ class BillingExceptionEdit extends Component
         'excNotes' => 'required|string|min:3',
     ];
 
+    protected $messages = [
+        'excConfigId.required' => 'Silakan pilih jenis iuran / tagihan terlebih dahulu.',
+        'excSantriIds.required' => 'Pilih minimal 1 santri penerima dispensasi dari tabel.',
+        'excSantriIds.min' => 'Pilih minimal 1 santri penerima dispensasi dari tabel.',
+        'excType.required' => 'Pilih tipe dispensasi.',
+        'excAmount.required' => 'Nominal potongan / tarif wajib diisi.',
+        'excAmount.min' => 'Nominal potongan tidak boleh bernilai negatif.',
+        'excNotes.required' => 'Ketik nama / keterangan kelompok potongan.',
+        'excNotes.min' => 'Keterangan potongan minimal 3 karakter.',
+    ];
+
     public function mount(): void
     {
         $this->configId = request()->query('config_id');
