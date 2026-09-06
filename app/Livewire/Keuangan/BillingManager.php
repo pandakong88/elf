@@ -101,6 +101,7 @@ class BillingManager extends Component
     public string  $payNotes         = '';
     public int     $cashierYear;
     public array   $recentSantriIds  = [];
+    public bool    $showPaymentConfirmModal = false;
     public array   $previousSelectedBillIds = [];
 
     // Kasir: Modal Bukti Bayar / Kuitansi Kasir
