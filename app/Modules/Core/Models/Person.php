@@ -109,6 +109,11 @@ class Person extends Model implements HasMedia
         return $this->hasMany(\App\Modules\Madrasah\Models\MadrasahEnrollment::class, 'person_id');
     }
 
+    public function leaves(): HasMany
+    {
+        return $this->hasMany(\App\Modules\Keuangan\Models\SantriLeave::class, 'person_id');
+    }
+
     /**
      * Ambil nilai dari profil santri (kolom langsung atau additional_info JSON).
      */

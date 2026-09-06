@@ -7,6 +7,7 @@ use App\Modules\Keuangan\Models\Bill;
 use App\Modules\Keuangan\Models\BillPayment;
 use App\Modules\Keuangan\Models\BillingConfiguration;
 use App\Modules\Keuangan\Models\BillingException;
+use App\Modules\Keuangan\Models\SantriLeave;
 use App\Modules\Kepengasuhan\Models\RoomAssignment;
 use App\Modules\Kepengasuhan\Models\Dormitory;
 use App\Services\WhatsAppService;
@@ -47,6 +48,7 @@ class BillingService
                     ->exists();
 
                 if (!$existingSyahriah) {
+                    $isOnLeave = $this->isSantriOnLeave($santri->id, $syahriahConfig?->id, $month, $year);
                     $amount = $syahriahConfig ? $this->calculateFinalAmount($syahriahConfig, $santri->id, $defaultSyahriahAmount) : $defaultSyahriahAmount;
 
                     Bill::create([
@@ -58,7 +60,8 @@ class BillingService
                         'period_year' => $year,
                         'amount' => $amount,
                         'amount_paid' => 0.00,
-                        'status' => $amount == 0.00 ? 'paid' : 'unpaid',
+                        'status' => $isOnLeave ? 'exempt' : ($amount == 0.00 ? 'paid' : 'unpaid'),
+                        'notes' => $isOnLeave ? '[CUTI]' : null,
                         'due_date' => now()->setDate($year, $month, 10)->toDateString(), // Due tgl 10
                         'created_by' => $createdByUserId,
                     ]);
@@ -87,6 +90,7 @@ class BillingService
                             ->first();
 
                         $defaultKasAmount = $kasConfig ? $kasConfig->amount : $dormitory->kas_komplek_amount;
+                        $isOnLeave = $this->isSantriOnLeave($santri->id, $kasConfig?->id, $month, $year);
                         $amount = $kasConfig ? $this->calculateFinalAmount($kasConfig, $santri->id, $defaultKasAmount) : $defaultKasAmount;
 
                         Bill::create([
@@ -98,7 +102,8 @@ class BillingService
                             'period_year' => $year,
                             'amount' => $amount,
                             'amount_paid' => 0.00,
-                            'status' => $amount == 0.00 ? 'paid' : 'unpaid',
+                            'status' => $isOnLeave ? 'exempt' : ($amount == 0.00 ? 'paid' : 'unpaid'),
+                            'notes' => $isOnLeave ? '[CUTI]' : null,
                             'due_date' => now()->setDate($year, $month, 10)->toDateString(),
                             'created_by' => $createdByUserId,
                         ]);
@@ -591,6 +596,7 @@ class BillingService
                 if (!$exists) {
                     // Calculate individual exception/discount
                     $amount = $this->calculateFinalAmount($config, $santri->id, $config->amount);
+                    $isOnLeave = !$isEventInterval && $this->isSantriOnLeave($santri->id, $config->id, $periodMonth, $periodYear);
 
                     Bill::create([
                         'id' => Str::uuid()->toString(),
@@ -602,7 +608,8 @@ class BillingService
                         'period_sub' => $periodSub,
                         'amount' => $amount,
                         'amount_paid' => 0.00,
-                        'status' => $amount == 0.00 ? 'paid' : 'unpaid',
+                        'status' => $isOnLeave ? 'exempt' : ($amount == 0.00 ? 'paid' : 'unpaid'),
+                        'notes' => $isOnLeave ? '[CUTI]' : null,
                         'due_date' => $dueDate,
                         'created_by' => $createdByUserId,
                     ]);
@@ -827,7 +834,21 @@ class BillingService
             if (in_array('laju', $residenceTargets) && $isMukim) return false;
         }
 
-        // Dormitory check
+        // Dormitory check (legacy column and relation)
+        if ($config->dormitory_id) {
+            $inDorm = $person->roomAssignments()
+                ->join('rooms', 'rooms.id', '=', 'room_assignments.room_id')
+                ->where('rooms.dormitory_id', $config->dormitory_id)
+                ->where('room_assignments.is_active', true)
+                ->exists();
+            if (!$inDorm) return false;
+        }
+
+        if ($config->dormitory && $config->dormitory->gender && $config->dormitory->gender !== 'ALL') {
+            if ($config->dormitory->gender !== $person->gender) return false;
+        }
+
+        // Dormitory check (target_type)
         if ($config->target_type === 'dormitory') {
             $dormIds = !empty($targetIds) ? $targetIds : ($config->target_filters ?? []);
             if (!empty($dormIds)) {
@@ -998,6 +1019,129 @@ class BillingService
             return $payment;
         });
     }
+
+    /**
+     * Check if a santri is on leave for a given period and billing configuration.
+     */
+    public function isSantriOnLeave(string $personId, ?string $configId, int $month, int $year): bool
+    {
+        $leaves = SantriLeave::where('person_id', $personId)
+            ->where('year', $year)
+            ->get();
+
+        foreach ($leaves as $leave) {
+            if ($leave->coversMonth($month, $configId)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Get the active SantriLeave record covering a specific month.
+     */
+    public function getSantriLeaveRecord(string $personId, ?string $configId, int $month, int $year): ?SantriLeave
+    {
+        $leaves = SantriLeave::where('person_id', $personId)
+            ->where('year', $year)
+            ->get();
+
+        foreach ($leaves as $leave) {
+            if ($leave->coversMonth($month, $configId)) {
+                return $leave;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Save a new SantriLeave period and automatically set unpaid bills in that period to 'exempt'.
+     */
+    public function saveSantriLeave(
+        string $personId,
+        int $year,
+        array $months,
+        string $scopeType = 'all',
+        ?array $configIds = null,
+        ?string $reason = null,
+        ?string $createdByUserId = null
+    ): SantriLeave {
+        return DB::transaction(function () use ($personId, $year, $months, $scopeType, $configIds, $reason, $createdByUserId) {
+            sort($months);
+            $startMonth = !empty($months) ? min($months) : 1;
+            $endMonth   = !empty($months) ? max($months) : 12;
+
+            $leave = SantriLeave::create([
+                'id'          => Str::uuid()->toString(),
+                'person_id'   => $personId,
+                'year'        => $year,
+                'start_month' => $startMonth,
+                'end_month'   => $endMonth,
+                'months'      => $months,
+                'scope_type'  => $scopeType,
+                'config_ids'  => $configIds,
+                'reason'      => $reason,
+                'created_by'  => $createdByUserId ?? auth()->id(),
+            ]);
+
+            // Update existing unpaid bills in these months to 'exempt'
+            $billsQuery = Bill::where('person_id', $personId)
+                ->where('period_year', $year)
+                ->whereIn('period_month', $months)
+                ->where('status', 'unpaid');
+
+            if ($scopeType === 'specific' && !empty($configIds)) {
+                $billsQuery->whereIn('billing_config_id', $configIds);
+            }
+
+            $bills = $billsQuery->get();
+            $noteSuffix = " [CUTI: " . ($reason ?: 'Izin Cuti') . "]";
+            foreach ($bills as $b) {
+                $b->status = 'exempt';
+                $b->notes  = trim(($b->notes ?? '') . $noteSuffix);
+                $b->save();
+            }
+
+            return $leave;
+        });
+    }
+
+    /**
+     * Delete a SantriLeave period and restore 'exempt' bills back to 'unpaid'.
+     */
+    public function deleteSantriLeave(string $leaveId): bool
+    {
+        return DB::transaction(function () use ($leaveId) {
+            $leave = SantriLeave::findOrFail($leaveId);
+            $personId  = $leave->person_id;
+            $year      = $leave->year;
+            $months    = $leave->months ?? range($leave->start_month, $leave->end_month);
+            $scopeType = $leave->scope_type;
+            $configIds = $leave->config_ids;
+
+            // Restore exempt bills back to unpaid
+            $billsQuery = Bill::where('person_id', $personId)
+                ->where('period_year', $year)
+                ->whereIn('period_month', $months)
+                ->where('status', 'exempt');
+
+            if ($scopeType === 'specific' && !empty($configIds)) {
+                $billsQuery->whereIn('billing_config_id', $configIds);
+            }
+
+            $bills = $billsQuery->get();
+            foreach ($bills as $b) {
+                $b->status = 'unpaid';
+                $b->notes  = trim(preg_replace('/\[CUTI:[^\]]*\]/', '', $b->notes ?? ''));
+                $b->save();
+            }
+
+            return $leave->delete();
+        });
+    }
 }
+
 
 

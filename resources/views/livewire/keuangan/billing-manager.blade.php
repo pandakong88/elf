@@ -1299,6 +1299,10 @@
                                         <span class="font-bold text-amber-400">{{ $selectedSantri->madrasahEnrollments->firstWhere('is_active', true)?->kelas?->name ?? 'Non-Madrasah' }}</span>
                                     </div>
                                 </div>
+                                <button type="button" wire:click="openLeaveModal" class="px-3 py-2 bg-indigo-500/20 hover:bg-indigo-500 text-indigo-300 hover:text-white border border-indigo-500/30 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shadow-2xs">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                                    <span>Kelola Cuti</span>
+                                </button>
                                 <button type="button" wire:click="openKasirAddBillModal" class="px-3 py-2 bg-emerald-500/20 hover:bg-emerald-500 text-emerald-300 hover:text-white border border-emerald-500/30 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shadow-2xs">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
                                     <span>Buka Tagihan Di Muka</span>
@@ -1444,9 +1448,19 @@
                                                         </div>
                                                     </td>
                                                     @foreach($monthNames as $mNum => $mLabel)
-                                                        @php $bill = $configData['months'][$mNum] ?? null; @endphp
+                                                        @php
+                                                            $bill = $configData['months'][$mNum] ?? null;
+                                                            $leaveInfo = $configData['leaves'][$mNum] ?? null;
+                                                            $isOnLeave = ($bill && $bill->status === 'exempt') || !empty($leaveInfo);
+                                                            $leaveReason = $leaveInfo['reason'] ?? ($bill?->notes ? trim(str_replace(['[CUTI:', ']'], '', $bill->notes)) : 'Izin Cuti');
+                                                        @endphp
                                                         <td class="py-2 px-1 text-center {{ ($bill && $bill->status === 'partial') ? 'bg-amber-500/5 dark:bg-amber-950/20' : '' }}">
-                                                            @if(!$bill)
+                                                            @if($isOnLeave)
+                                                                <span title="Status: CUTI ({{ $leaveReason }})"
+                                                                    class="inline-flex items-center justify-center px-1.5 py-0.5 rounded-md text-[8px] font-black bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-700 tracking-wider shadow-2xs cursor-default">
+                                                                    CUTI
+                                                                </span>
+                                                            @elseif(!$bill)
                                                                 <span class="text-slate-200 dark:text-slate-700 text-base">—</span>
                                                             @elseif($bill->status === 'paid')
                                                                 <span title="Lunas — Rp {{ number_format($bill->amount, 0, ',', '.') }}"
@@ -1493,9 +1507,17 @@
                                                 @foreach($monthNames as $mNum => $mLabel)
                                                     @php
                                                         $bill = $configData['months'][$mNum] ?? null;
+                                                        $leaveInfo = $configData['leaves'][$mNum] ?? null;
+                                                        $isOnLeave = ($bill && $bill->status === 'exempt') || !empty($leaveInfo);
+                                                        $leaveReason = $leaveInfo['reason'] ?? ($bill?->notes ? trim(str_replace(['[CUTI:', ']'], '', $bill->notes)) : 'Izin Cuti');
                                                         $isSelected = $bill && in_array($bill->id, $selectedBillIds);
                                                     @endphp
-                                                    @if(!$bill)
+                                                    @if($isOnLeave)
+                                                        <div class="py-2 px-1 rounded-xl bg-slate-100/80 dark:bg-slate-850 border border-slate-200 dark:border-slate-700/80 text-center" title="Status: CUTI ({{ $leaveReason }})">
+                                                            <span class="block text-[8px] font-black text-slate-500 dark:text-slate-400 uppercase">{{ $mLabel }}</span>
+                                                            <span class="text-[8px] font-bold text-slate-400 dark:text-slate-500">Cuti</span>
+                                                        </div>
+                                                    @elseif(!$bill)
                                                         <div class="py-2 px-1 rounded-xl bg-slate-100/50 dark:bg-slate-900/50 border border-slate-200/40 dark:border-slate-800/40 text-center opacity-40">
                                                             <span class="block text-[8px] font-extrabold text-slate-400 uppercase">{{ $mLabel }}</span>
                                                             <span class="text-[8px] text-slate-300 dark:text-slate-600">—</span>
@@ -4045,7 +4067,260 @@
                             </div>
                         </div>
                     @endif
+                </div>
+            </div>
+        @endif
 
+        <!-- Modal: Kelola Cuti / Bebas Tagihan Santri -->
+        @if($showLeaveModal && $selectedSantri)
+            <div class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/70 backdrop-blur-sm">
+                <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-2xl w-full max-w-2xl overflow-hidden max-h-[92vh] flex flex-col animate-in fade-in zoom-in-95 duration-150">
+
+                    {{-- ===== MODAL HEADER ===== --}}
+                    <div class="flex items-center justify-between px-5 sm:px-6 pt-5 pb-4 border-b border-slate-100 dark:border-slate-800 shrink-0">
+                        <div class="flex items-center gap-3">
+                            <div class="p-2.5 bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 rounded-2xl">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                            </div>
+                            <div>
+                                <h3 class="text-sm font-extrabold text-slate-900 dark:text-white">Kelola Cuti / Bebas Tagihan</h3>
+                                <p class="text-[11px] text-slate-400 mt-0.5">
+                                    Santri: <span class="font-bold text-indigo-600 dark:text-indigo-400">{{ $selectedSantri->name }}</span> (NIS: {{ $selectedSantri->nis ?? '—' }})
+                                </p>
+                            </div>
+                        </div>
+                        <button type="button" wire:click="closeLeaveModal" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-all">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                        </button>
+                    </div>
+
+                    {{-- ===== MODAL BODY ===== --}}
+                    <div class="p-5 sm:p-6 overflow-y-auto space-y-6 flex-1 text-xs">
+                        <!-- 1. Tahun & Shortcuts -->
+                        <div class="space-y-3">
+                            <div class="flex items-center justify-between flex-wrap gap-2">
+                                <label class="font-extrabold text-slate-700 dark:text-slate-300 uppercase tracking-wider text-[10px]">
+                                    Pilih Bulan Cuti di Tahun:
+                                </label>
+                                <select wire:model.live="leaveYear" class="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 rounded-xl px-3 py-1 text-xs font-bold focus:ring-2 focus:ring-indigo-500">
+                                    @for($y = (int)now()->format('Y') - 1; $y <= (int)now()->format('Y') + 1; $y++)
+                                        <option value="{{ $y }}">{{ $y }}</option>
+                                    @endfor
+                                </select>
+                            </div>
+
+                            <!-- Shortcut Buttons -->
+                            <div class="flex flex-wrap items-center gap-1.5 pt-1">
+                                <button type="button" wire:click="selectAllLeaveMonths"
+                                    class="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg text-[10px] font-bold transition-all">
+                                    Semua (12 Bln)
+                                </button>
+                                <button type="button" wire:click="selectLeaveSemester(1)"
+                                    class="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg text-[10px] font-bold transition-all">
+                                    Sem 1 (Jan-Jun)
+                                </button>
+                                <button type="button" wire:click="selectLeaveSemester(2)"
+                                    class="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg text-[10px] font-bold transition-all">
+                                    Sem 2 (Jul-Des)
+                                </button>
+                                <button type="button" wire:click="selectLeaveQuarter(1)"
+                                    class="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg text-[10px] font-bold transition-all">
+                                    Triwulan 1 (Jan-Mar)
+                                </button>
+                                <button type="button" wire:click="selectLeaveQuarter(2)"
+                                    class="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg text-[10px] font-bold transition-all">
+                                    Triwulan 2 (Apr-Jun)
+                                </button>
+                                <button type="button" wire:click="clearAllLeaveMonths"
+                                    class="px-2.5 py-1 bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/40 dark:hover:bg-rose-950/70 text-rose-600 dark:text-rose-400 rounded-lg text-[10px] font-bold transition-all">
+                                    Reset
+                                </button>
+                            </div>
+
+                            <!-- 12 Month Interactive Grid -->
+                            @php
+                                $allMonths = [
+                                    1 => 'Januari', 2 => 'Februari', 3 => 'Maret', 4 => 'April',
+                                    5 => 'Mei', 6 => 'Juni', 7 => 'Juli', 8 => 'Agustus',
+                                    9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Desember'
+                                ];
+                            @endphp
+                            <div class="grid grid-cols-3 sm:grid-cols-4 gap-2 pt-1">
+                                @foreach($allMonths as $mNum => $mName)
+                                    @php $isMSelected = in_array($mNum, $leaveSelectedMonths); @endphp
+                                    <button type="button" wire:click="toggleLeaveMonth({{ $mNum }})"
+                                        class="p-2.5 rounded-2xl border text-center transition-all flex flex-col items-center justify-center gap-1
+                                            {{ $isMSelected ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm' : 'bg-slate-50 dark:bg-slate-800/60 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:border-indigo-400' }}">
+                                        <div class="flex items-center gap-1">
+                                            @if($isMSelected)
+                                                <svg class="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
+                                            @endif
+                                            <span class="text-[11px] font-black">{{ $mName }}</span>
+                                        </div>
+                                        <span class="text-[9px] {{ $isMSelected ? 'text-indigo-200' : 'text-slate-400' }}">Bulan {{ $mNum }}</span>
+                                    </button>
+                                @endforeach
+                            </div>
+                        </div>
+
+                        <!-- 2. Cakupan Iuran -->
+                        <div class="space-y-3 pt-2 border-t border-slate-100 dark:border-slate-800">
+                            <label class="font-extrabold text-slate-700 dark:text-slate-300 uppercase tracking-wider text-[10px]">
+                                Cakupan Iuran yang Dibebaskan:
+                            </label>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                <label class="flex items-start gap-3 p-3 rounded-2xl border cursor-pointer transition-all
+                                    {{ $leaveScopeType === 'all' ? 'bg-indigo-50/60 dark:bg-indigo-950/30 border-indigo-300 dark:border-indigo-800' : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800' }}">
+                                    <input type="radio" wire:model.live="leaveScopeType" value="all" class="mt-0.5 text-indigo-600 focus:ring-indigo-500">
+                                    <div>
+                                        <span class="font-bold text-slate-800 dark:text-slate-200 block text-xs">Semua Iuran Bulanan</span>
+                                        <span class="text-[10px] text-slate-400">Syahriah Pondok, Kas Kamar/Komplek, dsb otomatis bebas</span>
+                                    </div>
+                                </label>
+                                <label class="flex items-start gap-3 p-3 rounded-2xl border cursor-pointer transition-all
+                                    {{ $leaveScopeType === 'specific' ? 'bg-indigo-50/60 dark:bg-indigo-950/30 border-indigo-300 dark:border-indigo-800' : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800' }}">
+                                    <input type="radio" wire:model.live="leaveScopeType" value="specific" class="mt-0.5 text-indigo-600 focus:ring-indigo-500">
+                                    <div>
+                                        <span class="font-bold text-slate-800 dark:text-slate-200 block text-xs">Pilih Iuran Tertentu</span>
+                                        <span class="text-[10px] text-slate-400">Hanya iuran pilihan saja yang dibebaskan</span>
+                                    </div>
+                                </label>
+                            </div>
+
+                            @if($leaveScopeType === 'specific')
+                                <div class="p-3 bg-slate-50 dark:bg-slate-800/40 rounded-2xl border border-slate-200 dark:border-slate-700/60 space-y-2">
+                                    <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Centang Iuran yang Dibebaskan:</span>
+                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                        @foreach($this->monthlyConfigsForLeave as $mConfig)
+                                            <label class="flex items-center gap-2 text-xs text-slate-700 dark:text-slate-300 cursor-pointer">
+                                                <input type="checkbox" wire:model.live="leaveConfigIds" value="{{ $mConfig->id }}"
+                                                    class="rounded text-indigo-600 focus:ring-indigo-500">
+                                                <span class="font-medium">{{ $mConfig->label }}</span>
+                                            </label>
+                                        @endforeach
+                                    </div>
+                                </div>
+                            @endif
+                        </div>
+
+                        <!-- 3. Alasan / Catatan Cuti -->
+                        <div class="space-y-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+                            <label class="font-extrabold text-slate-700 dark:text-slate-300 uppercase tracking-wider text-[10px]">
+                                Alasan / Keterangan Cuti (Opsional):
+                            </label>
+                            <input type="text" wire:model="leaveReason" placeholder="Contoh: Izin berobat keluarga / cuti 3 bulan"
+                                class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-indigo-500">
+                        </div>
+
+                        <!-- 4. Daftar Riwayat Cuti Aktif -->
+                        @php $existingLeaves = $this->activeSantriLeaves; @endphp
+                        @if($existingLeaves->isNotEmpty())
+                            <div class="space-y-2 pt-3 border-t border-slate-100 dark:border-slate-800">
+                                <span class="font-extrabold text-slate-700 dark:text-slate-300 uppercase tracking-wider text-[10px] block">
+                                    Data Cuti Tercatat di Tahun {{ $cashierYear }}:
+                                </span>
+                                <div class="space-y-2">
+                                    @foreach($existingLeaves as $el)
+                                        <div class="p-3 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/80 rounded-2xl flex items-center justify-between gap-3">
+                                            <div class="space-y-0.5">
+                                                <div class="flex items-center gap-2">
+                                                    <span class="font-black text-indigo-600 dark:text-indigo-400 text-xs">{{ $el->period_description }}</span>
+                                                    <span class="px-2 py-0.5 rounded-md text-[8px] font-extrabold bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 uppercase">
+                                                        {{ $el->scope_type === 'all' ? 'Semua Iuran' : 'Iuran Pilihan' }}
+                                                    </span>
+                                                </div>
+                                                @if($el->reason)
+                                                    <p class="text-[10px] text-slate-500 italic">"{{ $el->reason }}"</p>
+                                                @endif
+                                            </div>
+                                            <button type="button" wire:click="confirmDeleteSantriLeave('{{ $el->id }}')"
+                                                class="px-3 py-1.5 bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/40 dark:hover:bg-rose-950/70 text-rose-600 dark:text-rose-400 rounded-xl text-[10px] font-bold transition-all shrink-0 flex items-center gap-1.5 shadow-2xs">
+                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                                <span>Batalkan Cuti</span>
+                                            </button>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            </div>
+                        @endif
+                    </div>
+
+                    {{-- ===== MODAL FOOTER ===== --}}
+                    <div class="flex items-center justify-between gap-3 px-5 sm:px-6 py-4 border-t border-slate-100 dark:border-slate-800 shrink-0 bg-slate-50/50 dark:bg-slate-950/40">
+                        <button type="button" wire:click="closeLeaveModal"
+                            class="px-4 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-xl text-xs font-bold transition-all">
+                            Tutup
+                        </button>
+                        <button type="button" wire:click="saveSantriLeaveAction"
+                            @disabled(empty($leaveSelectedMonths))
+                            class="px-5 py-2.5 rounded-xl text-xs font-bold transition-all shadow-sm flex items-center gap-2
+                                {{ !empty($leaveSelectedMonths) ? 'bg-indigo-600 hover:bg-indigo-700 text-white' : 'bg-slate-200 dark:bg-slate-700 text-slate-400 cursor-not-allowed' }}">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                            <span>Simpan Status Cuti ({{ count($leaveSelectedMonths) }} Bulan)</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        @endif
+
+        {{-- ========================================== --}}
+        {{-- MODAL KONFIRMASI BATALKAN CUTI SANTRI      --}}
+        {{-- ========================================== --}}
+        @if($showDeleteLeaveConfirmModal)
+            <div class="fixed inset-0 z-[60] overflow-y-auto bg-slate-900/70 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-150">
+                <div class="bg-white dark:bg-slate-900 border border-rose-200 dark:border-rose-900/40 rounded-3xl p-6 sm:p-7 max-w-md w-full shadow-2xl space-y-5 animate-in fade-in zoom-in-95 duration-150 text-center">
+                    
+                    <!-- Warning Icon -->
+                    <div class="mx-auto w-14 h-14 bg-rose-500/10 text-rose-600 dark:text-rose-400 rounded-2xl flex items-center justify-center border border-rose-500/20">
+                        <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                    </div>
+
+                    <!-- Title & Description -->
+                    <div class="space-y-1.5">
+                        <h3 class="text-base font-black text-slate-900 dark:text-white">
+                            Batalkan Status Cuti Santri?
+                        </h3>
+                        <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                            Status cuti santri akan dihapus dan seluruh tagihan pada periode tersebut akan otomatis dikembalikan ke status <strong>Belum Bayar (Unpaid)</strong>.
+                        </p>
+                    </div>
+
+                    <!-- Detail Summary Box -->
+                    <div class="p-4 bg-rose-50/50 dark:bg-rose-950/30 border border-rose-200/60 dark:border-rose-900/30 rounded-2xl text-left space-y-2 text-xs">
+                        <div class="flex justify-between items-center">
+                            <span class="text-[10px] font-bold text-slate-400 uppercase">Nama Santri</span>
+                            <span class="font-bold text-slate-900 dark:text-slate-100">{{ $deleteLeaveData['santri_name'] ?? '-' }}</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-[10px] font-bold text-slate-400 uppercase">Periode Cuti</span>
+                            <span class="font-extrabold text-indigo-600 dark:text-indigo-400">{{ $deleteLeaveData['period'] ?? '-' }}</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-[10px] font-bold text-slate-400 uppercase">Cakupan</span>
+                            <span class="font-medium text-slate-700 dark:text-slate-300">{{ $deleteLeaveData['scope'] ?? '-' }}</span>
+                        </div>
+                        @if(!empty($deleteLeaveData['reason']))
+                            <div class="flex justify-between items-center pt-1.5 border-t border-rose-200/40 dark:border-rose-900/40">
+                                <span class="text-[10px] font-bold text-slate-400 uppercase">Alasan</span>
+                                <span class="text-slate-600 dark:text-slate-300 italic truncate max-w-[200px]">"{{ $deleteLeaveData['reason'] }}"</span>
+                            </div>
+                        @endif
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="flex items-center justify-end gap-2.5 pt-1">
+                        <button type="button" wire:click="cancelDeleteSantriLeave"
+                            class="w-1/2 py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-xl text-xs font-bold transition-all">
+                            Batal
+                        </button>
+                        <button type="button" wire:click="executeDeleteSantriLeave"
+                            class="w-1/2 py-2.5 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-bold transition-all shadow-md inline-flex items-center justify-center gap-1.5">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                            Ya, Batalkan Cuti
+                        </button>
+                    </div>
+                </div>
+            </div>
         @endif
     @endif
 
