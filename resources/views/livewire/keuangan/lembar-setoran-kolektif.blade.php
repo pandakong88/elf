@@ -365,7 +365,10 @@
                                     @elseif($data['bill']->status === 'exempt')
                                         <div class="py-1.5 px-1 rounded-xl bg-purple-500/10 dark:bg-purple-500/20 border border-purple-500/30 text-center" title="Bebas Tagihan (Izin Cuti)">
                                             <span class="block text-[8px] font-extrabold text-purple-600 dark:text-purple-400 uppercase">{{ $months[$periodKey] ?? $periodKey }}</span>
-                                            <span class="text-[8px] font-bold text-purple-600/80 dark:text-purple-400/80">Cuti</span>
+                                            <span class="inline-flex items-center justify-center gap-0.5 text-[8px] font-bold text-purple-600/90 dark:text-purple-400/90">
+                                                <svg class="w-2 h-2 inline-block" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                                Cuti
+                                            </span>
                                         </div>
                                     @else
                                         @php
@@ -545,8 +548,9 @@
                                                 ✓ Lunas
                                             </span>
                                         @elseif($data['bill']->status === 'exempt')
-                                            <span class="inline-flex items-center justify-center px-2 py-1 bg-purple-500/15 text-purple-600 dark:text-purple-400 border border-purple-500/30 rounded-lg text-[9px] font-extrabold uppercase tracking-wider" title="Bebas Tagihan (Izin Cuti)">
-                                                🌴 Cuti
+                                            <span class="inline-flex items-center gap-1 justify-center px-2 py-1 bg-purple-500/15 text-purple-600 dark:text-purple-400 border border-purple-500/30 rounded-lg text-[9px] font-extrabold uppercase tracking-wider" title="Bebas Tagihan (Izin Cuti)">
+                                                <svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                                Cuti
                                             </span>
                                         @else
                                             @php
