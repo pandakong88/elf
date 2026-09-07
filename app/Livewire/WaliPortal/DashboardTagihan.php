@@ -653,7 +653,7 @@ class DashboardTagihan extends Component
                     'breakdown'    => $breakdown,
                     'notes'        => $first->notes,
                     'logger_name'  => $first->logger?->name ?? 'Kasir Pesantren',
-                    'preview_url'  => route('bukti-bayar.kuitansi', $first->receipt_no ?: $first->id),
+                    'preview_url'  => route('bukti-bayar.kuitansi', ['receiptNo' => ($first->receipt_no ?: $first->id), 'from' => 'portal-wali']),
                     'pdf_url'      => route('bukti-bayar.kuitansi.pdf', $first->receipt_no ?: $first->id),
                     'status'       => $isAnyPartial ? 'Sebagian (Kasir)' : 'Lunas (Kasir)',
                 ];

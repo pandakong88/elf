@@ -682,9 +682,9 @@
     <div class="action-bar-wrapper">
         <div class="action-bar">
             <div class="left-group">
-                <a href="{{ route('keuangan.billing') }}" class="btn-nav btn-back">
+                <a href="{{ $back_url ?? route('keuangan.billing') }}" class="btn-nav btn-back">
                     <i class="fa-solid fa-arrow-left"></i>
-                    <span>Kembali ke Kasir</span>
+                    <span>{{ $back_label ?? 'Kembali' }}</span>
                 </a>
                 <div class="brand-badge">
                     <div class="brand-logo-mini">E</div>

@@ -142,6 +142,34 @@ class BuktiBayarController extends Controller
         $roomName  = $santri?->activeRoomAssignment?->room?->name ?? '';
         $dormFull  = $roomName ? ($dormName . ' - ' . $roomName) : $dormName;
 
+        $santriPersonId = $santri?->id;
+
+        // Dynamic Back URL & Back Label
+        $user = Auth::user();
+        $fromParam = request()->query('from', '');
+        $referer = request()->headers->get('referer', '');
+
+        // 1. Explicitly came from portal wali or referer is portal-wali
+        if ($fromParam === 'portal-wali' || str_contains($referer, '/portal-wali')) {
+            $backUrl = $santriPersonId ? route('portal-wali.dashboard', $santriPersonId) : route('portal-wali.search');
+            $backLabel = 'Kembali ke Data Santri';
+        }
+        // 2. Wali santri user or unauthenticated public visitor viewing santri
+        elseif (!$user || ($user && $user->hasRole('wali-santri'))) {
+            $backUrl = $santriPersonId ? route('portal-wali.dashboard', $santriPersonId) : route('portal-wali.search');
+            $backLabel = 'Kembali ke Data Santri';
+        }
+        // 3. Financial/Admin/Staff user
+        elseif ($user && $user->hasAnyRole(['super-admin', 'pengasuh', 'manajemen', 'bendahara-pondok', 'bendahara-putra', 'bendahara-putri', 'bendahara-madin', 'bendahara-unit', 'admin-data'])) {
+            $backUrl = route('keuangan.billing');
+            $backLabel = 'Kembali ke Kasir';
+        }
+        // 4. Default fallback
+        else {
+            $backUrl = $santriPersonId ? route('portal-wali.dashboard', $santriPersonId) : route('keuangan.billing');
+            $backLabel = $santriPersonId ? 'Kembali ke Data Santri' : 'Kembali ke Kasir';
+        }
+
         $tendered = $firstPayment->tendered_amount ? (float) $firstPayment->tendered_amount : $totalAmount;
         $change   = $firstPayment->change_amount ? (float) $firstPayment->change_amount : 0.0;
 
@@ -151,6 +179,7 @@ class BuktiBayarController extends Controller
             'receipt_no'      => $receiptNo,
             'payment_date'    => $paymentDate,
             'payment_time'    => $paymentTime,
+            'santri_id'       => $santriPersonId,
             'santri_name'     => $santri?->name ?? '—',
             'santri_gender'   => $santri?->gender === 'P' ? 'Putri' : 'Putra',
             'kelas_name'      => $kelasName,
@@ -169,6 +198,8 @@ class BuktiBayarController extends Controller
             'terbilang'       => $this->terbilang($totalAmount),
             'notes'           => $firstPayment->notes,
             'generated_at'    => now()->translatedFormat('d F Y, H:i') . ' WIB',
+            'back_url'        => $backUrl,
+            'back_label'      => $backLabel,
         ];
     }
 
