@@ -1068,8 +1068,8 @@
                             @endif
                         </div>
 
-                        {{-- Footer Total & Download PDF --}}
-                        <div class="flex items-center justify-between pt-1">
+                        {{-- Footer Total & Action Buttons --}}
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1">
                             <div>
                                 <span class="text-[9px] font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-wider block">
                                     Total Dibayar
@@ -1084,12 +1084,21 @@
                                 @endif
                             </div>
 
-                            {{-- Tombol Unduh PDF --}}
-                            <a href="{{ $item['pdf_url'] }}" target="_blank"
-                               class="inline-flex items-center gap-1.5 px-3.5 py-2 bg-indigo-50 dark:bg-indigo-950/40 hover:bg-indigo-600 text-indigo-600 dark:text-indigo-400 hover:text-white rounded-2xl text-xs font-extrabold transition-all border border-indigo-200 dark:border-indigo-800 shadow-xs active:scale-95">
-                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-                                <span>Unduh PDF</span>
-                            </a>
+                            {{-- Action Buttons: Lihat Nota & Unduh PDF --}}
+                            <div class="flex items-center gap-2">
+                                @if(!empty($item['preview_url']))
+                                    <a href="{{ $item['preview_url'] }}" target="_blank"
+                                       class="inline-flex items-center gap-1.5 px-3 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-2xl text-xs font-bold transition-all border border-slate-200 dark:border-slate-700 shadow-2xs active:scale-95">
+                                        <svg class="w-3.5 h-3.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                                        <span>Lihat Nota</span>
+                                    </a>
+                                @endif
+                                <a href="{{ $item['pdf_url'] }}" target="_blank"
+                                   class="inline-flex items-center gap-1.5 px-3.5 py-2 bg-emerald-50 dark:bg-emerald-950/40 hover:bg-emerald-600 text-emerald-600 dark:text-emerald-400 hover:text-white rounded-2xl text-xs font-extrabold transition-all border border-emerald-200 dark:border-emerald-800 shadow-2xs active:scale-95">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                                    <span>Unduh PDF</span>
+                                </a>
+                            </div>
                         </div>
                     </div>
                 @empty

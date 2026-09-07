@@ -591,6 +591,7 @@ class DashboardTagihan extends Component
                 'date'         => $trx->created_at,
                 'date_fmt'     => $trx->created_at->locale('id')->translatedFormat('d M Y • H:i') . ' WIB',
                 'breakdown'    => $breakdown,
+                'preview_url'  => route('bukti-bayar.gateway', $trx->id),
                 'pdf_url'      => route('bukti-bayar.gateway', $trx->id),
                 'status'       => 'Lunas (Online)',
             ];
@@ -604,40 +605,60 @@ class DashboardTagihan extends Component
             $kasirQuery->whereYear('payment_date', (int)$this->historyYear);
         }
 
-        $kasirList = ($this->historyMethod === 'gateway') ? collect() : $kasirQuery->orderBy('payment_date', 'desc')->orderBy('created_at', 'desc')->get()->map(function ($pay) {
-            $bill = $pay->bill;
-            $periodLabel = $bill ? $this->getBillPeriodLabel($bill) : '';
-            $methodName = match(strtolower($pay->payment_method ?? '')) {
-                'cash'     => '💵 Tunai (Kasir)',
-                'transfer' => '🏦 Transfer Bank',
-                default    => strtoupper($pay->payment_method ?? 'Kasir'),
-            };
+        $kasirList = ($this->historyMethod === 'gateway') ? collect() : $kasirQuery->orderBy('created_at', 'desc')->get()
+            ->groupBy(function ($pay) {
+                return $pay->receipt_no ?: ($pay->payment_group_id ?: $pay->id);
+            })
+            ->map(function ($group, $groupKey) {
+                $first = $group->first();
 
-            $isPartial = (float)$pay->amount_paid < (float)($bill?->amount ?? 0);
+                $methodName = match(strtolower($first->payment_method ?? '')) {
+                    'cash'     => '💵 Tunai (Kasir)',
+                    'transfer' => '🏦 Transfer Bank',
+                    default    => strtoupper($first->payment_method ?? 'Kasir'),
+                };
 
-            return [
-                'id'           => $pay->id,
-                'source'       => 'kasir',
-                'order_id'     => 'KSR-' . strtoupper(substr($pay->id, 0, 8)),
-                'method_label' => $methodName,
-                'channel_code' => $pay->payment_method,
-                'amount'       => (float) $pay->amount_paid,
-                'bill_amount'  => (float) $pay->amount_paid,
-                'mdr_amount'   => 0,
-                'date'         => $pay->payment_date ? \Carbon\Carbon::parse($pay->payment_date) : $pay->created_at,
-                'date_fmt'     => $pay->payment_date ? \Carbon\Carbon::parse($pay->payment_date)->locale('id')->translatedFormat('d M Y') : '—',
-                'breakdown'    => [[
-                    'config_label' => $bill?->config?->label ?? ucwords(str_replace('_', ' ', $bill?->bill_type ?? '')),
-                    'period_label' => $periodLabel,
-                    'pay_portion'  => (float) $pay->amount_paid,
-                    'is_partial'   => $isPartial,
-                ]],
-                'notes'        => $pay->notes,
-                'logger_name'  => $pay->logger?->name ?? 'Kasir Pesantren',
-                'pdf_url'      => route('bukti-bayar.kasir', $pay->id),
-                'status'       => $isPartial ? 'Cicilan Kasir' : 'Lunas (Kasir)',
-            ];
-        });
+                $totalAmount = (float) $group->sum('amount_paid');
+                $isAnyPartial = false;
+
+                $breakdown = $group->map(function ($pay) use (&$isAnyPartial) {
+                    $b = $pay->bill;
+                    $periodLabel = $b ? $this->getBillPeriodLabel($b) : '';
+                    $isPartial = (float)$pay->amount_paid < (float)($b?->amount ?? 0);
+                    if ($isPartial) $isAnyPartial = true;
+
+                    return [
+                        'config_label' => $b?->config?->label ?? ucwords(str_replace('_', ' ', $b?->bill_type ?? '')),
+                        'period_label' => $periodLabel,
+                        'pay_portion'  => (float) $pay->amount_paid,
+                        'is_partial'   => $isPartial,
+                    ];
+                })->all();
+
+                $receiptNo = $first->receipt_no ?: ('KSR-' . strtoupper(substr($first->id, 0, 8)));
+                $dateObj = $first->payment_date ? \Carbon\Carbon::parse($first->payment_date) : $first->created_at;
+
+                return [
+                    'id'           => $first->id,
+                    'group_key'    => $groupKey,
+                    'source'       => 'kasir',
+                    'order_id'     => $receiptNo,
+                    'method_label' => $methodName,
+                    'channel_code' => $first->payment_method,
+                    'amount'       => $totalAmount,
+                    'bill_amount'  => $totalAmount,
+                    'mdr_amount'   => 0,
+                    'date'         => $dateObj,
+                    'date_fmt'     => $dateObj ? $dateObj->locale('id')->translatedFormat('d M Y • H:i') . ' WIB' : '—',
+                    'breakdown'    => $breakdown,
+                    'notes'        => $first->notes,
+                    'logger_name'  => $first->logger?->name ?? 'Kasir Pesantren',
+                    'preview_url'  => route('bukti-bayar.kuitansi', $first->receipt_no ?: $first->id),
+                    'pdf_url'      => route('bukti-bayar.kuitansi.pdf', $first->receipt_no ?: $first->id),
+                    'status'       => $isAnyPartial ? 'Sebagian (Kasir)' : 'Lunas (Kasir)',
+                ];
+            })
+            ->values();
 
         $paymentHistory = $gatewayList->concat($kasirList)->sortByDesc(fn($item) => $item['date'] ? $item['date']->timestamp : 0)->values();
 

@@ -31,16 +31,13 @@ Route::post('/duitku/callback', [\App\Http\Controllers\DuitkuCallbackController:
 Route::get('/portal-wali/bukti-bayar/gateway/{trxId}', [\App\Http\Controllers\BuktiBayarController::class, 'gateway'])
     ->name('bukti-bayar.gateway');
 
-// Admin/Bendahara — Preview Kuitansi & Unduh PDF
+// Admin/Bendahara & Portal Wali — Preview Kuitansi & Unduh PDF
 Route::get('/keuangan/kuitansi/{receiptNo}', [\App\Http\Controllers\BuktiBayarController::class, 'kuitansi'])
-    ->name('bukti-bayar.kuitansi')
-    ->middleware('auth');
+    ->name('bukti-bayar.kuitansi');
 Route::get('/keuangan/kuitansi/{receiptNo}/pdf', [\App\Http\Controllers\BuktiBayarController::class, 'kuitansiPdf'])
-    ->name('bukti-bayar.kuitansi.pdf')
-    ->middleware('auth');
+    ->name('bukti-bayar.kuitansi.pdf');
 Route::get('/keuangan/bukti-bayar/kasir/{paymentId}', [\App\Http\Controllers\BuktiBayarController::class, 'kasir'])
-    ->name('bukti-bayar.kasir')
-    ->middleware('auth');
+    ->name('bukti-bayar.kasir');
 // ─────────────────────────────────────────────────────────────────────────────
 
 
