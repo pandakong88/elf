@@ -154,20 +154,25 @@ class BuktiBayarController extends Controller
             $backUrl = $santriPersonId ? route('portal-wali.dashboard', $santriPersonId) : route('portal-wali.search');
             $backLabel = 'Kembali ke Data Santri';
         }
-        // 2. Wali santri user or unauthenticated public visitor viewing santri
+        // 2. Explicitly came from payments_log
+        elseif ($fromParam === 'payments_log') {
+            $backUrl = route('keuangan.billing', ['tab' => 'payments_log']);
+            $backLabel = 'Kembali ke Riwayat Pembayaran';
+        }
+        // 3. Wali santri user or unauthenticated public visitor viewing santri
         elseif (!$user || ($user && $user->hasRole('wali-santri'))) {
             $backUrl = $santriPersonId ? route('portal-wali.dashboard', $santriPersonId) : route('portal-wali.search');
             $backLabel = 'Kembali ke Data Santri';
         }
-        // 3. Financial/Admin/Staff user
+        // 4. Financial/Admin/Staff user
         elseif ($user && $user->hasAnyRole(['super-admin', 'pengasuh', 'manajemen', 'bendahara-pondok', 'bendahara-putra', 'bendahara-putri', 'bendahara-madin', 'bendahara-unit', 'admin-data'])) {
-            $backUrl = route('keuangan.billing');
-            $backLabel = 'Kembali ke Kasir';
+            $backUrl = route('keuangan.billing', ['tab' => 'payments_log']);
+            $backLabel = 'Kembali ke Riwayat Pembayaran';
         }
-        // 4. Default fallback
+        // 5. Default fallback
         else {
-            $backUrl = $santriPersonId ? route('portal-wali.dashboard', $santriPersonId) : route('keuangan.billing');
-            $backLabel = $santriPersonId ? 'Kembali ke Data Santri' : 'Kembali ke Kasir';
+            $backUrl = $santriPersonId ? route('portal-wali.dashboard', $santriPersonId) : route('keuangan.billing', ['tab' => 'payments_log']);
+            $backLabel = $santriPersonId ? 'Kembali ke Data Santri' : 'Kembali ke Riwayat Pembayaran';
         }
 
         $tendered = $firstPayment->tendered_amount ? (float) $firstPayment->tendered_amount : $totalAmount;
