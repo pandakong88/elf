@@ -3071,7 +3071,7 @@ class BillingManager extends Component
             ->get();
 
         $user = auth()->user();
-        $isCentral = $user && ($user->hasRole('super-admin') || $user->hasRole('manajemen') || $user->hasRole('bendahara-pondok') || $user->hasRole('bendahara-pusat'));
+        $isCentral = $user && ($user->hasRole('super-admin') || $user->hasRole('admin') || $user->hasRole('pengasuh') || $user->hasRole('manajemen') || $user->hasRole('bendahara-pondok') || $user->hasRole('bendahara-pusat'));
 
         if (!$isCentral && $user) {
             $userRoles = $user->roles->pluck('name')->toArray();
@@ -3126,7 +3126,7 @@ class BillingManager extends Component
         }
 
         $user = auth()->user();
-        $isCentral = $user && ($user->hasRole('super-admin') || $user->hasRole('manajemen') || $user->hasRole('bendahara-pondok') || $user->hasRole('bendahara-pusat'));
+        $isCentral = $user && ($user->hasRole('super-admin') || $user->hasRole('admin') || $user->hasRole('pengasuh') || $user->hasRole('manajemen') || $user->hasRole('bendahara-pondok') || $user->hasRole('bendahara-pusat'));
 
         $ratesQuery = BillingConfiguration::with('creator');
 
@@ -3369,18 +3369,24 @@ class BillingManager extends Component
                 $q->whereHas('bill.person', fn($pq) => $pq->where('gender', $g));
             })
             ->when($this->payLogSearch, function ($q) {
-                $q->where(function($sub) {
-                    $sub->whereHas('bill.person', function ($sq) {
-                        $sq->where('name', 'like', '%' . $this->payLogSearch . '%')
-                          ->orWhere('nik', 'like', '%' . $this->payLogSearch . '%')
-                          ->orWhereHas('santriProfile', fn($sp) =>
-                              $sp->where('additional_info->nis', 'like', '%' . $this->payLogSearch . '%')
-                          );
-                    })
-                    ->orWhereHas('bill.config', function ($sq) {
-                        $sq->where('label', 'like', '%' . $this->payLogSearch . '%');
-                    })
-                    ->orWhere('notes', 'like', '%' . $this->payLogSearch . '%');
+                $term = trim($this->payLogSearch);
+                $q->where(function($sub) use ($term) {
+                    $sub->where('receipt_no', 'like', '%' . $term . '%')
+                        ->orWhere('payment_group_id', 'like', '%' . $term . '%')
+                        ->orWhere('id', 'like', '%' . $term . '%')
+                        ->orWhereHas('bill.person', function ($sq) use ($term) {
+                            $sq->where('name', 'like', '%' . $term . '%')
+                              ->orWhere('nik', 'like', '%' . $term . '%')
+                              ->orWhereHas('santriProfile', fn($sp) =>
+                                  $sp->where('additional_info->nis', 'like', '%' . $term . '%')
+                                     ->orWhere('additional_info->nisn', 'like', '%' . $term . '%')
+                              );
+                        })
+                        ->orWhereHas('bill.config', function ($sq) use ($term) {
+                            $sq->where('label', 'like', '%' . $term . '%')
+                              ->orWhere('bill_type', 'like', '%' . $term . '%');
+                        })
+                        ->orWhere('notes', 'like', '%' . $term . '%');
                 });
             })
             ->when($this->payLogMethod, function ($q) {
