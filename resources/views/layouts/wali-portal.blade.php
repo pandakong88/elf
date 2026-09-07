@@ -25,6 +25,49 @@
             });
         }
 
+        // Kompresi Gambar Cerdas di Browser Sisi Klien (Hemat Kuota & Cepat)
+        window.compressImageFile = function(file, maxDimension = 1600, quality = 0.8) {
+            return new Promise((resolve) => {
+                if (!file || !file.type.startsWith('image/')) {
+                    resolve(file);
+                    return;
+                }
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const img = new Image();
+                    img.onload = function() {
+                        let width = img.width;
+                        let height = img.height;
+                        const ratio = Math.min(maxDimension / width, maxDimension / height, 1.0);
+                        width = Math.round(width * ratio);
+                        height = Math.round(height * ratio);
+
+                        const canvas = document.createElement('canvas');
+                        canvas.width = width;
+                        canvas.height = height;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, width, height);
+
+                        canvas.toBlob((blob) => {
+                            if (blob && blob.size < file.size) {
+                                const compressedFile = new File([blob], file.name.replace(/\.[^/.]+$/, "") + ".webp", {
+                                    type: "image/webp",
+                                    lastModified: Date.now()
+                                });
+                                resolve(compressedFile);
+                            } else {
+                                resolve(file);
+                            }
+                        }, 'image/webp', quality);
+                    };
+                    img.onerror = () => resolve(file);
+                    img.src = e.target.result;
+                };
+                reader.onerror = () => resolve(file);
+                reader.readAsDataURL(file);
+            });
+        };
+
         // Generator Gambar Struk Simulasi Native (100% Handal & Cepat)
         function generateAndDownloadSimulasiImage(santriName, nominal, itemsData) {
             try {

@@ -20,6 +20,8 @@ use Illuminate\Support\Str;
 use App\Modules\Keuangan\Models\BillPayment;
 use App\Modules\Keuangan\Models\PaymentTransaction;
 use App\Modules\Keuangan\Models\FundDistribution;
+use App\Modules\Keuangan\Models\ManualTransferSubmission;
+use App\Modules\Keuangan\Models\PocketMoneyDeposit;
 use App\Traits\HasGenderScope;
 use App\Livewire\Concerns\SendsToast;
 
@@ -59,6 +61,24 @@ class BillingManager extends Component
     public ?string $selectedParentBillId = null;
     public bool $showInstallmentDetailsModal = false;
     public string $instFilterSearch = '';
+
+    // Tab: Verifikasi Transfer Manual (Portal Wali)
+    public string  $transferFilterStatus        = 'pending'; // 'all' | 'pending' | 'approved' | 'rejected'
+    public string  $transferSearch              = '';
+    public bool    $showTransferVerifyModal     = false;
+    public ?string $selectedTransferId          = null;
+    public ?ManualTransferSubmission $selectedTransferData = null;
+    public string  $transferRejectionReason     = '';
+
+    public function updatedTransferSearch(): void
+    {
+        $this->resetPage('transferPage');
+    }
+
+    public function updatedTransferFilterStatus(): void
+    {
+        $this->resetPage('transferPage');
+    }
 
     // Tab: Daftar Konfigurasi Tarif
     public string $rateSearchQuery = '';
@@ -2473,9 +2493,128 @@ class BillingManager extends Component
         $this->closeVoidModal();
     }
 
-    public function deletePayment(string $paymentId): void
+    // ─── METHODS: VERIFIKASI TRANSFER MANUAL (PORTAL WALI) ──────────────────
+    public function openTransferVerifyModal(string $id): void
     {
-        $this->confirmVoidPayment($paymentId);
+        $this->selectedTransferId = $id;
+        $this->selectedTransferData = ManualTransferSubmission::with(['person', 'verifier'])->find($id);
+        $this->transferRejectionReason = '';
+        $this->showTransferVerifyModal = true;
+    }
+
+    public function closeTransferVerifyModal(): void
+    {
+        $this->showTransferVerifyModal = false;
+        $this->selectedTransferId = null;
+        $this->selectedTransferData = null;
+        $this->transferRejectionReason = '';
+    }
+
+    public function approveTransferSubmission(string $id): void
+    {
+        $user = auth()->user();
+        $sub = ManualTransferSubmission::with('person')->find($id);
+
+        if (!$sub || $sub->status !== 'pending') {
+            $this->toastError('Pengajuan transfer tidak ditemukan atau sudah diproses.');
+            return;
+        }
+
+        try {
+            DB::beginTransaction();
+
+            $receiptNo = BillPayment::generateReceiptNo();
+            $paymentGroupId = (string) Str::uuid();
+            $now = now();
+            foreach (($sub->bill_breakdown ?? []) as $item) {
+                if (empty($item['bill_id'])) continue;
+                $bill = Bill::find($item['bill_id']);
+                if (!$bill) continue;
+
+                $payPortion = (float) ($item['amount'] ?? 0);
+                if ($payPortion <= 0) continue;
+
+                // Create BillPayment record (Bill::recalculateStatus handles bill status/amount_paid automatically on saved hook)
+                BillPayment::create([
+                    'bill_id'          => $bill->id,
+                    'receipt_no'       => $receiptNo,
+                    'payment_group_id' => $paymentGroupId,
+                    'amount_paid'      => $payPortion,
+                    'payment_method'   => 'transfer',
+                    'payment_date'     => $now,
+                    'logged_by'        => $user?->id,
+                    'notes'            => 'Transfer manual via Portal Wali [' . $sub->submission_code . ']',
+                ]);
+            }
+
+            // Update Pocket Money Deposit if any
+            if ($sub->pocket_money_amount > 0) {
+                PocketMoneyDeposit::where('reference_id', $sub->id)->update([
+                    'status'      => 'received',
+                    'received_by' => $user?->id,
+                    'received_at' => $now,
+                ]);
+            }
+
+            // Update ManualTransferSubmission
+            $sub->update([
+                'status'      => 'approved',
+                'verified_by' => $user?->id,
+                'verified_at' => $now,
+                'receipt_no'  => $receiptNo,
+            ]);
+
+            DB::commit();
+
+            $this->closeTransferVerifyModal();
+            $this->toastSuccess("Pembayaran transfer [{$sub->submission_code}] berhasil disetujui. Nota kuitansi {$receiptNo} telah diterbitkan.");
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            \Illuminate\Support\Facades\Log::error('[BillingManager] approveTransferSubmission failed', ['error' => $e->getMessage()]);
+            $this->toastError('Gagal menyetujui transfer: ' . $e->getMessage());
+        }
+    }
+
+    public function rejectTransferSubmission(string $id): void
+    {
+        $user = auth()->user();
+        $sub = ManualTransferSubmission::find($id);
+
+        if (!$sub || $sub->status !== 'pending') {
+            $this->toastError('Pengajuan transfer tidak ditemukan atau sudah diproses.');
+            return;
+        }
+
+        if (empty(trim($this->transferRejectionReason))) {
+            $this->toastError('Harap cantumkan alasan penolakan agar wali santri dapat memperbaikinya.');
+            return;
+        }
+
+        try {
+            DB::beginTransaction();
+
+            $sub->update([
+                'status'           => 'rejected',
+                'rejection_reason' => trim($this->transferRejectionReason),
+                'verified_by'      => $user?->id,
+                'verified_at'      => now(),
+            ]);
+
+            if ($sub->pocket_money_amount > 0) {
+                PocketMoneyDeposit::where('reference_id', $sub->id)->delete();
+            }
+
+            DB::commit();
+
+            $this->closeTransferVerifyModal();
+            $this->toastWarning("Pengajuan transfer [{$sub->submission_code}] telah ditolak dengan catatan.");
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            \Illuminate\Support\Facades\Log::error('[BillingManager] rejectTransferSubmission failed', ['error' => $e->getMessage()]);
+            $this->toastError('Gagal menolak pengajuan: ' . $e->getMessage());
+        }
     }
 
 
@@ -3588,7 +3727,30 @@ class BillingManager extends Component
             }
         }
 
+        // ─── Query Verifikasi Transfer Manual (Portal Wali) ───────────────
+        $transferBaseQuery = ManualTransferSubmission::with(['person', 'verifier'])
+            ->when($this->genderScope(), fn($q, $g) => $q->whereHas('person', fn($pq) => $pq->where('gender', $g)))
+            ->when($this->transferSearch, function ($q) {
+                $s = $this->transferSearch;
+                $q->where(function ($sub) use ($s) {
+                    $sub->whereHas('person', fn($pq) => $pq->where('name', 'like', "%{$s}%"))
+                        ->orWhere('submission_code', 'like', "%{$s}%")
+                        ->orWhere('sender_account_name', 'like', "%{$s}%")
+                        ->orWhere('receipt_no', 'like', "%{$s}%");
+                });
+            })
+            ->when($this->transferFilterStatus !== 'all', fn($q) => $q->where('status', $this->transferFilterStatus));
+
+        $manualTransferSubmissions = (clone $transferBaseQuery)->orderBy('created_at', 'desc')->paginate(15, pageName: 'transferPage');
+        $manualTransferPendingCount = ManualTransferSubmission::when($this->genderScope(), fn($q, $g) => $q->whereHas('person', fn($pq) => $pq->where('gender', $g)))->where('status', 'pending')->count();
+        $manualTransferApprovedCount = ManualTransferSubmission::when($this->genderScope(), fn($q, $g) => $q->whereHas('person', fn($pq) => $pq->where('gender', $g)))->where('status', 'approved')->count();
+        $manualTransferRejectedCount = ManualTransferSubmission::when($this->genderScope(), fn($q, $g) => $q->whereHas('person', fn($pq) => $pq->where('gender', $g)))->where('status', 'rejected')->count();
+
         return view('livewire.keuangan.billing-manager', [
+            'manualTransferSubmissions'   => $manualTransferSubmissions,
+            'manualTransferPendingCount'  => $manualTransferPendingCount,
+            'manualTransferApprovedCount' => $manualTransferApprovedCount,
+            'manualTransferRejectedCount' => $manualTransferRejectedCount,
             'settlementReport'    => $settlementReport,
             'savedDistributions'  => $savedDistributions,
             'modalDormitoryData'  => $modalDormitoryData,

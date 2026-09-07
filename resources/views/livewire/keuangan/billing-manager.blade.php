@@ -284,6 +284,13 @@
                     <span class="inline-flex items-center justify-center w-4 h-4 text-[9px] font-extrabold bg-amber-500 text-white rounded-full">{{ $gatewayPendingCount }}</span>
                 @endif
             </button>
+            <button wire:click="$set('activeTab', 'transfers')" class="px-5 py-3 text-xs font-bold transition-all border-b-2 flex items-center gap-2 whitespace-nowrap {{ $activeTab === 'transfers' ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400' : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300' }}">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                <span>Verifikasi Transfer Wali</span>
+                @if(isset($manualTransferPendingCount) && $manualTransferPendingCount > 0)
+                    <span class="inline-flex items-center justify-center px-1.5 py-0.5 text-[9px] font-extrabold bg-rose-500 text-white rounded-full animate-pulse">{{ $manualTransferPendingCount }}</span>
+                @endif
+            </button>
             @if($this->canViewSettlementTab())
                 <button wire:click="$set('activeTab', 'settlement')" class="px-5 py-3 text-xs font-bold transition-all border-b-2 flex items-center gap-2 whitespace-nowrap {{ $activeTab === 'settlement' ? 'border-sky-500 text-sky-600 dark:text-sky-400' : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300' }}">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3"/></svg>
@@ -3992,6 +3999,196 @@
             @endif
         @endif
 
+        {{-- TAB: VERIFIKASI TRANSFER MANUAL (PORTAL WALI) --}}
+        @if ($activeTab === 'transfers')
+            <div class="space-y-6 animate-fade-in">
+
+                {{-- Header & KPI Stats --}}
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div class="bg-gradient-to-br from-amber-500/10 to-transparent border border-amber-500/20 dark:border-amber-500/30 p-4 rounded-2xl flex items-center justify-between shadow-2xs">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-600 dark:text-amber-400 flex items-center justify-center text-lg shrink-0">⏳</div>
+                            <div>
+                                <span class="block text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">Menunggu Verifikasi</span>
+                                <span class="text-xl font-black text-amber-600 dark:text-amber-400">{{ $manualTransferPendingCount }}</span>
+                                <span class="text-[10px] text-slate-400 block">perlu dicek bendahara</span>
+                            </div>
+                        </div>
+                        <button type="button" wire:click="$set('transferFilterStatus', 'pending')" class="px-2.5 py-1 text-[10px] font-bold rounded-lg {{ $transferFilterStatus === 'pending' ? 'bg-amber-600 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300' }}">Filter</button>
+                    </div>
+
+                    <div class="bg-gradient-to-br from-emerald-500/10 to-transparent border border-emerald-500/20 dark:border-emerald-500/30 p-4 rounded-2xl flex items-center justify-between shadow-2xs">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-lg shrink-0">✅</div>
+                            <div>
+                                <span class="block text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">Disetujui & Lunas</span>
+                                <span class="text-xl font-black text-emerald-600 dark:text-emerald-400">{{ $manualTransferApprovedCount }}</span>
+                                <span class="text-[10px] text-slate-400 block">kuitansi terbit</span>
+                            </div>
+                        </div>
+                        <button type="button" wire:click="$set('transferFilterStatus', 'approved')" class="px-2.5 py-1 text-[10px] font-bold rounded-lg {{ $transferFilterStatus === 'approved' ? 'bg-emerald-600 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300' }}">Filter</button>
+                    </div>
+
+                    <div class="bg-gradient-to-br from-rose-500/10 to-transparent border border-rose-500/20 dark:border-rose-500/30 p-4 rounded-2xl flex items-center justify-between shadow-2xs">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-xl bg-rose-500/20 text-rose-600 dark:text-rose-400 flex items-center justify-center text-lg shrink-0">❌</div>
+                            <div>
+                                <span class="block text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">Ditolak</span>
+                                <span class="text-xl font-black text-rose-600 dark:text-rose-400">{{ $manualTransferRejectedCount }}</span>
+                                <span class="text-[10px] text-slate-400 block">bukti tidak valid/kurang</span>
+                            </div>
+                        </div>
+                        <button type="button" wire:click="$set('transferFilterStatus', 'rejected')" class="px-2.5 py-1 text-[10px] font-bold rounded-lg {{ $transferFilterStatus === 'rejected' ? 'bg-rose-600 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300' }}">Filter</button>
+                    </div>
+                </div>
+
+                {{-- Table Section --}}
+                <div class="bg-white dark:bg-slate-900 border border-slate-200/50 dark:border-slate-800 rounded-3xl shadow-xs overflow-hidden">
+                    {{-- Filter & Search Bar --}}
+                    <div class="px-5 py-4 border-b border-slate-100 dark:border-slate-800 flex flex-col md:flex-row md:items-center justify-between gap-3">
+                        <div class="relative flex-1 max-w-md">
+                            <svg class="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                            <input wire:model.live.debounce.300ms="transferSearch" type="text" placeholder="Cari nama santri, kode submit, pengirim, kuitansi..." class="w-full pl-9 pr-3 py-2 text-xs bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-700 dark:text-slate-300 placeholder-slate-400 focus:ring-1 focus:ring-indigo-400 focus:border-indigo-400 outline-none transition"/>
+                        </div>
+
+                        <div class="flex items-center gap-1.5 flex-wrap">
+                            <button type="button" wire:click="$set('transferFilterStatus', 'pending')" class="px-3 py-1.5 rounded-xl text-xs font-bold transition-all {{ $transferFilterStatus === 'pending' ? 'bg-amber-500 text-white shadow-sm' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200' }}">
+                                Menunggu ({{ $manualTransferPendingCount }})
+                            </button>
+                            <button type="button" wire:click="$set('transferFilterStatus', 'approved')" class="px-3 py-1.5 rounded-xl text-xs font-bold transition-all {{ $transferFilterStatus === 'approved' ? 'bg-emerald-600 text-white shadow-sm' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200' }}">
+                                Disetujui ({{ $manualTransferApprovedCount }})
+                            </button>
+                            <button type="button" wire:click="$set('transferFilterStatus', 'rejected')" class="px-3 py-1.5 rounded-xl text-xs font-bold transition-all {{ $transferFilterStatus === 'rejected' ? 'bg-rose-600 text-white shadow-sm' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200' }}">
+                                Ditolak ({{ $manualTransferRejectedCount }})
+                            </button>
+                            <button type="button" wire:click="$set('transferFilterStatus', 'all')" class="px-3 py-1.5 rounded-xl text-xs font-bold transition-all {{ $transferFilterStatus === 'all' ? 'bg-indigo-600 text-white shadow-sm' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200' }}">
+                                Semua
+                            </button>
+                        </div>
+                    </div>
+
+                    {{-- Table Content --}}
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-xs">
+                            <thead class="bg-slate-50/80 dark:bg-slate-950/40 text-[10px] font-extrabold uppercase tracking-wider text-slate-400 border-b border-slate-100 dark:border-slate-800">
+                                <tr>
+                                    <th class="px-5 py-3.5">Kode &amp; Waktu</th>
+                                    <th class="px-5 py-3.5">Santri</th>
+                                    <th class="px-5 py-3.5">Rincian Nominal</th>
+                                    <th class="px-5 py-3.5">Pengirim &amp; Rekening</th>
+                                    <th class="px-5 py-3.5 text-center">Bukti Struk</th>
+                                    <th class="px-5 py-3.5 text-center">Status</th>
+                                    <th class="px-5 py-3.5 text-right">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100 dark:divide-slate-800 font-medium">
+                                @forelse ($manualTransferSubmissions as $sub)
+                                    <tr class="hover:bg-slate-50/60 dark:hover:bg-slate-800/30 transition-colors {{ $sub->status === 'pending' ? 'bg-amber-50/30 dark:bg-amber-950/10' : '' }}">
+                                        {{-- Kode & Waktu --}}
+                                        <td class="px-5 py-4 whitespace-nowrap">
+                                            <span class="font-mono font-black text-slate-900 dark:text-white block">{{ $sub->submission_code }}</span>
+                                            <span class="text-[10px] text-slate-400 block mt-0.5">{{ $sub->created_at->translatedFormat('d M Y · H:i') }} WIB</span>
+                                            @if($sub->receipt_no)
+                                                <span class="inline-block mt-1 font-mono text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-1.5 py-0.5 rounded border border-emerald-200 dark:border-emerald-800">
+                                                    🧾 {{ $sub->receipt_no }}
+                                                </span>
+                                            @endif
+                                        </td>
+
+                                        {{-- Santri --}}
+                                        <td class="px-5 py-4 whitespace-nowrap">
+                                            <div class="flex items-center gap-2">
+                                                <span class="font-bold text-slate-900 dark:text-white">{{ $sub->person?->name ?? '-' }}</span>
+                                                <span class="px-1.5 py-0.5 rounded text-[9px] font-black {{ $sub->person?->gender === 'L' ? 'bg-sky-100 text-sky-700' : 'bg-pink-100 text-pink-700' }}">
+                                                    {{ $sub->person?->gender === 'L' ? 'PA' : 'PI' }}
+                                                </span>
+                                            </div>
+                                            <span class="text-[10px] text-slate-400 block mt-0.5">NIS: {{ $sub->person?->nis ?? '-' }}</span>
+                                        </td>
+
+                                        {{-- Rincian Nominal --}}
+                                        <td class="px-5 py-4 whitespace-nowrap">
+                                            <span class="font-black text-slate-900 dark:text-white text-sm block">Rp {{ number_format($sub->total_paid, 0, ',', '.') }}</span>
+                                            <div class="text-[10px] text-slate-400 flex items-center gap-1.5 mt-0.5">
+                                                <span>Tagihan: Rp {{ number_format($sub->bill_amount, 0, ',', '.') }}</span>
+                                                @if($sub->pocket_money_amount > 0)
+                                                    <span class="text-indigo-600 dark:text-indigo-400 font-bold">• Saku: Rp {{ number_format($sub->pocket_money_amount, 0, ',', '.') }}</span>
+                                                @endif
+                                            </div>
+                                        </td>
+
+                                        {{-- Pengirim & Rekening --}}
+                                        <td class="px-5 py-4">
+                                            <span class="font-bold text-slate-800 dark:text-slate-200 block">{{ $sub->sender_account_name }}</span>
+                                            <span class="text-[10px] text-slate-400 block">{{ $sub->sender_bank }} ➔ {{ $sub->destination_bank }}</span>
+                                        </td>
+
+                                        {{-- Bukti Struk --}}
+                                        <td class="px-5 py-4 text-center whitespace-nowrap">
+                                            @if($sub->proof_image_path)
+                                                <button type="button" wire:click="openTransferVerifyModal('{{ $sub->id }}')" class="relative group inline-block rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 w-12 h-12 shadow-2xs hover:scale-105 transition-all">
+                                                    <img src="{{ Storage::url($sub->proof_image_path) }}" alt="Bukti" class="w-full h-full object-cover"/>
+                                                    <div class="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-xs">🔍</div>
+                                                </button>
+                                            @else
+                                                <span class="text-slate-300 dark:text-slate-600 text-xs italic">Tidak ada</span>
+                                            @endif
+                                        </td>
+
+                                        {{-- Status --}}
+                                        <td class="px-5 py-4 text-center whitespace-nowrap">
+                                            @if($sub->status === 'pending')
+                                                <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300 border border-amber-200 dark:border-amber-800 animate-pulse">
+                                                    ⏳ Menunggu
+                                                </span>
+                                            @elseif($sub->status === 'approved')
+                                                <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
+                                                    ✅ Disetujui
+                                                </span>
+                                            @elseif($sub->status === 'rejected')
+                                                <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-rose-100 text-rose-800 dark:bg-rose-950/60 dark:text-rose-300 border border-rose-200 dark:border-rose-800">
+                                                    ❌ Ditolak
+                                                </span>
+                                            @endif
+                                        </td>
+
+                                        {{-- Aksi --}}
+                                        <td class="px-5 py-4 text-right whitespace-nowrap">
+                                            @if($sub->status === 'pending')
+                                                <button type="button" wire:click="openTransferVerifyModal('{{ $sub->id }}')" class="px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold shadow-sm transition-all flex items-center gap-1.5 ml-auto">
+                                                    <span>🔍 Verifikasi</span>
+                                                </button>
+                                            @else
+                                                <button type="button" wire:click="openTransferVerifyModal('{{ $sub->id }}')" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl text-xs font-semibold transition-all">
+                                                    Detail
+                                                </button>
+                                            @endif
+                                        </td>
+                                    </tr>
+                                @empty
+                                    <tr>
+                                        <td colspan="7" class="px-5 py-12 text-center text-slate-400">
+                                            <svg class="w-12 h-12 mx-auto text-slate-300 dark:text-slate-700 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                                            <p class="font-bold text-sm">Tidak ada pengajuan transfer manual</p>
+                                            <p class="text-xs text-slate-400 mt-1">Pengajuan transfer dari wali santri akan muncul di sini</p>
+                                        </td>
+                                    </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
+
+                    {{-- Pagination --}}
+                    @if($manualTransferSubmissions->hasPages())
+                        <div class="p-4 border-t border-slate-100 dark:border-slate-800">
+                            {{ $manualTransferSubmissions->links() }}
+                        </div>
+                    @endif
+                </div>
+
+            </div>
+        @endif
+
         <!-- Live Preview Generator Modal -->
         @if($showGeneratePreviewModal)
             <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
@@ -4830,6 +5027,210 @@
                         </span>
                     </button>
                 </div>
+            </div>
+        </div>
+    @endif
+
+    {{-- MODAL VERIFIKASI TRANSFER MANUAL (PORTAL WALI) --}}
+    @if($showTransferVerifyModal && $selectedTransferData)
+        <div class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/70 backdrop-blur-xs">
+            <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-2xl w-full max-w-4xl overflow-hidden max-h-[92vh] flex flex-col animate-in fade-in zoom-in-95 duration-150">
+
+                {{-- Modal Header --}}
+                <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100 dark:border-slate-800 shrink-0 bg-slate-50/50 dark:bg-slate-950/40">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-2xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center text-lg shrink-0">
+                            🔍
+                        </div>
+                        <div>
+                            <div class="flex items-center gap-2">
+                                <h3 class="text-sm font-extrabold text-slate-900 dark:text-white">Verifikasi Bukti Transfer Manual</h3>
+                                <span class="font-mono text-xs font-black px-2 py-0.5 rounded-lg bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+                                    {{ $selectedTransferData->submission_code }}
+                                </span>
+                            </div>
+                            <p class="text-[11px] text-slate-400 mt-0.5">
+                                Diajukan oleh wali santri pada {{ $selectedTransferData->created_at->translatedFormat('d F Y · H:i') }} WIB
+                            </p>
+                        </div>
+                    </div>
+                    <button type="button" wire:click="closeTransferVerifyModal" class="p-2 rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                    </button>
+                </div>
+
+                {{-- Modal Body: 2 Columns Grid --}}
+                <div class="p-6 overflow-y-auto flex-1 grid grid-cols-1 md:grid-cols-12 gap-6">
+
+                    {{-- Left Column: Image Viewer (5 cols) --}}
+                    <div class="md:col-span-5 flex flex-col space-y-3">
+                        <span class="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                            📸 Bukti Struk / Transfer Bank
+                        </span>
+
+                        @if($selectedTransferData->proof_image_path)
+                            <div class="flex-1 min-h-[260px] bg-slate-950 rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-800 relative group flex items-center justify-center p-2">
+                                <img src="{{ Storage::url($selectedTransferData->proof_image_path) }}"
+                                     alt="Struk Transfer"
+                                     class="max-h-[380px] w-auto object-contain rounded-xl shadow-lg"/>
+                                <a href="{{ Storage::url($selectedTransferData->proof_image_path) }}"
+                                   target="_blank"
+                                   class="absolute bottom-3 right-3 px-3 py-1.5 bg-black/70 hover:bg-black text-white text-[11px] font-bold rounded-xl backdrop-blur-xs flex items-center gap-1.5 opacity-90 hover:opacity-100 transition-all">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+                                    Buka Ukuran Penuh
+                                </a>
+                            </div>
+                        @else
+                            <div class="flex-1 min-h-[200px] bg-slate-100 dark:bg-slate-800 rounded-2xl flex flex-col items-center justify-center text-slate-400 p-4 text-center">
+                                <span class="text-3xl mb-2">🖼️</span>
+                                <p class="text-xs font-semibold">Tidak ada lampiran gambar struk</p>
+                            </div>
+                        @endif
+
+                        {{-- Info Pengirim & Rekening --}}
+                        <div class="p-3.5 bg-slate-50 dark:bg-slate-950/60 border border-slate-200/80 dark:border-slate-800 rounded-2xl space-y-2 text-xs">
+                            <div class="flex justify-between">
+                                <span class="text-slate-400">Rekening Pengirim:</span>
+                                <span class="font-bold text-slate-800 dark:text-slate-200">{{ $selectedTransferData->sender_account_name }} ({{ $selectedTransferData->sender_bank }})</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-slate-400">Transfer Menuju:</span>
+                                <span class="font-bold text-indigo-600 dark:text-indigo-400">{{ $selectedTransferData->destination_bank }}</span>
+                            </div>
+                            @if($selectedTransferData->notes)
+                                <div class="pt-2 border-t border-slate-200/60 dark:border-slate-800/60 text-[11px] text-slate-500">
+                                    <span class="font-bold text-slate-700 dark:text-slate-300">Catatan Wali:</span> {{ $selectedTransferData->notes }}
+                                </div>
+                            @endif
+                        </div>
+                    </div>
+
+                    {{-- Right Column: Santri & Breakdown Alokasi (7 cols) --}}
+                    <div class="md:col-span-7 space-y-4">
+
+                        {{-- Santri Card --}}
+                        <div class="p-4 bg-indigo-50/50 dark:bg-indigo-950/20 border border-indigo-100 dark:border-indigo-900/40 rounded-2xl flex items-center justify-between">
+                            <div>
+                                <span class="text-[10px] font-extrabold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider">Santri Penerima</span>
+                                <h4 class="text-sm font-black text-slate-900 dark:text-white mt-0.5">{{ $selectedTransferData->person?->name ?? '-' }}</h4>
+                                <span class="text-[11px] text-slate-500">NIS: {{ $selectedTransferData->person?->nis ?? '-' }}</span>
+                            </div>
+                            <span class="px-2.5 py-1 rounded-xl text-xs font-black {{ $selectedTransferData->person?->gender === 'L' ? 'bg-sky-100 text-sky-800' : 'bg-pink-100 text-pink-800' }}">
+                                {{ $selectedTransferData->person?->gender === 'L' ? 'Santri Putra' : 'Santri Putri' }}
+                            </span>
+                        </div>
+
+                        {{-- Breakdown Alokasi Tagihan --}}
+                        <div>
+                            <span class="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-2">
+                                📋 Rincian Alokasi Tagihan Pondok
+                            </span>
+                            <div class="space-y-2 max-h-48 overflow-y-auto pr-1">
+                                @forelse($selectedTransferData->bill_breakdown as $item)
+                                    <div class="p-3 bg-white dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700/80 rounded-xl flex items-center justify-between text-xs shadow-2xs">
+                                        <div>
+                                            <span class="font-bold text-slate-900 dark:text-white block">{{ $item['config_label'] ?? 'Tagihan' }}</span>
+                                            <span class="text-[10px] text-slate-400">Periode: {{ $item['period_label'] ?? '-' }}</span>
+                                        </div>
+                                        <span class="font-bold text-emerald-600 dark:text-emerald-400">
+                                            Rp {{ number_format($item['amount'], 0, ',', '.') }}
+                                        </span>
+                                    </div>
+                                @empty
+                                    <div class="p-3 text-center text-slate-400 text-xs">Tidak ada rincian tagihan</div>
+                                @endforelse
+                            </div>
+                        </div>
+
+                        {{-- Titipan Uang Saku (if any) --}}
+                        @if($selectedTransferData->pocket_money_amount > 0)
+                            <div class="p-3.5 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/50 rounded-2xl flex items-center justify-between">
+                                <div class="flex items-center gap-2.5">
+                                    <span class="text-xl">💰</span>
+                                    <div>
+                                        <span class="text-[10px] font-extrabold text-amber-700 dark:text-amber-300 uppercase tracking-wider">Titipan Uang Saku Anak</span>
+                                        <p class="text-[11px] text-slate-600 dark:text-slate-400">Akan dicatat otomatis ke kas titipan santri</p>
+                                    </div>
+                                </div>
+                                <span class="text-sm font-black text-amber-700 dark:text-amber-300">
+                                    + Rp {{ number_format($selectedTransferData->pocket_money_amount, 0, ',', '.') }}
+                                </span>
+                            </div>
+                        @endif
+
+                        {{-- Total Pembayaran --}}
+                        <div class="p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl flex items-center justify-between">
+                            <span class="text-xs font-bold text-emerald-800 dark:text-emerald-300">TOTAL TRANSFER DITERIMA</span>
+                            <span class="text-xl font-black text-emerald-700 dark:text-emerald-300">
+                                Rp {{ number_format($selectedTransferData->total_paid, 0, ',', '.') }}
+                            </span>
+                        </div>
+
+                        {{-- Status Detail if already processed --}}
+                        @if($selectedTransferData->status === 'approved')
+                            <div class="p-3.5 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 rounded-2xl text-xs space-y-1">
+                                <div class="font-bold text-emerald-700 dark:text-emerald-300 flex items-center gap-1.5">
+                                    <span>✅ Disetujui oleh:</span> {{ $selectedTransferData->verifier?->name ?? 'Petugas' }}
+                                </div>
+                                <div class="text-[11px] text-slate-500">
+                                    Waktu: {{ $selectedTransferData->verified_at?->translatedFormat('d F Y · H:i') }} WIB • No. Kuitansi: <strong class="font-mono text-emerald-700 dark:text-emerald-300">{{ $selectedTransferData->receipt_no }}</strong>
+                                </div>
+                            </div>
+                        @elseif($selectedTransferData->status === 'rejected')
+                            <div class="p-3.5 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 rounded-2xl text-xs space-y-1">
+                                <div class="font-bold text-rose-700 dark:text-rose-300">❌ Ditolak oleh {{ $selectedTransferData->verifier?->name ?? 'Petugas' }}</div>
+                                <div class="text-xs text-rose-600 dark:text-rose-400"><strong>Alasan:</strong> {{ $selectedTransferData->rejection_reason }}</div>
+                            </div>
+                        @endif
+
+                        {{-- Rejection Form when status is pending --}}
+                        @if($selectedTransferData->status === 'pending')
+                            <div class="space-y-1.5 pt-2 border-t border-slate-100 dark:border-slate-800">
+                                <label class="block text-xs font-bold text-slate-600 dark:text-slate-400">
+                                    Alasan Penolakan <span class="text-slate-400 font-normal">(wajib diisi hanya jika ingin menolak transfer)</span>:
+                                </label>
+                                <textarea wire:model="transferRejectionReason"
+                                          rows="2"
+                                          placeholder="Contoh: Nominal transfer kurang Rp 50.000 / Bukti transfer buram / Nama pengirim tidak sesuai..."
+                                          class="w-full text-xs p-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-800 dark:text-slate-200 focus:ring-1 focus:ring-rose-400 focus:border-rose-400 outline-none"></textarea>
+                            </div>
+                        @endif
+
+                    </div>
+                </div>
+
+                {{-- Modal Footer --}}
+                <div class="px-6 py-4 bg-slate-50/80 dark:bg-slate-950/60 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-3 shrink-0">
+                    <button type="button" wire:click="closeTransferVerifyModal" class="px-5 py-2.5 bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 rounded-xl text-xs font-bold transition-all">
+                        Tutup
+                    </button>
+
+                    @if($selectedTransferData->status === 'pending')
+                        <div class="flex items-center gap-2">
+                            <button type="button"
+                                    wire:click="rejectTransferSubmission('{{ $selectedTransferData->id }}')"
+                                    wire:confirm="Yakin ingin MENOLAK pengajuan transfer ini? Pastikan Anda telah mengisi alasan penolakan."
+                                    wire:loading.attr="disabled"
+                                    class="px-4 py-2.5 bg-rose-100 hover:bg-rose-200 dark:bg-rose-950/50 dark:hover:bg-rose-900/50 text-rose-700 dark:text-rose-300 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5">
+                                <span wire:loading.remove wire:target="rejectTransferSubmission">❌ Tolak Pengajuan</span>
+                                <span wire:loading wire:target="rejectTransferSubmission">Memproses...</span>
+                            </button>
+
+                            <button type="button"
+                                    wire:click="approveTransferSubmission('{{ $selectedTransferData->id }}')"
+                                    wire:confirm="Setujui transfer sebesar Rp {{ number_format($selectedTransferData->total_paid, 0, ',', '.') }} dan terbitkan kuitansi resmi?"
+                                    wire:loading.attr="disabled"
+                                    class="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-extrabold shadow-lg shadow-emerald-500/20 transition-all flex items-center gap-2">
+                                <span wire:loading.remove wire:target="approveTransferSubmission">✓ Setujui &amp; Terbitkan Kuitansi</span>
+                                <span wire:loading wire:target="approveTransferSubmission" class="inline-flex items-center gap-2">
+                                    <svg class="animate-spin h-3.5 w-3.5 text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                                    Menerbitkan Kuitansi...
+                                </span>
+                            </button>
+                        </div>
+                    @endif
+                </div>
+
             </div>
         </div>
     @endif
