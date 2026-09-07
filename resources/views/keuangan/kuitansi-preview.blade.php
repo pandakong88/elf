@@ -3,26 +3,27 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kuitansi Pembayaran - {{ $receipt_no }}</title>
+    <title>Kuitansi Pembayaran #{{ $receipt_no }} - elvith.id</title>
     
-    <!-- Fonts -->
+    <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     
     <!-- FontAwesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     
     <style>
         :root {
-            --primary: #0f172a;
-            --primary-accent: #0284c7;
-            --success: #16a34a;
-            --bg-body: #f1f5f9;
+            --brand-emerald: #10b981;
+            --brand-emerald-dark: #059669;
+            --brand-emerald-light: #ecfdf5;
+            --brand-slate-dark: #0f172a;
+            --brand-slate-medium: #334155;
+            --brand-slate-muted: #64748b;
+            --brand-slate-light: #f8fafc;
+            --brand-border: #e2e8f0;
             --paper-bg: #ffffff;
-            --text-main: #0f172a;
-            --text-muted: #64748b;
-            --border-color: #e2e8f0;
         }
 
         * {
@@ -33,44 +34,78 @@
 
         body {
             font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            background-color: var(--bg-body);
-            color: var(--text-main);
+            background-color: #0b0f19;
+            background-image: radial-gradient(at 0% 0%, rgba(16, 185, 129, 0.12) 0px, transparent 50%),
+                              radial-gradient(at 100% 100%, rgba(14, 165, 233, 0.08) 0px, transparent 50%);
+            background-attachment: fixed;
+            color: var(--brand-slate-dark);
             min-height: 100vh;
             display: flex;
             flex-direction: column;
             align-items: center;
-            padding-bottom: 60px;
+            padding-bottom: 70px;
         }
 
-        /* ── TOP ACTION BAR ────────────────────────── */
+        /* ── TOP ACTION BAR (FLOATING GLASSMORPHISM) ────────────────────────── */
         .action-bar-wrapper {
             position: sticky;
             top: 0;
             left: 0;
             right: 0;
             width: 100%;
-            background: rgba(15, 23, 42, 0.92);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
             border-bottom: 1px solid rgba(255, 255, 255, 0.1);
             z-index: 999;
-            box-shadow: 0 4px 20px -5px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
         }
 
         .action-bar {
-            max-width: 900px;
+            max-width: 860px;
             margin: 0 auto;
-            padding: 12px 20px;
+            padding: 12px 24px;
             display: flex;
             align-items: center;
             justify-content: space-between;
-            gap: 12px;
+            gap: 16px;
         }
 
         .action-bar .left-group {
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: 14px;
+        }
+
+        .action-bar .brand-badge {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+        }
+
+        .action-bar .brand-logo-mini {
+            width: 28px;
+            height: 28px;
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #ffffff;
+            font-weight: 800;
+            font-size: 14px;
+            box-shadow: 0 2px 8px rgba(16, 185, 129, 0.4);
+        }
+
+        .action-bar .brand-name {
+            font-size: 14px;
+            font-weight: 700;
+            color: #ffffff;
+            letter-spacing: -0.3px;
+        }
+        .action-bar .brand-name span {
+            color: #34d399;
         }
 
         .action-bar .right-group {
@@ -83,331 +118,526 @@
             display: inline-flex;
             align-items: center;
             gap: 8px;
-            padding: 8px 14px;
+            padding: 8px 16px;
             font-size: 13px;
             font-weight: 600;
-            border-radius: 8px;
+            border-radius: 9px;
             text-decoration: none;
-            transition: all 0.2s ease;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
             cursor: pointer;
             border: none;
+            line-height: 1;
         }
 
         .btn-back {
-            background: rgba(255, 255, 255, 0.1);
-            color: #f8fafc;
-            border: 1px solid rgba(255, 255, 255, 0.15);
+            background: rgba(255, 255, 255, 0.08);
+            color: #e2e8f0;
+            border: 1px solid rgba(255, 255, 255, 0.12);
         }
         .btn-back:hover {
-            background: rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.16);
             color: #ffffff;
             transform: translateX(-2px);
         }
 
         .btn-print {
-            background: #0284c7;
-            color: #ffffff;
-            box-shadow: 0 2px 8px rgba(2, 132, 199, 0.4);
+            background: #ffffff;
+            color: #0f172a;
+            box-shadow: 0 2px 10px rgba(255, 255, 255, 0.2);
         }
         .btn-print:hover {
-            background: #0369a1;
+            background: #f1f5f9;
             transform: translateY(-1px);
+            box-shadow: 0 4px 14px rgba(255, 255, 255, 0.3);
         }
 
         .btn-download {
-            background: #10b981;
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
             color: #ffffff;
-            box-shadow: 0 2px 8px rgba(16, 185, 129, 0.4);
+            box-shadow: 0 4px 14px rgba(16, 185, 129, 0.35);
         }
         .btn-download:hover {
-            background: #059669;
+            background: linear-gradient(135deg, #059669 0%, #047857 100%);
             transform: translateY(-1px);
-        }
-
-        .badge-preview {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            background: rgba(16, 185, 129, 0.15);
-            color: #34d399;
-            border: 1px solid rgba(16, 185, 129, 0.3);
-            padding: 4px 10px;
-            border-radius: 999px;
-            font-size: 11px;
-            font-weight: 600;
-            letter-spacing: 0.3px;
+            box-shadow: 0 6px 18px rgba(16, 185, 129, 0.45);
         }
 
         /* ── PAPER CONTAINER ────────────────────────── */
         .paper-container {
-            margin-top: 30px;
+            margin-top: 36px;
             width: 100%;
-            max-width: 820px;
-            padding: 0 16px;
+            max-width: 840px;
+            padding: 0 20px;
         }
 
         .receipt-paper {
             background: var(--paper-bg);
-            border-radius: 12px;
-            box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.04);
-            padding: 40px 48px;
+            border-radius: 16px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(255, 255, 255, 0.1);
+            padding: 44px 50px;
             position: relative;
+            overflow: hidden;
+        }
+
+        /* Top decorative accent bar */
+        .receipt-paper::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 6px;
+            background: linear-gradient(90deg, #10b981 0%, #0284c7 50%, #10b981 100%);
+        }
+
+        /* Watermark Background */
+        .watermark-bg {
+            position: absolute;
+            right: -40px;
+            bottom: 40px;
+            font-size: 160px;
+            font-weight: 900;
+            color: rgba(16, 185, 129, 0.03);
+            pointer-events: none;
+            user-select: none;
+            transform: rotate(-15deg);
+            z-index: 0;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            letter-spacing: -5px;
+        }
+
+        .content-relative {
+            position: relative;
+            z-index: 1;
         }
 
         /* ── HEADER ─────────────────────────────────── */
-        .header-section {
-            border-bottom: 2px solid #0f172a;
-            padding-bottom: 18px;
-            margin-bottom: 20px;
+        .receipt-header {
             display: flex;
             justify-content: space-between;
             align-items: flex-start;
+            padding-bottom: 22px;
+            border-bottom: 1.5px dashed #cbd5e1;
+            margin-bottom: 24px;
         }
 
-        .inst-title {
-            font-size: 19px;
+        .brand-group {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .brand-logo-box {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, #10b981 0%, #047857 100%);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #ffffff;
+            font-weight: 800;
+            font-size: 24px;
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+            flex-shrink: 0;
+        }
+
+        .brand-text-block .inst-title {
+            font-size: 18px;
             font-weight: 800;
             color: #0f172a;
-            letter-spacing: 0.5px;
-            text-transform: uppercase;
+            letter-spacing: -0.3px;
+            line-height: 1.2;
         }
 
-        .inst-subtitle {
+        .brand-text-block .brand-sub {
+            display: flex;
+            align-items: center;
+            gap: 6px;
             font-size: 12px;
             color: #64748b;
             margin-top: 3px;
             font-weight: 500;
         }
 
-        .receipt-header-right {
+        .brand-sub .elvith-tag {
+            color: #059669;
+            font-weight: 700;
+        }
+
+        .doc-identity {
             text-align: right;
         }
 
-        .doc-title {
-            font-size: 16px;
+        .doc-title-badge {
+            font-size: 11px;
             font-weight: 800;
-            color: #0f172a;
-            letter-spacing: 0.5px;
             text-transform: uppercase;
-        }
-
-        .receipt-code {
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 13px;
-            font-weight: 700;
-            color: #059669;
-            margin-top: 3px;
-            background: #ecfdf5;
-            padding: 2px 8px;
+            letter-spacing: 1.2px;
+            color: #0f172a;
+            background: #f1f5f9;
+            padding: 4px 10px;
             border-radius: 6px;
             display: inline-block;
-            border: 1px solid #a7f3d0;
+            margin-bottom: 6px;
         }
 
-        /* ── STATUS BANNER ─────────────────────────── */
-        .status-banner {
+        .doc-no {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 14px;
+            font-weight: 700;
+            color: #059669;
+            letter-spacing: -0.2px;
+        }
+
+        /* ── STATUS STRIP ──────────────────────────── */
+        .status-strip {
             background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
-            border: 1.5px solid #86efac;
-            border-radius: 10px;
-            padding: 12px 18px;
-            margin-bottom: 20px;
+            border: 1px solid #bbf7d0;
+            border-radius: 12px;
+            padding: 12px 20px;
+            margin-bottom: 24px;
             display: flex;
             justify-content: space-between;
             align-items: center;
         }
 
-        .status-badge-text {
+        .status-strip-left {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .status-icon-circle {
+            width: 26px;
+            height: 26px;
+            background: #16a34a;
+            color: #ffffff;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             font-size: 13px;
-            font-weight: 700;
+            box-shadow: 0 2px 6px rgba(22, 163, 74, 0.3);
+        }
+
+        .status-main-label {
+            font-size: 13.5px;
+            font-weight: 800;
             color: #166534;
+            letter-spacing: 0.2px;
+        }
+
+        .status-strip-right {
+            font-size: 11.5px;
+            color: #15803d;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        /* ── INFO BENTO GRID ───────────────────────── */
+        .bento-info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px;
+            margin-bottom: 26px;
+        }
+
+        .bento-card {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 16px 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .bento-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 12px;
+        }
+
+        .bento-label {
+            color: #64748b;
+            font-weight: 500;
             display: flex;
             align-items: center;
             gap: 8px;
         }
 
-        .status-timestamp {
-            font-size: 11px;
-            color: #15803d;
-            font-weight: 500;
-        }
-
-        /* ── INFO GRID ──────────────────────────────── */
-        .info-grid-card {
-            background: #f8fafc;
-            border: 1px solid #e2e8f0;
-            border-radius: 10px;
-            padding: 14px 18px;
-            margin-bottom: 22px;
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px 24px;
-        }
-
-        .info-row {
-            display: flex;
-            align-items: flex-start;
-            font-size: 12px;
-            line-height: 1.5;
-        }
-
-        .info-label {
-            width: 125px;
-            color: #64748b;
-            font-weight: 500;
-            flex-shrink: 0;
-        }
-
-        .info-sep {
-            width: 15px;
+        .bento-label i {
             color: #94a3b8;
-            flex-shrink: 0;
+            font-size: 13px;
+            width: 14px;
+            text-align: center;
         }
 
-        .info-val {
-            color: #0f172a;
+        .bento-val {
             font-weight: 700;
-            flex-grow: 1;
-            word-break: break-word;
+            color: #0f172a;
+            text-align: right;
         }
 
-        /* ── BREAKDOWN TABLE ─────────────────────────── */
-        .table-wrapper {
-            margin-bottom: 20px;
-            border-radius: 8px;
+        .gender-pill {
+            display: inline-block;
+            font-size: 10px;
+            font-weight: 700;
+            padding: 2px 7px;
+            border-radius: 999px;
+            background: #e2e8f0;
+            color: #334155;
+            margin-left: 4px;
+        }
+
+        .pill-method {
+            background: #e0f2fe;
+            color: #0369a1;
+            padding: 3px 9px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 700;
+        }
+
+        /* ── TABLE ─────────────────────────────────── */
+        .table-card {
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
             overflow: hidden;
-            border: 1px solid #cbd5e1;
+            margin-bottom: 24px;
+            background: #ffffff;
         }
 
         .items-table {
             width: 100%;
             border-collapse: collapse;
-            font-size: 12px;
+            font-size: 12.5px;
         }
 
         .items-table thead th {
-            background: #0f172a;
-            color: #ffffff;
-            padding: 10px 14px;
+            background: #f8fafc;
+            color: #475569;
+            padding: 12px 18px;
             font-size: 11px;
             font-weight: 700;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
-            border-right: 1px solid rgba(255, 255, 255, 0.1);
-        }
-        .items-table thead th:last-child {
-            border-right: none;
+            letter-spacing: 0.6px;
+            border-bottom: 1px solid #e2e8f0;
         }
 
         .items-table tbody td {
-            padding: 10px 14px;
-            border-bottom: 1px solid #e2e8f0;
-            border-right: 1px solid #e2e8f0;
+            padding: 13px 18px;
+            border-bottom: 1px solid #f1f5f9;
             color: #1e293b;
-        }
-        .items-table tbody td:last-child {
-            border-right: none;
+            vertical-align: middle;
         }
 
-        .items-table tbody tr:nth-child(even) {
-            background: #f8fafc;
+        .items-table tbody tr:last-child td {
+            border-bottom: none;
         }
 
-        .items-table tfoot td {
-            padding: 10px 14px;
-            border-top: 1px solid #cbd5e1;
-            border-right: 1px solid #cbd5e1;
-        }
-        .items-table tfoot td:last-child {
-            border-right: none;
+        .items-table tbody tr:hover {
+            background: #fafafa;
         }
 
-        .row-total-main {
-            background: #ecfdf5 !important;
-            color: #065f46;
-            font-weight: 800;
+        .item-main-name {
+            font-weight: 700;
+            color: #0f172a;
+            font-size: 13px;
         }
 
-        .row-calc {
-            background: #f8fafc;
+        .item-period-badge {
+            display: inline-block;
+            background: #f1f5f9;
             color: #475569;
+            padding: 3px 8px;
+            border-radius: 6px;
+            font-size: 11px;
             font-weight: 600;
         }
 
-        .mono {
-            font-family: 'JetBrains Mono', monospace;
+        .item-partial-tag {
+            font-size: 9.5px;
+            font-weight: 700;
+            color: #d97706;
+            background: #fef3c7;
+            padding: 2px 6px;
+            border-radius: 4px;
+            margin-left: 6px;
         }
 
-        .text-center { text-align: center; }
-        .text-left { text-align: left; }
-        .text-right { text-align: right; }
-
-        /* ── TERBILANG BOX ──────────────────────────── */
-        .terbilang-card {
+        /* Table Totals */
+        .totals-section {
+            border-top: 1.5px solid #cbd5e1;
             background: #f8fafc;
-            border: 1px dashed #cbd5e1;
-            border-radius: 8px;
-            padding: 12px 16px;
-            margin-bottom: 24px;
+            padding: 16px 20px;
         }
 
-        .terbilang-title {
+        .total-item-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 12px;
+            color: #64748b;
+            margin-bottom: 6px;
+        }
+        .total-item-row:last-child {
+            margin-bottom: 0;
+        }
+
+        .grand-total-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 10px;
+            margin-top: 8px;
+            border-top: 1px dashed #cbd5e1;
+        }
+
+        .grand-total-label {
+            font-size: 13px;
+            font-weight: 800;
+            color: #0f172a;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+
+        .grand-total-val {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 19px;
+            font-weight: 800;
+            color: #059669;
+            letter-spacing: -0.5px;
+        }
+
+        /* ── TERBILANG CARD ────────────────────────── */
+        .terbilang-box {
+            background: #f8fafc;
+            border-left: 3.5px solid #10b981;
+            border-radius: 0 10px 10px 0;
+            padding: 12px 18px;
+            margin-bottom: 28px;
+        }
+
+        .terbilang-label {
             font-size: 10px;
             font-weight: 700;
-            color: #64748b;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin-bottom: 4px;
+            letter-spacing: 0.8px;
+            color: #64748b;
+            margin-bottom: 3px;
         }
 
-        .terbilang-content {
+        .terbilang-text {
             font-size: 12.5px;
             font-weight: 700;
             font-style: italic;
             color: #0f172a;
         }
 
-        /* ── SIGNATURES ─────────────────────────────── */
-        .signature-grid {
+        /* ── SIGNATURES & SECURITY ─────────────────── */
+        .footer-signatures {
             display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
-            margin-top: 30px;
+            grid-template-columns: 1fr 1fr 1fr;
+            align-items: flex-end;
+            gap: 16px;
+            margin-top: 36px;
             padding-top: 10px;
         }
 
-        .sig-box {
+        .sig-block {
             text-align: center;
         }
 
-        .sig-label {
-            font-size: 11.5px;
+        .sig-caption {
+            font-size: 11px;
+            font-weight: 600;
             color: #64748b;
-            font-weight: 500;
-            margin-bottom: 60px;
+            margin-bottom: 54px;
         }
 
-        .sig-under {
-            font-size: 12.5px;
+        .sig-line {
+            font-size: 12px;
             font-weight: 700;
             color: #0f172a;
             border-bottom: 1.5px solid #94a3b8;
             display: inline-block;
             padding-bottom: 3px;
-            min-width: 180px;
+            min-width: 150px;
         }
 
-        /* ── FOOTER ─────────────────────────────────── */
-        .page-footer {
-            margin-top: 35px;
-            padding-top: 14px;
-            border-top: 1px solid #e2e8f0;
+        .security-seal {
             text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+        }
+
+        .seal-badge {
+            width: 52px;
+            height: 52px;
+            border: 2px dashed #059669;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #059669;
+            font-size: 20px;
+            background: #ecfdf5;
+            margin-bottom: 4px;
+        }
+
+        .seal-text {
+            font-size: 9px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: #059669;
+        }
+
+        .seal-sub {
+            font-size: 8px;
+            color: #94a3b8;
+        }
+
+        /* ── FOOTER LEGAL ──────────────────────────── */
+        .system-footer {
+            margin-top: 36px;
+            padding-top: 16px;
+            border-top: 1px solid #f1f5f9;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
             font-size: 10px;
             color: #94a3b8;
-            font-weight: 500;
         }
 
-        /* ── PRINT MEDIA QUERIES ────────────────────── */
+        .system-footer .power-by {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-weight: 600;
+            color: #64748b;
+        }
+        .system-footer .power-by .brand {
+            color: #059669;
+            font-weight: 800;
+        }
+
+        .mono {
+            font-family: 'JetBrains Mono', monospace;
+        }
+        .text-center { text-align: center; }
+        .text-left { text-align: left; }
+        .text-right { text-align: right; }
+
+        /* ── PRINT RULES ───────────────────────────── */
         @media print {
             body {
                 background: #ffffff !important;
@@ -432,7 +662,11 @@
                 box-shadow: none !important;
                 border: none !important;
                 border-radius: 0 !important;
-                padding: 15mm 15mm !important;
+                padding: 12mm 14mm !important;
+            }
+
+            .receipt-paper::before {
+                display: none !important;
             }
 
             @page {
@@ -444,7 +678,7 @@
 </head>
 <body>
 
-    <!-- STICKY TOP ACTION BAR (Hidden in print) -->
+    <!-- FLOATING TOP BAR -->
     <div class="action-bar-wrapper">
         <div class="action-bar">
             <div class="left-group">
@@ -452,10 +686,10 @@
                     <i class="fa-solid fa-arrow-left"></i>
                     <span>Kembali ke Kasir</span>
                 </a>
-                <span class="badge-preview">
-                    <i class="fa-solid fa-file-invoice"></i>
-                    <span>Preview Kuitansi</span>
-                </span>
+                <div class="brand-badge">
+                    <div class="brand-logo-mini">E</div>
+                    <span class="brand-name">elvith<span>.id</span></span>
+                </div>
             </div>
             <div class="right-group">
                 <button type="button" onclick="window.print()" class="btn-nav btn-print">
@@ -470,153 +704,184 @@
         </div>
     </div>
 
-    <!-- MAIN PAPER CONTAINER -->
+    <!-- MAIN RECEIPT PAPER -->
     <div class="paper-container">
         <div class="receipt-paper">
             
-            <!-- HEADER -->
-            <div class="header-section">
-                <div>
-                    <div class="inst-title">{{ config('app.name', 'PONDOK PESANTREN') }}</div>
-                    <div class="inst-subtitle">Sistem Informasi Manajemen Keuangan Santri</div>
-                </div>
-                <div class="receipt-header-right">
-                    <div class="doc-title">Kuitansi Pembayaran Kasir</div>
-                    <div class="receipt-code">{{ $receipt_no }}</div>
-                </div>
-            </div>
+            <div class="watermark-bg">ELVITH</div>
 
-            <!-- STATUS BANNER -->
-            <div class="status-banner">
-                <div class="status-badge-text">
-                    <i class="fa-solid fa-circle-check"></i>
-                    <span>Pembayaran Berhasil (Lunas)</span>
+            <div class="content-relative">
+                
+                <!-- HEADER BRANDING -->
+                <div class="receipt-header">
+                    <div class="brand-group">
+                        <div class="brand-logo-box">E</div>
+                        <div class="brand-text-block">
+                            <div class="inst-title">{{ config('app.name', 'PONDOK PESANTREN AL-FITHROH') }}</div>
+                            <div class="brand-sub">
+                                <span>SIM Keuangan Santri</span>
+                                <span>&bull;</span>
+                                <span class="elvith-tag">elvith.id</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="doc-identity">
+                        <div class="doc-title-badge">Kuitansi Pembayaran</div>
+                        <div class="doc-no">{{ $receipt_no }}</div>
+                    </div>
                 </div>
-                <div class="status-timestamp">
-                    Dicetak pada: {{ $generated_at }}
-                </div>
-            </div>
 
-            <!-- INFO GRID DUA KOLOM -->
-            <div class="info-grid-card">
-                <div class="info-row">
-                    <span class="info-label">Nama Santri</span>
-                    <span class="info-sep">:</span>
-                    <span class="info-val">{{ $santri_name }} ({{ $santri_gender }})</span>
+                <!-- STATUS BANNER -->
+                <div class="status-strip">
+                    <div class="status-strip-left">
+                        <div class="status-icon-circle">
+                            <i class="fa-solid fa-check"></i>
+                        </div>
+                        <div class="status-main-label">PEMBAYARAN RESMI &bull; LUNAS</div>
+                    </div>
+                    <div class="status-strip-right">
+                        <i class="fa-regular fa-clock"></i>
+                        <span>{{ $generated_at }}</span>
+                    </div>
                 </div>
-                <div class="info-row">
-                    <span class="info-label">No. Kuitansi</span>
-                    <span class="info-sep">:</span>
-                    <span class="info-val mono">{{ $receipt_no }}</span>
-                </div>
-                <div class="info-row">
-                    <span class="info-label">Kelas / Madrasah</span>
-                    <span class="info-sep">:</span>
-                    <span class="info-val">{{ $kelas_name }}</span>
-                </div>
-                <div class="info-row">
-                    <span class="info-label">Tanggal Bayar</span>
-                    <span class="info-sep">:</span>
-                    <span class="info-val">{{ $payment_date }} {{ $payment_time }}</span>
-                </div>
-                <div class="info-row">
-                    <span class="info-label">Komplek / Asrama</span>
-                    <span class="info-sep">:</span>
-                    <span class="info-val">{{ $dorm_name }}</span>
-                </div>
-                <div class="info-row">
-                    <span class="info-label">Metode Bayar</span>
-                    <span class="info-sep">:</span>
-                    <span class="info-val">{{ $payment_method }}</span>
-                </div>
-                <div class="info-row">
-                    <span class="info-label">Petugas Kasir</span>
-                    <span class="info-sep">:</span>
-                    <span class="info-val">{{ $cashier_name }}</span>
-                </div>
-                <div class="info-row">
-                    <span class="info-label">Catatan</span>
-                    <span class="info-sep">:</span>
-                    <span class="info-val">{{ $notes ?: '—' }}</span>
-                </div>
-            </div>
 
-            <!-- BREAKDOWN ITEMS TABLE -->
-            <div class="table-wrapper">
-                <table class="items-table">
-                    <thead>
-                        <tr>
-                            <th class="text-center" style="width: 6%;">No</th>
-                            <th class="text-left" style="width: 44%;">Nama Iuran / Tagihan</th>
-                            <th class="text-center" style="width: 25%;">Periode Tagihan</th>
-                            <th class="text-right" style="width: 25%;">Nominal (Rp)</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach($breakdown as $idx => $item)
+                <!-- BENTO INFO GRID -->
+                <div class="bento-info-grid">
+                    <!-- Santri & Akademik -->
+                    <div class="bento-card">
+                        <div class="bento-row">
+                            <span class="bento-label"><i class="fa-regular fa-user"></i> Nama Santri</span>
+                            <span class="bento-val">
+                                {{ $santri_name }} 
+                                <span class="gender-pill">{{ $santri_gender }}</span>
+                            </span>
+                        </div>
+                        <div class="bento-row">
+                            <span class="bento-label"><i class="fa-solid fa-graduation-cap"></i> Kelas / Madrasah</span>
+                            <span class="bento-val">{{ $kelas_name }}</span>
+                        </div>
+                        <div class="bento-row">
+                            <span class="bento-label"><i class="fa-solid fa-hotel"></i> Komplek / Kamar</span>
+                            <span class="bento-val">{{ $dorm_name }}</span>
+                        </div>
+                    </div>
+
+                    <!-- Transaksi Info -->
+                    <div class="bento-card">
+                        <div class="bento-row">
+                            <span class="bento-label"><i class="fa-regular fa-calendar-check"></i> Tanggal Bayar</span>
+                            <span class="bento-val">{{ $payment_date }} {{ $payment_time }}</span>
+                        </div>
+                        <div class="bento-row">
+                            <span class="bento-label"><i class="fa-solid fa-wallet"></i> Metode Bayar</span>
+                            <span class="bento-val">
+                                <span class="pill-method">{{ $payment_method }}</span>
+                            </span>
+                        </div>
+                        <div class="bento-row">
+                            <span class="bento-label"><i class="fa-solid fa-user-tie"></i> Petugas Kasir</span>
+                            <span class="bento-val">{{ $cashier_name }}</span>
+                        </div>
+                    </div>
+                </div>
+
+                @if(!empty($notes))
+                    <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px 16px; margin-bottom: 22px; font-size: 11.5px; color: #475569;">
+                        <strong style="color: #0f172a;">Catatan Transaksi:</strong> {{ $notes }}
+                    </div>
+                @endif
+
+                <!-- ITEMS TABLE CARD -->
+                <div class="table-card">
+                    <table class="items-table">
+                        <thead>
                             <tr>
-                                <td class="text-center" style="color: #64748b;">{{ $idx + 1 }}</td>
-                                <td>
-                                    <span style="font-weight: 700; color: #0f172a;">{{ $item['config_label'] }}</span>
-                                    @if(!empty($item['is_partial']))
-                                        <span style="font-size: 10px; color: #d97706; background: #fef3c7; padding: 2px 6px; border-radius: 4px; margin-left: 6px;">Sebagian</span>
-                                    @endif
-                                </td>
-                                <td class="text-center" style="color: #475569;">{{ $item['period_label'] }}</td>
-                                <td class="text-right mono" style="font-weight: 700;">
-                                    Rp {{ number_format($item['amount'], 0, ',', '.') }}
-                                </td>
+                                <th class="text-center" style="width: 6%;">No</th>
+                                <th class="text-left" style="width: 44%;">Nama Iuran / Tagihan</th>
+                                <th class="text-center" style="width: 25%;">Periode Tagihan</th>
+                                <th class="text-right" style="width: 25%;">Nominal (Rp)</th>
                             </tr>
-                        @endforeach
-                    </tbody>
-                    <tfoot>
-                        <tr class="row-total-main">
-                            <td colspan="3" class="text-right" style="text-transform: uppercase; letter-spacing: 0.5px;">TOTAL PEMBAYARAN</td>
-                            <td class="text-right mono" style="font-size: 13.5px;">
-                                Rp {{ number_format($total_amount, 0, ',', '.') }}
-                            </td>
-                        </tr>
+                        </thead>
+                        <tbody>
+                            @foreach($breakdown as $idx => $item)
+                                <tr>
+                                    <td class="text-center" style="color: #94a3b8; font-weight: 600;">{{ $idx + 1 }}</td>
+                                    <td>
+                                        <div class="item-main-name">{{ $item['config_label'] }}</div>
+                                        @if(!empty($item['is_partial']))
+                                            <span class="item-partial-tag">Pembayaran Sebagian</span>
+                                        @endif
+                                    </td>
+                                    <td class="text-center">
+                                        <span class="item-period-badge">{{ $item['period_label'] }}</span>
+                                    </td>
+                                    <td class="text-right mono" style="font-weight: 700; color: #0f172a;">
+                                        Rp {{ number_format($item['amount'], 0, ',', '.') }}
+                                    </td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+
+                    <!-- Totals & Calculations -->
+                    <div class="totals-section">
                         @if($payment_method === 'Tunai' && $tendered_amount > $total_amount)
-                            <tr class="row-calc">
-                                <td colspan="3" class="text-right">Uang Diterima (Tunai)</td>
-                                <td class="text-right mono">
-                                    Rp {{ number_format($tendered_amount, 0, ',', '.') }}
-                                </td>
-                            </tr>
-                            <tr class="row-calc">
-                                <td colspan="3" class="text-right">Kembalian</td>
-                                <td class="text-right mono" style="color: #059669; font-weight: 700;">
-                                    Rp {{ number_format($change_amount, 0, ',', '.') }}
-                                </td>
-                            </tr>
+                            <div class="total-item-row">
+                                <span>Uang Tunai Diterima:</span>
+                                <span class="mono" style="font-weight: 600; color: #334155;">Rp {{ number_format($tendered_amount, 0, ',', '.') }}</span>
+                            </div>
+                            <div class="total-item-row">
+                                <span>Kembalian Tunai:</span>
+                                <span class="mono" style="font-weight: 700; color: #059669;">Rp {{ number_format($change_amount, 0, ',', '.') }}</span>
+                            </div>
                         @endif
-                    </tfoot>
-                </table>
-            </div>
 
-            <!-- TERBILANG BOX -->
-            <div class="terbilang-card">
-                <div class="terbilang-title">Terbilang:</div>
-                <div class="terbilang-content"># {{ $terbilang }} #</div>
-            </div>
-
-            <!-- TANDA TANGAN -->
-            <div class="signature-grid">
-                <div class="sig-box">
-                    <div class="sig-label">Wali Santri / Penyetor,</div>
-                    <div class="sig-under">( ........................................ )</div>
+                        <div class="grand-total-row">
+                            <span class="grand-total-label">TOTAL PEMBAYARAN</span>
+                            <span class="grand-total-val">Rp {{ number_format($total_amount, 0, ',', '.') }}</span>
+                        </div>
+                    </div>
                 </div>
-                <div class="sig-box">
-                    <div class="sig-label">Kasir / Bendahara Pondok,</div>
-                    <div class="sig-under">{{ $cashier_name }}</div>
+
+                <!-- TERBILANG BOX -->
+                <div class="terbilang-box">
+                    <div class="terbilang-label">Terbilang</div>
+                    <div class="terbilang-text"># {{ $terbilang }} #</div>
                 </div>
-            </div>
 
-            <!-- FOOTER -->
-            <div class="page-footer">
-                Dokumen ini merupakan bukti pembayaran resmi yang sah dan diterbitkan secara elektronik oleh sistem {{ config('app.name', 'Elvith') }}.
-            </div>
+                <!-- SIGNATURES SECTION & DIGITAL SEAL -->
+                <div class="footer-signatures">
+                    <div class="sig-block">
+                        <div class="sig-caption">Wali Santri / Penyetor,</div>
+                        <div class="sig-line">( ........................................ )</div>
+                    </div>
 
+                    <div class="security-seal">
+                        <div class="seal-badge">
+                            <i class="fa-solid fa-shield-halved"></i>
+                        </div>
+                        <div class="seal-text">elvith.id Verified</div>
+                        <div class="seal-sub">Valid Official E-Receipt</div>
+                    </div>
+
+                    <div class="sig-block">
+                        <div class="sig-caption">Kasir / Bendahara Pondok,</div>
+                        <div class="sig-line">{{ $cashier_name }}</div>
+                    </div>
+                </div>
+
+                <!-- SYSTEM FOOTER -->
+                <div class="system-footer">
+                    <div>
+                        Dokumen ini adalah bukti pembayaran resmi yang diterbitkan secara elektronik oleh sistem pesantren.
+                    </div>
+                    <div class="power-by">
+                        <span>Powered by</span>
+                        <span class="brand">elvith.id</span>
+                    </div>
+                </div>
+
+            </div>
         </div>
     </div>
 
