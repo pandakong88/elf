@@ -281,7 +281,9 @@
                                 @foreach($row['bills'] as $periodKey => $bill)
                                     <td class="center font-bold" style="padding: 6px 8px;">
                                         @if($mode === 'history')
-                                            @if($bill && $bill->amount_paid > 0)
+                                            @if($bill && $bill->status === 'exempt')
+                                                <span style="color: #7c3aed; font-size: 8.5px; font-weight: 800; background: #f3e8ff; padding: 1px 4px; border-radius: 3px;">CUTI</span>
+                                            @elseif($bill && $bill->amount_paid > 0)
                                                 <span style="color: #16a34a; font-size: 9px; font-weight: 800;">
                                                     Rp {{ number_format($bill->amount_paid, 0, ',', '.') }}
                                                     @if($bill->status === 'paid')
@@ -440,7 +442,9 @@
                             @foreach($row['bills'] as $periodKey => $bill)
                                 <td class="center font-bold" style="padding: 6px 8px;">
                                     @if($mode === 'history')
-                                        @if($bill && $bill->amount_paid > 0)
+                                        @if($bill && $bill->status === 'exempt')
+                                            <span style="color: #7e22ce; font-size: 8px; font-weight: 800; background: #f3e8ff; padding: 1px 4px; border-radius: 3px; border: 1px solid #d8b4fe;">CUTI</span>
+                                        @elseif($bill && $bill->amount_paid > 0)
                                             <span style="color: #16a34a; font-size: 9px; font-weight: 800;">
                                                 Rp {{ number_format($bill->amount_paid, 0, ',', '.') }}
                                                 @if($bill->status === 'paid')

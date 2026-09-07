@@ -172,6 +172,12 @@ class LembarSetoranKolektif extends Component
  
         $bill = Bill::find($billId);
         if ($bill) {
+            if ($bill->status === 'exempt' || $bill->status === 'paid') {
+                unset($this->paymentAmounts[$billId]);
+                $this->recalculateTotals();
+                return;
+            }
+
             $remaining = (float)$bill->amount - (float)$bill->amount_paid;
             if ($amountPaid > $remaining) {
                 $amountPaid = $remaining;
@@ -335,13 +341,17 @@ class LembarSetoranKolektif extends Component
 
     public function toggleBillFullPayment(string $billId, float $remainingAmount): void
     {
+        $bill = Bill::find($billId);
+        if (!$bill || $bill->status === 'exempt' || $bill->status === 'paid') {
+            return;
+        }
+
         $currentVal = isset($this->paymentAmounts[$billId]) ? (float)$this->paymentAmounts[$billId] : 0.0;
         $configId = $this->activeConfigId ?: $this->config?->id;
         
         if ($currentVal > 0) {
             $this->paymentAmounts[$billId] = 0;
             
-            $bill = Bill::find($billId);
             if ($bill) {
                 $subsequentBills = Bill::where('person_id', $bill->person_id)
                     ->when($configId, fn($q) => $q->where('billing_config_id', $configId), fn($q) => $q->where('bill_type', $bill->bill_type))

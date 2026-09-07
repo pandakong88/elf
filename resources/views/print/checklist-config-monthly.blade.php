@@ -335,6 +335,8 @@
                                         @if($mode === 'history')
                                             @if($bill && $bill->status === 'paid')
                                                 <span class="checkbox-box checked"></span>
+                                            @elseif($bill && $bill->status === 'exempt')
+                                                <span style="font-size: {{ $is24Months ? '6.5px' : '7.5px' }}; color: #7c3aed; font-weight: 800; background: #f3e8ff; padding: 1px 3px; border-radius: 2px;">CUTI</span>
                                             @elseif($bill && $bill->amount_paid > 0)
                                                 <span style="font-size: {{ $is24Months ? '6.5px' : '7.5px' }}; color: #16a34a; font-weight: 800; white-space: nowrap; display: inline-block;">
                                                     Rp {{ number_format($bill->amount_paid, 0, ',', '.') }}
@@ -545,6 +547,8 @@
                                     @if($mode === 'history')
                                         @if($bill && $bill->status === 'paid')
                                             <span class="checkbox-box checked"></span>
+                                        @elseif($bill && $bill->status === 'exempt')
+                                            <span style="font-size: {{ $is24Months ? '6.5px' : '7.5px' }}; color: #7c3aed; font-weight: 800; background: #f3e8ff; padding: 1px 3px; border-radius: 2px;">CUTI</span>
                                         @elseif($bill && $bill->amount_paid > 0)
                                             <span style="font-size: {{ $is24Months ? '6.5px' : '7.5px' }}; color: #16a34a; font-weight: 800; white-space: nowrap; display: inline-block;">
                                                 Rp {{ number_format($bill->amount_paid, 0, ',', '.') }}

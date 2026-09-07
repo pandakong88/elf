@@ -362,6 +362,11 @@
                                             <span class="block text-[8px] font-black text-emerald-600 dark:text-emerald-400 uppercase">✓ {{ $months[$periodKey] ?? $periodKey }}</span>
                                             <span class="text-[8px] font-bold text-emerald-600/80">Lunas</span>
                                         </div>
+                                    @elseif($data['bill']->status === 'exempt')
+                                        <div class="py-1.5 px-1 rounded-xl bg-purple-500/10 dark:bg-purple-500/20 border border-purple-500/30 text-center" title="Bebas Tagihan (Izin Cuti)">
+                                            <span class="block text-[8px] font-extrabold text-purple-600 dark:text-purple-400 uppercase">{{ $months[$periodKey] ?? $periodKey }}</span>
+                                            <span class="text-[8px] font-bold text-purple-600/80 dark:text-purple-400/80">Cuti</span>
+                                        </div>
                                     @else
                                         @php
                                             $remaining = (float)$data['bill']->amount - (float)$data['bill']->amount_paid;
@@ -538,6 +543,10 @@
                                         @elseif($data['bill']->status === 'paid')
                                             <span class="inline-flex items-center justify-center px-2 py-1 bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 rounded-lg text-[9px] font-extrabold uppercase tracking-wider">
                                                 ✓ Lunas
+                                            </span>
+                                        @elseif($data['bill']->status === 'exempt')
+                                            <span class="inline-flex items-center justify-center px-2 py-1 bg-purple-500/15 text-purple-600 dark:text-purple-400 border border-purple-500/30 rounded-lg text-[9px] font-extrabold uppercase tracking-wider" title="Bebas Tagihan (Izin Cuti)">
+                                                🌴 Cuti
                                             </span>
                                         @else
                                             @php

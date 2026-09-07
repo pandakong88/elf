@@ -124,6 +124,8 @@
                                 —
                             @elseif($bill->status === 'paid')
                                 [ LUNAS ]
+                            @elseif($bill->status === 'exempt')
+                                [ CUTI ]
                             @else
                                 [ &nbsp; &nbsp; ]
                             @endif

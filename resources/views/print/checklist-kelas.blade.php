@@ -270,6 +270,8 @@
                                         <span style="color: #cbd5e1; font-weight: normal;">—</span>
                                     @elseif($bill->status === 'paid')
                                         <span class="checkbox-box checked"></span>
+                                    @elseif($bill->status === 'exempt')
+                                        <span style="font-size: 8px; color: #7c3aed; font-weight: bold; background: #f3e8ff; padding: 1px 4px; border-radius: 3px;">CUTI</span>
                                     @else
                                         <span class="checkbox-box"></span>
                                     @endif

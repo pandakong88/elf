@@ -280,7 +280,9 @@
                                             $isPaid = $bill && $bill->status === 'paid';
                                         @endphp
                                         <td class="center font-bold border-dark" style="font-size: 8.5px; {{ $termPaid > 0 ? 'color: #16a34a;' : 'color: #94a3b8;' }}">
-                                            @if($termPaid > 0)
+                                            @if($bill && $bill->status === 'exempt')
+                                                <span style="color: #7e22ce; font-size: 8px; font-weight: 800; background: #f3e8ff; padding: 1px 4px; border-radius: 3px; border: 1px solid #d8b4fe;">CUTI</span>
+                                            @elseif($termPaid > 0)
                                                 Rp {{ number_format($termPaid, 0, ',', '.') }}
                                                 @if($isPaid)
                                                     <span style="font-size: 8px; color: #16a34a;">✓</span>
@@ -443,7 +445,9 @@
                                         $isPaid = $bill && $bill->status === 'paid';
                                     @endphp
                                     <td class="center font-bold border-dark" style="font-size: 8.5px; {{ $termPaid > 0 ? 'color: #16a34a;' : 'color: #94a3b8;' }}">
-                                        @if($termPaid > 0)
+                                        @if($bill && $bill->status === 'exempt')
+                                            <span style="color: #7e22ce; font-size: 8px; font-weight: 800; background: #f3e8ff; padding: 1px 4px; border-radius: 3px; border: 1px solid #d8b4fe;">CUTI</span>
+                                        @elseif($termPaid > 0)
                                             Rp {{ number_format($termPaid, 0, ',', '.') }}
                                             @if($isPaid)
                                                 <span style="font-size: 8px; color: #16a34a;">✓</span>
