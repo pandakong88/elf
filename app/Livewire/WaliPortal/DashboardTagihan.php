@@ -37,6 +37,9 @@ class DashboardTagihan extends Component
 
     // Pembayaran Parsial / Cicilan — nominal custom per bill [bill_id => amount]
     public array $customAmounts = [];
+    public array $editingCustomBills = [];
+    public bool $showFutureBills = false;
+    public ?string $fifoNotice = null;
 
     // ─── Fitur Titipan Uang Saku Anak ─────────────────────────────────────────
     public bool $includePocketMoney = false;
@@ -82,6 +85,7 @@ class DashboardTagihan extends Component
         $this->portalTab = in_array($tab, ['tagihan', 'bayar', 'riwayat']) ? $tab : 'tagihan';
         $this->manualSuccessMessage = null;
         $this->manualErrorMessage = null;
+        $this->fifoNotice = null;
     }
 
     public function setCheckoutMethod(string $method): void
@@ -128,13 +132,157 @@ class DashboardTagihan extends Component
         $this->selectedBillIds = [];
     }
 
+    public function getUnpaidBillsPartition(): array
+    {
+        $now = now();
+        $currentMonth = (int) $now->format('m');
+        $currentYear  = (int) $now->format('Y');
+
+        $allBills = Bill::with('config')
+            ->where('person_id', $this->personId)
+            ->whereIn('status', ['unpaid', 'partial'])
+            ->get();
+
+        $past = collect();
+        $current = collect();
+        $future = collect();
+
+        foreach ($allBills as $bill) {
+            $interval = $bill->config?->interval;
+            $isEvent = in_array($interval, ['once', 'insidental', 'event', 'sekali']) || in_array($bill->bill_type, ['kitab', 'pendaftaran', 'event_iuran']);
+
+            if ($isEvent) {
+                if ($bill->due_date && $bill->due_date->lt(now()->startOfDay())) {
+                    $past->push($bill);
+                } else {
+                    $current->push($bill);
+                }
+                continue;
+            }
+
+            $status = $this->classifyBillPeriodStatus($bill, $currentMonth, $currentYear);
+            if ($status === 'past') {
+                $past->push($bill);
+            } elseif ($status === 'future') {
+                $future->push($bill);
+            } else {
+                $current->push($bill);
+            }
+        }
+
+        return [
+            'past'    => $past,
+            'current' => $current,
+            'future'  => $future,
+        ];
+    }
+
+    public function selectQuickMode(string $mode): void
+    {
+        $this->fifoNotice = null;
+        $partition = $this->getUnpaidBillsPartition();
+        $pastIds = $partition['past']->pluck('id')->toArray();
+        $currentIds = $partition['current']->pluck('id')->toArray();
+
+        if ($mode === 'all_active') {
+            $this->selectedBillIds = array_values(array_unique(array_merge($pastIds, $currentIds)));
+        } elseif ($mode === 'past_only') {
+            $this->selectedBillIds = $pastIds;
+        } elseif ($mode === 'current_only') {
+            if (!empty($pastIds)) {
+                $this->selectedBillIds = array_values(array_unique(array_merge($pastIds, $currentIds)));
+                $this->fifoNotice = 'Tunggakan bulan lalu otomatis diikutsertakan karena wajib diselesaikan terlebih dahulu.';
+            } else {
+                $this->selectedBillIds = $currentIds;
+            }
+        } elseif ($mode === 'none') {
+            $this->selectedBillIds = [];
+        }
+    }
+
     public function toggleBillSelection(string $billId): void
     {
-        if (in_array($billId, $this->selectedBillIds)) {
+        $this->fifoNotice = null;
+        $partition = $this->getUnpaidBillsPartition();
+        $pastIds = $partition['past']->pluck('id')->toArray();
+        $currentIds = $partition['current']->pluck('id')->toArray();
+        $futureIds = $partition['future']->pluck('id')->toArray();
+
+        $isSelected = in_array($billId, $this->selectedBillIds);
+
+        if ($isSelected) {
+            // Uncheck bill
             $this->selectedBillIds = array_values(array_diff($this->selectedBillIds, [$billId]));
+
+            // If user unchecks a past bill, current & future bills must also be unchecked (FIFO)
+            if (in_array($billId, $pastIds)) {
+                $intersect = array_intersect($this->selectedBillIds, array_merge($currentIds, $futureIds));
+                if (!empty($intersect)) {
+                    $this->selectedBillIds = array_values(array_diff($this->selectedBillIds, array_merge($currentIds, $futureIds)));
+                    $this->fifoNotice = 'Tagihan bulan berjalan/mendatang disesuaikan karena tunggakan lama belum dipilih.';
+                }
+            } elseif (in_array($billId, $currentIds)) {
+                $intersectFuture = array_intersect($this->selectedBillIds, $futureIds);
+                if (!empty($intersectFuture)) {
+                    $this->selectedBillIds = array_values(array_diff($this->selectedBillIds, $futureIds));
+                    $this->fifoNotice = 'Tagihan bulan mendatang disesuaikan karena tagihan bulan ini belum dipilih.';
+                }
+            }
         } else {
+            // Check bill
+            if (in_array($billId, $currentIds)) {
+                $missingPast = array_diff($pastIds, $this->selectedBillIds);
+                if (!empty($missingPast)) {
+                    $this->selectedBillIds = array_values(array_unique(array_merge($this->selectedBillIds, $pastIds, [$billId])));
+                    $this->fifoNotice = 'Tagihan tunggakan bulan sebelumnya otomatis diikutsertakan agar urutan pelunasan tertib.';
+                    return;
+                }
+            } elseif (in_array($billId, $futureIds)) {
+                $missingMandatory = array_diff(array_merge($pastIds, $currentIds), $this->selectedBillIds);
+                if (!empty($missingMandatory)) {
+                    $this->selectedBillIds = array_values(array_unique(array_merge($this->selectedBillIds, $pastIds, $currentIds, [$billId])));
+                    $this->fifoNotice = 'Tunggakan & tagihan bulan ini otomatis diikutsertakan sebelum membayar bulan depan.';
+                    return;
+                }
+            }
+
             $this->selectedBillIds[] = $billId;
         }
+    }
+
+    public function toggleCustomAmountInput(string $billId): void
+    {
+        $current = $this->editingCustomBills[$billId] ?? false;
+        $this->editingCustomBills[$billId] = !$current;
+        if (!in_array($billId, $this->selectedBillIds)) {
+            $this->toggleBillSelection($billId);
+        }
+    }
+
+    public function setCustomAmountPercent(string $billId, int $percent, float $maxRemaining): void
+    {
+        if ($percent >= 100) {
+            unset($this->customAmounts[$billId]);
+            $this->editingCustomBills[$billId] = false;
+        } else {
+            $val = round(($maxRemaining * $percent) / 100);
+            $this->customAmounts[$billId] = max(1000, $val);
+            $this->editingCustomBills[$billId] = true;
+        }
+        if (!in_array($billId, $this->selectedBillIds)) {
+            $this->toggleBillSelection($billId);
+        }
+    }
+
+    public function resetBillCustomAmount(string $billId): void
+    {
+        unset($this->customAmounts[$billId]);
+        $this->editingCustomBills[$billId] = false;
+    }
+
+    public function toggleShowFutureBills(): void
+    {
+        $this->showFutureBills = !$this->showFutureBills;
     }
 
     public function getGrandTotalTransfer(): float
@@ -803,6 +951,12 @@ class DashboardTagihan extends Component
             ? \Carbon\Carbon::parse($latestTimestamp)->locale('id')->translatedFormat('d M Y • H:i') . ' WIB'
             : 'Hari ini (Sistem Real-Time)';
 
+        $partition = $this->getUnpaidBillsPartition();
+        $pastUnpaidList = $partition['past'];
+        $currentUnpaidList = $partition['current'];
+        $futureUnpaidList = $partition['future'];
+        $hasPastUnpaid = $pastUnpaidList->isNotEmpty();
+
         return view('livewire.wali-portal.dashboard-tagihan', [
             'portalTab'               => $this->portalTab,
             'santri'                  => $santri,
@@ -825,6 +979,10 @@ class DashboardTagihan extends Component
             'futureBills'             => $futureBills,
             'pastPaidBills'           => $pastPaidBills,
             'unpaidQueue'             => $unpaidQueue,
+            'pastUnpaidList'          => $pastUnpaidList,
+            'currentUnpaidList'       => $currentUnpaidList,
+            'futureUnpaidList'        => $futureUnpaidList,
+            'hasPastUnpaid'           => $hasPastUnpaid,
             'allUnpaidIds'            => $allUnpaidIds,
             'totalCurrentMonthUnpaid' => $this->totalCurrentMonthUnpaid,
             'totalPastTunggakan'      => $this->totalPastTunggakan,

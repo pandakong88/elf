@@ -165,4 +165,96 @@ class PortalWaliV2Test extends TestCase
             'status'       => 'received',
         ]);
     }
+
+    public function test_fifo_logic_and_quick_modes(): void
+    {
+        $santri = $this->santri;
+        $this->actingAs($this->admin);
+
+        // Past bill (tunggakan bulan lalu)
+        $pastBill = Bill::create([
+            'person_id'    => $santri->id,
+            'bill_type'    => 'syahriah',
+            'title'        => 'Syahriah Bulan Lalu',
+            'amount'       => 150000,
+            'amount_paid'  => 0,
+            'status'       => 'unpaid',
+            'period_month' => now()->subMonth()->month,
+            'period_year'  => now()->subMonth()->year,
+            'created_by'   => $this->admin->id,
+        ]);
+
+        // Current bill (bulan ini)
+        $currentBill = Bill::create([
+            'person_id'    => $santri->id,
+            'bill_type'    => 'syahriah',
+            'title'        => 'Syahriah Bulan Ini',
+            'amount'       => 150000,
+            'amount_paid'  => 0,
+            'status'       => 'unpaid',
+            'period_month' => now()->month,
+            'period_year'  => now()->year,
+            'created_by'   => $this->admin->id,
+        ]);
+
+        $test = Livewire::test(DashboardTagihan::class, ['personId' => $santri->id])
+            ->call('setPortalTab', 'bayar');
+
+        // Test past_only quick mode
+        $test->call('selectQuickMode', 'past_only')
+            ->assertSet('selectedBillIds', [$pastBill->id]);
+
+        // Test unselecting all
+        $test->call('selectQuickMode', 'none')
+            ->assertSet('selectedBillIds', []);
+
+        // Test FIFO enforcement: selecting current bill when past bill is unselected automatically includes past bill
+        $test->call('toggleBillSelection', $currentBill->id)
+            ->assertSet('selectedBillIds', [$pastBill->id, $currentBill->id])
+            ->assertSet('fifoNotice', 'Tagihan tunggakan bulan sebelumnya otomatis diikutsertakan agar urutan pelunasan tertib.');
+
+        // Test FIFO enforcement: deselecting past bill automatically deselects current bill
+        $test->call('toggleBillSelection', $pastBill->id)
+            ->assertSet('selectedBillIds', [])
+            ->assertSet('fifoNotice', 'Tagihan bulan berjalan/mendatang disesuaikan karena tunggakan lama belum dipilih.');
+    }
+
+    public function test_partial_custom_installment_and_submission(): void
+    {
+        Storage::fake('public');
+
+        $santri = $this->santri;
+        $this->actingAs($this->admin);
+
+        $bill = Bill::create([
+            'person_id'    => $santri->id,
+            'bill_type'    => 'syahriah',
+            'title'        => 'Syahriah Cicil Test',
+            'amount'       => 200000,
+            'amount_paid'  => 0,
+            'status'       => 'unpaid',
+            'period_month' => now()->month,
+            'period_year'  => now()->year,
+            'created_by'   => $this->admin->id,
+        ]);
+
+        $fakeImage = UploadedFile::fake()->image('bukti_transfer_cicil.jpg', 600, 800);
+
+        $test = Livewire::test(DashboardTagihan::class, ['personId' => $santri->id])
+            ->call('setPortalTab', 'bayar')
+            ->set('selectedBillIds', [$bill->id])
+            // Set 50% installment
+            ->call('setCustomAmountPercent', $bill->id, 50, 200000)
+            ->assertSet('customAmounts.' . $bill->id, 100000)
+            ->set('proofImage', $fakeImage)
+            ->call('submitManualTransfer')
+            ->assertHasNoErrors();
+
+        $this->assertDatabaseHas('manual_transfer_submissions', [
+            'person_id'          => $santri->id,
+            'total_bills_amount' => 100000,
+            'status'             => 'pending',
+        ]);
+    }
 }
+

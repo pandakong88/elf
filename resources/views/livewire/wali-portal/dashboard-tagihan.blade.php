@@ -342,61 +342,438 @@
         <div class="space-y-5">
 
             <!-- ─── LANGKAH 1: PILIH TAGIHAN YANG MAU DIBAYAR ───────────────── -->
-            <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-4 sm:p-5 space-y-3.5 shadow-sm">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <h3 class="text-sm font-black text-slate-900 dark:text-white flex items-center gap-2">
-                            <span class="w-6 h-6 rounded-full bg-emerald-600 text-white text-xs flex items-center justify-center font-black">1</span>
-                            <span>Pilih Tagihan yang Ingin Dibayar</span>
-                        </h3>
-                        <p class="text-[11px] text-slate-500 dark:text-slate-400 ml-8 mt-0.5">Centang satu atau beberapa tagihan berikut</p>
+            <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-4 sm:p-5 space-y-4 shadow-sm">
+                <!-- Header with step counter & quick chips -->
+                <div>
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pb-2">
+                        <div>
+                            <h3 class="text-sm font-black text-slate-900 dark:text-white flex items-center gap-2">
+                                <span class="w-6 h-6 rounded-full bg-emerald-600 text-white text-xs flex items-center justify-center font-black shrink-0">1</span>
+                                <span>Pilih Tagihan yang Ingin Dibayar</span>
+                            </h3>
+                            <p class="text-[11px] text-slate-500 dark:text-slate-400 ml-8 mt-0.5">
+                                Pilih tagihan lunas penuh atau tentukan nominal cicilan per tagihan
+                            </p>
+                        </div>
+
+                        <!-- Smart Quick Chips Toolbar -->
+                        <div class="flex flex-wrap items-center gap-1.5 ml-8 sm:ml-0">
+                            @if($hasPastUnpaid)
+                                <button type="button" 
+                                        wire:click="selectQuickMode('all_active')"
+                                        class="text-[11px] font-bold text-emerald-800 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 hover:bg-emerald-100 px-3 py-1.5 rounded-xl border border-emerald-200 dark:border-emerald-800 transition-all flex items-center gap-1 active:scale-95">
+                                    <span>⚡</span>
+                                    <span>Semua Tagihan Wajib</span>
+                                </button>
+                                <button type="button" 
+                                        wire:click="selectQuickMode('past_only')"
+                                        class="text-[11px] font-bold text-amber-800 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/60 hover:bg-amber-100 px-3 py-1.5 rounded-xl border border-amber-200 dark:border-amber-800 transition-all flex items-center gap-1 active:scale-95">
+                                    <span>⚠️</span>
+                                    <span>Lunasi Tunggakan Dulu</span>
+                                </button>
+                            @else
+                                <button type="button" 
+                                        wire:click="selectQuickMode('all_active')"
+                                        class="text-[11px] font-bold text-emerald-800 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 hover:bg-emerald-100 px-3 py-1.5 rounded-xl border border-emerald-200 dark:border-emerald-800 transition-all flex items-center gap-1 active:scale-95">
+                                    <span>⚡</span>
+                                    <span>Semua Tagihan Bulan Ini</span>
+                                </button>
+                            @endif
+                            <button type="button" 
+                                    wire:click="selectQuickMode('none')"
+                                    class="text-[11px] font-bold text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 px-2.5 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 transition-all active:scale-95">
+                                Batal Pilih
+                            </button>
+                        </div>
                     </div>
 
-                    <div class="flex items-center gap-1.5">
-                        <button type="button" 
-                                wire:click="selectAllBills({{ json_encode($allUnpaidIds) }})"
-                                class="text-[10px] font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/50 hover:bg-emerald-100 px-2.5 py-1 rounded-lg border border-emerald-200 dark:border-emerald-800 transition-all">
-                            Pilih Semua
-                        </button>
-                    </div>
+                    <!-- FIFO Notice Banner -->
+                    @if($fifoNotice)
+                        <div class="mt-2.5 p-3 bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-700/60 rounded-2xl text-xs text-amber-900 dark:text-amber-200 flex items-start gap-2.5 shadow-xs">
+                            <span class="text-base leading-none mt-0.5">ℹ️</span>
+                            <div class="flex-1">
+                                <strong class="font-black block">Pemberitahuan Urutan Tagihan</strong>
+                                <span class="text-[11px] leading-relaxed">{{ $fifoNotice }}</span>
+                            </div>
+                        </div>
+                    @endif
                 </div>
 
-                @if($unpaidQueue->isEmpty())
-                    <div class="py-6 text-center text-xs text-slate-400 bg-slate-50 dark:bg-slate-950 rounded-2xl border border-slate-200 dark:border-slate-800">
-                        Tidak ada tagihan tertunggak saat ini. Semua tagihan sudah lunas!
+                @if($pastUnpaidList->isEmpty() && $currentUnpaidList->isEmpty() && $futureUnpaidList->isEmpty())
+                    <div class="py-8 text-center text-xs text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/30 rounded-2xl border border-emerald-200 dark:border-emerald-800 space-y-1">
+                        <span class="text-2xl block">🎉</span>
+                        <strong class="font-black text-sm block">Alhamdulillah, Semua Tagihan Lunas!</strong>
+                        <p class="text-[11px] text-slate-500 dark:text-slate-400">Tidak ada tagihan tertunggak maupun tagihan aktif saat ini.</p>
                     </div>
                 @else
-                    <div class="space-y-2 pt-1">
-                        @foreach($unpaidQueue as $bill)
-                            @php
-                                $maxKekurangan = max(0, (float)$bill->amount - (float)$bill->amount_paid);
-                                $isChecked = in_array($bill->id, $selectedBillIds);
-                                $monthName = $this->getMonthName($bill->period_month);
-                            @endphp
-                            <label class="block p-3.5 rounded-2xl border-2 cursor-pointer transition-all {{ $isChecked ? 'border-emerald-500 bg-emerald-50/50 dark:bg-emerald-950/20 shadow-xs' : 'border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/50 hover:border-slate-300' }}">
-                                <div class="flex items-center gap-3">
-                                    <input type="checkbox" 
-                                           wire:click="toggleBillSelection('{{ $bill->id }}')"
-                                           {{ $isChecked ? 'checked' : '' }}
-                                           class="w-5 h-5 rounded-lg text-emerald-600 focus:ring-emerald-500 border-slate-300 dark:border-slate-700 cursor-pointer">
-                                    
-                                    <div class="flex-1 min-w-0">
-                                        <div class="font-black text-xs text-slate-900 dark:text-white truncate">
-                                            {{ $this->getBillDisplayName($bill) }}
-                                        </div>
-                                        <div class="text-[11px] text-slate-500 dark:text-slate-400">
-                                            Periode: {{ $this->getBillPeriodLabel($bill) }}
-                                        </div>
+                    <div class="space-y-4">
+                        <!-- ─── GRUP 1: TUNGGAKAN BULAN LALU (PRIORITAS UTAMA) ──────────────── -->
+                        @if($pastUnpaidList->isNotEmpty())
+                            <div class="p-3.5 sm:p-4 rounded-2xl bg-rose-50/60 dark:bg-rose-950/20 border-2 border-rose-200 dark:border-rose-900/50 space-y-3">
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center gap-2">
+                                        <span class="w-2.5 h-2.5 rounded-full bg-rose-500 animate-pulse"></span>
+                                        <h4 class="text-xs font-black uppercase tracking-wider text-rose-800 dark:text-rose-300">
+                                            ⚠️ Tunggakan Bulan Lalu (Wajib Didahulukan)
+                                        </h4>
                                     </div>
-
-                                    <div class="text-right">
-                                        <span class="text-sm font-black text-emerald-700 dark:text-emerald-400">
-                                            Rp {{ number_format($maxKekurangan, 0, ',', '.') }}
-                                        </span>
-                                    </div>
+                                    <span class="text-[10px] font-bold px-2 py-0.5 rounded-md bg-rose-200 dark:bg-rose-900/60 text-rose-800 dark:text-rose-200">
+                                        {{ $pastUnpaidList->count() }} Tagihan
+                                    </span>
                                 </div>
-                            </label>
-                        @endforeach
+
+                                <div class="space-y-2.5">
+                                    @foreach($pastUnpaidList as $bill)
+                                        @php
+                                            $maxKekurangan = max(0, (float)$bill->amount - (float)$bill->amount_paid);
+                                            $isChecked = in_array($bill->id, $selectedBillIds);
+                                            $isEditingCustom = $editingCustomBills[$bill->id] ?? false;
+                                            $customVal = $customAmounts[$bill->id] ?? null;
+                                            $payAmount = (isset($customVal) && is_numeric($customVal) && (float)$customVal > 0)
+                                                ? min($maxKekurangan, (float)$customVal)
+                                                : $maxKekurangan;
+                                            $sisaTagihan = max(0, $maxKekurangan - $payAmount);
+                                        @endphp
+                                        <div class="p-3.5 rounded-2xl border-2 transition-all {{ $isChecked ? 'border-rose-500 bg-white dark:bg-slate-900 shadow-xs' : 'border-rose-200/80 dark:border-rose-900/40 bg-white/70 dark:bg-slate-900/70 hover:border-rose-300' }}">
+                                            <div class="flex items-start gap-3">
+                                                <input type="checkbox" 
+                                                       wire:click="toggleBillSelection('{{ $bill->id }}')"
+                                                       {{ $isChecked ? 'checked' : '' }}
+                                                       class="mt-1 w-5 h-5 rounded-lg text-rose-600 focus:ring-rose-500 border-rose-300 dark:border-rose-700 cursor-pointer">
+                                                
+                                                <div class="flex-1 min-w-0">
+                                                    <div class="flex flex-wrap items-center justify-between gap-1">
+                                                        <span class="font-black text-xs text-slate-900 dark:text-white">
+                                                            {{ $this->getBillDisplayName($bill) }}
+                                                        </span>
+                                                        <span class="text-sm font-black text-rose-700 dark:text-rose-400">
+                                                            Rp {{ number_format($maxKekurangan, 0, ',', '.') }}
+                                                        </span>
+                                                    </div>
+                                                    <div class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                                                        Periode: {{ $this->getBillPeriodLabel($bill) }}
+                                                    </div>
+
+                                                    <!-- Cicilan Controls if Selected -->
+                                                    @if($isChecked)
+                                                        <div class="mt-2.5 pt-2.5 border-t border-slate-100 dark:border-slate-800">
+                                                            @if(!$isEditingCustom)
+                                                                <div class="flex items-center justify-between">
+                                                                    <span class="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+                                                                        ✓ Bayar Penuh: <strong>Rp {{ number_format($payAmount, 0, ',', '.') }}</strong>
+                                                                    </span>
+                                                                    <button type="button" 
+                                                                            wire:click="toggleCustomAmountInput('{{ $bill->id }}')"
+                                                                            class="text-[11px] font-bold text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 underline flex items-center gap-1">
+                                                                        <span>✏️ Mau bayar sebagian / cicil?</span>
+                                                                    </button>
+                                                                </div>
+                                                            @else
+                                                                <div class="space-y-2 bg-slate-50 dark:bg-slate-950 p-2.5 rounded-xl border border-slate-200 dark:border-slate-800">
+                                                                    <div class="flex items-center justify-between">
+                                                                        <span class="text-[11px] font-black text-slate-700 dark:text-slate-300">Tentukan Nominal Pembayaran:</span>
+                                                                        <button type="button" 
+                                                                                wire:click="resetBillCustomAmount('{{ $bill->id }}')"
+                                                                                class="text-[10px] font-bold text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 underline">
+                                                                            Batal Cicil (Bayar Penuh)
+                                                                        </button>
+                                                                    </div>
+
+                                                                    <!-- Quick percent chips -->
+                                                                    <div class="flex flex-wrap items-center gap-1.5">
+                                                                        <button type="button" 
+                                                                                wire:click="setCustomAmountPercent('{{ $bill->id }}', 50, {{ $maxKekurangan }})"
+                                                                                class="px-2.5 py-1 text-[10px] font-bold rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 hover:bg-indigo-50 dark:hover:bg-indigo-950 text-slate-700 dark:text-slate-300">
+                                                                            50% (Rp {{ number_format($maxKekurangan * 0.5, 0, ',', '.') }})
+                                                                        </button>
+                                                                        <button type="button" 
+                                                                                wire:click="setCustomAmountPercent('{{ $bill->id }}', 75, {{ $maxKekurangan }})"
+                                                                                class="px-2.5 py-1 text-[10px] font-bold rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 hover:bg-indigo-50 dark:hover:bg-indigo-950 text-slate-700 dark:text-slate-300">
+                                                                            75% (Rp {{ number_format($maxKekurangan * 0.75, 0, ',', '.') }})
+                                                                        </button>
+                                                                        <button type="button" 
+                                                                                wire:click="resetBillCustomAmount('{{ $bill->id }}')"
+                                                                                class="px-2.5 py-1 text-[10px] font-bold rounded-lg border border-emerald-300 dark:border-emerald-700 bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300">
+                                                                            100% (Penuh)
+                                                                        </button>
+                                                                    </div>
+
+                                                                    <!-- Custom Input box -->
+                                                                    <div class="flex items-center gap-2">
+                                                                        <span class="text-xs font-bold text-slate-500">Rp</span>
+                                                                        <input type="number" 
+                                                                               wire:model.live.debounce.300ms="customAmounts.{{ $bill->id }}"
+                                                                               placeholder="{{ (int)$maxKekurangan }}"
+                                                                               max="{{ (int)$maxKekurangan }}"
+                                                                               min="1"
+                                                                               class="w-full py-1.5 px-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500">
+                                                                    </div>
+
+                                                                    @if($sisaTagihan > 0)
+                                                                        <div class="text-[11px] text-amber-700 dark:text-amber-400 font-bold flex items-center justify-between">
+                                                                            <span>Bayar sekarang: <strong>Rp {{ number_format($payAmount, 0, ',', '.') }}</strong></span>
+                                                                            <span>Sisa tagihan: <strong>Rp {{ number_format($sisaTagihan, 0, ',', '.') }}</strong></span>
+                                                                        </div>
+                                                                    @endif
+                                                                </div>
+                                                            @endif
+                                                        </div>
+                                                    @endif
+                                                </div>
+                                            </div>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            </div>
+                        @endif
+
+
+                        <!-- ─── GRUP 2: TAGIHAN BULAN INI & KEGIATAN AKTIF ──────────────────── -->
+                        @if($currentUnpaidList->isNotEmpty())
+                            <div class="p-3.5 sm:p-4 rounded-2xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 space-y-3">
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center gap-2">
+                                        <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+                                        <h4 class="text-xs font-black uppercase tracking-wider text-slate-800 dark:text-slate-200">
+                                            🗓️ Tagihan Bulan Berjalan & Kegiatan Aktif
+                                        </h4>
+                                    </div>
+                                    <span class="text-[10px] font-bold px-2 py-0.5 rounded-md bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300">
+                                        {{ $currentUnpaidList->count() }} Tagihan
+                                    </span>
+                                </div>
+
+                                <div class="space-y-2.5">
+                                    @foreach($currentUnpaidList as $bill)
+                                        @php
+                                            $maxKekurangan = max(0, (float)$bill->amount - (float)$bill->amount_paid);
+                                            $isChecked = in_array($bill->id, $selectedBillIds);
+                                            $isEditingCustom = $editingCustomBills[$bill->id] ?? false;
+                                            $customVal = $customAmounts[$bill->id] ?? null;
+                                            $payAmount = (isset($customVal) && is_numeric($customVal) && (float)$customVal > 0)
+                                                ? min($maxKekurangan, (float)$customVal)
+                                                : $maxKekurangan;
+                                            $sisaTagihan = max(0, $maxKekurangan - $payAmount);
+                                        @endphp
+                                        <div class="p-3.5 rounded-2xl border-2 transition-all {{ $isChecked ? 'border-emerald-500 bg-white dark:bg-slate-900 shadow-xs' : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:border-slate-300' }}">
+                                            <div class="flex items-start gap-3">
+                                                <input type="checkbox" 
+                                                       wire:click="toggleBillSelection('{{ $bill->id }}')"
+                                                       {{ $isChecked ? 'checked' : '' }}
+                                                       class="mt-1 w-5 h-5 rounded-lg text-emerald-600 focus:ring-emerald-500 border-slate-300 dark:border-slate-700 cursor-pointer">
+                                                
+                                                <div class="flex-1 min-w-0">
+                                                    <div class="flex flex-wrap items-center justify-between gap-1">
+                                                        <span class="font-black text-xs text-slate-900 dark:text-white">
+                                                            {{ $this->getBillDisplayName($bill) }}
+                                                        </span>
+                                                        <span class="text-sm font-black text-emerald-700 dark:text-emerald-400">
+                                                            Rp {{ number_format($maxKekurangan, 0, ',', '.') }}
+                                                        </span>
+                                                    </div>
+                                                    <div class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                                                        Periode: {{ $this->getBillPeriodLabel($bill) }}
+                                                    </div>
+
+                                                    <!-- Cicilan Controls if Selected -->
+                                                    @if($isChecked)
+                                                        <div class="mt-2.5 pt-2.5 border-t border-slate-100 dark:border-slate-800">
+                                                            @if(!$isEditingCustom)
+                                                                <div class="flex items-center justify-between">
+                                                                    <span class="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+                                                                        ✓ Bayar Penuh: <strong>Rp {{ number_format($payAmount, 0, ',', '.') }}</strong>
+                                                                    </span>
+                                                                    <button type="button" 
+                                                                            wire:click="toggleCustomAmountInput('{{ $bill->id }}')"
+                                                                            class="text-[11px] font-bold text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 underline flex items-center gap-1">
+                                                                        <span>✏️ Mau bayar sebagian / cicil?</span>
+                                                                    </button>
+                                                                </div>
+                                                            @else
+                                                                <div class="space-y-2 bg-slate-50 dark:bg-slate-950 p-2.5 rounded-xl border border-slate-200 dark:border-slate-800">
+                                                                    <div class="flex items-center justify-between">
+                                                                        <span class="text-[11px] font-black text-slate-700 dark:text-slate-300">Tentukan Nominal Pembayaran:</span>
+                                                                        <button type="button" 
+                                                                                wire:click="resetBillCustomAmount('{{ $bill->id }}')"
+                                                                                class="text-[10px] font-bold text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 underline">
+                                                                            Batal Cicil (Bayar Penuh)
+                                                                        </button>
+                                                                    </div>
+
+                                                                    <!-- Quick percent chips -->
+                                                                    <div class="flex flex-wrap items-center gap-1.5">
+                                                                        <button type="button" 
+                                                                                wire:click="setCustomAmountPercent('{{ $bill->id }}', 50, {{ $maxKekurangan }})"
+                                                                                class="px-2.5 py-1 text-[10px] font-bold rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 hover:bg-indigo-50 dark:hover:bg-indigo-950 text-slate-700 dark:text-slate-300">
+                                                                            50% (Rp {{ number_format($maxKekurangan * 0.5, 0, ',', '.') }})
+                                                                        </button>
+                                                                        <button type="button" 
+                                                                                wire:click="setCustomAmountPercent('{{ $bill->id }}', 75, {{ $maxKekurangan }})"
+                                                                                class="px-2.5 py-1 text-[10px] font-bold rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 hover:bg-indigo-50 dark:hover:bg-indigo-950 text-slate-700 dark:text-slate-300">
+                                                                            75% (Rp {{ number_format($maxKekurangan * 0.75, 0, ',', '.') }})
+                                                                        </button>
+                                                                        <button type="button" 
+                                                                                wire:click="resetBillCustomAmount('{{ $bill->id }}')"
+                                                                                class="px-2.5 py-1 text-[10px] font-bold rounded-lg border border-emerald-300 dark:border-emerald-700 bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300">
+                                                                            100% (Penuh)
+                                                                        </button>
+                                                                    </div>
+
+                                                                    <!-- Custom Input box -->
+                                                                    <div class="flex items-center gap-2">
+                                                                        <span class="text-xs font-bold text-slate-500">Rp</span>
+                                                                        <input type="number" 
+                                                                               wire:model.live.debounce.300ms="customAmounts.{{ $bill->id }}"
+                                                                               placeholder="{{ (int)$maxKekurangan }}"
+                                                                               max="{{ (int)$maxKekurangan }}"
+                                                                               min="1"
+                                                                               class="w-full py-1.5 px-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500">
+                                                                    </div>
+
+                                                                    @if($sisaTagihan > 0)
+                                                                        <div class="text-[11px] text-amber-700 dark:text-amber-400 font-bold flex items-center justify-between">
+                                                                            <span>Bayar sekarang: <strong>Rp {{ number_format($payAmount, 0, ',', '.') }}</strong></span>
+                                                                            <span>Sisa tagihan: <strong>Rp {{ number_format($sisaTagihan, 0, ',', '.') }}</strong></span>
+                                                                        </div>
+                                                                    @endif
+                                                                </div>
+                                                            @endif
+                                                        </div>
+                                                    @endif
+                                                </div>
+                                            </div>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            </div>
+                        @endif
+
+
+                        <!-- ─── GRUP 3: ACCORDION TAGIHAN BULAN MENDATANG (BAYAR DI MUKA) ──── -->
+                        @if($futureUnpaidList->isNotEmpty())
+                            <div class="border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden bg-slate-50/50 dark:bg-slate-950/50">
+                                <button type="button" 
+                                        wire:click="toggleShowFutureBills"
+                                        class="w-full p-4 flex items-center justify-between text-left hover:bg-slate-100/60 dark:hover:bg-slate-900/60 transition-all">
+                                    <div class="flex items-center gap-2.5">
+                                        <span class="text-base">📅</span>
+                                        <div>
+                                            <span class="font-black text-xs text-slate-800 dark:text-slate-200 block">
+                                                Bayar di Muka untuk Bulan Depan ({{ $futureUnpaidList->count() }} Tagihan)
+                                            </span>
+                                            <span class="text-[10px] text-slate-500 dark:text-slate-400">
+                                                {{ $showFutureBills ? 'Klik untuk menutup daftar' : 'Klik untuk membuka tagihan bulan-bulan mendatang bila ingin melunasi lebih awal' }}
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <span class="text-xs font-bold text-slate-400 transform transition-transform duration-200 {{ $showFutureBills ? 'rotate-180' : '' }}">
+                                        ▼
+                                    </span>
+                                </button>
+
+                                @if($showFutureBills)
+                                    <div class="p-4 pt-0 space-y-2.5 border-t border-slate-200 dark:border-slate-800">
+                                        @foreach($futureUnpaidList as $bill)
+                                            @php
+                                                $maxKekurangan = max(0, (float)$bill->amount - (float)$bill->amount_paid);
+                                                $isChecked = in_array($bill->id, $selectedBillIds);
+                                                $isEditingCustom = $editingCustomBills[$bill->id] ?? false;
+                                                $customVal = $customAmounts[$bill->id] ?? null;
+                                                $payAmount = (isset($customVal) && is_numeric($customVal) && (float)$customVal > 0)
+                                                    ? min($maxKekurangan, (float)$customVal)
+                                                    : $maxKekurangan;
+                                                $sisaTagihan = max(0, $maxKekurangan - $payAmount);
+                                            @endphp
+                                            <div class="p-3.5 rounded-2xl border-2 transition-all {{ $isChecked ? 'border-emerald-500 bg-white dark:bg-slate-900 shadow-xs' : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:border-slate-300' }}">
+                                                <div class="flex items-start gap-3">
+                                                    <input type="checkbox" 
+                                                           wire:click="toggleBillSelection('{{ $bill->id }}')"
+                                                           {{ $isChecked ? 'checked' : '' }}
+                                                           class="mt-1 w-5 h-5 rounded-lg text-emerald-600 focus:ring-emerald-500 border-slate-300 dark:border-slate-700 cursor-pointer">
+                                                    
+                                                    <div class="flex-1 min-w-0">
+                                                        <div class="flex flex-wrap items-center justify-between gap-1">
+                                                            <span class="font-black text-xs text-slate-900 dark:text-white">
+                                                                {{ $this->getBillDisplayName($bill) }}
+                                                            </span>
+                                                            <span class="text-sm font-black text-emerald-700 dark:text-emerald-400">
+                                                                Rp {{ number_format($maxKekurangan, 0, ',', '.') }}
+                                                            </span>
+                                                        </div>
+                                                        <div class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                                                            Periode: {{ $this->getBillPeriodLabel($bill) }}
+                                                        </div>
+
+                                                        @if($isChecked)
+                                                            <div class="mt-2.5 pt-2.5 border-t border-slate-100 dark:border-slate-800">
+                                                                @if(!$isEditingCustom)
+                                                                    <div class="flex items-center justify-between">
+                                                                        <span class="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+                                                                            ✓ Bayar Penuh: <strong>Rp {{ number_format($payAmount, 0, ',', '.') }}</strong>
+                                                                        </span>
+                                                                        <button type="button" 
+                                                                                wire:click="toggleCustomAmountInput('{{ $bill->id }}')"
+                                                                                class="text-[11px] font-bold text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 underline flex items-center gap-1">
+                                                                            <span>✏️ Mau bayar sebagian / cicil?</span>
+                                                                        </button>
+                                                                    </div>
+                                                                @else
+                                                                    <div class="space-y-2 bg-slate-50 dark:bg-slate-950 p-2.5 rounded-xl border border-slate-200 dark:border-slate-800">
+                                                                        <div class="flex items-center justify-between">
+                                                                            <span class="text-[11px] font-black text-slate-700 dark:text-slate-300">Tentukan Nominal Pembayaran:</span>
+                                                                            <button type="button" 
+                                                                                    wire:click="resetBillCustomAmount('{{ $bill->id }}')"
+                                                                                    class="text-[10px] font-bold text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 underline">
+                                                                                Batal Cicil (Bayar Penuh)
+                                                                            </button>
+                                                                        </div>
+
+                                                                        <div class="flex flex-wrap items-center gap-1.5">
+                                                                            <button type="button" 
+                                                                                    wire:click="setCustomAmountPercent('{{ $bill->id }}', 50, {{ $maxKekurangan }})"
+                                                                                    class="px-2.5 py-1 text-[10px] font-bold rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 hover:bg-indigo-50 dark:hover:bg-indigo-950 text-slate-700 dark:text-slate-300">
+                                                                                50% (Rp {{ number_format($maxKekurangan * 0.5, 0, ',', '.') }})
+                                                                            </button>
+                                                                            <button type="button" 
+                                                                                    wire:click="setCustomAmountPercent('{{ $bill->id }}', 75, {{ $maxKekurangan }})"
+                                                                                    class="px-2.5 py-1 text-[10px] font-bold rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 hover:bg-indigo-50 dark:hover:bg-indigo-950 text-slate-700 dark:text-slate-300">
+                                                                                75% (Rp {{ number_format($maxKekurangan * 0.75, 0, ',', '.') }})
+                                                                            </button>
+                                                                            <button type="button" 
+                                                                                    wire:click="resetBillCustomAmount('{{ $bill->id }}')"
+                                                                                    class="px-2.5 py-1 text-[10px] font-bold rounded-lg border border-emerald-300 dark:border-emerald-700 bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300">
+                                                                                100% (Penuh)
+                                                                            </button>
+                                                                        </div>
+
+                                                                        <div class="flex items-center gap-2">
+                                                                            <span class="text-xs font-bold text-slate-500">Rp</span>
+                                                                            <input type="number" 
+                                                                                   wire:model.live.debounce.300ms="customAmounts.{{ $bill->id }}"
+                                                                                   placeholder="{{ (int)$maxKekurangan }}"
+                                                                                   max="{{ (int)$maxKekurangan }}"
+                                                                                   min="1"
+                                                                                   class="w-full py-1.5 px-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500">
+                                                                        </div>
+
+                                                                        @if($sisaTagihan > 0)
+                                                                            <div class="text-[11px] text-amber-700 dark:text-amber-400 font-bold flex items-center justify-between">
+                                                                                <span>Bayar sekarang: <strong>Rp {{ number_format($payAmount, 0, ',', '.') }}</strong></span>
+                                                                                <span>Sisa tagihan: <strong>Rp {{ number_format($sisaTagihan, 0, ',', '.') }}</strong></span>
+                                                                            </div>
+                                                                        @endif
+                                                                    </div>
+                                                                @endif
+                                                            </div>
+                                                        @endif
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                @endif
+                            </div>
+                        @endif
                     </div>
                 @endif
             </div>
@@ -466,8 +843,19 @@
                 <span class="text-xs font-black uppercase text-emerald-300 tracking-wider block">Ringkasan Pembayaran:</span>
                 
                 <div class="space-y-1.5 text-xs">
+                    @if(!empty($simulasiHasil))
+                        <div class="space-y-1 pb-2 border-b border-emerald-800/60">
+                            @foreach($simulasiHasil as $item)
+                                <div class="flex items-center justify-between text-[11px] text-slate-300">
+                                    <span class="truncate pr-2">• {{ $item['label'] }} @if($item['is_partial'] ?? false) <span class="text-amber-300 font-bold">(Cicil)</span> @endif</span>
+                                    <span class="font-bold text-white shrink-0">Rp {{ number_format($item['terbayar'], 0, ',', '.') }}</span>
+                                </div>
+                            @endforeach
+                        </div>
+                    @endif
+
                     <div class="flex items-center justify-between text-slate-300">
-                        <span>Tagihan Pondok ({{ count($selectedBillIds) }} Tagihan)</span>
+                        <span>Tagihan Pondok ({{ count($selectedBillIds) }} Dipilih)</span>
                         <strong class="text-white font-bold">Rp {{ number_format($simulasiTotal, 0, ',', '.') }}</strong>
                     </div>
 
