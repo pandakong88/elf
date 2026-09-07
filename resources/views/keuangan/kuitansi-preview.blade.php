@@ -682,11 +682,9 @@
     <div class="action-bar-wrapper">
         <div class="action-bar">
             <div class="left-group">
-                <a href="{{ $back_url ?? route('keuangan.billing', ['tab' => 'payments_log']) }}" 
-                   onclick="if (window.history.length > 1 && document.referrer && document.referrer.includes(window.location.host)) { window.history.back(); return false; }" 
-                   class="btn-nav btn-back">
+                <a href="{{ $back_url ?? route('keuangan.billing', ['tab' => 'payments_log']) }}" class="btn-nav btn-back">
                     <i class="fa-solid fa-arrow-left"></i>
-                    <span>{{ $back_label ?? 'Kembali ke Riwayat' }}</span>
+                    <span>{{ $back_label ?? 'Kembali ke Riwayat Pembayaran' }}</span>
                 </a>
                 <div class="brand-badge">
                     <div class="brand-logo-mini">E</div>
