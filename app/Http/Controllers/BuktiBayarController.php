@@ -78,12 +78,10 @@ class BuktiBayarController extends Controller
     }
 
     /**
-     * Generate PDF bukti bayar kuitansi kasir (Multi-Item / Gabungan).
-     * Menerima receipt_no, payment_group_id, atau single paymentId.
+     * Helper privat untuk mengekstrak dan memformat data kuitansi kasir.
      */
-    public function kuitansi(string $identifier): Response
+    private function getKuitansiData(string $identifier): array
     {
-        // Cari berdasarkan receipt_no, payment_group_id, atau id
         $payments = BillPayment::with([
             'bill.config',
             'bill.person.activeMadrasahEnrollment.kelas',
@@ -113,9 +111,9 @@ class BuktiBayarController extends Controller
             $b = $p->bill;
             $interval = $b?->config?->interval ?? '';
             $period = match(true) {
-                $interval === 'semester'                                     => 'Semester ' . $b->period_month . '/' . $b->period_year,
+                $interval === 'semester'                                       => 'Semester ' . $b->period_month . '/' . $b->period_year,
                 in_array($interval, ['once', 'insidental', 'event', 'sekali']) => 'Event ' . ($b->period_year ?? ''),
-                default                                                      => ($months[$b?->period_month ?? 0] ?? '') . ' ' . ($b?->period_year ?? ''),
+                default                                                        => ($months[$b?->period_month ?? 0] ?? '') . ' ' . ($b?->period_year ?? ''),
             };
 
             $amountPaid = (float) $p->amount_paid;
@@ -147,7 +145,7 @@ class BuktiBayarController extends Controller
         $tendered = $firstPayment->tendered_amount ? (float) $firstPayment->tendered_amount : $totalAmount;
         $change   = $firstPayment->change_amount ? (float) $firstPayment->change_amount : 0.0;
 
-        $data = [
+        return [
             'type'            => 'kuitansi_kasir',
             'app_name'        => config('app.name', 'Elvith'),
             'receipt_no'      => $receiptNo,
@@ -172,18 +170,35 @@ class BuktiBayarController extends Controller
             'notes'           => $firstPayment->notes,
             'generated_at'    => now()->translatedFormat('d F Y, H:i') . ' WIB',
         ];
+    }
+
+    /**
+     * Halaman Web Preview Kuitansi Kasir (On-Screen View).
+     */
+    public function kuitansi(string $identifier)
+    {
+        $data = $this->getKuitansiData($identifier);
+        return view('keuangan.kuitansi-preview', $data);
+    }
+
+    /**
+     * Unduh file PDF Kuitansi Kasir secara langsung.
+     */
+    public function kuitansiPdf(string $identifier): Response
+    {
+        $data = $this->getKuitansiData($identifier);
 
         $pdf = Pdf::loadView('pdf.kuitansi-kasir', $data)
                   ->setPaper('a4', 'portrait');
 
-        $filename = 'Kuitansi-' . $receiptNo . '.pdf';
+        $filename = 'Kuitansi-' . $data['receipt_no'] . '.pdf';
         return $pdf->download($filename);
     }
 
     /**
-     * Generate PDF bukti bayar untuk pembayaran kasir legacy (BillPayment manual tunggal).
+     * Generate / Preview bukti bayar untuk pembayaran kasir legacy.
      */
-    public function kasir(string $paymentId): Response
+    public function kasir(string $paymentId)
     {
         return $this->kuitansi($paymentId);
     }
