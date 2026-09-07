@@ -308,33 +308,41 @@ class DashboardTagihan extends Component
     public function getBillPeriodLabel(Bill $bill): string
     {
         $interval = $bill->config?->interval ?? 'monthly';
+        $dueStr = $bill->due_date ? ' • Tenggat: ' . $bill->due_date->translatedFormat('d M Y') : '';
 
         if (in_array($interval, ['semester', '2x_yearly'])) {
             $s = $bill->period_sub ?? ($bill->period_month && $bill->period_month <= 6 ? 1 : 2);
-            return "Semester {$s} ({$bill->period_year})";
+            return "Semester {$s} ({$bill->period_year}){$dueStr}";
         }
 
         if (in_array($interval, ['caturwulan', '3x_yearly'])) {
             $cw = $bill->period_sub ?? ($bill->period_month ? ($bill->period_month <= 4 ? 1 : ($bill->period_month <= 8 ? 2 : 3)) : 1);
-            return "Caturwulan {$cw} ({$bill->period_year})";
+            return "Caturwulan {$cw} ({$bill->period_year}){$dueStr}";
         }
 
         if (in_array($interval, ['triwulan', '4x_yearly'])) {
             $tw = $bill->period_sub ?? ($bill->period_month ? (int)ceil($bill->period_month / 3) : 1);
-            return "Triwulan {$tw} ({$bill->period_year})";
+            return "Triwulan {$tw} ({$bill->period_year}){$dueStr}";
         }
 
         if (in_array($interval, ['bimulanan', '6x_yearly'])) {
             $b = $bill->period_sub ?? ($bill->period_month ? (int)ceil($bill->period_month / 2) : 1);
-            return "Dwibulanan {$b} ({$bill->period_year})";
+            return "Dwibulanan {$b} ({$bill->period_year}){$dueStr}";
         }
 
-        if (in_array($interval, ['once', 'insidental', 'event', 'sekali', 'yearly'])) {
-            return "Tahun {$bill->period_year}";
+        if (in_array($interval, ['once', 'insidental', 'event', 'sekali'])) {
+            if ($bill->due_date) {
+                return "Tenggat: " . $bill->due_date->translatedFormat('d M Y');
+            }
+            return "Sekali Bayar ({$bill->period_year})";
+        }
+
+        if ($interval === 'yearly') {
+            return "Tahunan ({$bill->period_year}){$dueStr}";
         }
 
         $monthName = $this->getMonthName($bill->period_month);
-        return trim("{$monthName} {$bill->period_year}");
+        return trim("{$monthName} {$bill->period_year}{$dueStr}");
     }
 
     public function classifyBillPeriodStatus(Bill $bill, int $currentMonth, int $currentYear): string
@@ -396,6 +404,9 @@ class DashboardTagihan extends Component
     {
         if ($bill->config && $bill->config->label) {
             return $bill->config->label;
+        }
+        if (!empty($bill->title)) {
+            return $bill->title;
         }
         return $this->getBillTypeLabel($bill->bill_type);
     }
