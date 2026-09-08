@@ -243,7 +243,7 @@ class DokuIntegrationTest extends TestCase
 
         // Check transaction updated
         $transaction->refresh();
-        $this->assertEquals('paid', $transaction->status);
+        $this->assertEquals('success', $transaction->status);
         $this->assertEquals('VIRTUAL_ACCOUNT_BCA', $transaction->payment_channel);
         $this->assertNotNull($transaction->callback_received_at);
 

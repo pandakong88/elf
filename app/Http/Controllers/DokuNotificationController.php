@@ -135,8 +135,7 @@ class DokuNotificationController extends Controller
 
                 // 3a. Update PaymentTransaction
                 $trx->update([
-                    'status'                => 'paid',
-                    'paid_at'               => $now,
+                    'status'                => 'success',
                     'payment_channel'       => $channelId,
                     'channel_label'         => str_replace('_', ' ', $channelId),
                     'callback_received_at'  => $now,
@@ -239,8 +238,9 @@ class DokuNotificationController extends Controller
                 ], 500);
             }
         } elseif (in_array($trxStatus, ['FAILED', 'CANCELLED', 'EXPIRED'])) {
+            $mappedStatus = $trxStatus === 'EXPIRED' ? 'expired' : 'failed';
             $trx->update([
-                'status'               => strtolower($trxStatus),
+                'status'               => $mappedStatus,
                 'callback_received_at' => now(),
                 'raw_callback_payload' => $payload,
                 'failure_reason'       => $payload['transaction']['status_message'] ?? 'Pembayaran gagal atau kadaluarsa di DOKU.',
@@ -248,7 +248,7 @@ class DokuNotificationController extends Controller
 
             return response()->json([
                 'status'  => 'OK',
-                'message' => 'Transaction marked as ' . strtolower($trxStatus),
+                'message' => 'Transaction marked as ' . $mappedStatus,
             ]);
         }
 
