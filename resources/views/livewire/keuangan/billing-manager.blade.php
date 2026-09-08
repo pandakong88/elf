@@ -265,6 +265,13 @@
     @else
         <!-- Navigation Tabs -->
         <div class="flex border-b border-slate-200 dark:border-slate-800 gap-2 overflow-x-auto pb-1">
+            <button wire:click="$set('activeTab', 'bendahara')" class="px-5 py-3 text-xs font-black transition-all border-b-2 flex items-center gap-2 whitespace-nowrap {{ $activeTab === 'bendahara' ? 'border-emerald-600 text-emerald-700 dark:text-emerald-400 bg-emerald-50/50 dark:bg-emerald-950/20' : 'border-transparent text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-200' }}">
+                <svg class="w-4 h-4 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+                <span>🏛️ Beranda Bendahara</span>
+                @if(isset($manualTransferPendingCount) && $manualTransferPendingCount > 0)
+                    <span class="inline-flex items-center justify-center px-1.5 py-0.5 text-[9px] font-extrabold bg-rose-500 text-white rounded-full animate-pulse">{{ $manualTransferPendingCount }}</span>
+                @endif
+            </button>
             <button wire:click="$set('activeTab', 'generate')" class="px-5 py-3 text-xs font-bold transition-all border-b-2 flex items-center gap-2 whitespace-nowrap {{ $activeTab === 'generate' ? 'border-emerald-500 text-emerald-600 dark:text-emerald-400' : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300' }}">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
                 <span>Penerbitan Tagihan</span>
@@ -318,6 +325,436 @@
 
         <!-- Tabs Contents -->
         <div>
+            <!-- ============================================================= -->
+            <!-- TAB 0: DASHBOARD / BERANDA BENDAHARA                           -->
+            <!-- ============================================================= -->
+            @if ($activeTab === 'bendahara')
+                <div class="space-y-6">
+
+                    <!-- ─── HEADER BANNER EKSEKUTIF BENDAHARA ─────────────────── -->
+                    <div class="relative overflow-hidden rounded-3xl bg-gradient-to-br from-emerald-800 via-teal-900 to-slate-900 p-6 text-white shadow-lg border border-emerald-700/50">
+                        <div class="relative z-10 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                            <div>
+                                <div class="inline-flex items-center gap-2 px-3 py-1 bg-white/10 backdrop-blur-md rounded-full text-[11px] font-bold text-emerald-200 mb-2 border border-white/15">
+                                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+                                    <span>Pusat Kendali Eksekutif Bendahara</span>
+                                </div>
+                                <h2 class="text-xl md:text-2xl font-black tracking-tight">
+                                    Assalamu'alaikum, {{ auth()->user()->name ?? 'Bendahara Pesantren' }} 👋
+                                </h2>
+                                <p class="text-xs text-emerald-100/80 mt-1 max-w-xl leading-relaxed">
+                                    Monitoring arus kas masuk harian, antrean verifikasi bukti transfer wali santri, dan status tagihan pesantren secara real-time.
+                                </p>
+                            </div>
+
+                            <div class="flex items-center gap-2.5 shrink-0">
+                                <div class="bg-black/25 backdrop-blur-md px-4 py-2.5 rounded-2xl border border-white/10 text-right">
+                                    <span class="block text-[10px] font-bold uppercase tracking-wider text-emerald-300/80">Hari Ini</span>
+                                    <strong class="text-xs font-black text-white">
+                                        {{ now()->locale('id')->translatedFormat('l, d F Y') }}
+                                    </strong>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Decorative background elements -->
+                        <div class="absolute -right-10 -bottom-10 w-64 h-64 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none"></div>
+                        <div class="absolute right-1/3 -top-12 w-48 h-48 bg-teal-400/10 rounded-full blur-2xl pointer-events-none"></div>
+                    </div>
+
+                    <!-- ─── 4 TOP KPI CARDS ───────────────────────────────────── -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                        
+                        <!-- 1. Penerimaan Hari Ini -->
+                        <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-3xl p-4 space-y-3 shadow-xs relative overflow-hidden group hover:border-emerald-500/50 transition-all">
+                            <div class="flex items-center justify-between">
+                                <span class="text-[10px] font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">Penerimaan Hari Ini</span>
+                                <div class="w-8 h-8 rounded-xl bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-sm font-bold">
+                                    💵
+                                </div>
+                            </div>
+                            <div>
+                                <strong class="text-xl font-black text-slate-900 dark:text-white block">
+                                    Rp {{ number_format($bendaharaStats['today_total_inflow'] ?? 0, 0, ',', '.') }}
+                                </strong>
+                                <span class="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 mt-0.5 block">
+                                    {{ $bendaharaStats['today_total_trx'] ?? 0 }} Transaksi Terdata
+                                </span>
+                            </div>
+                            <div class="pt-2 border-t border-slate-100 dark:border-slate-800 text-[10px] text-slate-500 dark:text-slate-400 space-y-0.5">
+                                <div class="flex justify-between">
+                                    <span>Tunai:</span>
+                                    <strong class="text-slate-700 dark:text-slate-300">Rp {{ number_format($bendaharaStats['today_cash_inflow'] ?? 0, 0, ',', '.') }}</strong>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span>Transfer / Online:</span>
+                                    <strong class="text-slate-700 dark:text-slate-300">Rp {{ number_format(($bendaharaStats['today_transfer_inflow'] ?? 0) + ($bendaharaStats['today_gateway_inflow'] ?? 0), 0, ',', '.') }}</strong>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 2. Antrean Verifikasi Transfer Wali -->
+                        <div class="bg-white dark:bg-slate-900 border rounded-3xl p-4 space-y-3 shadow-xs relative overflow-hidden transition-all {{ ($bendaharaStats['pending_transfer_count'] ?? 0) > 0 ? 'border-amber-300 dark:border-amber-700/60 bg-amber-50/20' : 'border-slate-200/80 dark:border-slate-800' }}">
+                            <div class="flex items-center justify-between">
+                                <span class="text-[10px] font-black uppercase tracking-wider text-amber-700 dark:text-amber-400">Verifikasi Transfer Wali</span>
+                                <div class="w-8 h-8 rounded-xl bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 flex items-center justify-center text-sm font-bold">
+                                    ⏳
+                                </div>
+                            </div>
+                            <div>
+                                <div class="flex items-baseline gap-2">
+                                    <strong class="text-xl font-black text-slate-900 dark:text-white">
+                                        {{ $bendaharaStats['pending_transfer_count'] ?? 0 }}
+                                    </strong>
+                                    <span class="text-xs font-bold text-slate-500 dark:text-slate-400">Pengajuan Pending</span>
+                                </div>
+                                <span class="text-[11px] font-bold text-amber-600 dark:text-amber-400 mt-0.5 block">
+                                    Rp {{ number_format($bendaharaStats['pending_transfer_amount'] ?? 0, 0, ',', '.') }}
+                                </span>
+                            </div>
+                            <div class="pt-2 border-t border-slate-100 dark:border-slate-800/80">
+                                <button type="button" wire:click="$set('activeTab', 'transfers')"
+                                        class="w-full py-1.5 px-3 bg-amber-600 hover:bg-amber-500 text-white font-bold rounded-xl text-[11px] text-center transition-all flex items-center justify-center gap-1 shadow-2xs">
+                                    <span>Buka Verifikasi</span>
+                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- 3. Penerimaan Bulan Ini -->
+                        <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-3xl p-4 space-y-3 shadow-xs relative overflow-hidden group hover:border-teal-500/50 transition-all">
+                            <div class="flex items-center justify-between">
+                                <span class="text-[10px] font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">Penerimaan Bulan Ini</span>
+                                <div class="w-8 h-8 rounded-xl bg-teal-50 dark:bg-teal-950/50 text-teal-600 dark:text-teal-400 flex items-center justify-center text-sm font-bold">
+                                    📊
+                                </div>
+                            </div>
+                            <div>
+                                <strong class="text-xl font-black text-slate-900 dark:text-white block">
+                                    Rp {{ number_format($bendaharaStats['month_total_inflow'] ?? 0, 0, ',', '.') }}
+                                </strong>
+                                <span class="text-[11px] font-bold text-teal-600 dark:text-teal-400 mt-0.5 block">
+                                    {{ now()->locale('id')->translatedFormat('F Y') }} • {{ $bendaharaStats['month_total_trx'] ?? 0 }} Transaksi
+                                </span>
+                            </div>
+                            <div class="pt-2 border-t border-slate-100 dark:border-slate-800 text-[10px] text-slate-500 dark:text-slate-400 space-y-0.5">
+                                <div class="flex justify-between">
+                                    <span>Kasir:</span>
+                                    <strong class="text-slate-700 dark:text-slate-300">Rp {{ number_format($bendaharaStats['month_kasir_inflow'] ?? 0, 0, ',', '.') }}</strong>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span>Online Gateway:</span>
+                                    <strong class="text-slate-700 dark:text-slate-300">Rp {{ number_format($bendaharaStats['month_gateway_inflow'] ?? 0, 0, ',', '.') }}</strong>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 4. Total Tunggakan Santri -->
+                        <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-3xl p-4 space-y-3 shadow-xs relative overflow-hidden group hover:border-rose-500/50 transition-all">
+                            <div class="flex items-center justify-between">
+                                <span class="text-[10px] font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">Total Tunggakan Santri</span>
+                                <div class="w-8 h-8 rounded-xl bg-rose-50 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400 flex items-center justify-center text-sm font-bold">
+                                    ⚠️
+                                </div>
+                            </div>
+                            <div>
+                                <strong class="text-xl font-black text-rose-600 dark:text-rose-400 block">
+                                    Rp {{ number_format($bendaharaStats['total_tunggakan_amount'] ?? 0, 0, ',', '.') }}
+                                </strong>
+                                <span class="text-[11px] font-bold text-slate-500 dark:text-slate-400 mt-0.5 block">
+                                    {{ number_format($bendaharaStats['total_santri_menunggak'] ?? 0) }} Santri Belum Lunas
+                                </span>
+                            </div>
+                            <div class="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-[10px] text-slate-400">
+                                <span>Status Posisi Tagihan Aktif</span>
+                                <span class="text-rose-500 font-bold">Unpaid / Sisa</span>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <!-- ─── PINTASAN AKSI CEPAT BENDAHARA (QUICK ACTION HUB) ───── -->
+                    <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-3xl p-4 space-y-3 shadow-xs">
+                        <div class="flex items-center justify-between">
+                            <h3 class="text-xs font-black uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                                <span>⚡</span>
+                                <span>Aksi & Pintasan Kerja Utama Bendahara</span>
+                            </h3>
+                            <span class="text-[10px] text-slate-400">Klik untuk langsung menuju modul terkait</span>
+                        </div>
+
+                        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5">
+                            
+                            <!-- 1. Buka Kasir Pembayaran -->
+                            <button type="button" wire:click="$set('activeTab', 'cashier')"
+                                    class="p-3 bg-slate-50 dark:bg-slate-800/60 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 border border-slate-200/80 dark:border-slate-700/80 hover:border-emerald-500/50 rounded-2xl text-left transition-all group flex flex-col justify-between">
+                                <div class="w-8 h-8 rounded-xl bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300 flex items-center justify-center text-base mb-2 group-hover:scale-110 transition-transform">
+                                    💳
+                                </div>
+                                <div>
+                                    <strong class="text-xs font-black text-slate-900 dark:text-white block group-hover:text-emerald-600 dark:group-hover:text-emerald-400">Kasir Pembayaran</strong>
+                                    <span class="text-[10px] text-slate-500 dark:text-slate-400 block mt-0.5">Input bayar 12 bulan santri</span>
+                                </div>
+                            </button>
+
+                            <!-- 2. Verifikasi Transfer Wali -->
+                            <button type="button" wire:click="$set('activeTab', 'transfers')"
+                                    class="p-3 bg-slate-50 dark:bg-slate-800/60 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 border border-slate-200/80 dark:border-slate-700/80 hover:border-indigo-500/50 rounded-2xl text-left transition-all group flex flex-col justify-between relative overflow-hidden">
+                                @if(($bendaharaStats['pending_transfer_count'] ?? 0) > 0)
+                                    <span class="absolute top-2 right-2 px-1.5 py-0.5 bg-rose-500 text-white text-[9px] font-black rounded-full animate-pulse">
+                                        {{ $bendaharaStats['pending_transfer_count'] }}
+                                    </span>
+                                @endif
+                                <div class="w-8 h-8 rounded-xl bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300 flex items-center justify-center text-base mb-2 group-hover:scale-110 transition-transform">
+                                    ⏳
+                                </div>
+                                <div>
+                                    <strong class="text-xs font-black text-slate-900 dark:text-white block group-hover:text-indigo-600 dark:group-hover:text-indigo-400">Verifikasi Transfer</strong>
+                                    <span class="text-[10px] text-slate-500 dark:text-slate-400 block mt-0.5">Cek mutasi & bukti transfer</span>
+                                </div>
+                            </button>
+
+                            <!-- 3. Terbitkan Tagihan Baru -->
+                            <button type="button" wire:click="$set('activeTab', 'generate')"
+                                    class="p-3 bg-slate-50 dark:bg-slate-800/60 hover:bg-teal-50 dark:hover:bg-teal-950/40 border border-slate-200/80 dark:border-slate-700/80 hover:border-teal-500/50 rounded-2xl text-left transition-all group flex flex-col justify-between">
+                                <div class="w-8 h-8 rounded-xl bg-teal-100 dark:bg-teal-900/50 text-teal-700 dark:text-teal-300 flex items-center justify-center text-base mb-2 group-hover:scale-110 transition-transform">
+                                    📄
+                                </div>
+                                <div>
+                                    <strong class="text-xs font-black text-slate-900 dark:text-white block group-hover:text-teal-600 dark:group-hover:text-teal-400">Terbitkan Tagihan</strong>
+                                    <span class="text-[10px] text-slate-500 dark:text-slate-400 block mt-0.5">Generate SPP / majek massal</span>
+                                </div>
+                            </button>
+
+                            <!-- 4. Rekonsiliasi & Settlement -->
+                            <button type="button" wire:click="$set('activeTab', 'settlement')"
+                                    class="p-3 bg-slate-50 dark:bg-slate-800/60 hover:bg-sky-50 dark:hover:bg-sky-950/40 border border-slate-200/80 dark:border-slate-700/80 hover:border-sky-500/50 rounded-2xl text-left transition-all group flex flex-col justify-between">
+                                <div class="w-8 h-8 rounded-xl bg-sky-100 dark:bg-sky-900/50 text-sky-700 dark:text-sky-300 flex items-center justify-center text-base mb-2 group-hover:scale-110 transition-transform">
+                                    ⚖️
+                                </div>
+                                <div>
+                                    <strong class="text-xs font-black text-slate-900 dark:text-white block group-hover:text-sky-600 dark:group-hover:text-sky-400">Rekonsiliasi & Setor</strong>
+                                    <span class="text-[10px] text-slate-500 dark:text-slate-400 block mt-0.5">Rekap distribusi kasir & bank</span>
+                                </div>
+                            </button>
+
+                            <!-- 5. Konfigurasi Tarif & Pos Tagihan -->
+                            <button type="button" wire:click="$set('activeTab', 'rates')"
+                                    class="p-3 bg-slate-50 dark:bg-slate-800/60 hover:bg-purple-50 dark:hover:bg-purple-950/40 border border-slate-200/80 dark:border-slate-700/80 hover:border-purple-500/50 rounded-2xl text-left transition-all group flex flex-col justify-between col-span-2 sm:col-span-1">
+                                <div class="w-8 h-8 rounded-xl bg-purple-100 dark:bg-purple-900/50 text-purple-700 dark:text-purple-300 flex items-center justify-center text-base mb-2 group-hover:scale-110 transition-transform">
+                                    ⚙️
+                                </div>
+                                <div>
+                                    <strong class="text-xs font-black text-slate-900 dark:text-white block group-hover:text-purple-600 dark:group-hover:text-purple-400">Kelola Tarif</strong>
+                                    <span class="text-[10px] text-slate-500 dark:text-slate-400 block mt-0.5">Atur pos biaya & nominal</span>
+                                </div>
+                            </button>
+
+                        </div>
+                    </div>
+
+                    <!-- ─── 2-COLUMN SECTION: LIVE FEED & REKENING OPERASIONAL ── -->
+                    <div class="grid grid-cols-1 lg:grid-cols-12 gap-5">
+                        
+                        <!-- KOLOM KIRI: LIVE FEED TRANSAKSI MASUK TERKINI (8 Col) -->
+                        <div class="lg:col-span-8 space-y-3">
+                            <div class="flex items-center justify-between px-1">
+                                <h3 class="text-xs font-black uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                                    <span>📜</span>
+                                    <span>Penerimaan Masuk Terkini (Live Feed)</span>
+                                </h3>
+                                <button type="button" wire:click="$set('activeTab', 'payments_log')"
+                                        class="text-xs font-bold text-emerald-600 dark:text-emerald-400 hover:underline flex items-center gap-1">
+                                    <span>Lihat Semua Log Transaksi</span>
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg>
+                                </button>
+                            </div>
+
+                            @if(empty($bendaharaRecentInflows) || count($bendaharaRecentInflows) === 0)
+                                <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-3xl p-8 text-center space-y-2 shadow-xs">
+                                    <div class="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-400 flex items-center justify-center mx-auto text-lg">
+                                        🧾
+                                    </div>
+                                    <h4 class="text-xs font-bold text-slate-800 dark:text-slate-200">Belum Ada Transaksi Pembayaran</h4>
+                                    <p class="text-[11px] text-slate-500 dark:text-slate-400 max-w-xs mx-auto">
+                                        Transaksi yang masuk melalui Kasir ataupun Online Duitku akan tampil real-time di sini.
+                                    </p>
+                                </div>
+                            @else
+                                <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-3xl overflow-hidden shadow-xs">
+                                    <div class="overflow-x-auto">
+                                        <table class="w-full text-left text-xs">
+                                            <thead class="bg-slate-50 dark:bg-slate-800/60 text-[10px] font-black uppercase tracking-wider text-slate-500 dark:text-slate-400 border-b border-slate-100 dark:border-slate-800">
+                                                <tr>
+                                                    <th class="py-3 px-4">Santri / No. Kuitansi</th>
+                                                    <th class="py-3 px-3">Metode & Saluran</th>
+                                                    <th class="py-3 px-3 text-right">Nominal Masuk</th>
+                                                    <th class="py-3 px-3 text-right">Waktu</th>
+                                                    <th class="py-3 px-4 text-center">Aksi</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+                                                @foreach($bendaharaRecentInflows as $inflow)
+                                                    <tr class="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors">
+                                                        <td class="py-3 px-4">
+                                                            <div class="font-bold text-slate-900 dark:text-white">
+                                                                {{ $inflow['santri_name'] }}
+                                                            </div>
+                                                            <div class="text-[10px] text-slate-400 font-mono flex items-center gap-1.5 mt-0.5">
+                                                                <span>{{ $inflow['receipt_no'] }}</span>
+                                                                @if($inflow['dorm_name'] !== '—')
+                                                                    <span>• {{ $inflow['dorm_name'] }}</span>
+                                                                @endif
+                                                            </div>
+                                                        </td>
+                                                        <td class="py-3 px-3">
+                                                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[10px] font-bold {{ $inflow['source'] === 'gateway' ? 'bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800/60' : 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60' }}">
+                                                                {{ $inflow['method_label'] }}
+                                                            </span>
+                                                            <span class="block text-[9px] text-slate-400 mt-0.5">Petugas: {{ $inflow['logger_name'] }}</span>
+                                                        </td>
+                                                        <td class="py-3 px-3 text-right">
+                                                            <strong class="font-black text-slate-900 dark:text-white">
+                                                                Rp {{ number_format($inflow['amount'], 0, ',', '.') }}
+                                                            </strong>
+                                                        </td>
+                                                        <td class="py-3 px-3 text-right text-[11px] text-slate-500 dark:text-slate-400">
+                                                            {{ $inflow['date_fmt'] }}
+                                                        </td>
+                                                        <td class="py-3 px-4 text-center">
+                                                            @if(!empty($inflow['preview_url']))
+                                                                <a href="{{ $inflow['preview_url'] }}" target="_blank"
+                                                                   class="inline-flex items-center gap-1 px-2.5 py-1 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-lg text-[11px] font-bold transition-all shadow-2xs">
+                                                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                                                                    <span>Nota</span>
+                                                                </a>
+                                                            @else
+                                                                <span class="text-[10px] text-slate-400">—</span>
+                                                            @endif
+                                                        </td>
+                                                    </tr>
+                                                @endforeach
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            @endif
+                        </div>
+
+                        <!-- KOLOM KANAN: REKAP SALURAN & INFO REKENING OPERASIONAL (4 Col) -->
+                        <div class="lg:col-span-4 space-y-4">
+                            
+                            <!-- Widget Komposisi Saluran Hari Ini -->
+                            <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-3xl p-4 space-y-3 shadow-xs">
+                                <h4 class="text-xs font-black uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                                    <span>🥧</span>
+                                    <span>Saluran Masuk Hari Ini</span>
+                                </h4>
+
+                                @php
+                                    $tot = max(1, ($bendaharaStats['today_total_inflow'] ?? 0));
+                                    $pCash = round((($bendaharaStats['today_cash_inflow'] ?? 0) / $tot) * 100);
+                                    $pTrf  = round((($bendaharaStats['today_transfer_inflow'] ?? 0) / $tot) * 100);
+                                    $pGtw  = round((($bendaharaStats['today_gateway_inflow'] ?? 0) / $tot) * 100);
+                                @endphp
+
+                                <!-- Progress multi-bar -->
+                                <div class="w-full h-3 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden flex">
+                                    <div style="width: {{ $pCash }}%" class="bg-emerald-500" title="Tunai: {{ $pCash }}%"></div>
+                                    <div style="width: {{ $pTrf }}%" class="bg-indigo-500" title="Transfer Kasir: {{ $pTrf }}%"></div>
+                                    <div style="width: {{ $pGtw }}%" class="bg-amber-500" title="Online Duitku: {{ $pGtw }}%"></div>
+                                </div>
+
+                                <div class="space-y-2 text-xs pt-1">
+                                    <div class="flex items-center justify-between">
+                                        <span class="flex items-center gap-1.5 text-slate-600 dark:text-slate-400">
+                                            <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+                                            <span>Kasir Tunai</span>
+                                        </span>
+                                        <strong class="font-bold text-slate-900 dark:text-white">
+                                            Rp {{ number_format($bendaharaStats['today_cash_inflow'] ?? 0, 0, ',', '.') }}
+                                        </strong>
+                                    </div>
+                                    <div class="flex items-center justify-between">
+                                        <span class="flex items-center gap-1.5 text-slate-600 dark:text-slate-400">
+                                            <span class="w-2.5 h-2.5 rounded-full bg-indigo-500"></span>
+                                            <span>Kasir Transfer</span>
+                                        </span>
+                                        <strong class="font-bold text-slate-900 dark:text-white">
+                                            Rp {{ number_format($bendaharaStats['today_transfer_inflow'] ?? 0, 0, ',', '.') }}
+                                        </strong>
+                                    </div>
+                                    <div class="flex items-center justify-between">
+                                        <span class="flex items-center gap-1.5 text-slate-600 dark:text-slate-400">
+                                            <span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
+                                            <span>Online Duitku</span>
+                                        </span>
+                                        <strong class="font-bold text-slate-900 dark:text-white">
+                                            Rp {{ number_format($bendaharaStats['today_gateway_inflow'] ?? 0, 0, ',', '.') }}
+                                        </strong>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Widget Status Rekening Penerimaan Pesantren (CMS) -->
+                            <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-3xl p-4 space-y-3 shadow-xs">
+                                <div class="flex items-center justify-between">
+                                    <h4 class="text-xs font-black uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                                        <span>🏦</span>
+                                        <span>Rekening Penerimaan Pondok</span>
+                                    </h4>
+                                    @if(\Illuminate\Support\Facades\Route::has('system.wali-cms'))
+                                        <a href="{{ route('system.wali-cms') }}" target="_blank"
+                                           class="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 hover:underline">
+                                            Ubah di CMS ↗
+                                        </a>
+                                    @endif
+                                </div>
+
+                                <div class="space-y-2.5 text-xs">
+                                    <!-- Rekening Putra -->
+                                    <div class="p-2.5 bg-slate-50 dark:bg-slate-800/60 rounded-2xl border border-slate-200/60 dark:border-slate-700/60 space-y-1">
+                                        <div class="flex items-center justify-between">
+                                            <span class="text-[10px] font-black text-emerald-700 dark:text-emerald-400 uppercase">Santri Putra</span>
+                                            <span class="text-[10px] text-slate-400">WA: {{ $bendaharaAccounts['putra_wa'] ?? '—' }}</span>
+                                        </div>
+                                        <div class="font-bold text-slate-800 dark:text-slate-200">
+                                            BSI: <span class="font-mono text-emerald-600 dark:text-emerald-400">{{ $bendaharaAccounts['putra_bsi_no'] ?? '—' }}</span>
+                                        </div>
+                                        <div class="text-[10px] text-slate-500 dark:text-slate-400">
+                                            a.n. {{ $bendaharaAccounts['putra_bsi_an'] ?? '—' }}
+                                        </div>
+                                        <div class="font-bold text-slate-800 dark:text-slate-200 pt-0.5">
+                                            BRI: <span class="font-mono text-slate-600 dark:text-slate-300">{{ $bendaharaAccounts['putra_bri_no'] ?? '—' }}</span>
+                                        </div>
+                                    </div>
+
+                                    <!-- Rekening Putri -->
+                                    <div class="p-2.5 bg-slate-50 dark:bg-slate-800/60 rounded-2xl border border-slate-200/60 dark:border-slate-700/60 space-y-1">
+                                        <div class="flex items-center justify-between">
+                                            <span class="text-[10px] font-black text-purple-700 dark:text-purple-400 uppercase">Santri Putri</span>
+                                            <span class="text-[10px] text-slate-400">WA: {{ $bendaharaAccounts['putri_wa'] ?? '—' }}</span>
+                                        </div>
+                                        <div class="font-bold text-slate-800 dark:text-slate-200">
+                                            BSI: <span class="font-mono text-purple-600 dark:text-purple-400">{{ $bendaharaAccounts['putri_bsi_no'] ?? '—' }}</span>
+                                        </div>
+                                        <div class="text-[10px] text-slate-500 dark:text-slate-400">
+                                            a.n. {{ $bendaharaAccounts['putri_bsi_an'] ?? '—' }}
+                                        </div>
+                                        <div class="font-bold text-slate-800 dark:text-slate-200 pt-0.5">
+                                            BRI: <span class="font-mono text-slate-600 dark:text-slate-300">{{ $bendaharaAccounts['putri_bri_no'] ?? '—' }}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+            @endif
+
             <!-- TAB 1: GENERATE TAGIHAN -->
             @if ($activeTab === 'generate')
                 <div class="space-y-8">

@@ -22,6 +22,7 @@ use App\Modules\Keuangan\Models\PaymentTransaction;
 use App\Modules\Keuangan\Models\FundDistribution;
 use App\Modules\Keuangan\Models\ManualTransferSubmission;
 use App\Modules\Keuangan\Models\PocketMoneyDeposit;
+use App\Modules\Core\Models\LandingPageContent;
 use App\Traits\HasGenderScope;
 use App\Livewire\Concerns\SendsToast;
 
@@ -30,7 +31,7 @@ class BillingManager extends Component
     use WithPagination, HasGenderScope, SendsToast;
 
     // Tabs
-    public string $activeTab = 'generate';
+    public string $activeTab = 'bendahara';
 
     // Tab: Rekonsiliasi & Settlement (Fase 4)
     public string $settlementDateFrom = '';
@@ -3746,7 +3747,172 @@ class BillingManager extends Component
         $manualTransferApprovedCount = ManualTransferSubmission::when($this->genderScope(), fn($q, $g) => $q->whereHas('person', fn($pq) => $pq->where('gender', $g)))->where('status', 'approved')->count();
         $manualTransferRejectedCount = ManualTransferSubmission::when($this->genderScope(), fn($q, $g) => $q->whereHas('person', fn($pq) => $pq->where('gender', $g)))->where('status', 'rejected')->count();
 
+        // ─── DATA TAB BENDAHARA (DASHBOARD UTAMA) ───────────────────────────
+        $todayDate = now()->toDateString();
+        $currMonth = (int) now()->format('m');
+        $currYear  = (int) now()->format('Y');
+
+        // 1. Kasir Hari Ini
+        $kasirTodayQuery = BillPayment::whereDate('payment_date', $todayDate)
+            ->where('payment_method', '!=', 'gateway_duitku')
+            ->when($this->genderScope(), fn($q, $g) => $q->whereHas('bill.person', fn($pq) => $pq->where('gender', $g)));
+
+        $todayCashInflow     = (float) (clone $kasirTodayQuery)->where('payment_method', 'cash')->sum('amount_paid');
+        $todayTransferInflow = (float) (clone $kasirTodayQuery)->where('payment_method', 'transfer')->sum('amount_paid');
+        $todayKasirTrxCount  = (clone $kasirTodayQuery)->count();
+
+        // 2. Gateway Hari Ini
+        $gatewayTodayQuery = PaymentTransaction::whereDate('created_at', $todayDate)
+            ->where('status', 'success')
+            ->when($this->genderScope(), fn($q, $g) => $q->whereHas('person', fn($pq) => $pq->where('gender', $g)));
+
+        $todayGatewayInflow   = (float) (clone $gatewayTodayQuery)->sum('total_amount');
+        $todayGatewayTrxCount = (clone $gatewayTodayQuery)->count();
+
+        $todayTotalInflow = $todayCashInflow + $todayTransferInflow + $todayGatewayInflow;
+        $todayTotalTrx    = $todayKasirTrxCount + $todayGatewayTrxCount;
+
+        // 3. Penerimaan Bulan Ini
+        $kasirMonthQuery = BillPayment::whereMonth('payment_date', $currMonth)
+            ->whereYear('payment_date', $currYear)
+            ->where('payment_method', '!=', 'gateway_duitku')
+            ->when($this->genderScope(), fn($q, $g) => $q->whereHas('bill.person', fn($pq) => $pq->where('gender', $g)));
+
+        $monthKasirInflow   = (float) (clone $kasirMonthQuery)->sum('amount_paid');
+        $monthKasirTrxCount = (clone $kasirMonthQuery)->count();
+
+        $gatewayMonthQuery = PaymentTransaction::whereMonth('created_at', $currMonth)
+            ->whereYear('created_at', $currYear)
+            ->where('status', 'success')
+            ->when($this->genderScope(), fn($q, $g) => $q->whereHas('person', fn($pq) => $pq->where('gender', $g)));
+
+        $monthGatewayInflow   = (float) (clone $gatewayMonthQuery)->sum('total_amount');
+        $monthGatewayTrxCount = (clone $gatewayMonthQuery)->count();
+
+        $monthTotalInflow = $monthKasirInflow + $monthGatewayInflow;
+        $monthTotalTrx    = $monthKasirTrxCount + $monthGatewayTrxCount;
+
+        // 4. Tunggakan Keseluruhan
+        $unpaidBillsQuery = Bill::whereIn('status', ['unpaid', 'partial'])
+            ->whereNotIn('status', ['refund_requested', 'refunded', 'cancelled', 'exempt'])
+            ->when($this->genderScope(), fn($q, $g) => $q->whereHas('person', fn($pq) => $pq->where('gender', $g)));
+
+        $totalTunggakanAmount = (float) ((clone $unpaidBillsQuery)->selectRaw('SUM(amount - amount_paid) as total_unpaid')->value('total_unpaid') ?? 0.0);
+        $totalSantriMenunggak = (clone $unpaidBillsQuery)->distinct('person_id')->count('person_id');
+
+        // 5. Antrean Verifikasi Transfer Wali Pending
+        $pendingTransferCount  = $manualTransferPendingCount;
+        $pendingTransferAmount = (float) ManualTransferSubmission::when($this->genderScope(), fn($q, $g) => $q->whereHas('person', fn($pq) => $pq->where('gender', $g)))
+            ->where('status', 'pending')
+            ->sum('total_transfer_amount');
+
+        $bendaharaStats = [
+            'today_total_inflow'     => $todayTotalInflow,
+            'today_cash_inflow'      => $todayCashInflow,
+            'today_transfer_inflow'  => $todayTransferInflow,
+            'today_gateway_inflow'   => $todayGatewayInflow,
+            'today_total_trx'        => $todayTotalTrx,
+            'month_total_inflow'     => $monthTotalInflow,
+            'month_total_trx'        => $monthTotalTrx,
+            'month_kasir_inflow'     => $monthKasirInflow,
+            'month_gateway_inflow'   => $monthGatewayInflow,
+            'total_tunggakan_amount' => $totalTunggakanAmount,
+            'total_santri_menunggak' => $totalSantriMenunggak,
+            'pending_transfer_count' => $pendingTransferCount,
+            'pending_transfer_amount'=> $pendingTransferAmount,
+            'pending_gateway_count'  => $gatewayPendingCount,
+        ];
+
+        // 6. Live Feed Transaksi Masuk Terkini (Gabungan Kasir + Gateway)
+        $recentKasirPayments = BillPayment::with(['bill.person.roomAssignments.room.dormitory', 'bill.config', 'logger'])
+            ->where('payment_method', '!=', 'gateway_duitku')
+            ->when($this->genderScope(), fn($q, $g) => $q->whereHas('bill.person', fn($pq) => $pq->where('gender', $g)))
+            ->orderBy('created_at', 'desc')
+            ->take(10)
+            ->get()
+            ->groupBy(fn($p) => $p->receipt_no ?: ($p->payment_group_id ?: $p->id))
+            ->map(function ($grp) {
+                $first = $grp->first();
+                $person = $first->bill?->person;
+                $dorm = $person?->roomAssignments?->first()?->room?->dormitory?->name;
+                $date = $first->payment_date ? \Carbon\Carbon::parse($first->payment_date) : $first->created_at;
+
+                return [
+                    'id'           => $first->id,
+                    'receipt_no'   => $first->receipt_no ?: 'KSR-' . strtoupper(substr($first->id, 0, 8)),
+                    'santri_name'  => $person?->name ?? 'Santri',
+                    'santri_nis'   => $person?->nis ?? '—',
+                    'dorm_name'    => $dorm ?: '—',
+                    'gender'       => $person?->gender ?? 'L',
+                    'source'       => 'kasir',
+                    'method_label' => match(strtolower($first->payment_method ?? '')) {
+                        'cash'     => '💵 Tunai (Kasir)',
+                        'transfer' => '🏦 Transfer Kasir',
+                        default    => strtoupper($first->payment_method ?? 'Kasir'),
+                    },
+                    'channel'      => $first->payment_method,
+                    'amount'       => (float) $grp->sum('amount_paid'),
+                    'date'         => $date,
+                    'date_fmt'     => $date ? $date->locale('id')->translatedFormat('d M, H:i') : '—',
+                    'logger_name'  => $first->logger?->name ?? 'Kasir',
+                    'preview_url'  => route('bukti-bayar.kuitansi', ['receiptNo' => ($first->receipt_no ?: $first->id), 'from' => 'bendahara']),
+                ];
+            });
+
+        $recentGatewayTrx = PaymentTransaction::with(['person.roomAssignments.room.dormitory'])
+            ->where('status', 'success')
+            ->when($this->genderScope(), fn($q, $g) => $q->whereHas('person', fn($pq) => $pq->where('gender', $g)))
+            ->orderBy('created_at', 'desc')
+            ->take(10)
+            ->get()
+            ->map(function ($trx) {
+                $person = $trx->person;
+                $dorm = $person?->roomAssignments?->first()?->room?->dormitory?->name;
+
+                return [
+                    'id'           => $trx->id,
+                    'receipt_no'   => $trx->merchant_order_id,
+                    'santri_name'  => $person?->name ?? 'Santri',
+                    'santri_nis'   => $person?->nis ?? '—',
+                    'dorm_name'    => $dorm ?: '—',
+                    'gender'       => $person?->gender ?? 'L',
+                    'source'       => 'gateway',
+                    'method_label' => '🌐 ' . ($trx->channel_label ?? $trx->payment_channel ?? 'Online QRIS/VA'),
+                    'channel'      => 'gateway_duitku',
+                    'amount'       => (float) $trx->total_amount,
+                    'date'         => $trx->created_at,
+                    'date_fmt'     => $trx->created_at ? $trx->created_at->locale('id')->translatedFormat('d M, H:i') : '—',
+                    'logger_name'  => 'Duitku Gateway',
+                    'preview_url'  => route('bukti-bayar.gateway', $trx->id),
+                ];
+            });
+
+        $bendaharaRecentInflows = $recentKasirPayments->concat($recentGatewayTrx)
+            ->sortByDesc(fn($item) => $item['date'] ? $item['date']->timestamp : 0)
+            ->take(8)
+            ->values();
+
+        // 7. Data CMS Rekening Operasional & WhatsApp
+        $cmsContents = LandingPageContent::all()->pluck('value', 'key')->toArray();
+        $bendaharaAccounts = [
+            'putra_bsi_no'   => $cmsContents['wali_bsi_putra'] ?? '7123456789',
+            'putra_bsi_an'   => $cmsContents['wali_bsi_putra_an'] ?? 'Pesantren Al-Fithroh Putra',
+            'putra_bri_no'   => $cmsContents['wali_bri_putra'] ?? '001201009876504',
+            'putra_bri_an'   => $cmsContents['wali_bri_putra_an'] ?? 'Yayasan Al-Fithroh Putra',
+            'putra_wa'       => $cmsContents['wali_wa_putra'] ?? '6281234567890',
+            'putra_wa_name'  => $cmsContents['wali_wa_putra_name'] ?? 'Bendahara Putra',
+            'putri_bsi_no'   => $cmsContents['wali_bsi_putri'] ?? '7987654321',
+            'putri_bsi_an'   => $cmsContents['wali_bsi_putri_an'] ?? 'Pesantren Al-Fithroh Putri',
+            'putri_bri_no'   => $cmsContents['wali_bri_putri'] ?? '001201009876505',
+            'putri_bri_an'   => $cmsContents['wali_bri_putri_an'] ?? 'Yayasan Al-Fithroh Putri',
+            'putri_wa'       => $cmsContents['wali_wa_putri'] ?? '6281234567891',
+            'putri_wa_name'  => $cmsContents['wali_wa_putri_name'] ?? 'Bendahara Putri',
+        ];
+
         return view('livewire.keuangan.billing-manager', [
+            'bendaharaStats'              => $bendaharaStats,
+            'bendaharaRecentInflows'      => $bendaharaRecentInflows,
+            'bendaharaAccounts'           => $bendaharaAccounts,
             'manualTransferSubmissions'   => $manualTransferSubmissions,
             'manualTransferPendingCount'  => $manualTransferPendingCount,
             'manualTransferApprovedCount' => $manualTransferApprovedCount,

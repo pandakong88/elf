@@ -19,6 +19,8 @@ use App\Modules\Keuangan\Services\BillingService;
 use App\Modules\Keuangan\Services\MajekService;
 use App\Modules\Keuangan\Services\EventBillService;
 use App\Models\User;
+use App\Livewire\Keuangan\BillingManager;
+use Livewire\Livewire;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
 
@@ -259,4 +261,49 @@ class KeuanganBillingTest extends TestCase
         $this->assertEquals(0.00, $nonSiblingItem->discount_amount);
         $this->assertEquals(50000.00, $nonSiblingItem->final_amount);
     }
+
+    public function test_bendahara_dashboard_tab_renders_and_computes_stats(): void
+    {
+        $admin = $this->admin;
+        $this->actingAs($admin);
+
+        // 1. Create a santri with a bill and a payment today
+        $santri = Person::create([
+            'id'     => Str::uuid()->toString(),
+            'name'   => 'Muhammad Rizky',
+            'gender' => 'L',
+        ]);
+
+        $bill = Bill::create([
+            'id'           => Str::uuid()->toString(),
+            'person_id'    => $santri->id,
+            'bill_type'    => 'syahriah_pondok',
+            'period_month' => now()->month,
+            'period_year'  => now()->year,
+            'amount'       => 150000.00,
+            'amount_paid'  => 150000.00,
+            'status'       => 'paid',
+            'created_by'   => $admin->id,
+        ]);
+
+        BillPayment::create([
+            'bill_id'        => $bill->id,
+            'amount_paid'    => 150000.00,
+            'payment_date'   => now()->toDateString(),
+            'payment_method' => 'cash',
+            'receipt_no'     => 'KSR-TEST-001',
+            'logged_by'      => $admin->id,
+        ]);
+
+        Livewire::test(BillingManager::class)
+            ->assertSet('activeTab', 'bendahara')
+            ->assertSee('Beranda Bendahara')
+            ->assertSee('Penerimaan Hari Ini')
+            ->assertSee('150.000')
+            ->assertSee('Muhammad Rizky')
+            ->assertSee('KSR-TEST-001')
+            ->call('$set', 'activeTab', 'cashier')
+            ->assertSet('activeTab', 'cashier');
+    }
 }
+
