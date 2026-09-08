@@ -235,7 +235,7 @@
 
     <!-- Header Ramah Wali -->
     <header class="bg-emerald-700 dark:bg-slate-900 text-white shadow-lg sticky top-0 z-30 px-4 py-3 border-b border-emerald-800 dark:border-slate-800 transition-colors">
-        <div class="max-w-md mx-auto flex items-center justify-between">
+        <div class="max-w-xl mx-auto flex items-center justify-between">
             <a href="{{ url('/portal-wali') }}" class="flex items-center gap-2.5">
                 <div class="w-9 h-9 rounded-xl bg-white dark:bg-slate-800 text-emerald-700 dark:text-emerald-400 flex items-center justify-center font-black text-lg shadow-md border border-emerald-600/30 dark:border-slate-700">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l9-5-9-5-9 5 9 5z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0112 20.055a11.952 11.952 0 01-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z"/></svg>
@@ -470,7 +470,7 @@
     </div>
 
     <!-- Content Area (Mobile Container) -->
-    <main class="flex-1 w-full max-w-md mx-auto p-4 pb-12">
+    <main class="flex-1 w-full max-w-xl mx-auto p-3.5 sm:p-4 pb-12">
         {{ $slot }}
     </main>
 
