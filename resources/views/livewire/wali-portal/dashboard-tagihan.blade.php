@@ -813,8 +813,21 @@
                     <span>Pilih Metode Pembayaran</span>
                 </h3>
 
+                @php
+                    $isDokuEnabled = \App\Modules\Keuangan\Services\DokuService::isEnabled();
+                @endphp
+
                 <!-- Segmented Tabs Pembayaran -->
                 <div class="grid grid-cols-2 gap-1.5 p-1 bg-slate-100 dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-slate-800">
+                    @if($isDokuEnabled)
+                        <button type="button" 
+                                wire:click="setCheckoutMethod('doku')"
+                                class="py-2 px-3 rounded-lg text-xs font-black transition-all flex items-center justify-center gap-1.5 {{ $checkoutMethod === 'doku' ? 'bg-white dark:bg-slate-800 text-emerald-700 dark:text-emerald-400 shadow-xs' : 'text-slate-500 hover:text-slate-800' }}">
+                            <span>⚡</span>
+                            <span>Bayar Otomatis</span>
+                        </button>
+                    @endif
+
                     <button type="button" 
                             wire:click="setCheckoutMethod('manual')"
                             class="py-2 px-3 rounded-lg text-xs font-black transition-all flex items-center justify-center gap-1.5 {{ $checkoutMethod === 'manual' ? 'bg-white dark:bg-slate-800 text-emerald-700 dark:text-emerald-400 shadow-xs' : 'text-slate-500 hover:text-slate-800' }}">
@@ -822,13 +835,69 @@
                         <span>Transfer Manual</span>
                     </button>
 
-                    <button type="button" 
-                            wire:click="setCheckoutMethod('duitku')"
-                            class="py-2 px-3 rounded-lg text-xs font-black transition-all flex items-center justify-center gap-1.5 {{ $checkoutMethod === 'duitku' ? 'bg-white dark:bg-slate-800 text-emerald-700 dark:text-emerald-400 shadow-xs' : 'text-slate-500 hover:text-slate-800' }}">
-                        <span>⚡</span>
-                        <span>QRIS / Otomatis</span>
-                    </button>
+                    @if(!$isDokuEnabled)
+                        <button type="button" 
+                                wire:click="setCheckoutMethod('duitku')"
+                                class="py-2 px-3 rounded-lg text-xs font-black transition-all flex items-center justify-center gap-1.5 {{ $checkoutMethod === 'duitku' ? 'bg-white dark:bg-slate-800 text-emerald-700 dark:text-emerald-400 shadow-xs' : 'text-slate-500 hover:text-slate-800' }}">
+                            <span>⚡</span>
+                            <span>QRIS / Otomatis</span>
+                        </button>
+                    @endif
                 </div>
+
+                @if(!empty($paymentError))
+                    <div class="p-3 bg-rose-50 dark:bg-rose-950/40 border border-rose-300 dark:border-rose-700 rounded-xl flex items-start gap-2.5 text-xs text-rose-900 dark:text-rose-200">
+                        <span class="text-base shrink-0">⚠️</span>
+                        <div class="flex-1 font-semibold leading-relaxed">
+                            {{ $paymentError }}
+                        </div>
+                    </div>
+                @endif
+
+                <!-- ─── FORM GATEWAY DOKU (HOSTED CHECKOUT) ───────────────────── -->
+                @if($checkoutMethod === 'doku' && $isDokuEnabled)
+                    <div class="space-y-3 pt-1">
+                        <div class="bg-slate-50 dark:bg-slate-950 p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 space-y-3 text-xs">
+                            <div class="flex items-center justify-between pb-2 border-b border-slate-200/80 dark:border-slate-800/80">
+                                <span class="font-bold text-slate-700 dark:text-slate-300">Total yang akan dibayar:</span>
+                                <span class="font-mono font-black text-sm text-emerald-600 dark:text-emerald-400">
+                                    Rp {{ number_format($this->getGrandTotalTransfer(), 0, ',', '.') }}
+                                </span>
+                            </div>
+
+                            <div class="space-y-1.5 text-[11px] text-slate-600 dark:text-slate-400">
+                                <p class="font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1">
+                                    <span>🛡️</span> <span>Saluran Pembayaran Resmi DOKU:</span>
+                                </p>
+                                <ul class="space-y-1 pl-1">
+                                    <li class="flex items-center gap-1.5">
+                                        <span class="text-emerald-500">✓</span> <strong>QRIS:</strong> GoPay, OVO, DANA, ShopeePay, LinkAja & Semua Mobile Banking
+                                    </li>
+                                    <li class="flex items-center gap-1.5">
+                                        <span class="text-emerald-500">✓</span> <strong>Virtual Account:</strong> BCA, BRI, Mandiri, BNI, BSI, Permata, CIMB
+                                    </li>
+                                    <li class="flex items-center gap-1.5">
+                                        <span class="text-emerald-500">✓</span> <strong>Gerai Retail:</strong> Alfamart / Indomaret
+                                    </li>
+                                </ul>
+                            </div>
+
+                            <div class="p-2.5 bg-emerald-50/80 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800/50 rounded-lg text-[11px] text-emerald-800 dark:text-emerald-300 flex items-start gap-2">
+                                <span class="text-sm">✨</span>
+                                <span>Tagihan otomatis lunas dalam beberapa detik setelah Anda menyelesaikan pembayaran tanpa perlu konfirmasi manual.</span>
+                            </div>
+                        </div>
+
+                        <!-- Tombol Lanjut ke DOKU -->
+                        <button type="button" 
+                                wire:click="payViaDoku"
+                                wire:loading.attr="disabled"
+                                class="w-full py-3 px-4 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 active:from-emerald-700 active:to-teal-700 text-white font-black rounded-xl transition-all shadow-sm flex items-center justify-center gap-2 text-xs disabled:opacity-50">
+                            <span wire:loading.remove wire:target="payViaDoku">🚀 Lanjut ke Pembayaran DOKU</span>
+                            <span wire:loading wire:target="payViaDoku">Menghubungkan ke DOKU...</span>
+                        </button>
+                    </div>
+                @endif
 
                 <!-- ─── FORM TRANSFER MANUAL ────────────────────────────────── -->
                 @if($checkoutMethod === 'manual')

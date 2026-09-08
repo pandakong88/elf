@@ -12,6 +12,7 @@ use App\Modules\Keuangan\Models\BillPayment;
 use App\Modules\Keuangan\Models\PaymentTransaction;
 use App\Modules\Keuangan\Models\ManualTransferSubmission;
 use App\Modules\Keuangan\Models\PocketMoneyDeposit;
+use App\Modules\Keuangan\Services\DokuService;
 use App\Modules\Keuangan\Services\DuitkuService;
 use App\Modules\Keuangan\Services\ProofImageCompressionService;
 use Illuminate\Support\Facades\DB;
@@ -47,8 +48,8 @@ class DashboardTagihan extends Component
     public string $customPocketMoney = '';
     public array $presetPocketMoney = [50000, 100000, 200000, 500000];
 
-    // ─── Form Checkout Transfer Manual ────────────────────────────────────────
-    public string $checkoutMethod = 'manual'; // 'manual' | 'duitku'
+    // ─── Form Checkout Pembayaran ─────────────────────────────────────────────
+    public string $checkoutMethod = 'doku'; // 'doku' | 'manual' | 'duitku'
     public $proofImage; // Temporary uploaded image
     public string $senderBank = '';
     public string $senderAccountName = '';
@@ -60,7 +61,7 @@ class DashboardTagihan extends Component
     public ?string $manualErrorMessage = null;
     public bool $isSubmittingManual = false;
 
-    // Bayar Online (Duitku)
+    // Bayar Online (DOKU & Duitku)
     public string $selectedChannel = '';
     public bool $isProcessingPayment = false;
     public ?string $paymentError = null;
@@ -78,6 +79,9 @@ class DashboardTagihan extends Component
     public function mount(string $personId)
     {
         $this->personId = $personId;
+        if (!DokuService::isEnabled()) {
+            $this->checkoutMethod = 'manual';
+        }
     }
 
     public function setPortalTab(string $tab): void
@@ -90,7 +94,7 @@ class DashboardTagihan extends Component
 
     public function setCheckoutMethod(string $method): void
     {
-        $this->checkoutMethod = in_array($method, ['manual', 'duitku']) ? $method : 'manual';
+        $this->checkoutMethod = in_array($method, ['doku', 'manual', 'duitku']) ? $method : 'manual';
     }
 
     public function togglePocketMoney(): void
@@ -557,6 +561,55 @@ class DashboardTagihan extends Component
             return $bill->title;
         }
         return $this->getBillTypeLabel($bill->bill_type);
+    }
+
+    /**
+     * Inisiasi pembayaran online otomatis via DOKU Hosted Checkout.
+     */
+    public function payViaDoku(DokuService $dokuService): void
+    {
+        $this->paymentError       = null;
+        $this->isProcessingPayment = true;
+
+        try {
+            if (empty($this->selectedBillIds)) {
+                $this->paymentError       = 'Pilih minimal satu tagihan terlebih dahulu.';
+                $this->isProcessingPayment = false;
+                return;
+            }
+
+            $bills = Bill::whereIn('id', $this->selectedBillIds)
+                ->where('person_id', $this->personId)
+                ->whereIn('status', ['unpaid', 'partial'])
+                ->get()
+                ->all();
+
+            if (empty($bills)) {
+                $this->paymentError       = 'Tagihan yang dipilih tidak ditemukan atau sudah lunas.';
+                $this->isProcessingPayment = false;
+                return;
+            }
+
+            $pocketMoney = ($this->includePocketMoney && $this->pocketMoneyAmount > 0) ? (float)$this->pocketMoneyAmount : 0.0;
+
+            $transaction = $dokuService->createCheckoutSession(
+                bills:         $bills,
+                personId:      $this->personId,
+                pocketMoney:   $pocketMoney,
+                userId:        auth()->id(),
+                customAmounts: $this->customAmounts,
+            );
+
+            $this->redirect($transaction->payment_url, navigate: false);
+
+        } catch (\Exception $e) {
+            Log::error('[DashboardTagihan] payViaDoku failed', [
+                'person_id' => $this->personId,
+                'error'     => $e->getMessage(),
+            ]);
+            $this->paymentError       = 'Gagal menghubungi server DOKU: ' . $e->getMessage();
+            $this->isProcessingPayment = false;
+        }
     }
 
     /**

@@ -20,7 +20,12 @@ Route::get('/portal-wali', \App\Livewire\WaliPortal\SantriSearch::class)->name('
 Route::get('/portal-wali/{personId}', \App\Livewire\WaliPortal\DashboardTagihan::class)->name('portal-wali.dashboard');
 Route::get('/portal-wali/payment/return', \App\Livewire\WaliPortal\StatusPembayaran::class)->name('portal-wali.payment.return');
 
-// ─── Duitku Payment Gateway ───────────────────────────────────────────────────
+// ─── Payment Gateway Webhooks ────────────────────────────────────────────────
+// Webhook callback dari DOKU — publik, tanpa auth, tanpa CSRF
+Route::post('/payment/doku/notification', [\App\Http\Controllers\DokuNotificationController::class, 'handle'])
+    ->name('doku.notification')
+    ->withoutMiddleware([\Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class]);
+
 // Webhook callback dari Duitku — publik, tanpa auth, tanpa CSRF
 Route::post('/duitku/callback', [\App\Http\Controllers\DuitkuCallbackController::class, 'handle'])
     ->name('duitku.callback')
