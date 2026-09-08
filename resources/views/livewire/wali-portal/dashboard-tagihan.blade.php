@@ -883,10 +883,28 @@
                             </div>
                             @error('proofImage') <span class="text-[11px] text-rose-600 font-bold block">{{ $message }}</span> @enderror
 
-                            <!-- Bank & Pengirim -->
-                            <div class="grid grid-cols-2 gap-2">
-                                <input type="text" wire:model="senderBank" placeholder="Bank Pengirim (BCA/dll)" class="p-2 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-medium text-slate-900 dark:text-white">
-                                <input type="text" wire:model="senderAccountName" placeholder="Nama Pemilik Rekening" class="p-2 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-medium text-slate-900 dark:text-white">
+                            <!-- Bank & Pengirim (Opsional) -->
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-0.5">
+                                <div>
+                                    <label class="text-[10px] font-bold text-slate-600 dark:text-slate-400 block mb-1 flex items-center justify-between">
+                                        <span>Bank Pengirim:</span>
+                                        <span class="text-[9px] text-slate-400 dark:text-slate-500 bg-slate-100 dark:bg-slate-800/80 px-1.5 py-0.5 rounded font-semibold">(Opsional)</span>
+                                    </label>
+                                    <input type="text" 
+                                           wire:model="senderBank" 
+                                           placeholder="Contoh: BCA / Mandiri" 
+                                           class="w-full p-2 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-medium text-slate-900 dark:text-white">
+                                </div>
+                                <div>
+                                    <label class="text-[10px] font-bold text-slate-600 dark:text-slate-400 block mb-1 flex items-center justify-between">
+                                        <span>Nama Rekening Pengirim:</span>
+                                        <span class="text-[9px] text-slate-400 dark:text-slate-500 bg-slate-100 dark:bg-slate-800/80 px-1.5 py-0.5 rounded font-semibold">(Opsional)</span>
+                                    </label>
+                                    <input type="text" 
+                                           wire:model="senderAccountName" 
+                                           placeholder="Nama pemilik rekening" 
+                                           class="w-full p-2 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-medium text-slate-900 dark:text-white">
+                                </div>
                             </div>
 
                             <!-- Tombol Kirim Bukti -->
