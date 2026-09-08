@@ -833,9 +833,15 @@ class DashboardTagihan extends Component
         $allUnpaidIds = $unpaidQueue->pluck('id')->toArray();
 
         // ─── Riwayat Pengajuan Transfer Manual (Wali) ────────────────────────
-        $manualSubmissions = ManualTransferSubmission::where('person_id', $this->personId)
-            ->orderBy('created_at', 'desc')
-            ->get();
+        $manualQuery = ManualTransferSubmission::where('person_id', $this->personId);
+
+        if ($this->historyYear) {
+            $manualQuery->whereYear('created_at', (int)$this->historyYear);
+        }
+
+        $manualSubmissions = ($this->historyMethod === 'kasir' || $this->historyMethod === 'gateway')
+            ? collect()
+            : $manualQuery->orderBy('created_at', 'desc')->get();
 
         // ─── Payment History Aggregation (Gateway + Kasir) ───────────────────
         $gatewayQuery = PaymentTransaction::where('person_id', $this->personId)
@@ -942,7 +948,8 @@ class DashboardTagihan extends Component
 
         $gatewayYears = PaymentTransaction::where('person_id', $this->personId)->where('status', 'success')->pluck('created_at')->map(fn($d) => (int)$d->format('Y'));
         $kasirYears   = BillPayment::whereHas('bill', fn($q) => $q->where('person_id', $this->personId))->pluck('payment_date')->filter()->map(fn($d) => (int)\Carbon\Carbon::parse($d)->format('Y'));
-        $historyYears = $gatewayYears->concat($kasirYears)->filter()->unique()->sortDesc()->values();
+        $manualYears  = ManualTransferSubmission::where('person_id', $this->personId)->pluck('created_at')->map(fn($d) => (int)$d->format('Y'));
+        $historyYears = $gatewayYears->concat($kasirYears)->concat($manualYears)->filter()->unique()->sortDesc()->values();
 
         $lastBillUpdate = Bill::where('person_id', $this->personId)->max('updated_at');
         $lastPayment = BillPayment::whereHas('bill', fn($q) => $q->where('person_id', $this->personId))->max('created_at');

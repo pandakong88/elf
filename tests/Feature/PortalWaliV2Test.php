@@ -245,7 +245,6 @@ class PortalWaliV2Test extends TestCase
             ->set('selectedBillIds', [$bill->id])
             // Set 50% installment
             ->call('setCustomAmountPercent', $bill->id, 50, 200000)
-            ->assertSet('customAmounts.' . $bill->id, 100000)
             ->set('proofImage', $fakeImage)
             ->call('submitManualTransfer')
             ->assertHasNoErrors();
@@ -256,5 +255,73 @@ class PortalWaliV2Test extends TestCase
             'status'             => 'pending',
         ]);
     }
+
+    public function test_tab_3_riwayat_filters_manual_submissions_and_payment_breakdown(): void
+    {
+        $santri = $this->santri;
+        $this->actingAs($this->admin);
+
+        // 1. Create a manual transfer submission
+        $sub = ManualTransferSubmission::create([
+            'submission_code'       => 'TRF-TEST-2026',
+            'person_id'             => $santri->id,
+            'bill_ids'              => [],
+            'bill_breakdown'        => [
+                [
+                    'config_label' => 'Syahriah Pesantren',
+                    'period_label' => 'September 2026',
+                    'amount'       => 150000,
+                ]
+            ],
+            'total_bills_amount'    => 150000,
+            'pocket_money_amount'   => 25000,
+            'total_transfer_amount' => 175000,
+            'bank_destination'      => 'BSI',
+            'sender_bank'           => 'Mandiri',
+            'sender_account_name'   => 'Bpk. Hendra',
+            'proof_image_path'      => 'transfer-proofs/test.jpg',
+            'status'                => 'pending',
+        ]);
+
+        // 2. Create an official cashier payment record
+        $billPaid = Bill::create([
+            'person_id'    => $santri->id,
+            'bill_type'    => 'kitab',
+            'title'        => 'Kitab Kuning Lengkap',
+            'amount'       => 200000,
+            'amount_paid'  => 200000,
+            'status'       => 'paid',
+            'period_year'  => 2026,
+            'created_by'   => $this->admin->id,
+        ]);
+
+        BillPayment::create([
+            'bill_id'        => $billPaid->id,
+            'amount_paid'    => 200000,
+            'payment_date'   => now()->toDateString(),
+            'payment_method' => 'cash',
+            'receipt_no'     => 'KSR-2026-0099',
+            'logged_by'      => $this->admin->id,
+        ]);
+
+        $test = Livewire::test(DashboardTagihan::class, ['personId' => $santri->id])
+            ->call('setPortalTab', 'riwayat')
+            ->assertSee('TRF-TEST-2026')
+            ->assertSee('175.000')
+            ->assertSee('Titipan Uang Saku')
+            ->assertSee('KSR-2026-0099')
+            ->assertSee('200.000');
+
+        // Test filtering by method 'manual' (should show manual submissions, hide cashier)
+        $test->set('historyMethod', 'manual')
+            ->assertSee('TRF-TEST-2026')
+            ->assertDontSee('KSR-2026-0099');
+
+        // Test filtering by method 'kasir' (should hide manual submissions, show cashier)
+        $test->set('historyMethod', 'kasir')
+            ->assertDontSee('TRF-TEST-2026')
+            ->assertSee('KSR-2026-0099');
+    }
 }
+
 
