@@ -360,19 +360,22 @@
                         @if($hasPastUnpaid)
                             <button type="button" 
                                     wire:click="selectQuickMode('all_active')"
-                                    class="font-bold text-emerald-800 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 hover:bg-emerald-100 px-2.5 py-1 rounded-lg border border-emerald-200 dark:border-emerald-800 transition-all active:scale-95">
-                                ⚡ Semua Wajib
+                                    class="font-bold text-emerald-800 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 hover:bg-emerald-100 px-2.5 py-1 rounded-lg border border-emerald-200 dark:border-emerald-800 transition-all active:scale-95 flex items-center gap-1">
+                                <svg class="w-3 h-3 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+                                <span>Semua Wajib</span>
                             </button>
                             <button type="button" 
                                     wire:click="selectQuickMode('past_only')"
-                                    class="font-bold text-amber-800 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/60 hover:bg-amber-100 px-2.5 py-1 rounded-lg border border-amber-200 dark:border-amber-800 transition-all active:scale-95">
-                                ⚠️ Tunggakan Dulu
+                                    class="font-bold text-amber-800 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/60 hover:bg-amber-100 px-2.5 py-1 rounded-lg border border-amber-200 dark:border-amber-800 transition-all active:scale-95 flex items-center gap-1">
+                                <svg class="w-3 h-3 text-amber-600 dark:text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                                <span>Tunggakan Dulu</span>
                             </button>
                         @else
                             <button type="button" 
                                     wire:click="selectQuickMode('all_active')"
-                                    class="font-bold text-emerald-800 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 hover:bg-emerald-100 px-2.5 py-1 rounded-lg border border-emerald-200 dark:border-emerald-800 transition-all active:scale-95">
-                                ⚡ Semua Bulan Ini
+                                    class="font-bold text-emerald-800 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 hover:bg-emerald-100 px-2.5 py-1 rounded-lg border border-emerald-200 dark:border-emerald-800 transition-all active:scale-95 flex items-center gap-1">
+                                <svg class="w-3 h-3 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+                                <span>Semua Bulan Ini</span>
                             </button>
                         @endif
                         <button type="button" 
@@ -386,7 +389,7 @@
                 <!-- FIFO Notice Banner (Compact) -->
                 @if($fifoNotice)
                     <div class="p-2.5 bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-700/60 rounded-xl text-[11px] text-amber-900 dark:text-amber-200 flex items-center gap-2">
-                        <span class="text-sm shrink-0">ℹ️</span>
+                        <svg class="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                         <span class="flex-1 font-medium">{{ $fifoNotice }}</span>
                     </div>
                 @endif
@@ -807,6 +810,7 @@
 
 
             <!-- ─── LANGKAH 4: PILIH METODE & FORM CHECKOUT ─────────────────── -->
+            <!-- ─── LANGKAH 4: PILIH METODE & FORM CHECKOUT ─────────────────── -->
             <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-3.5 sm:p-4 space-y-3 shadow-xs">
                 <h3 class="text-xs font-black text-slate-900 dark:text-white flex items-center gap-1.5">
                     <span class="w-5 h-5 rounded-full bg-emerald-600 text-white text-[11px] flex items-center justify-center font-black">3</span>
@@ -822,32 +826,40 @@
                     @if($isDokuEnabled)
                         <button type="button" 
                                 wire:click="setCheckoutMethod('doku')"
-                                class="py-2 px-3 rounded-lg text-xs font-black transition-all flex items-center justify-center gap-1.5 {{ $checkoutMethod === 'doku' ? 'bg-white dark:bg-slate-800 text-emerald-700 dark:text-emerald-400 shadow-xs' : 'text-slate-500 hover:text-slate-800' }}">
-                            <span>⚡</span>
-                            <span>Bayar Otomatis</span>
+                                class="py-2.5 px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-2 {{ $checkoutMethod === 'doku' ? 'bg-white dark:bg-slate-800 text-emerald-700 dark:text-emerald-400 shadow-xs' : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200' }}">
+                            <svg class="w-4 h-4 {{ $checkoutMethod === 'doku' ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
+                            </svg>
+                            <span>Bayar Online</span>
                         </button>
                     @endif
 
                     <button type="button" 
                             wire:click="setCheckoutMethod('manual')"
-                            class="py-2 px-3 rounded-lg text-xs font-black transition-all flex items-center justify-center gap-1.5 {{ $checkoutMethod === 'manual' ? 'bg-white dark:bg-slate-800 text-emerald-700 dark:text-emerald-400 shadow-xs' : 'text-slate-500 hover:text-slate-800' }}">
-                        <span>🏦</span>
+                            class="py-2.5 px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-2 {{ $checkoutMethod === 'manual' ? 'bg-white dark:bg-slate-800 text-emerald-700 dark:text-emerald-400 shadow-xs' : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200' }}">
+                        <svg class="w-4 h-4 {{ $checkoutMethod === 'manual' ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 14v3m4-3v3m4-3v3M3 21h18M3 10h18M3 7l9-4 9 4M4 10h16v11H4V10z"/>
+                        </svg>
                         <span>Transfer Manual</span>
                     </button>
 
                     @if(!$isDokuEnabled)
                         <button type="button" 
                                 wire:click="setCheckoutMethod('duitku')"
-                                class="py-2 px-3 rounded-lg text-xs font-black transition-all flex items-center justify-center gap-1.5 {{ $checkoutMethod === 'duitku' ? 'bg-white dark:bg-slate-800 text-emerald-700 dark:text-emerald-400 shadow-xs' : 'text-slate-500 hover:text-slate-800' }}">
-                            <span>⚡</span>
-                            <span>QRIS / Otomatis</span>
+                                class="py-2.5 px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-2 {{ $checkoutMethod === 'duitku' ? 'bg-white dark:bg-slate-800 text-emerald-700 dark:text-emerald-400 shadow-xs' : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200' }}">
+                            <svg class="w-4 h-4 {{ $checkoutMethod === 'duitku' ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
+                            </svg>
+                            <span>Bayar Online</span>
                         </button>
                     @endif
                 </div>
 
                 @if(!empty($paymentError))
                     <div class="p-3 bg-rose-50 dark:bg-rose-950/40 border border-rose-300 dark:border-rose-700 rounded-xl flex items-start gap-2.5 text-xs text-rose-900 dark:text-rose-200">
-                        <span class="text-base shrink-0">⚠️</span>
+                        <svg class="w-4 h-4 text-rose-600 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                        </svg>
                         <div class="flex-1 font-semibold leading-relaxed">
                             {{ $paymentError }}
                         </div>
@@ -859,32 +871,46 @@
                     <div class="space-y-3 pt-1">
                         <div class="bg-slate-50 dark:bg-slate-950 p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 space-y-3 text-xs">
                             <div class="flex items-center justify-between pb-2 border-b border-slate-200/80 dark:border-slate-800/80">
-                                <span class="font-bold text-slate-700 dark:text-slate-300">Total yang akan dibayar:</span>
+                                <span class="font-bold text-slate-700 dark:text-slate-300">Total Pembayaran:</span>
                                 <span class="font-mono font-black text-sm text-emerald-600 dark:text-emerald-400">
                                     Rp {{ number_format($this->getGrandTotalTransfer(), 0, ',', '.') }}
                                 </span>
                             </div>
 
-                            <div class="space-y-1.5 text-[11px] text-slate-600 dark:text-slate-400">
-                                <p class="font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1">
-                                    <span>🛡️</span> <span>Saluran Pembayaran Resmi DOKU:</span>
+                            <div class="space-y-2 text-[11px] text-slate-600 dark:text-slate-400">
+                                <p class="font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+                                    <svg class="w-4 h-4 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                                    </svg>
+                                    <span>Saluran Pembayaran yang Tersedia:</span>
                                 </p>
-                                <ul class="space-y-1 pl-1">
-                                    <li class="flex items-center gap-1.5">
-                                        <span class="text-emerald-500">✓</span> <strong>QRIS:</strong> GoPay, OVO, DANA, ShopeePay, LinkAja & Semua Mobile Banking
+                                <ul class="space-y-1.5 pl-0.5">
+                                    <li class="flex items-start gap-2">
+                                        <svg class="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+                                        </svg>
+                                        <span><strong>QRIS Instan:</strong> GoPay, OVO, DANA, ShopeePay, LinkAja, BCA Mobile & Semua M-Banking</span>
                                     </li>
-                                    <li class="flex items-center gap-1.5">
-                                        <span class="text-emerald-500">✓</span> <strong>Virtual Account:</strong> BCA, BRI, Mandiri, BNI, BSI, Permata, CIMB
+                                    <li class="flex items-start gap-2">
+                                        <svg class="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
+                                        </svg>
+                                        <span><strong>Virtual Account:</strong> BCA, Mandiri, BRI, BNI, BSI, Permata, CIMB Niaga, Danamon</span>
                                     </li>
-                                    <li class="flex items-center gap-1.5">
-                                        <span class="text-emerald-500">✓</span> <strong>Gerai Retail:</strong> Alfamart / Indomaret
+                                    <li class="flex items-start gap-2">
+                                        <svg class="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
+                                        </svg>
+                                        <span><strong>Gerai Retail:</strong> Alfamart, Indomaret, Pos Indonesia</span>
                                     </li>
                                 </ul>
                             </div>
 
                             <div class="p-2.5 bg-emerald-50/80 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800/50 rounded-lg text-[11px] text-emerald-800 dark:text-emerald-300 flex items-start gap-2">
-                                <span class="text-sm">✨</span>
-                                <span>Tagihan otomatis lunas dalam beberapa detik setelah Anda menyelesaikan pembayaran tanpa perlu konfirmasi manual.</span>
+                                <svg class="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                </svg>
+                                <span>Tagihan terverifikasi secara real-time setelah pembayaran berhasil. Tidak perlu konfirmasi manual atau mengunggah bukti transfer.</span>
                             </div>
                         </div>
 
@@ -892,9 +918,15 @@
                         <button type="button" 
                                 wire:click="payViaDoku"
                                 wire:loading.attr="disabled"
-                                class="w-full py-3 px-4 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 active:from-emerald-700 active:to-teal-700 text-white font-black rounded-xl transition-all shadow-sm flex items-center justify-center gap-2 text-xs disabled:opacity-50">
-                            <span wire:loading.remove wire:target="payViaDoku">🚀 Lanjut ke Pembayaran DOKU</span>
-                            <span wire:loading wire:target="payViaDoku">Menghubungkan ke DOKU...</span>
+                                class="w-full py-3 px-4 bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white font-bold rounded-xl transition-all shadow-xs flex items-center justify-center gap-2 text-xs disabled:opacity-50">
+                            <span wire:loading.remove wire:target="payViaDoku" class="flex items-center gap-1.5">
+                                <span>Lanjut ke Pembayaran Online</span>
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+                            </span>
+                            <span wire:loading wire:target="payViaDoku" class="flex items-center gap-1.5">
+                                <svg class="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                                <span>Menghubungkan ke Gateway Pembayaran...</span>
+                            </span>
                         </button>
                     </div>
                 @endif
@@ -941,13 +973,21 @@
                                 @if($proofImage)
                                     <div class="space-y-1">
                                         <img src="{{ $proofImage->temporaryUrl() }}" class="max-h-36 mx-auto rounded-lg shadow-xs object-contain border">
-                                        <span class="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 block">✓ Foto bukti siap dikirim (Klik untuk ganti)</span>
+                                        <span class="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 flex items-center justify-center gap-1">
+                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                                            <span>Foto bukti siap dikirim (Klik untuk ganti)</span>
+                                        </span>
                                     </div>
                                 @else
-                                    <div class="flex items-center justify-center gap-2 py-2">
-                                        <span class="text-xl">📷</span>
+                                    <div class="flex items-center justify-center gap-3 py-2">
+                                        <div class="w-9 h-9 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500 dark:text-slate-400">
+                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/>
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                            </svg>
+                                        </div>
                                         <div class="text-left">
-                                            <strong class="text-xs font-bold text-slate-800 dark:text-slate-200 block">Pilih Foto / Struk Transfer</strong>
+                                            <strong class="text-xs font-bold text-slate-800 dark:text-slate-200 block">Pilih Foto / Struk Bukti Transfer</strong>
                                             <span class="text-[10px] text-slate-400">Otomatis dioptimasi hemat kuota</span>
                                         </div>
                                     </div>
@@ -983,9 +1023,15 @@
                             <button type="button" 
                                     wire:click="submitManualTransfer"
                                     wire:loading.attr="disabled"
-                                    class="w-full py-3 px-4 bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white font-black rounded-xl transition-all shadow-sm flex items-center justify-center gap-2 text-xs disabled:opacity-50">
-                                <span wire:loading.remove wire:target="submitManualTransfer">🚀 Kirim Bukti Pembayaran</span>
-                                <span wire:loading wire:target="submitManualTransfer">Mengunggah...</span>
+                                    class="w-full py-3 px-4 bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white font-bold rounded-xl transition-all shadow-xs flex items-center justify-center gap-2 text-xs disabled:opacity-50">
+                                <span wire:loading.remove wire:target="submitManualTransfer" class="flex items-center gap-1.5">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
+                                    <span>Kirim Bukti Pembayaran</span>
+                                </span>
+                                <span wire:loading wire:target="submitManualTransfer" class="flex items-center gap-1.5">
+                                    <svg class="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                                    <span>Mengunggah Bukti...</span>
+                                </span>
                             </button>
                         </div>
                     </div>
@@ -994,7 +1040,7 @@
                 <!-- ─── FORM GATEWAY DUITKU ─────────────────────────────────── -->
                 @if($checkoutMethod === 'duitku')
                     <div class="space-y-2 pt-1">
-                        <span class="text-[11px] text-slate-500 dark:text-slate-400 block">Pilih saluran pembayaran otomatis (langsung lunas):</span>
+                        <span class="text-[11px] text-slate-500 dark:text-slate-400 block">Pilih saluran pembayaran online:</span>
                         @php
                             $channels = config('duitku.enabled_channels', [
                                 'SP' => ['name' => 'QRIS (Semua E-Wallet / Mobile Banking)', 'type' => 'qris'],
@@ -1011,8 +1057,12 @@
                                         wire:click="initiateBayarOnline('{{ $code }}')"
                                         class="w-full p-2.5 bg-slate-50 dark:bg-slate-950 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 border border-slate-200 dark:border-slate-800 rounded-xl text-left transition-all flex items-center justify-between text-xs font-bold group">
                                     <div class="flex items-center gap-2">
-                                        <span>{{ $ch['type'] === 'qris' ? '📱' : '🏦' }}</span>
-                                        <span class="text-slate-800 dark:text-slate-200 group-hover:text-emerald-700">{{ $ch['name'] }}</span>
+                                        @if($ch['type'] === 'qris')
+                                            <svg class="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+                                        @else
+                                            <svg class="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
+                                        @endif
+                                        <span class="text-slate-800 dark:text-slate-200 group-hover:text-emerald-700 dark:group-hover:text-emerald-400">{{ $ch['name'] }}</span>
                                     </div>
                                     <svg class="w-3.5 h-3.5 text-slate-400 group-hover:text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
                                 </button>

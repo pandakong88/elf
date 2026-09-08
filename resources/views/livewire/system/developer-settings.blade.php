@@ -77,9 +77,9 @@
             {{-- Toggle Enable/Disable DOKU --}}
             <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between p-5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl gap-4">
                 <div class="space-y-1 max-w-xl">
-                    <span class="text-sm font-bold text-slate-900 dark:text-slate-100 block">Aktifkan Pembayaran Otomatis DOKU di Portal Wali</span>
+                    <span class="text-sm font-bold text-slate-900 dark:text-slate-100 block">Aktifkan Pembayaran Online DOKU di Portal Wali</span>
                     <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-                        Saat saklar ini **AKTIF (🟢 ON)**, wali santri dapat memilih metode pembayaran otomatis instan (Virtual Account, QRIS, E-Wallet) yang diverifikasi otomatis oleh DOKU.
+                        Saat status **AKTIF**, wali santri dapat memilih metode pembayaran online resmi (Virtual Account, QRIS, E-Wallet) yang diverifikasi langsung oleh DOKU.
                     </p>
                 </div>
                 <label class="relative inline-flex items-center cursor-pointer shrink-0">
