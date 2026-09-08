@@ -5641,19 +5641,19 @@
                     <div class="md:col-span-7 space-y-4">
 
                         {{-- Santri Card --}}
-                        <div class="p-4 bg-indigo-50/50 dark:bg-indigo-950/20 border border-indigo-100 dark:border-indigo-900/40 rounded-2xl flex items-center justify-between">
+                        <div class="p-4 bg-slate-50 dark:bg-slate-950/60 border border-slate-200/80 dark:border-slate-800 rounded-2xl flex items-center justify-between">
                             <div>
-                                <span class="text-[10px] font-extrabold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider">Santri Penerima</span>
+                                <span class="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">Santri Penerima</span>
                                 <h4 class="text-sm font-black text-slate-900 dark:text-white mt-0.5">{{ $selectedTransferData->person?->name ?? '-' }}</h4>
                                 <span class="text-[11px] text-slate-500">NIS: {{ $selectedTransferData->person?->nis ?? '-' }}</span>
                             </div>
                             @if($selectedTransferData->person?->gender === 'L')
-                                <span class="px-3 py-1.5 rounded-xl text-xs font-extrabold bg-sky-100 text-sky-800 dark:bg-sky-950 dark:text-sky-300 border border-sky-300 dark:border-sky-700 shadow-2xs flex items-center gap-1.5">
+                                <span class="px-2.5 py-1 rounded-xl text-xs font-semibold bg-sky-50 dark:bg-sky-950/40 text-sky-700 dark:text-sky-300 border border-sky-200/80 dark:border-sky-800/60 flex items-center gap-1.5">
                                     <span class="w-2 h-2 rounded-full bg-sky-500"></span>
                                     <span>Santri Putra (PA)</span>
                                 </span>
                             @else
-                                <span class="px-3 py-1.5 rounded-xl text-xs font-extrabold bg-pink-100 text-pink-800 dark:bg-pink-950 dark:text-pink-300 border border-pink-300 dark:border-pink-700 shadow-2xs flex items-center gap-1.5">
+                                <span class="px-2.5 py-1 rounded-xl text-xs font-semibold bg-pink-50 dark:bg-pink-950/40 text-pink-700 dark:text-pink-300 border border-pink-200/80 dark:border-pink-800/60 flex items-center gap-1.5">
                                     <span class="w-2 h-2 rounded-full bg-pink-500"></span>
                                     <span>Santri Putri (PI)</span>
                                 </span>
