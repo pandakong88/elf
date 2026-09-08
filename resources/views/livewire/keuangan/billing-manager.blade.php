@@ -3014,20 +3014,20 @@
                                                 <div class="relative">
                                                     <div class="flex items-center gap-1.5 flex-wrap max-w-sm">
                                                         @foreach(collect($rcpt->grouped_summary ?? [])->take(2) as $summary)
-                                                            <div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-slate-100 dark:bg-slate-800/90 border border-slate-200/80 dark:border-slate-700/80 text-[10px] text-slate-700 dark:text-slate-200 shadow-2xs whitespace-nowrap">
-                                                                <span class="font-bold truncate max-w-[130px]" title="{{ $summary['label'] }}">{{ $summary['label'] }}</span>
+                                                            <div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-[10px] text-slate-800 dark:text-slate-200 shadow-2xs whitespace-nowrap">
+                                                                <span class="font-bold text-slate-800 dark:text-slate-200 truncate max-w-[130px]" title="{{ $summary['label'] }}">{{ $summary['label'] }}</span>
                                                                 @if($summary['count'] > 1)
-                                                                    <span class="px-1.5 py-0.2 bg-indigo-50 dark:bg-indigo-950/80 text-indigo-600 dark:text-indigo-400 font-extrabold rounded-md text-[9px] border border-indigo-200/40 dark:border-indigo-800/40">
+                                                                    <span class="px-1.5 py-0.5 bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 font-extrabold rounded-md text-[9px] border border-indigo-200 dark:border-indigo-800">
                                                                         {{ $summary['count'] }} Bln
                                                                     </span>
                                                                 @endif
-                                                                <span class="text-emerald-600 dark:text-emerald-400 font-bold font-mono text-[11px]">Rp {{ number_format($summary['total'], 0, ',', '.') }}</span>
+                                                                <span class="text-emerald-700 dark:text-emerald-400 font-bold font-mono text-[11px]">Rp {{ number_format($summary['total'], 0, ',', '.') }}</span>
                                                             </div>
                                                         @endforeach
 
                                                         @if($rcpt->items_count > 1)
                                                             <button type="button" @click="openDetail = !openDetail"
-                                                                class="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-950/60 dark:hover:bg-indigo-900/60 text-indigo-600 dark:text-indigo-400 border border-indigo-200/60 dark:border-indigo-800/60 text-[10px] font-extrabold transition-all cursor-pointer shadow-2xs whitespace-nowrap"
+                                                                class="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-950 dark:hover:bg-indigo-900 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 text-[10px] font-extrabold transition-all cursor-pointer shadow-2xs whitespace-nowrap"
                                                                 title="Lihat rincian lengkap seluruh {{ $rcpt->items_count }} item tagihan">
                                                                 <span>📋 {{ $rcpt->items_count }} Pos Tagihan</span>
                                                                 <svg class="w-3 h-3 transition-transform" :class="openDetail ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
