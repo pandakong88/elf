@@ -751,15 +751,47 @@
             @php
                 $grandTotal = $this->getGrandTotalTransfer();
             @endphp
-            <div class="bg-gradient-to-br from-emerald-950 via-slate-900 to-slate-950 text-white border border-emerald-800/80 rounded-2xl p-4 space-y-2 shadow-sm">
-                <div class="flex items-center justify-between text-xs pb-1.5 border-b border-emerald-800/60">
-                    <span class="text-slate-300">Tagihan Terpilih ({{ count($selectedBillIds) }})</span>
-                    <strong class="text-white font-bold">Rp {{ number_format($simulasiTotal, 0, ',', '.') }}</strong>
+            <div x-data="{ showDetail: false }" class="bg-gradient-to-br from-emerald-950 via-slate-900 to-slate-950 text-white border border-emerald-800/80 rounded-2xl p-4 space-y-2.5 shadow-sm">
+                
+                <!-- Row Tagihan Terpilih (Interactive Accordion) -->
+                <div>
+                    <button type="button" 
+                            @click="showDetail = !showDetail"
+                            class="w-full flex items-center justify-between text-xs pb-1.5 border-b border-emerald-800/60 hover:text-emerald-300 transition-colors">
+                        <span class="flex items-center gap-1.5 text-slate-300">
+                            <span>Tagihan Terpilih ({{ count($selectedBillIds) }})</span>
+                            <span class="text-[10px] px-1.5 py-0.5 rounded bg-emerald-800/80 text-emerald-200 font-bold flex items-center gap-0.5">
+                                <span x-text="showDetail ? 'Tutup Rincian' : 'Lihat Rincian'">Lihat Rincian</span>
+                                <span class="transform transition-transform duration-200" :class="showDetail ? 'rotate-180' : ''">▾</span>
+                            </span>
+                        </span>
+                        <strong class="text-white font-bold">Rp {{ number_format($simulasiTotal, 0, ',', '.') }}</strong>
+                    </button>
+
+                    <!-- Expanded Breakdown List -->
+                    <div x-show="showDetail" x-transition x-cloak class="pt-2 pb-1 space-y-1.5 text-[11px] border-b border-emerald-800/40">
+                        @forelse($simulasiHasil as $item)
+                            <div class="flex items-center justify-between text-slate-300 pl-2 border-l-2 border-emerald-500/60 py-0.5">
+                                <div class="truncate pr-2">
+                                    <span class="text-white font-medium">• {{ $item['label'] }}</span>
+                                    @if($item['is_partial'] ?? false)
+                                        <span class="text-amber-300 text-[9px] font-bold bg-amber-950/60 px-1 py-0.2 rounded border border-amber-500/40 ml-1">Cicil</span>
+                                    @endif
+                                </div>
+                                <span class="font-bold text-white shrink-0">Rp {{ number_format($item['terbayar'], 0, ',', '.') }}</span>
+                            </div>
+                        @empty
+                            <span class="text-[10px] text-slate-400 italic">Belum ada tagihan yang dipilih.</span>
+                        @endforelse
+                    </div>
                 </div>
 
                 @if($includePocketMoney && $pocketMoneyAmount > 0)
                     <div class="flex items-center justify-between text-xs text-purple-300 pb-1.5 border-b border-emerald-800/60">
-                        <span>Titipan Uang Saku</span>
+                        <span class="flex items-center gap-1">
+                            <span>💰</span>
+                            <span>Titipan Uang Saku Santri</span>
+                        </span>
                         <strong class="text-purple-200 font-bold">+ Rp {{ number_format($pocketMoneyAmount, 0, ',', '.') }}</strong>
                     </div>
                 @endif
