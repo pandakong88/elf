@@ -114,19 +114,25 @@
         /* ── BENTO INFO GRID (TABLE) ────────────────── */
         .info-grid-table {
             width: 100%;
-            border-collapse: separate;
-            border-spacing: 10px 0;
-            margin-left: -10px;
-            margin-right: -10px;
+            border-collapse: collapse;
             margin-bottom: 14px;
         }
         .info-grid-table > tbody > tr > td {
             width: 50%;
             vertical-align: top;
+            padding: 0;
+        }
+        .info-card-inner {
             background: #f8fafc;
             border: 1px solid #e2e8f0;
             border-radius: 8px;
-            padding: 10px 12px;
+            padding: 8px 10px;
+        }
+        .info-card-left {
+            margin-right: 4px;
+        }
+        .info-card-right {
+            margin-left: 4px;
         }
 
         .nested-info-table {
@@ -327,43 +333,47 @@
         <tr>
             <!-- Kolom Santri -->
             <td>
-                <table class="nested-info-table">
-                    <tr>
-                        <td class="n-key">Nama Santri</td>
-                        <td class="n-sep">:</td>
-                        <td class="n-val">{{ $santri_name }} ({{ $santri_gender }})</td>
-                    </tr>
-                    <tr>
-                        <td class="n-key">Kelas / Madrasah</td>
-                        <td class="n-sep">:</td>
-                        <td class="n-val">{{ $kelas_name }}</td>
-                    </tr>
-                    <tr>
-                        <td class="n-key">Komplek / Kamar</td>
-                        <td class="n-sep">:</td>
-                        <td class="n-val">{{ $dorm_name }}</td>
-                    </tr>
-                </table>
+                <div class="info-card-inner info-card-left">
+                    <table class="nested-info-table">
+                        <tr>
+                            <td class="n-key">Nama Santri</td>
+                            <td class="n-sep">:</td>
+                            <td class="n-val">{{ $santri_name }} ({{ $santri_gender }})</td>
+                        </tr>
+                        <tr>
+                            <td class="n-key">Kelas / Madrasah</td>
+                            <td class="n-sep">:</td>
+                            <td class="n-val">{{ $kelas_name }}</td>
+                        </tr>
+                        <tr>
+                            <td class="n-key">Komplek / Kamar</td>
+                            <td class="n-sep">:</td>
+                            <td class="n-val">{{ $dorm_name }}</td>
+                        </tr>
+                    </table>
+                </div>
             </td>
             <!-- Kolom Transaksi -->
             <td>
-                <table class="nested-info-table">
-                    <tr>
-                        <td class="n-key">Tanggal Bayar</td>
-                        <td class="n-sep">:</td>
-                        <td class="n-val">{{ $payment_date }} {{ $payment_time }}</td>
-                    </tr>
-                    <tr>
-                        <td class="n-key">Metode Bayar</td>
-                        <td class="n-sep">:</td>
-                        <td class="n-val">{{ $payment_method }}</td>
-                    </tr>
-                    <tr>
-                        <td class="n-key">Petugas Kasir</td>
-                        <td class="n-sep">:</td>
-                        <td class="n-val">{{ $cashier_name }}</td>
-                    </tr>
-                </table>
+                <div class="info-card-inner info-card-right">
+                    <table class="nested-info-table">
+                        <tr>
+                            <td class="n-key">Tanggal Bayar</td>
+                            <td class="n-sep">:</td>
+                            <td class="n-val">{{ $payment_date }} {{ $payment_time }}</td>
+                        </tr>
+                        <tr>
+                            <td class="n-key">Metode Bayar</td>
+                            <td class="n-sep">:</td>
+                            <td class="n-val">{{ $payment_method }}</td>
+                        </tr>
+                        <tr>
+                            <td class="n-key">Petugas Kasir</td>
+                            <td class="n-sep">:</td>
+                            <td class="n-val">{{ $cashier_name }}</td>
+                        </tr>
+                    </table>
+                </div>
             </td>
         </tr>
     </table>

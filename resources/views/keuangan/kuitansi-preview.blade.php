@@ -637,12 +637,158 @@
         .text-left { text-align: left; }
         .text-right { text-align: right; }
 
+        /* ── RESPONSIVE & MOBILE RULES ───────────────── */
+        @media (max-width: 768px) {
+            body {
+                padding-bottom: 40px;
+            }
+
+            .action-bar {
+                padding: 10px 14px;
+                gap: 10px;
+            }
+
+            .action-bar .brand-badge {
+                display: none;
+            }
+
+            .btn-nav {
+                padding: 7px 11px;
+                font-size: 11.5px;
+                gap: 5px;
+            }
+
+            .paper-container {
+                margin-top: 18px;
+                padding: 0 10px;
+            }
+
+            .receipt-paper {
+                padding: 24px 18px;
+                border-radius: 12px;
+            }
+
+            .bento-info-grid {
+                grid-template-columns: 1fr;
+                gap: 10px;
+                margin-bottom: 18px;
+            }
+
+            .bento-card {
+                padding: 12px 14px;
+            }
+
+            .receipt-header {
+                flex-direction: column;
+                gap: 14px;
+                align-items: stretch;
+                padding-bottom: 16px;
+                margin-bottom: 18px;
+            }
+
+            .doc-identity {
+                text-align: left;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                border-top: 1px dashed #e2e8f0;
+                padding-top: 10px;
+            }
+
+            .doc-title-badge {
+                margin-bottom: 0;
+            }
+
+            .status-strip {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 6px;
+                padding: 10px 14px;
+                margin-bottom: 18px;
+            }
+
+            .items-table {
+                font-size: 11.5px;
+            }
+
+            .items-table thead th {
+                padding: 9px 10px;
+                font-size: 10px;
+            }
+
+            .items-table tbody td {
+                padding: 10px 10px;
+            }
+
+            .item-main-name {
+                font-size: 12px;
+            }
+
+            .footer-signatures {
+                grid-template-columns: 1fr 1fr;
+                gap: 16px;
+                margin-top: 24px;
+            }
+
+            .security-seal {
+                grid-column: span 2;
+                order: 3;
+                margin-top: 10px;
+                padding-top: 10px;
+                border-top: 1px dashed #e2e8f0;
+            }
+
+            .sig-line {
+                min-width: 100px;
+                width: 100%;
+                font-size: 11px;
+            }
+
+            .sig-caption {
+                font-size: 10px;
+                margin-bottom: 38px;
+            }
+
+            .system-footer {
+                flex-direction: column;
+                gap: 8px;
+                text-align: center;
+                font-size: 9.5px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .btn-nav span.desktop-only {
+                display: none;
+            }
+
+            .brand-text-block .inst-title {
+                font-size: 14px;
+            }
+
+            .grand-total-val {
+                font-size: 16px;
+            }
+
+            .terbilang-text {
+                font-size: 11px;
+            }
+        }
+
         /* ── PRINT RULES ───────────────────────────── */
         @media print {
-            body {
+            *, *::before, *::after {
+                text-shadow: none !important;
+                box-shadow: none !important;
+            }
+
+            html, body {
                 background: #ffffff !important;
-                padding: 0 !important;
+                color: #000000 !important;
+                width: 100% !important;
+                min-height: auto !important;
                 margin: 0 !important;
+                padding: 0 !important;
                 -webkit-print-color-adjust: exact !important;
                 print-color-adjust: exact !important;
             }
@@ -662,16 +808,38 @@
                 box-shadow: none !important;
                 border: none !important;
                 border-radius: 0 !important;
-                padding: 12mm 14mm !important;
+                padding: 6mm 8mm !important;
+                width: 100% !important;
+                max-width: 100% !important;
             }
 
             .receipt-paper::before {
                 display: none !important;
             }
 
+            .watermark-bg {
+                display: none !important;
+            }
+
+            .bento-info-grid {
+                grid-template-columns: 1fr 1fr !important;
+            }
+
+            .footer-signatures {
+                grid-template-columns: 1fr 1fr 1fr !important;
+            }
+
+            .security-seal {
+                grid-column: auto !important;
+                order: 2 !important;
+                border-top: none !important;
+                margin-top: 0 !important;
+                padding-top: 0 !important;
+            }
+
             @page {
-                size: A4 portrait;
-                margin: 0;
+                size: auto;
+                margin: 8mm 10mm;
             }
         }
     </style>
@@ -682,9 +850,9 @@
     <div class="action-bar-wrapper">
         <div class="action-bar">
             <div class="left-group">
-                <a href="{{ $back_url ?? route('keuangan.billing', ['tab' => 'payments_log']) }}" class="btn-nav btn-back">
+                <a href="{{ $back_url ?? route('keuangan.billing', ['tab' => 'payments_log']) }}" class="btn-nav btn-back" title="{{ $back_label ?? 'Kembali' }}">
                     <i class="fa-solid fa-arrow-left"></i>
-                    <span>{{ $back_label ?? 'Kembali ke Riwayat Pembayaran' }}</span>
+                    <span>{{ $back_label ?? 'Kembali' }}</span>
                 </a>
                 <div class="brand-badge">
                     <div class="brand-logo-mini">E</div>
@@ -692,13 +860,13 @@
                 </div>
             </div>
             <div class="right-group">
-                <button type="button" onclick="window.print()" class="btn-nav btn-print">
+                <button type="button" onclick="window.print()" class="btn-nav btn-print" title="Cetak Kuitansi">
                     <i class="fa-solid fa-print"></i>
-                    <span>Cetak Kuitansi</span>
+                    <span>Cetak <span class="desktop-only">Kuitansi</span></span>
                 </button>
-                <a href="{{ route('bukti-bayar.kuitansi.pdf', $receipt_no) }}" class="btn-nav btn-download">
+                <a href="{{ route('bukti-bayar.kuitansi.pdf', $receipt_no) }}" class="btn-nav btn-download" title="Unduh PDF">
                     <i class="fa-solid fa-download"></i>
-                    <span>Unduh PDF</span>
+                    <span>Unduh <span class="desktop-only">PDF</span></span>
                 </a>
             </div>
         </div>
