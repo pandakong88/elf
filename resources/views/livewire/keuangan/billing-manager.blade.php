@@ -4441,66 +4441,152 @@
             <div class="space-y-6 animate-fade-in">
 
                 {{-- Header & KPI Stats --}}
-                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <div class="bg-gradient-to-br from-amber-500/10 to-transparent border border-amber-500/20 dark:border-amber-500/30 p-4 rounded-2xl flex items-center justify-between shadow-2xs">
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    {{-- Total Submissions --}}
+                    <div wire:click="$set('transferFilterStatus', 'all')" class="cursor-pointer bg-white dark:bg-slate-900 border {{ $transferFilterStatus === 'all' ? 'border-indigo-500 ring-2 ring-indigo-500/20' : 'border-slate-200/80 dark:border-slate-800' }} p-4 rounded-2xl flex items-center justify-between shadow-xs hover:border-indigo-400 transition-all">
                         <div class="flex items-center gap-3">
-                            <div class="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-600 dark:text-amber-400 flex items-center justify-center text-lg shrink-0">⏳</div>
+                            <div class="w-10 h-10 rounded-xl bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 flex items-center justify-center text-lg shrink-0">📑</div>
+                            <div>
+                                <span class="block text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">Total Pengajuan</span>
+                                <span class="text-xl font-black text-slate-900 dark:text-white">{{ $manualTransferAllCount }}</span>
+                                <span class="text-[10px] text-slate-400 block">semua riwayat</span>
+                            </div>
+                        </div>
+                        <span class="px-2 py-0.5 text-[10px] font-bold rounded-md {{ $transferFilterStatus === 'all' ? 'bg-indigo-600 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-500' }}">Semua</span>
+                    </div>
+
+                    {{-- Pending Submissions --}}
+                    <div wire:click="$set('transferFilterStatus', 'pending')" class="cursor-pointer bg-white dark:bg-slate-900 border {{ $transferFilterStatus === 'pending' ? 'border-amber-500 ring-2 ring-amber-500/20' : 'border-slate-200/80 dark:border-slate-800' }} p-4 rounded-2xl flex items-center justify-between shadow-xs hover:border-amber-400 transition-all">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-xl bg-amber-50 dark:bg-amber-950/50 text-amber-600 dark:text-amber-400 flex items-center justify-center text-lg shrink-0">⏳</div>
                             <div>
                                 <span class="block text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">Menunggu Verifikasi</span>
                                 <span class="text-xl font-black text-amber-600 dark:text-amber-400">{{ $manualTransferPendingCount }}</span>
                                 <span class="text-[10px] text-slate-400 block">perlu dicek bendahara</span>
                             </div>
                         </div>
-                        <button type="button" wire:click="$set('transferFilterStatus', 'pending')" class="px-2.5 py-1 text-[10px] font-bold rounded-lg {{ $transferFilterStatus === 'pending' ? 'bg-amber-600 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300' }}">Filter</button>
+                        <span class="px-2 py-0.5 text-[10px] font-bold rounded-md {{ $transferFilterStatus === 'pending' ? 'bg-amber-500 text-white' : 'bg-amber-50 dark:bg-amber-950/50 text-amber-600 dark:text-amber-400' }}">Pending</span>
                     </div>
 
-                    <div class="bg-gradient-to-br from-emerald-500/10 to-transparent border border-emerald-500/20 dark:border-emerald-500/30 p-4 rounded-2xl flex items-center justify-between shadow-2xs">
+                    {{-- Approved Submissions --}}
+                    <div wire:click="$set('transferFilterStatus', 'approved')" class="cursor-pointer bg-white dark:bg-slate-900 border {{ $transferFilterStatus === 'approved' ? 'border-emerald-500 ring-2 ring-emerald-500/20' : 'border-slate-200/80 dark:border-slate-800' }} p-4 rounded-2xl flex items-center justify-between shadow-xs hover:border-emerald-400 transition-all">
                         <div class="flex items-center gap-3">
-                            <div class="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-lg shrink-0">✅</div>
+                            <div class="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-lg shrink-0">✅</div>
                             <div>
-                                <span class="block text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">Disetujui & Lunas</span>
+                                <span class="block text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">Disetujui &amp; Lunas</span>
                                 <span class="text-xl font-black text-emerald-600 dark:text-emerald-400">{{ $manualTransferApprovedCount }}</span>
                                 <span class="text-[10px] text-slate-400 block">kuitansi terbit</span>
                             </div>
                         </div>
-                        <button type="button" wire:click="$set('transferFilterStatus', 'approved')" class="px-2.5 py-1 text-[10px] font-bold rounded-lg {{ $transferFilterStatus === 'approved' ? 'bg-emerald-600 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300' }}">Filter</button>
+                        <span class="px-2 py-0.5 text-[10px] font-bold rounded-md {{ $transferFilterStatus === 'approved' ? 'bg-emerald-600 text-white' : 'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400' }}">Lunas</span>
                     </div>
 
-                    <div class="bg-gradient-to-br from-rose-500/10 to-transparent border border-rose-500/20 dark:border-rose-500/30 p-4 rounded-2xl flex items-center justify-between shadow-2xs">
+                    {{-- Rejected Submissions --}}
+                    <div wire:click="$set('transferFilterStatus', 'rejected')" class="cursor-pointer bg-white dark:bg-slate-900 border {{ $transferFilterStatus === 'rejected' ? 'border-rose-500 ring-2 ring-rose-500/20' : 'border-slate-200/80 dark:border-slate-800' }} p-4 rounded-2xl flex items-center justify-between shadow-xs hover:border-rose-400 transition-all">
                         <div class="flex items-center gap-3">
-                            <div class="w-10 h-10 rounded-xl bg-rose-500/20 text-rose-600 dark:text-rose-400 flex items-center justify-center text-lg shrink-0">❌</div>
+                            <div class="w-10 h-10 rounded-xl bg-rose-50 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400 flex items-center justify-center text-lg shrink-0">❌</div>
                             <div>
                                 <span class="block text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">Ditolak</span>
                                 <span class="text-xl font-black text-rose-600 dark:text-rose-400">{{ $manualTransferRejectedCount }}</span>
-                                <span class="text-[10px] text-slate-400 block">bukti tidak valid/kurang</span>
+                                <span class="text-[10px] text-slate-400 block">bukti tidak valid</span>
                             </div>
                         </div>
-                        <button type="button" wire:click="$set('transferFilterStatus', 'rejected')" class="px-2.5 py-1 text-[10px] font-bold rounded-lg {{ $transferFilterStatus === 'rejected' ? 'bg-rose-600 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300' }}">Filter</button>
+                        <span class="px-2 py-0.5 text-[10px] font-bold rounded-md {{ $transferFilterStatus === 'rejected' ? 'bg-rose-600 text-white' : 'bg-rose-50 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400' }}">Ditolak</span>
                     </div>
                 </div>
 
-                {{-- Table Section --}}
-                <div class="bg-white dark:bg-slate-900 border border-slate-200/50 dark:border-slate-800 rounded-3xl shadow-xs overflow-hidden">
-                    {{-- Filter & Search Bar --}}
-                    <div class="px-5 py-4 border-b border-slate-100 dark:border-slate-800 flex flex-col md:flex-row md:items-center justify-between gap-3">
-                        <div class="relative flex-1 max-w-md">
-                            <svg class="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-                            <input wire:model.live.debounce.300ms="transferSearch" type="text" placeholder="Cari nama santri, kode submit, pengirim, kuitansi..." class="w-full pl-9 pr-3 py-2 text-xs bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-700 dark:text-slate-300 placeholder-slate-400 focus:ring-1 focus:ring-indigo-400 focus:border-indigo-400 outline-none transition"/>
+                {{-- Table Section & Multi-Filters Toolbar --}}
+                <div class="bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800 rounded-3xl shadow-xs overflow-hidden">
+                    
+                    {{-- Top Filter Bar --}}
+                    <div class="p-5 border-b border-slate-100 dark:border-slate-800 space-y-3.5">
+                        <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+                            
+                            {{-- Search Input --}}
+                            <div class="relative flex-1 min-w-[280px]">
+                                <svg class="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                                <input wire:model.live.debounce.300ms="transferSearch" type="text" placeholder="Cari santri, NIS, kode submit, pengirim, kuitansi..." class="w-full pl-9 pr-3 py-2 text-xs bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-700 dark:text-slate-300 placeholder-slate-400 focus:ring-1 focus:ring-indigo-400 focus:border-indigo-400 outline-none transition"/>
+                            </div>
+
+                            {{-- Gender Scope & Status Badges --}}
+                            <div class="flex items-center gap-2 flex-wrap">
+                                {{-- Gender Filter (Admin bypass) vs Gender Scope Badge (Treasurer) --}}
+                                @if(!$this->genderScope())
+                                    <div class="flex items-center bg-slate-100 dark:bg-slate-800 p-1 rounded-xl">
+                                        <button type="button" wire:click="$set('transferGenderFilter', '')" class="px-2.5 py-1 text-[11px] font-bold rounded-lg transition-all {{ $transferGenderFilter === '' ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 shadow-xs' : 'text-slate-500 hover:text-slate-700' }}">Semua Gender</button>
+                                        <button type="button" wire:click="$set('transferGenderFilter', 'L')" class="px-2.5 py-1 text-[11px] font-bold rounded-lg transition-all {{ $transferGenderFilter === 'L' ? 'bg-sky-500 text-white shadow-xs' : 'text-slate-500 hover:text-slate-700' }}">Putra (L)</button>
+                                        <button type="button" wire:click="$set('transferGenderFilter', 'P')" class="px-2.5 py-1 text-[11px] font-bold rounded-lg transition-all {{ $transferGenderFilter === 'P' ? 'bg-pink-500 text-white shadow-xs' : 'text-slate-500 hover:text-slate-700' }}">Putri (P)</button>
+                                    </div>
+                                @else
+                                    <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold {{ $this->genderScope() === 'L' ? 'bg-sky-50 text-sky-700 dark:bg-sky-950/60 dark:text-sky-300 border border-sky-200 dark:border-sky-800' : 'bg-pink-50 text-pink-700 dark:bg-pink-950/60 dark:text-pink-300 border border-pink-200 dark:border-pink-800' }}">
+                                        <span>🔒 Scope:</span>
+                                        <span>{{ $this->genderScope() === 'L' ? 'Santri Putra' : 'Santri Putri' }}</span>
+                                    </span>
+                                @endif
+
+                                {{-- Status Filter Buttons --}}
+                                <div class="flex items-center bg-slate-100 dark:bg-slate-800 p-1 rounded-xl">
+                                    <button type="button" wire:click="$set('transferFilterStatus', 'pending')" class="px-2.5 py-1 text-[11px] font-bold rounded-lg transition-all {{ $transferFilterStatus === 'pending' ? 'bg-amber-500 text-white shadow-xs' : 'text-slate-500 hover:text-slate-700' }}">
+                                        Menunggu ({{ $manualTransferPendingCount }})
+                                    </button>
+                                    <button type="button" wire:click="$set('transferFilterStatus', 'approved')" class="px-2.5 py-1 text-[11px] font-bold rounded-lg transition-all {{ $transferFilterStatus === 'approved' ? 'bg-emerald-600 text-white shadow-xs' : 'text-slate-500 hover:text-slate-700' }}">
+                                        Disetujui ({{ $manualTransferApprovedCount }})
+                                    </button>
+                                    <button type="button" wire:click="$set('transferFilterStatus', 'rejected')" class="px-2.5 py-1 text-[11px] font-bold rounded-lg transition-all {{ $transferFilterStatus === 'rejected' ? 'bg-rose-600 text-white shadow-xs' : 'text-slate-500 hover:text-slate-700' }}">
+                                        Ditolak ({{ $manualTransferRejectedCount }})
+                                    </button>
+                                    <button type="button" wire:click="$set('transferFilterStatus', 'all')" class="px-2.5 py-1 text-[11px] font-bold rounded-lg transition-all {{ $transferFilterStatus === 'all' ? 'bg-indigo-600 text-white shadow-xs' : 'text-slate-500 hover:text-slate-700' }}">
+                                        Semua
+                                    </button>
+                                </div>
+                            </div>
                         </div>
 
-                        <div class="flex items-center gap-1.5 flex-wrap">
-                            <button type="button" wire:click="$set('transferFilterStatus', 'pending')" class="px-3 py-1.5 rounded-xl text-xs font-bold transition-all {{ $transferFilterStatus === 'pending' ? 'bg-amber-500 text-white shadow-sm' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200' }}">
-                                Menunggu ({{ $manualTransferPendingCount }})
-                            </button>
-                            <button type="button" wire:click="$set('transferFilterStatus', 'approved')" class="px-3 py-1.5 rounded-xl text-xs font-bold transition-all {{ $transferFilterStatus === 'approved' ? 'bg-emerald-600 text-white shadow-sm' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200' }}">
-                                Disetujui ({{ $manualTransferApprovedCount }})
-                            </button>
-                            <button type="button" wire:click="$set('transferFilterStatus', 'rejected')" class="px-3 py-1.5 rounded-xl text-xs font-bold transition-all {{ $transferFilterStatus === 'rejected' ? 'bg-rose-600 text-white shadow-sm' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200' }}">
-                                Ditolak ({{ $manualTransferRejectedCount }})
-                            </button>
-                            <button type="button" wire:click="$set('transferFilterStatus', 'all')" class="px-3 py-1.5 rounded-xl text-xs font-bold transition-all {{ $transferFilterStatus === 'all' ? 'bg-indigo-600 text-white shadow-sm' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200' }}">
-                                Semua
-                            </button>
+                        {{-- Secondary Filter Row: Dates, Bank, PerPage, Reset --}}
+                        <div class="flex flex-wrap items-center gap-3 pt-2 border-t border-slate-100 dark:border-slate-800 text-xs">
+                            {{-- Date From --}}
+                            <div class="flex items-center gap-1.5">
+                                <span class="text-slate-400 text-[11px] font-medium">Dari:</span>
+                                <input wire:model.live="transferDateFrom" type="date" class="px-2.5 py-1 text-xs bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-700 dark:text-slate-300 focus:ring-1 focus:ring-indigo-400 outline-none"/>
+                            </div>
+
+                            {{-- Date To --}}
+                            <div class="flex items-center gap-1.5">
+                                <span class="text-slate-400 text-[11px] font-medium">Sampai:</span>
+                                <input wire:model.live="transferDateTo" type="date" class="px-2.5 py-1 text-xs bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-700 dark:text-slate-300 focus:ring-1 focus:ring-indigo-400 outline-none"/>
+                            </div>
+
+                            {{-- Bank Destination Filter --}}
+                            @if(count($transferDestinationBanks) > 0)
+                                <div class="flex items-center gap-1.5">
+                                    <span class="text-slate-400 text-[11px] font-medium">Bank Tujuan:</span>
+                                    <select wire:model.live="transferBankDestination" class="px-2.5 py-1 text-xs bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-700 dark:text-slate-300 focus:ring-1 focus:ring-indigo-400 outline-none">
+                                        <option value="">Semua Bank Tujuan</option>
+                                        @foreach($transferDestinationBanks as $bankName)
+                                            <option value="{{ $bankName }}">{{ $bankName }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                            @endif
+
+                            {{-- Per Page --}}
+                            <div class="flex items-center gap-1.5 ml-auto">
+                                <span class="text-slate-400 text-[11px] font-medium">Tampilkan:</span>
+                                <select wire:model.live="transferPerPage" class="px-2.5 py-1 text-xs bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-700 dark:text-slate-300 focus:ring-1 focus:ring-indigo-400 outline-none">
+                                    <option value="10">10</option>
+                                    <option value="15">15</option>
+                                    <option value="25">25</option>
+                                    <option value="50">50</option>
+                                </select>
+                            </div>
+
+                            {{-- Reset Button --}}
+                            @if($transferSearch || $transferFilterStatus !== 'pending' || $transferGenderFilter || $transferDateFrom || $transferDateTo || $transferBankDestination || $transferPerPage != 15)
+                                <button type="button" wire:click="resetTransferFilters" class="px-2.5 py-1 bg-slate-200 hover:bg-slate-300 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl text-xs font-bold transition-all flex items-center gap-1">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                                    Reset
+                                </button>
+                            @endif
                         </div>
                     </div>
 
@@ -4510,7 +4596,7 @@
                             <thead class="bg-slate-50/80 dark:bg-slate-950/40 text-[10px] font-extrabold uppercase tracking-wider text-slate-400 border-b border-slate-100 dark:border-slate-800">
                                 <tr>
                                     <th class="px-5 py-3.5">Kode &amp; Waktu</th>
-                                    <th class="px-5 py-3.5">Santri</th>
+                                    <th class="px-5 py-3.5">Santri &amp; Kamar</th>
                                     <th class="px-5 py-3.5">Rincian Nominal</th>
                                     <th class="px-5 py-3.5">Pengirim &amp; Rekening</th>
                                     <th class="px-5 py-3.5 text-center">Bukti Struk</th>
@@ -4532,15 +4618,24 @@
                                             @endif
                                         </td>
 
-                                        {{-- Santri --}}
+                                        {{-- Santri & Kamar --}}
                                         <td class="px-5 py-4 whitespace-nowrap">
                                             <div class="flex items-center gap-2">
                                                 <span class="font-bold text-slate-900 dark:text-white">{{ $sub->person?->name ?? '-' }}</span>
-                                                <span class="px-1.5 py-0.5 rounded text-[9px] font-black {{ $sub->person?->gender === 'L' ? 'bg-sky-100 text-sky-700' : 'bg-pink-100 text-pink-700' }}">
+                                                <span class="px-1.5 py-0.5 rounded text-[9px] font-black {{ $sub->person?->gender === 'L' ? 'bg-sky-100 text-sky-700 dark:bg-sky-950/60 dark:text-sky-300' : 'bg-pink-100 text-pink-700 dark:bg-pink-950/60 dark:text-pink-300' }}">
                                                     {{ $sub->person?->gender === 'L' ? 'PA' : 'PI' }}
                                                 </span>
                                             </div>
-                                            <span class="text-[10px] text-slate-400 block mt-0.5">NIS: {{ $sub->person?->nis ?? '-' }}</span>
+                                            <div class="text-[10px] text-slate-400 flex items-center gap-1.5 mt-0.5">
+                                                <span>NIS: {{ $sub->person?->nis ?? '-' }}</span>
+                                                @php
+                                                    $dormName = $sub->person?->roomAssignments?->first()?->room?->dormitory?->name;
+                                                    $roomNum = $sub->person?->roomAssignments?->first()?->room?->room_number;
+                                                @endphp
+                                                @if($dormName)
+                                                    <span>• Asrama: {{ $dormName }} ({{ $roomNum }})</span>
+                                                @endif
+                                            </div>
                                         </td>
 
                                         {{-- Rincian Nominal --}}
@@ -4549,7 +4644,7 @@
                                             <div class="text-[10px] text-slate-400 flex items-center gap-1.5 mt-0.5">
                                                 <span>Tagihan: Rp {{ number_format($sub->bill_amount, 0, ',', '.') }}</span>
                                                 @if($sub->pocket_money_amount > 0)
-                                                    <span class="text-indigo-600 dark:text-indigo-400 font-bold">• Saku: Rp {{ number_format($sub->pocket_money_amount, 0, ',', '.') }}</span>
+                                                    <span class="text-amber-600 dark:text-amber-400 font-bold">• Saku: +Rp {{ number_format($sub->pocket_money_amount, 0, ',', '.') }}</span>
                                                 @endif
                                             </div>
                                         </td>
@@ -4557,7 +4652,7 @@
                                         {{-- Pengirim & Rekening --}}
                                         <td class="px-5 py-4">
                                             <span class="font-bold text-slate-800 dark:text-slate-200 block">{{ $sub->sender_account_name }}</span>
-                                            <span class="text-[10px] text-slate-400 block">{{ $sub->sender_bank }} ➔ {{ $sub->destination_bank }}</span>
+                                            <span class="text-[10px] text-slate-400 block">{{ $sub->sender_bank }} ➔ <strong class="text-indigo-600 dark:text-indigo-400">{{ $sub->destination_bank }}</strong></span>
                                         </td>
 
                                         {{-- Bukti Struk --}}
@@ -4607,7 +4702,7 @@
                                         <td colspan="7" class="px-5 py-12 text-center text-slate-400">
                                             <svg class="w-12 h-12 mx-auto text-slate-300 dark:text-slate-700 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
                                             <p class="font-bold text-sm">Tidak ada pengajuan transfer manual</p>
-                                            <p class="text-xs text-slate-400 mt-1">Pengajuan transfer dari wali santri akan muncul di sini</p>
+                                            <p class="text-xs text-slate-400 mt-1">Pengajuan transfer dari wali santri yang sesuai kriteria filter akan muncul di sini</p>
                                         </td>
                                     </tr>
                                 @endforelse
@@ -5622,13 +5717,27 @@
 
                         {{-- Rejection Form when status is pending --}}
                         @if($selectedTransferData->status === 'pending')
-                            <div class="space-y-1.5 pt-2 border-t border-slate-100 dark:border-slate-800">
+                            <div class="space-y-2 pt-2 border-t border-slate-100 dark:border-slate-800">
                                 <label class="block text-xs font-bold text-slate-600 dark:text-slate-400">
                                     Alasan Penolakan <span class="text-slate-400 font-normal">(wajib diisi hanya jika ingin menolak transfer)</span>:
                                 </label>
+                                <div class="flex flex-wrap gap-1.5">
+                                    <button type="button" wire:click="setQuickRejectionReason('Bukti transfer buram atau tidak terbaca')" class="px-2 py-1 rounded-lg bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/40 dark:hover:bg-rose-900/40 text-[10px] text-rose-700 dark:text-rose-300 font-semibold border border-rose-200/60 dark:border-rose-800/60 transition">
+                                        ⚡ Bukti Buram
+                                    </button>
+                                    <button type="button" wire:click="setQuickRejectionReason('Nominal transfer tidak sesuai dengan mutasi bank')" class="px-2 py-1 rounded-lg bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/40 dark:hover:bg-rose-900/40 text-[10px] text-rose-700 dark:text-rose-300 font-semibold border border-rose-200/60 dark:border-rose-800/60 transition">
+                                        ⚡ Nominal Beda
+                                    </button>
+                                    <button type="button" wire:click="setQuickRejectionReason('Nama pengirim atau rekening tidak cocok')" class="px-2 py-1 rounded-lg bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/40 dark:hover:bg-rose-900/40 text-[10px] text-rose-700 dark:text-rose-300 font-semibold border border-rose-200/60 dark:border-rose-800/60 transition">
+                                        ⚡ Rekening Tidak Cocok
+                                    </button>
+                                    <button type="button" wire:click="setQuickRejectionReason('Dana belum masuk mutasi rekening pesantren')" class="px-2 py-1 rounded-lg bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/40 dark:hover:bg-rose-900/40 text-[10px] text-rose-700 dark:text-rose-300 font-semibold border border-rose-200/60 dark:border-rose-800/60 transition">
+                                        ⚡ Belum Ada di Mutasi
+                                    </button>
+                                </div>
                                 <textarea wire:model="transferRejectionReason"
                                           rows="2"
-                                          placeholder="Contoh: Nominal transfer kurang Rp 50.000 / Bukti transfer buram / Nama pengirim tidak sesuai..."
+                                          placeholder="Tulis alasan spesifik atau klik tombol cepat di atas..."
                                           class="w-full text-xs p-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-800 dark:text-slate-200 focus:ring-1 focus:ring-rose-400 focus:border-rose-400 outline-none"></textarea>
                             </div>
                         @endif

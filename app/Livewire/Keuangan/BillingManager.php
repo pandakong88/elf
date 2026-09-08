@@ -66,6 +66,11 @@ class BillingManager extends Component
     // Tab: Verifikasi Transfer Manual (Portal Wali)
     public string  $transferFilterStatus        = 'pending'; // 'all' | 'pending' | 'approved' | 'rejected'
     public string  $transferSearch              = '';
+    public string  $transferGenderFilter        = ''; // '' (Semua) | 'L' (Putra) | 'P' (Putri)
+    public string  $transferDateFrom            = ''; // YYYY-MM-DD
+    public string  $transferDateTo              = ''; // YYYY-MM-DD
+    public string  $transferBankDestination     = ''; // '' (Semua) | 'BSI' | 'BRI' | etc.
+    public int     $transferPerPage             = 15;
     public bool    $showTransferVerifyModal     = false;
     public ?string $selectedTransferId          = null;
     public ?ManualTransferSubmission $selectedTransferData = null;
@@ -79,6 +84,48 @@ class BillingManager extends Component
     public function updatedTransferFilterStatus(): void
     {
         $this->resetPage('transferPage');
+    }
+
+    public function updatedTransferGenderFilter(): void
+    {
+        $this->resetPage('transferPage');
+    }
+
+    public function updatedTransferDateFrom(): void
+    {
+        $this->resetPage('transferPage');
+    }
+
+    public function updatedTransferDateTo(): void
+    {
+        $this->resetPage('transferPage');
+    }
+
+    public function updatedTransferBankDestination(): void
+    {
+        $this->resetPage('transferPage');
+    }
+
+    public function updatedTransferPerPage(): void
+    {
+        $this->resetPage('transferPage');
+    }
+
+    public function resetTransferFilters(): void
+    {
+        $this->transferSearch = '';
+        $this->transferFilterStatus = 'all';
+        $this->transferGenderFilter = '';
+        $this->transferDateFrom = '';
+        $this->transferDateTo = '';
+        $this->transferBankDestination = '';
+        $this->transferPerPage = 15;
+        $this->resetPage('transferPage');
+    }
+
+    public function setQuickRejectionReason(string $reason): void
+    {
+        $this->transferRejectionReason = $reason;
     }
 
     // Tab: Daftar Konfigurasi Tarif
@@ -2497,8 +2544,21 @@ class BillingManager extends Component
     // ─── METHODS: VERIFIKASI TRANSFER MANUAL (PORTAL WALI) ──────────────────
     public function openTransferVerifyModal(string $id): void
     {
+        $sub = ManualTransferSubmission::with(['person.roomAssignments.room.dormitory', 'verifier'])->find($id);
+
+        if (!$sub) {
+            $this->toastError('Pengajuan transfer tidak ditemukan.');
+            return;
+        }
+
+        // Security check for gender scope
+        if ($this->genderScope() && $sub->person?->gender !== $this->genderScope()) {
+            $this->toastError('Anda tidak memiliki wewenang untuk mengakses data santri gender lain.');
+            return;
+        }
+
         $this->selectedTransferId = $id;
-        $this->selectedTransferData = ManualTransferSubmission::with(['person', 'verifier'])->find($id);
+        $this->selectedTransferData = $sub;
         $this->transferRejectionReason = '';
         $this->showTransferVerifyModal = true;
     }
@@ -2518,6 +2578,12 @@ class BillingManager extends Component
 
         if (!$sub || $sub->status !== 'pending') {
             $this->toastError('Pengajuan transfer tidak ditemukan atau sudah diproses.');
+            return;
+        }
+
+        // Security check for gender scope
+        if ($this->genderScope() && $sub->person?->gender !== $this->genderScope()) {
+            $this->toastError('Anda tidak memiliki wewenang untuk menyetujui transfer santri gender lain.');
             return;
         }
 
@@ -2580,10 +2646,16 @@ class BillingManager extends Component
     public function rejectTransferSubmission(string $id): void
     {
         $user = auth()->user();
-        $sub = ManualTransferSubmission::find($id);
+        $sub = ManualTransferSubmission::with('person')->find($id);
 
         if (!$sub || $sub->status !== 'pending') {
             $this->toastError('Pengajuan transfer tidak ditemukan atau sudah diproses.');
+            return;
+        }
+
+        // Security check for gender scope
+        if ($this->genderScope() && $sub->person?->gender !== $this->genderScope()) {
+            $this->toastError('Anda tidak memiliki wewenang untuk menolak transfer santri gender lain.');
             return;
         }
 
@@ -3729,23 +3801,40 @@ class BillingManager extends Component
         }
 
         // ─── Query Verifikasi Transfer Manual (Portal Wali) ───────────────
-        $transferBaseQuery = ManualTransferSubmission::with(['person', 'verifier'])
-            ->when($this->genderScope(), fn($q, $g) => $q->whereHas('person', fn($pq) => $pq->where('gender', $g)))
+        $targetTransferGender = $this->genderScope() ?: ($this->transferGenderFilter ?: null);
+
+        $transferBaseQuery = ManualTransferSubmission::with(['person.roomAssignments.room.dormitory', 'verifier'])
+            ->when($targetTransferGender, fn($q, $g) => $q->whereHas('person', fn($pq) => $pq->where('gender', $g)))
             ->when($this->transferSearch, function ($q) {
                 $s = $this->transferSearch;
                 $q->where(function ($sub) use ($s) {
-                    $sub->whereHas('person', fn($pq) => $pq->where('name', 'like', "%{$s}%"))
+                    $sub->whereHas('person', fn($pq) => $pq->where('name', 'like', "%{$s}%")->orWhere('nis', 'like', "%{$s}%"))
                         ->orWhere('submission_code', 'like', "%{$s}%")
                         ->orWhere('sender_account_name', 'like', "%{$s}%")
+                        ->orWhere('sender_bank', 'like', "%{$s}%")
                         ->orWhere('receipt_no', 'like', "%{$s}%");
                 });
             })
+            ->when($this->transferDateFrom, fn($q, $d) => $q->whereDate('created_at', '>=', $d))
+            ->when($this->transferDateTo, fn($q, $d) => $q->whereDate('created_at', '<=', $d))
+            ->when($this->transferBankDestination, fn($q, $b) => $q->where('bank_destination', $b))
             ->when($this->transferFilterStatus !== 'all', fn($q) => $q->where('status', $this->transferFilterStatus));
 
-        $manualTransferSubmissions = (clone $transferBaseQuery)->orderBy('created_at', 'desc')->paginate(15, pageName: 'transferPage');
-        $manualTransferPendingCount = ManualTransferSubmission::when($this->genderScope(), fn($q, $g) => $q->whereHas('person', fn($pq) => $pq->where('gender', $g)))->where('status', 'pending')->count();
-        $manualTransferApprovedCount = ManualTransferSubmission::when($this->genderScope(), fn($q, $g) => $q->whereHas('person', fn($pq) => $pq->where('gender', $g)))->where('status', 'approved')->count();
-        $manualTransferRejectedCount = ManualTransferSubmission::when($this->genderScope(), fn($q, $g) => $q->whereHas('person', fn($pq) => $pq->where('gender', $g)))->where('status', 'rejected')->count();
+        $manualTransferSubmissions = (clone $transferBaseQuery)
+            ->orderBy('created_at', 'desc')
+            ->paginate($this->transferPerPage ?: 15, pageName: 'transferPage');
+
+        $transferCountBase = ManualTransferSubmission::when($targetTransferGender, fn($q, $g) => $q->whereHas('person', fn($pq) => $pq->where('gender', $g)));
+        $manualTransferAllCount      = (clone $transferCountBase)->count();
+        $manualTransferPendingCount  = (clone $transferCountBase)->where('status', 'pending')->count();
+        $manualTransferApprovedCount = (clone $transferCountBase)->where('status', 'approved')->count();
+        $manualTransferRejectedCount = (clone $transferCountBase)->where('status', 'rejected')->count();
+
+        $transferDestinationBanks = ManualTransferSubmission::select('bank_destination')
+            ->distinct()
+            ->whereNotNull('bank_destination')
+            ->where('bank_destination', '!=', '')
+            ->pluck('bank_destination');
 
         // ─── DATA TAB BENDAHARA (DASHBOARD UTAMA) ───────────────────────────
         $todayDate = now()->toDateString();
@@ -3914,9 +4003,12 @@ class BillingManager extends Component
             'bendaharaRecentInflows'      => $bendaharaRecentInflows,
             'bendaharaAccounts'           => $bendaharaAccounts,
             'manualTransferSubmissions'   => $manualTransferSubmissions,
+            'manualTransferAllCount'      => $manualTransferAllCount,
             'manualTransferPendingCount'  => $manualTransferPendingCount,
             'manualTransferApprovedCount' => $manualTransferApprovedCount,
             'manualTransferRejectedCount' => $manualTransferRejectedCount,
+            'transferDestinationBanks'    => $transferDestinationBanks,
+            'targetTransferGender'        => $targetTransferGender,
             'settlementReport'    => $settlementReport,
             'savedDistributions'  => $savedDistributions,
             'modalDormitoryData'  => $modalDormitoryData,
