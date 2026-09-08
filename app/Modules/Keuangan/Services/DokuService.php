@@ -218,6 +218,21 @@ class DokuService
         $notificationUrl = config('doku.notification_url') ?: route('doku.notification');
         $returnUrl = config('doku.return_url') ?: route('portal-wali.dashboard', ['personId' => $personId]);
 
+        // Resolve customer phone (DOKU requires calling code format: 628xxxxxxxxxx)
+        $rawPhone = $santri->phone ?? $santri->guardian_phone ?? '081234567890';
+        $cleanedPhone = preg_replace('/[^0-9]/', '', (string)$rawPhone);
+        if (str_starts_with($cleanedPhone, '0')) {
+            $formattedPhone = '62' . substr($cleanedPhone, 1);
+        } elseif (str_starts_with($cleanedPhone, '62')) {
+            $formattedPhone = $cleanedPhone;
+        } else {
+            $formattedPhone = '6281234567890';
+        }
+        $formattedPhone = substr($formattedPhone, 0, 16);
+
+        // Resolve customer email (must have valid standard TLD)
+        $email = $santri->email ?: ('santri_' . ($santri->nis ?: '00') . '@pesantren.sch.id');
+
         $payload = [
             'order' => [
                 'invoice_number' => $invoiceNumber,
@@ -232,8 +247,8 @@ class DokuService
             'customer' => [
                 'id'    => (string) $santri->id,
                 'name'  => Str::limit($santri->name, 50),
-                'email' => 'santri_' . ($santri->nis ?: '00') . '@pesantren.local',
-                'phone' => '08123456789',
+                'email' => $email,
+                'phone' => $formattedPhone,
             ],
             'additional_info' => [
                 'person_id'           => $personId,
