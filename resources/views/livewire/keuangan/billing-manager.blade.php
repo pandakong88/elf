@@ -4622,7 +4622,7 @@
                                         <td class="px-5 py-4 whitespace-nowrap">
                                             <div class="flex items-center gap-2">
                                                 <span class="font-bold text-slate-900 dark:text-white">{{ $sub->person?->name ?? '-' }}</span>
-                                                <span class="px-1.5 py-0.5 rounded text-[9px] font-black {{ $sub->person?->gender === 'L' ? 'bg-sky-100 text-sky-700 dark:bg-sky-950/60 dark:text-sky-300' : 'bg-pink-100 text-pink-700 dark:bg-pink-950/60 dark:text-pink-300' }}">
+                                                <span class="px-1.5 py-0.5 rounded text-[9px] font-black {{ $sub->person?->gender === 'L' ? 'bg-sky-100 text-sky-800 dark:bg-sky-950 dark:text-sky-300 border border-sky-300 dark:border-sky-800' : 'bg-pink-100 text-pink-800 dark:bg-pink-950 dark:text-pink-300 border border-pink-300 dark:border-pink-800' }}">
                                                     {{ $sub->person?->gender === 'L' ? 'PA' : 'PI' }}
                                                 </span>
                                             </div>
@@ -5647,9 +5647,17 @@
                                 <h4 class="text-sm font-black text-slate-900 dark:text-white mt-0.5">{{ $selectedTransferData->person?->name ?? '-' }}</h4>
                                 <span class="text-[11px] text-slate-500">NIS: {{ $selectedTransferData->person?->nis ?? '-' }}</span>
                             </div>
-                            <span class="px-2.5 py-1 rounded-xl text-xs font-black {{ $selectedTransferData->person?->gender === 'L' ? 'bg-sky-100 text-sky-800' : 'bg-pink-100 text-pink-800' }}">
-                                {{ $selectedTransferData->person?->gender === 'L' ? 'Santri Putra' : 'Santri Putri' }}
-                            </span>
+                            @if($selectedTransferData->person?->gender === 'L')
+                                <span class="px-3 py-1.5 rounded-xl text-xs font-extrabold bg-sky-100 text-sky-800 dark:bg-sky-950 dark:text-sky-300 border border-sky-300 dark:border-sky-700 shadow-2xs flex items-center gap-1.5">
+                                    <span class="w-2 h-2 rounded-full bg-sky-500"></span>
+                                    <span>Santri Putra (PA)</span>
+                                </span>
+                            @else
+                                <span class="px-3 py-1.5 rounded-xl text-xs font-extrabold bg-pink-100 text-pink-800 dark:bg-pink-950 dark:text-pink-300 border border-pink-300 dark:border-pink-700 shadow-2xs flex items-center gap-1.5">
+                                    <span class="w-2 h-2 rounded-full bg-pink-500"></span>
+                                    <span>Santri Putri (PI)</span>
+                                </span>
+                            @endif
                         </div>
 
                         {{-- Breakdown Alokasi Tagihan --}}
