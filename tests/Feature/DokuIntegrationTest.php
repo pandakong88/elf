@@ -140,8 +140,7 @@ class DokuIntegrationTest extends TestCase
             bills: [$bill],
             personId: $this->santri->id,
             pocketMoney: 100000,
-            userId: $this->admin->id,
-            category: 'va'
+            userId: $this->admin->id
         );
 
         $this->assertInstanceOf(PaymentTransaction::class, $transaction);

@@ -145,35 +145,12 @@ class DokuService
     }
 
     /**
-     * Dapatkan daftar kategori channel pembayaran DOKU.
+     * Dapatkan nominal Biaya Layanan / Admin Fee DOKU.
      */
-    public function getChannelCategories(): array
+    public function getAdminFee(): float
     {
-        return config('doku.channel_categories', []);
-    }
-
-    /**
-     * Hitung estimasi biaya layanan MDR per kategori.
-     */
-    public function calculateCategoryFee(string $categoryKey, float $baseAmount): float
-    {
-        $categories = $this->getChannelCategories();
-        $cat = $categories[$categoryKey] ?? ($categories['va'] ?? null);
-
-        if (!$cat) {
-            return 0.0;
-        }
-
-        $feeType = $cat['fee_type'] ?? 'fixed';
-        $feeAmount = (float)($cat['fee_amount'] ?? 0);
-        $minFee = (float)($cat['min_fee'] ?? 0);
-
-        if ($feeType === 'percentage') {
-            $fee = round($baseAmount * $feeAmount);
-            return max($minFee, $fee);
-        }
-
-        return $feeAmount;
+        $dbVal = LandingPageContent::where('key', 'doku_admin_fee')->value('value');
+        return $dbVal !== null ? (float) $dbVal : (float) config('doku.admin_fee', 3500);
     }
 
     /**
@@ -184,7 +161,6 @@ class DokuService
      * @param float $pocketMoney Titipan uang saku (opsional)
      * @param string|null $userId User yang memulai transaksi (opsional)
      * @param array $customAmounts Nominal cicilan per tagihan (opsional)
-     * @param string $category Kategori channel ('va'|'minimarket'|'ewallet'|'qris')
      * @return PaymentTransaction
      * @throws \Exception
      */
@@ -193,8 +169,7 @@ class DokuService
         string $personId,
         float $pocketMoney = 0,
         ?string $userId = null,
-        array $customAmounts = [],
-        string $category = 'va'
+        array $customAmounts = []
     ): PaymentTransaction {
         $santri = Person::with('activeMadrasahEnrollment.kelas', 'activeRoomAssignment.room.dormitory')->findOrFail($personId);
         
@@ -250,13 +225,8 @@ class DokuService
             throw new \Exception('Total pembayaran harus lebih besar dari 0.');
         }
 
-        // Hitung biaya layanan (MDR) sesuai kategori yang dipilih
-        $categories = $this->getChannelCategories();
-        $catConfig = $categories[$category] ?? ($categories['va'] ?? null);
-        $categoryName = $catConfig['name'] ?? 'Virtual Account';
-        $paymentTypes = $catConfig['payment_types'] ?? [];
-
-        $mdrFee = $this->calculateCategoryFee($category, $baseTotal);
+        // Biaya Layanan Gateway Flat
+        $mdrFee = $this->getAdminFee();
 
         if ($mdrFee > 0) {
             $lineItems[] = [
@@ -286,6 +256,7 @@ class DokuService
         // Resolve customer email (must have valid standard TLD)
         $email = $santri->email ?: ('santri_' . ($santri->nis ?: '00') . '@pesantren.sch.id');
 
+        $paymentTypes = config('doku.allowed_payment_types', []);
         $paymentPayload = [
             'payment_due_date' => $expiryMinutes,
         ];
@@ -312,7 +283,6 @@ class DokuService
                 'person_id'           => $personId,
                 'pocket_money_amount' => $pocketMoney,
                 'bills_count'         => count($billIds),
-                'category'            => $category,
                 'mdr_fee'             => $mdrFee,
             ],
         ];
@@ -324,7 +294,6 @@ class DokuService
 
         Log::info('[DokuService] Request Checkout', [
             'invoice_number' => $invoiceNumber,
-            'category'       => $category,
             'api_url'        => $apiUrl,
             'base_total'     => $baseTotal,
             'mdr_fee'        => $mdrFee,
@@ -357,8 +326,8 @@ class DokuService
             'merchant_order_id'    => $invoiceNumber,
             'person_id'            => $personId,
             'user_id'              => $userId,
-            'payment_channel'      => strtoupper($category),
-            'channel_label'        => $categoryName,
+            'payment_channel'      => 'DOKU_CHECKOUT',
+            'channel_label'        => 'DOKU Checkout (Hosted Page)',
             'bill_amount'          => $totalBillAmount,
             'mdr_amount'           => $mdrFee,
             'total_amount'         => $grandTotal,
