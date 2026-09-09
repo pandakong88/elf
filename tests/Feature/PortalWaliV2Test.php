@@ -43,7 +43,7 @@ class PortalWaliV2Test extends TestCase
         ]);
     }
 
-    public function test_wali_portal_renders_all_four_tabs_seamlessly(): void
+    public function test_wali_portal_renders_all_three_tabs_seamlessly(): void
     {
         $santri = $this->santri;
         $this->actingAs($this->admin);
@@ -56,10 +56,7 @@ class PortalWaliV2Test extends TestCase
             ->assertSee('Pilih Tagihan yang Ingin Dibayar')
             ->call('setPortalTab', 'riwayat')
             ->assertSet('portalTab', 'riwayat')
-            ->assertSee('Riwayat Pembayaran')
-            ->call('setPortalTab', 'rekap')
-            ->assertSet('portalTab', 'rekap')
-            ->assertSee('Rekapitulasi Tahunan');
+            ->assertSee('Riwayat Pembayaran');
     }
 
     public function test_wali_portal_manual_transfer_submission(): void
@@ -380,63 +377,6 @@ class PortalWaliV2Test extends TestCase
             ->assertSet('pocketMoneyAmount', 25000)
             ->assertSet('senderBank', 'BCA')
             ->assertSet('senderAccountName', 'Ibu Fatimah');
-    }
-
-    public function test_rekap_tab_matrix_and_quick_pay(): void
-    {
-        $santri = $this->santri;
-        $currentYear = (int) date('Y');
-
-        // 1. Syahriah Januari (Lunas)
-        Bill::create([
-            'person_id'    => $santri->id,
-            'bill_type'    => 'syahriah',
-            'title'        => 'Syahriah Jan',
-            'period_month' => 1,
-            'period_year'  => $currentYear,
-            'amount'       => 300000,
-            'amount_paid'  => 300000,
-            'status'       => 'paid',
-            'created_by'   => $this->admin->id,
-        ]);
-
-        // 2. Syahriah Februari (Cicilan)
-        $billFeb = Bill::create([
-            'person_id'    => $santri->id,
-            'bill_type'    => 'syahriah',
-            'title'        => 'Syahriah Feb',
-            'period_month' => 2,
-            'period_year'  => $currentYear,
-            'amount'       => 300000,
-            'amount_paid'  => 100000,
-            'status'       => 'partial',
-            'created_by'   => $this->admin->id,
-        ]);
-
-        // 3. Kitab (Non-bulanan)
-        $billKitab = Bill::create([
-            'person_id'    => $santri->id,
-            'bill_type'    => 'kitab',
-            'title'        => 'Kitab Kuning',
-            'period_year'  => $currentYear,
-            'amount'       => 200000,
-            'amount_paid'  => 0,
-            'status'       => 'unpaid',
-            'created_by'   => $this->admin->id,
-        ]);
-
-        $test = Livewire::test(DashboardTagihan::class, ['personId' => $santri->id])
-            ->call('setPortalTab', 'rekap')
-            ->assertSet('portalTab', 'rekap')
-            ->assertSee('Kelunasan Tahun ' . $currentYear)
-            ->assertSee('Januari')
-            ->assertSee('Februari')
-            ->assertSee('Biaya Kitab');
-
-        // Test quick pay from rekap for February
-        $test->call('payFromRekap', [(string)$billFeb->id])
-            ->assertSet('portalTab', 'bayar')
-            ->assertSet('selectedBillIds', [(string)$billFeb->id]);
     }
 }
 
