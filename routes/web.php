@@ -43,6 +43,16 @@ Route::get('/keuangan/kuitansi/{receiptNo}/pdf', [\App\Http\Controllers\BuktiBay
     ->name('bukti-bayar.kuitansi.pdf');
 Route::get('/keuangan/bukti-bayar/kasir/{paymentId}', [\App\Http\Controllers\BuktiBayarController::class, 'kasir'])
     ->name('bukti-bayar.kasir');
+// ─── Storage Static Fallback (Jika symlink public/storage hosting belum aktif) ──
+Route::get('/storage/{path}', function (string $path) {
+    $fullPath = storage_path('app/public/' . $path);
+    if (!file_exists($fullPath)) {
+        abort(404, 'File bukti/media tidak ditemukan.');
+    }
+    return response()->file($fullPath, [
+        'Cache-Control' => 'public, max-age=86400',
+    ]);
+})->where('path', '.*')->name('storage.fallback');
 // ─────────────────────────────────────────────────────────────────────────────
 
 
