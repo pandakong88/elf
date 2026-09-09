@@ -322,6 +322,49 @@ class PortalWaliV2Test extends TestCase
             ->assertDontSee('TRF-TEST-2026')
             ->assertSee('KSR-2026-0099');
     }
+
+    public function test_switch_tab_and_retry_manual_submission(): void
+    {
+        $santri = $this->santri;
+        $bill = Bill::create([
+            'person_id'   => $santri->id,
+            'bill_type'   => 'syahriah',
+            'title'       => 'Syahriah Retried',
+            'amount'      => 100000,
+            'amount_paid' => 0,
+            'status'      => 'unpaid',
+            'created_by'  => $this->admin->id,
+        ]);
+
+        $sub = ManualTransferSubmission::create([
+            'submission_code'       => 'TRF-RETRY-01',
+            'person_id'             => $santri->id,
+            'bill_ids'              => [$bill->id],
+            'bill_breakdown'        => [
+                ['bill_id' => $bill->id, 'bill_type' => 'syahriah', 'amount' => 100000, 'title' => 'Syahriah Retried'],
+            ],
+            'total_bills_amount'    => 100000,
+            'pocket_money_amount'   => 25000,
+            'total_transfer_amount' => 125000,
+            'bank_destination'      => 'BSI',
+            'sender_bank'           => 'BCA',
+            'sender_account_name'   => 'Ibu Fatimah',
+            'proof_image_path'      => 'transfer-proofs/dummy.jpg',
+            'status'                => 'rejected',
+            'rejection_reason'      => 'Bukti tidak jelas',
+        ]);
+
+        Livewire::test(DashboardTagihan::class, ['personId' => $santri->id])
+            ->call('switchTab', 'riwayat')
+            ->assertSet('portalTab', 'riwayat')
+            ->call('retryManualSubmission', $sub->id)
+            ->assertSet('portalTab', 'bayar')
+            ->assertSet('checkoutMethod', 'manual')
+            ->assertSet('selectedBillIds', [(string) $bill->id])
+            ->assertSet('pocketMoneyAmount', 25000)
+            ->assertSet('senderBank', 'BCA')
+            ->assertSet('senderAccountName', 'Ibu Fatimah');
+    }
 }
 
 

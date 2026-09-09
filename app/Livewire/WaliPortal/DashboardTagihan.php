@@ -92,6 +92,32 @@ class DashboardTagihan extends Component
         $this->fifoNotice = null;
     }
 
+    public function switchTab(string $tab): void
+    {
+        $this->setPortalTab($tab);
+    }
+
+    public function retryManualSubmission(string $submissionId): void
+    {
+        $sub = ManualTransferSubmission::where('id', $submissionId)
+            ->where('person_id', $this->personId)
+            ->first();
+
+        if ($sub) {
+            $this->selectedBillIds = array_map('strval', (array) ($sub->bill_ids ?? []));
+            if ($sub->pocket_money_amount > 0) {
+                $this->includePocketMoney = true;
+                $this->pocketMoneyAmount = (float) $sub->pocket_money_amount;
+            }
+            $this->senderBank = $sub->sender_bank ?? '';
+            $this->senderAccountName = $sub->sender_account_name ?? '';
+            $this->selectedBankDestination = $sub->bank_destination ?? 'BSI';
+        }
+
+        $this->checkoutMethod = 'manual';
+        $this->setPortalTab('bayar');
+    }
+
     public function setCheckoutMethod(string $method): void
     {
         $this->checkoutMethod = in_array($method, ['doku', 'manual', 'duitku']) ? $method : 'manual';
