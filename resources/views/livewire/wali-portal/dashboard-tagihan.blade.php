@@ -1101,23 +1101,42 @@
     @if($portalTab === 'riwayat')
         <div class="space-y-4">
             
-            <!-- ─── BAR FILTER RIWAYAT (TAHUN & METODE) ────────────────────────── -->
+            <!-- ─── BAR FILTER RIWAYAT (BULAN, TAHUN & METODE) ────────────────────────── -->
             <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-3.5 shadow-xs space-y-2.5">
                 <div class="flex items-center justify-between gap-2">
                     <span class="text-xs font-black uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
                         <svg class="w-3.5 h-3.5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/></svg>
                         <span>Filter Riwayat</span>
                     </span>
-                    @if($historyYear || $historyMethod)
+                    @if($historyYear || $historyMonth || $historyMethod)
                         <button type="button" 
-                                wire:click="$set('historyYear', ''); $set('historyMethod', '');"
+                                wire:click="$set('historyYear', ''); $set('historyMonth', ''); $set('historyMethod', '');"
                                 class="text-[11px] font-bold text-rose-600 dark:text-rose-400 hover:underline">
                             Reset Filter ✕
                         </button>
                     @endif
                 </div>
 
-                <div class="grid grid-cols-2 gap-2">
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                    <!-- Filter Bulan -->
+                    <div>
+                        <label class="block text-[10px] font-black uppercase text-slate-400 dark:text-slate-500 mb-1">Bulan</label>
+                        <select wire:model.live="historyMonth"
+                                class="w-full text-xs font-bold rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-200 py-1.5 px-2.5 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500">
+                            <option value="">Semua Bulan</option>
+                            @php
+                                $indoMonths = [
+                                    1 => 'Januari', 2 => 'Februari', 3 => 'Maret', 4 => 'April',
+                                    5 => 'Mei', 6 => 'Juni', 7 => 'Juli', 8 => 'Agustus',
+                                    9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Desember'
+                                ];
+                            @endphp
+                            @foreach($indoMonths as $mNum => $mName)
+                                <option value="{{ $mNum }}">{{ $mName }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+
                     <!-- Filter Tahun -->
                     <div>
                         <label class="block text-[10px] font-black uppercase text-slate-400 dark:text-slate-500 mb-1">Tahun</label>
@@ -1349,16 +1368,16 @@
                         <div>
                             <h4 class="text-xs font-bold text-slate-800 dark:text-slate-200">Belum Ada Riwayat Transaksi</h4>
                             <p class="text-[11px] text-slate-500 dark:text-slate-400 max-w-xs mx-auto mt-1">
-                                @if($historyYear || $historyMethod)
+                                @if($historyYear || $historyMonth || $historyMethod)
                                     Tidak ditemukan transaksi dengan filter yang dipilih. Silakan ubah atau reset filter.
                                 @else
                                     Semua transaksi pembayaran sah atau bukti transfer akan tercatat dan tersimpan rapi di sini.
                                 @endif
                             </p>
                         </div>
-                        @if($historyYear || $historyMethod)
+                        @if($historyYear || $historyMonth || $historyMethod)
                             <button type="button" 
-                                    wire:click="$set('historyYear', ''); $set('historyMethod', '');"
+                                    wire:click="$set('historyYear', ''); $set('historyMonth', ''); $set('historyMethod', '');"
                                     class="px-4 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-700 dark:text-slate-200 rounded-xl text-xs font-bold transition-all">
                                 Reset Filter
                             </button>

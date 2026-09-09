@@ -321,6 +321,19 @@ class PortalWaliV2Test extends TestCase
         $test->set('historyMethod', 'kasir')
             ->assertDontSee('TRF-TEST-2026')
             ->assertSee('KSR-2026-0099');
+
+        // Test filtering by current month
+        $currentMonth = (string) now()->month;
+        $test->set('historyMethod', '')
+            ->set('historyMonth', $currentMonth)
+            ->assertSee('TRF-TEST-2026')
+            ->assertSee('KSR-2026-0099');
+
+        // Test filtering by different month (e.g. month + 1 modulo 12)
+        $diffMonth = (string) (now()->month == 12 ? 1 : now()->month + 1);
+        $test->set('historyMonth', $diffMonth)
+            ->assertDontSee('TRF-TEST-2026')
+            ->assertDontSee('KSR-2026-0099');
     }
 
     public function test_switch_tab_and_retry_manual_submission(): void

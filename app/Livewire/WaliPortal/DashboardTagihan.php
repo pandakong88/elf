@@ -31,6 +31,7 @@ class DashboardTagihan extends Component
     // Filter Riwayat Pembayaran
     public string $historyMethod = ''; // '' (Semua) | 'gateway' (Online) | 'kasir' (Kasir) | 'manual' (Transfer)
     public string $historyYear   = ''; // '' (Semua Tahun) | '2026'
+    public string $historyMonth  = ''; // '' (Semua Bulan) | '1'..'12'
 
     // Checklist Tagihan yang dipilih wali
     public array $selectedBillIds = [];
@@ -927,6 +928,9 @@ class DashboardTagihan extends Component
         if ($this->historyYear) {
             $manualQuery->whereYear('created_at', (int)$this->historyYear);
         }
+        if ($this->historyMonth) {
+            $manualQuery->whereMonth('created_at', (int)$this->historyMonth);
+        }
 
         $manualSubmissions = ($this->historyMethod === 'kasir' || $this->historyMethod === 'gateway')
             ? collect()
@@ -938,6 +942,9 @@ class DashboardTagihan extends Component
 
         if ($this->historyYear) {
             $gatewayQuery->whereYear('created_at', (int)$this->historyYear);
+        }
+        if ($this->historyMonth) {
+            $gatewayQuery->whereMonth('created_at', (int)$this->historyMonth);
         }
 
         $gatewayList = ($this->historyMethod === 'kasir' || $this->historyMethod === 'manual') ? collect() : $gatewayQuery->orderBy('created_at', 'desc')->get()->map(function ($trx) {
@@ -976,6 +983,9 @@ class DashboardTagihan extends Component
 
         if ($this->historyYear) {
             $kasirQuery->whereYear('payment_date', (int)$this->historyYear);
+        }
+        if ($this->historyMonth) {
+            $kasirQuery->whereMonth('payment_date', (int)$this->historyMonth);
         }
 
         $kasirList = ($this->historyMethod === 'gateway' || $this->historyMethod === 'manual') ? collect() : $kasirQuery->orderBy('created_at', 'desc')->get()
