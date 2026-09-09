@@ -7,6 +7,7 @@ use App\Modules\Kepengasuhan\Models\Dormitory;
 use App\Modules\Keuangan\Models\Bill;
 use App\Modules\Keuangan\Models\BillPayment;
 use App\Modules\Keuangan\Models\PaymentTransaction;
+use App\Modules\Keuangan\Models\ManualTransferSubmission;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -60,7 +61,7 @@ class SettlementReportController extends Controller
         $totalNet   = 0.0;
         $totalTrx   = 0;
 
-        // Breakdown categories: Syahriah Putra, Syahriah Putri, Madrasah, Kitab, Majek Pagi, Majek Sore, Kas Komplek, Lainnya
+        // Breakdown categories: Syahriah Putra, Syahriah Putri, Madrasah, Kitab, Majek Pagi, Majek Sore, Kas Komplek, Pocket Money, Lainnya
         $categories = [
             'syahriah_putra' => ['label' => 'Syahriah / SPP Pondok Putra', 'desc' => 'Operasional pesantren unit putra', 'amount' => 0.0, 'count' => 0],
             'syahriah_putri' => ['label' => 'Syahriah / SPP Pondok Putri', 'desc' => 'Operasional pesantren unit putri', 'amount' => 0.0, 'count' => 0],
@@ -69,6 +70,7 @@ class SettlementReportController extends Controller
             'majek_pagi'     => ['label' => 'Katering Majek (Pagi)', 'desc' => 'Logistik konsumsi makan pagi', 'amount' => 0.0, 'count' => 0],
             'majek_sore'     => ['label' => 'Katering Majek (Sore)', 'desc' => 'Logistik konsumsi makan sore', 'amount' => 0.0, 'count' => 0],
             'kas_komplek'    => ['label' => 'Kas Komplek / Asrama', 'desc' => 'Dana titipan kebersihan & kegiatan asrama', 'amount' => 0.0, 'count' => 0],
+            'pocket_money'   => ['label' => 'Titipan Uang Saku Santri', 'desc' => 'Dana titipan uang saku / jajan santri', 'amount' => 0.0, 'count' => 0],
             'lainnya'        => ['label' => 'Iuran Lainnya / Insidental', 'desc' => 'Pendaftaran, kebersihan, & event', 'amount' => 0.0, 'count' => 0],
         ];
 
@@ -106,9 +108,10 @@ class SettlementReportController extends Controller
             $totalTrx += $gatewayTrx->count();
 
             foreach ($gatewayTrx as $trx) {
+                $netTrx = (float) ($trx->net_amount > 0 ? $trx->net_amount : ((float)$trx->bill_amount + (float)($trx->pocket_money_amount ?? 0)));
                 $totalGross += (float) $trx->total_amount;
                 $totalMdr   += (float) $trx->mdr_amount;
-                $totalNet   += (float) $trx->bill_amount;
+                $totalNet   += $netTrx;
 
                 $person = $trx->person;
                 $activeAssignment = $person?->roomAssignments?->first();
@@ -129,12 +132,19 @@ class SettlementReportController extends Controller
                         }
                     }
                 }
+
+                if ((float)($trx->pocket_money_amount ?? 0) > 0) {
+                    $this->allocateToCategory($categories, 'pocket_money', (float)$trx->pocket_money_amount, $person?->gender, 'Titipan Uang Saku Santri');
+                }
             }
         }
 
         // 2. Process Cashier Payments
         if ($source === 'kasir' || $source === 'all') {
-            $kasirQuery = BillPayment::where('payment_method', '!=', 'gateway_duitku')
+            $kasirQuery = BillPayment::where(function ($q) {
+                    $q->where('payment_method', 'not like', 'gateway%')
+                      ->orWhereNull('payment_method');
+                })
                 ->where(function ($q) use ($dateFrom, $dateTo, $fromCarbon, $toCarbon) {
                     $q->whereBetween('payment_date', [$dateFrom, $dateTo])
                       ->orWhereBetween('created_at', [$fromCarbon, $toCarbon]);
@@ -166,6 +176,27 @@ class SettlementReportController extends Controller
                         $dormBreakdown[$dormId]['count_santri']++;
                     }
                 }
+            }
+
+            // Hitung titipan uang saku dari transfer manual yang disetujui kasir
+            $manualSubsWithPocket = ManualTransferSubmission::where('status', 'approved')
+                ->where('pocket_money_amount', '>', 0)
+                ->where(function ($q) use ($dateFrom, $dateTo, $fromCarbon, $toCarbon) {
+                    $q->whereBetween('verified_at', [$fromCarbon, $toCarbon])
+                      ->orWhere(function ($oq) use ($fromCarbon, $toCarbon) {
+                          $oq->whereNull('verified_at')
+                             ->whereBetween('created_at', [$fromCarbon, $toCarbon]);
+                      });
+                })
+                ->when($targetGender, fn($q, $g) => $q->whereHas('person', fn($pq) => $pq->where('gender', $g)))
+                ->with('person')
+                ->get();
+
+            foreach ($manualSubsWithPocket as $mSub) {
+                $amtPm = (float) $mSub->pocket_money_amount;
+                $totalGross += $amtPm;
+                $totalNet   += $amtPm;
+                $this->allocateToCategory($categories, 'pocket_money', $amtPm, $mSub->person?->gender, 'Titipan Uang Saku Santri');
             }
         }
 
@@ -225,11 +256,18 @@ class SettlementReportController extends Controller
         // 1. Gateway
         if ($source === 'gateway' || $source === 'all') {
             $gatewayTrx = PaymentTransaction::where('status', 'success')
-                ->whereBetween('created_at', [$fromCarbon, $toCarbon])
+                ->where(function ($q) use ($fromCarbon, $toCarbon) {
+                    $q->whereBetween('callback_received_at', [$fromCarbon, $toCarbon])
+                      ->orWhere(function ($oq) use ($fromCarbon, $toCarbon) {
+                          $oq->whereNull('callback_received_at')
+                             ->whereBetween('created_at', [$fromCarbon, $toCarbon]);
+                      });
+                })
                 ->whereHas('person.roomAssignments', function ($q) use ($dormitoryId) {
                     $q->active()->whereHas('room', fn($r) => $r->where('dormitory_id', $dormitoryId));
                 })
-                ->with(['person.roomAssignments' => fn($q) => $q->active()->with('room')]);
+                ->with(['person.roomAssignments' => fn($q) => $q->active()->with('room')])
+                ->get();
 
             foreach ($gatewayTrx as $trx) {
                 $person = $trx->person;
@@ -240,8 +278,8 @@ class SettlementReportController extends Controller
                         $amt = (float) ($item['pay_portion'] ?? $item['net_amount'] ?? 0);
                         $totalAmount += $amt;
                         $santriList[] = [
-                            'nis'       => $person->nis ?? '-',
-                            'name'      => $person->name ?? '—',
+                            'nis'       => $person?->nis ?? '-',
+                            'name'      => $person?->name ?? '—',
                             'room_name' => $activeAssignment?->room?->name ?? '-',
                             'paid_date' => $trx->created_at->locale('id')->translatedFormat('d M Y, H:i'),
                             'method'    => ($trx->channel_label ?? $trx->payment_channel ?? 'Online') . ' (Online Gateway)',
@@ -254,8 +292,14 @@ class SettlementReportController extends Controller
 
         // 2. Kasir
         if ($source === 'kasir' || $source === 'all') {
-            $kasirPayments = BillPayment::where('payment_method', '!=', 'gateway_duitku')
-                ->whereBetween('payment_date', [$dateFrom, $dateTo])
+            $kasirPayments = BillPayment::where(function ($q) {
+                    $q->where('payment_method', 'not like', 'gateway%')
+                      ->orWhereNull('payment_method');
+                })
+                ->where(function ($q) use ($dateFrom, $dateTo, $fromCarbon, $toCarbon) {
+                    $q->whereBetween('payment_date', [$dateFrom, $dateTo])
+                      ->orWhereBetween('created_at', [$fromCarbon, $toCarbon]);
+                })
                 ->whereHas('bill', function ($q) use ($dormitoryId) {
                     $q->where('bill_type', 'kas_komplek')
                         ->whereHas('person.roomAssignments', function ($rq) use ($dormitoryId) {
@@ -273,8 +317,8 @@ class SettlementReportController extends Controller
 
                 $totalAmount += $amt;
                 $santriList[] = [
-                    'nis'       => $person->nis ?? '-',
-                    'name'      => $person->name ?? '—',
+                    'nis'       => $person?->nis ?? '-',
+                    'name'      => $person?->name ?? '—',
                     'room_name' => $activeAssignment?->room?->name ?? '-',
                     'paid_date' => $pay->payment_date ? Carbon::parse($pay->payment_date)->locale('id')->translatedFormat('d M Y') : '-',
                     'method'    => strtoupper($pay->payment_method ?? 'Kasir'),
@@ -303,6 +347,10 @@ class SettlementReportController extends Controller
     private function allocateToCategory(array &$categories, string $type, float $amt, ?string $gender = null, ?string $customLabel = null): void
     {
         switch ($type) {
+            case 'pocket_money':
+                $categories['pocket_money']['amount'] += $amt;
+                $categories['pocket_money']['count']++;
+                break;
             case 'syahriah_pondok':
                 if ($gender === 'P') {
                     $categories['syahriah_putri']['amount'] += $amt;

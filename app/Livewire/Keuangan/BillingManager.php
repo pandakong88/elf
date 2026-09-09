@@ -2981,7 +2981,7 @@ class BillingManager extends Component
             'id'             => Str::uuid()->toString(),
             'period_from'    => $this->settlementDateFrom ?: now()->startOfMonth()->toDateString(),
             'period_to'      => $this->settlementDateTo ?: now()->toDateString(),
-            'gender'         => $this->genderScope() ?: ($this->settlementGender ?: null),
+            'gender'         => $this->genderScope() ?: ($this->settlementGender ?: 'A'),
             'total_gross'    => $report['total_gross'],
             'total_mdr'      => $report['total_mdr'],
             'total_net'      => $report['total_net'],
@@ -3028,6 +3028,7 @@ class BillingManager extends Component
             'majek_pagi'     => ['key' => 'majek_pagi', 'label' => 'Katering Majek (Pagi)', 'desc' => 'Logistik konsumsi makan pagi santri', 'amount' => 0.0, 'count' => 0, 'icon' => '🍲', 'color' => 'orange'],
             'majek_sore'     => ['key' => 'majek_sore', 'label' => 'Katering Majek (Sore)', 'desc' => 'Logistik konsumsi makan sore santri', 'amount' => 0.0, 'count' => 0, 'icon' => '🍲', 'color' => 'orange'],
             'kas_komplek'    => ['key' => 'kas_komplek', 'label' => 'Kas Komplek / Asrama (Total)', 'desc' => 'Dana titipan kebersihan & kegiatan asrama', 'amount' => 0.0, 'count' => 0, 'icon' => '🏠', 'color' => 'indigo'],
+            'pocket_money'   => ['key' => 'pocket_money', 'label' => 'Titipan Uang Saku Santri', 'desc' => 'Dana titipan uang jajan santri via portal', 'amount' => 0.0, 'count' => 0, 'icon' => '💰', 'color' => 'purple'],
             'lainnya'        => ['key' => 'lainnya', 'label' => 'Iuran Lainnya / Insidental', 'desc' => 'Pendaftaran, kebersihan, & event', 'amount' => 0.0, 'count' => 0, 'icon' => '🏷️', 'color' => 'slate'],
         ];
 
@@ -3066,9 +3067,10 @@ class BillingManager extends Component
             $totalTrx += $gatewayTrx->count();
 
             foreach ($gatewayTrx as $trx) {
+                $netTrx = (float) ($trx->net_amount > 0 ? $trx->net_amount : ((float)$trx->bill_amount + (float)($trx->pocket_money_amount ?? 0)));
                 $totalGross += (float) $trx->total_amount;
                 $totalMdr   += (float) $trx->mdr_amount;
-                $totalNet   += (float) $trx->bill_amount;
+                $totalNet   += $netTrx;
 
                 $person = $trx->person;
                 $activeAssignment = $person?->roomAssignments?->first();
@@ -3097,12 +3099,19 @@ class BillingManager extends Component
                         $dormBreakdown[$dormId]['count_santri'] = count($dormBreakdown[$dormId]['santri_ids']);
                     }
                 }
+
+                if ((float)($trx->pocket_money_amount ?? 0) > 0) {
+                    $this->allocateCategory($categories, 'pocket_money', (float)$trx->pocket_money_amount, $person?->gender, 'Titipan Uang Saku Santri');
+                }
             }
         }
 
         // 2. Kasir
         if ($source === 'kasir' || $source === 'all') {
-            $kasirQuery = BillPayment::where('payment_method', '!=', 'gateway_duitku')
+            $kasirQuery = BillPayment::where(function ($q) {
+                    $q->where('payment_method', 'not like', 'gateway%')
+                      ->orWhereNull('payment_method');
+                })
                 ->where(function ($q) use ($dateFrom, $dateTo, $fromCarbon, $toCarbon) {
                     $q->whereBetween('payment_date', [$dateFrom, $dateTo])
                       ->orWhereBetween('created_at', [$fromCarbon, $toCarbon]);
@@ -3143,6 +3152,27 @@ class BillingManager extends Component
                     $dormBreakdown[$dormId]['count_santri'] = count($dormBreakdown[$dormId]['santri_ids']);
                 }
             }
+
+            // Hitung titipan uang saku dari transfer manual yang disetujui kasir
+            $manualSubsWithPocket = ManualTransferSubmission::where('status', 'approved')
+                ->where('pocket_money_amount', '>', 0)
+                ->where(function ($q) use ($dateFrom, $dateTo, $fromCarbon, $toCarbon) {
+                    $q->whereBetween('verified_at', [$fromCarbon, $toCarbon])
+                      ->orWhere(function ($oq) use ($fromCarbon, $toCarbon) {
+                          $oq->whereNull('verified_at')
+                             ->whereBetween('created_at', [$fromCarbon, $toCarbon]);
+                      });
+                })
+                ->when($targetGender, fn($q, $g) => $q->whereHas('person', fn($pq) => $pq->where('gender', $g)))
+                ->with('person')
+                ->get();
+
+            foreach ($manualSubsWithPocket as $mSub) {
+                $amtPm = (float) $mSub->pocket_money_amount;
+                $totalGross += $amtPm;
+                $totalNet   += $amtPm;
+                $this->allocateCategory($categories, 'pocket_money', $amtPm, $mSub->person?->gender, 'Titipan Uang Saku Santri');
+            }
         }
 
         $periodLabel = \Carbon\Carbon::parse($dateFrom)->locale('id')->translatedFormat('d M Y') . ' s/d ' . \Carbon\Carbon::parse($dateTo)->locale('id')->translatedFormat('d M Y');
@@ -3161,6 +3191,10 @@ class BillingManager extends Component
     private function allocateCategory(array &$categories, string $type, float $amt, ?string $gender = null, ?string $customLabel = null): void
     {
         switch ($type) {
+            case 'pocket_money':
+                $categories['pocket_money']['amount'] += $amt;
+                $categories['pocket_money']['count']++;
+                break;
             case 'syahriah_pondok':
                 if ($gender === 'P') {
                     $categories['syahriah_putri']['amount'] += $amt;
