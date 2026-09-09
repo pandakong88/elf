@@ -2485,7 +2485,7 @@ class BillingManager extends Component
 
         // ✅ SERVER-SIDE GUARD: Transaksi gateway tidak boleh di-void
         if (strtolower($payment->payment_method) === 'gateway_duitku') {
-            $this->toastError('Transaksi yang dibayar via Duitku (QRIS/VA) tidak dapat dibatalkan dari sistem ini. Hubungi Duitku jika diperlukan.');
+            $this->toastError('Transaksi yang dibayar via Payment Gateway tidak dapat dibatalkan dari sistem ini.');
             return;
         }
 
@@ -2557,7 +2557,7 @@ class BillingManager extends Component
 
         // ✅ SERVER-SIDE GUARD: Double-check — transaksi gateway tidak boleh di-void
         if (strtolower($payment->payment_method) === 'gateway_duitku') {
-            $this->toastError('Transaksi yang dibayar via Duitku tidak dapat dibatalkan dari sistem ini.');
+            $this->toastError('Transaksi yang dibayar via Payment Gateway tidak dapat dibatalkan dari sistem ini.');
             $this->closeVoidModal();
             return;
         }
@@ -3091,7 +3091,7 @@ class BillingManager extends Component
                             'name'      => $person->name ?? '—',
                             'room_name' => $activeAssignment?->room?->name ?? '-',
                             'paid_date' => $trx->created_at->locale('id')->translatedFormat('d M, H:i'),
-                            'method'    => ($trx->channel_label ?? $trx->payment_channel ?? 'Online') . ' (Duitku)',
+                            'method'    => ($trx->channel_label ?? $trx->payment_channel ?? 'Online') . ' (Online Gateway)',
                             'amount'    => $amt,
                         ];
                         $dormBreakdown[$dormId]['count_santri'] = count($dormBreakdown[$dormId]['santri_ids']);
@@ -4009,7 +4009,7 @@ class BillingManager extends Component
                     'amount'       => (float) $trx->total_amount,
                     'date'         => $trx->created_at,
                     'date_fmt'     => $trx->created_at ? $trx->created_at->locale('id')->translatedFormat('d M, H:i') : '—',
-                    'logger_name'  => 'Duitku Gateway',
+                    'logger_name'  => 'Payment Gateway',
                     'preview_url'  => route('bukti-bayar.gateway', $trx->id),
                 ];
             });

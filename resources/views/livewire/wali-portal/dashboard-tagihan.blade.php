@@ -1119,7 +1119,7 @@
                             <option value="">Semua Metode</option>
                             <option value="manual">Transfer Manual</option>
                             <option value="kasir">Kasir / Tunai</option>
-                            <option value="gateway">Online (Duitku)</option>
+                            <option value="gateway">Pembayaran Online (Gateway)</option>
                         </select>
                     </div>
                 </div>

@@ -577,7 +577,7 @@
                                     </div>
                                     <h4 class="text-xs font-bold text-slate-800 dark:text-slate-200">Belum Ada Transaksi Pembayaran</h4>
                                     <p class="text-[11px] text-slate-500 dark:text-slate-400 max-w-xs mx-auto">
-                                        Transaksi yang masuk melalui Kasir ataupun Online Duitku akan tampil real-time di sini.
+                                        Transaksi yang masuk melalui Kasir ataupun Pembayaran Online Gateway akan tampil real-time di sini.
                                     </p>
                                 </div>
                             @else
@@ -662,7 +662,7 @@
                                 <div class="w-full h-3 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden flex">
                                     <div style="width: {{ $pCash }}%" class="bg-emerald-500" title="Tunai: {{ $pCash }}%"></div>
                                     <div style="width: {{ $pTrf }}%" class="bg-indigo-500" title="Transfer Kasir: {{ $pTrf }}%"></div>
-                                    <div style="width: {{ $pGtw }}%" class="bg-amber-500" title="Online Duitku: {{ $pGtw }}%"></div>
+                                    <div style="width: {{ $pGtw }}%" class="bg-amber-500" title="Pembayaran Online: {{ $pGtw }}%"></div>
                                 </div>
 
                                 <div class="space-y-2 text-xs pt-1">
@@ -687,7 +687,7 @@
                                     <div class="flex items-center justify-between">
                                         <span class="flex items-center gap-1.5 text-slate-600 dark:text-slate-400">
                                             <span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
-                                            <span>Online Duitku</span>
+                                            <span>Pembayaran Online</span>
                                         </span>
                                         <strong class="font-bold text-slate-900 dark:text-white">
                                             Rp {{ number_format($bendaharaStats['today_gateway_inflow'] ?? 0, 0, ',', '.') }}
@@ -2781,7 +2781,7 @@
                             ⚡
                         </div>
                         <div>
-                            <span class="block text-[10px] font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Via Gateway Duitku</span>
+                            <span class="block text-[10px] font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Via Online Gateway</span>
                             <span class="text-base font-extrabold text-amber-600 dark:text-amber-400">Rp {{ number_format($payLogTotalGateway, 0, ',', '.') }}</span>
                             <span class="text-[9px] text-slate-400">{{ $payLogGatewayCount }} transaksi online</span>
                         </div>
@@ -2937,7 +2937,7 @@
                                     <option value="">-- Semua Metode --</option>
                                     <option value="cash">💵 Tunai (Cash)</option>
                                     <option value="transfer">🏦 Transfer Bank</option>
-                                    <option value="gateway_duitku">⚡ Gateway Duitku (QRIS/VA)</option>
+                                    <option value="gateway_duitku">⚡ Pembayaran Online (Gateway)</option>
                                 </select>
                             </div>
                         </div>
@@ -3064,18 +3064,12 @@
                                                                             <span class="text-[10px] text-slate-400 block font-medium">Periode: {{ $det['period'] }}</span>
                                                                         @endif
                                                                     </div>
-                                                                    <span class="font-mono font-extrabold text-emerald-600 dark:text-emerald-400 shrink-0 text-[11px]">
-                                                                        Rp {{ number_format($det['amount'], 0, ',', '.') }}
-                                                                    </span>
-                                                                </div>
-                                                            @endforeach
+                                                            </span>
+                                                            <span class="font-mono font-semibold text-slate-700 dark:text-slate-300 shrink-0">
+                                                                Rp {{ number_format($item->amount_paid, 0, ',', '.') }}
+                                                            </span>
                                                         </div>
-
-                                                        <div class="border-t border-slate-100 dark:border-slate-800 pt-2.5 flex items-center justify-between text-xs bg-slate-50/50 dark:bg-slate-950/40 -mx-4 -mb-4 px-4 py-3 rounded-b-2xl">
-                                                            <span class="font-bold text-slate-500">Total Kuitansi:</span>
-                                                            <span class="font-extrabold font-mono text-sm text-emerald-600 dark:text-emerald-400">Rp {{ number_format($rcpt->total_amount, 0, ',', '.') }}</span>
-                                                        </div>
-                                                    </div>
+                                                    @endforeach
                                                 </div>
                                             </td>
 
@@ -3093,7 +3087,7 @@
                                                     @else bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400 @endif">
                                                     @if($method === 'cash') 💵 Tunai
                                                     @elseif($method === 'transfer') 🏦 Transfer
-                                                    @elseif($method === 'gateway_duitku') ⚡ Duitku
+                                                    @elseif($method === 'gateway_duitku') ⚡ Online Gateway
                                                     @else 💳 {{ strtoupper($rcpt->payment_method) }} @endif
                                                 </span>
                                             </td>
@@ -3171,6 +3165,7 @@
                                             $bill = $pay->bill;
                                             $santri = $bill?->person;
                                             $config = $bill?->config;
+                                            $method = strtolower($pay->payment_method);
                                         @endphp
                                         <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/20 transition-colors">
                                             <td class="py-4 px-4 font-medium text-slate-500">
@@ -3219,7 +3214,6 @@
                                                 Rp {{ number_format($pay->amount_paid, 0, ',', '.') }}
                                             </td>
                                             <td class="py-4 px-4 text-center">
-                                                @php $method = strtolower($pay->payment_method); @endphp
                                                 <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[9px] font-extrabold uppercase tracking-wider
                                                     @if($method === 'cash') bg-teal-500/10 text-teal-600 dark:text-teal-400
                                                     @elseif($method === 'transfer') bg-blue-500/10 text-blue-600 dark:text-blue-400
@@ -3227,18 +3221,17 @@
                                                     @else bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400 @endif">
                                                     @if($method === 'cash') 💵 Tunai
                                                     @elseif($method === 'transfer') 🏦 Transfer
-                                                    @elseif($method === 'gateway_duitku') ⚡ Duitku Online
+                                                    @elseif($method === 'gateway_duitku') ⚡ Gateway Online
                                                     @else 💳 {{ $pay->payment_method }} @endif
                                                 </span>
                                             </td>
                                             <td class="py-4 px-4 max-w-[180px]">
                                                 @if($method === 'gateway_duitku')
                                                     @php
-                                                        // Ekstrak nomor referensi dari catatan
                                                         preg_match('/Ref transaksi:\s*(\S+)/', $pay->notes ?? '', $refMatch);
                                                         $refCode = $refMatch[1] ?? null;
                                                     @endphp
-                                                    <span class="text-[10px] text-slate-500 dark:text-slate-400 block">Bayar mandiri via Duitku</span>
+                                                    <span class="text-[10px] text-slate-500 dark:text-slate-400 block">Bayar mandiri via Payment Gateway</span>
                                                     @if($refCode)
                                                         <code class="text-[9px] font-mono bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 px-1.5 py-0.5 rounded mt-0.5 block truncate" title="{{ $refCode }}">{{ $refCode }}</code>
                                                     @endif
@@ -3253,9 +3246,7 @@
                                             </td>
                                             <td class="py-4 px-4 text-center">
                                                 <div class="flex items-center justify-center gap-1.5">
-                                                    {{-- ⬇ PDF Download / Kuitansi --}}
                                                     @if($method === 'gateway_duitku')
-                                                        {{-- Gateway: cari PaymentTransaction via reference di notes --}}
                                                     @else
                                                         <a href="{{ route('bukti-bayar.kuitansi', ['receiptNo' => ($pay->receipt_no ?: $pay->id), 'from' => 'payments_log']) }}" target="_blank"
                                                            class="inline-flex items-center gap-1 px-2.5 py-1.5 bg-indigo-500/10 hover:bg-indigo-500 text-indigo-600 hover:text-white rounded-xl text-[9px] font-bold transition-all whitespace-nowrap"
@@ -3265,9 +3256,8 @@
                                                         </a>
                                                     @endif
 
-                                                    {{-- 🗑 Void Button --}}
                                                     @if($method === 'gateway_duitku')
-                                                        <span class="inline-flex items-center gap-1 px-2.5 py-1.5 bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 rounded-xl text-[9px] font-bold whitespace-nowrap cursor-not-allowed" title="Transaksi online tidak dapat di-void. Hubungi Duitku jika diperlukan.">
+                                                        <span class="inline-flex items-center gap-1 px-2.5 py-1.5 bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 rounded-xl text-[9px] font-bold whitespace-nowrap cursor-not-allowed" title="Transaksi online tidak dapat di-void. Hubungi Admin jika diperlukan.">
                                                             🔒 Tidak Bisa Void
                                                         </span>
                                                     @else
@@ -3311,7 +3301,7 @@
             </div>
         @endif
 
-        {{-- TAB: TRANSAKSI GATEWAY DUITKU --}}
+        {{-- TAB: TRANSAKSI PAYMENT GATEWAY --}}
         @if ($activeTab === 'gateway_transactions')
             <div class="space-y-6 animate-fade-in">
 
@@ -3360,7 +3350,7 @@
                             {{-- Search --}}
                             <div class="relative flex-1 min-w-0">
                                 <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-                                <input wire:model.live.debounce.300ms="gatewaySearch" type="text" placeholder="Cari nama santri, no. order, atau ref Duitku…" class="w-full pl-8 pr-3 py-2 text-xs bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-700 dark:text-slate-300 placeholder-slate-400 focus:ring-1 focus:ring-amber-400 focus:border-amber-400 outline-none transition"/>
+                                <input wire:model.live.debounce.300ms="gatewaySearch" type="text" placeholder="Cari nama santri, no. invoice, atau referensi…" class="w-full pl-8 pr-3 py-2 text-xs bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-700 dark:text-slate-300 placeholder-slate-400 focus:ring-1 focus:ring-amber-400 focus:border-amber-400 outline-none transition"/>
                             </div>
                             {{-- Status --}}
                             <select wire:model.live="gatewayStatus" class="px-3 py-2 text-xs bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-600 dark:text-slate-300 focus:ring-1 focus:ring-amber-400 outline-none transition shrink-0">
@@ -3405,14 +3395,14 @@
 
                     <div class="px-6 py-3.5 border-b border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                         <div>
-                            <h3 class="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider font-serif-display">Log Transaksi Gateway Duitku</h3>
+                            <h3 class="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider font-serif-display">Log Transaksi Payment Gateway</h3>
                             <p class="text-[11px] text-slate-400 mt-0.5">Semua percobaan pembayaran wali santri via QRIS / Virtual Account — termasuk yang belum berhasil.</p>
                         </div>
                         <button type="button" wire:click="syncAllPendingGateway" wire:loading.attr="disabled"
                             class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-amber-500/10 hover:bg-amber-500/20 text-amber-700 dark:text-amber-300 rounded-xl text-xs font-extrabold border border-amber-500/30 transition shrink-0 active:scale-95">
                             <svg wire:loading.class="animate-spin" wire:target="syncAllPendingGateway" class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
                             <span wire:loading.remove wire:target="syncAllPendingGateway">🔄 Sinkronkan Status Pending</span>
-                            <span wire:loading wire:target="syncAllPendingGateway">Menghubungi Duitku...</span>
+                            <span wire:loading wire:target="syncAllPendingGateway">Menghubungi Gateway...</span>
                         </button>
                     </div>
                     <div class="overflow-x-auto">
@@ -3426,7 +3416,7 @@
                                     <th class="py-4 px-4 text-right">MDR</th>
                                     <th class="py-4 px-4 text-right">Total Bayar</th>
                                     <th class="py-4 px-4 text-center">Status</th>
-                                    <th class="py-4 px-4">Ref. Duitku</th>
+                                    <th class="py-4 px-4">Ref. Gateway</th>
                                     <th class="py-4 px-4 text-center">Aksi &amp; Rincian</th>
                                 </tr>
                             </thead>
@@ -3472,8 +3462,8 @@
                                             @endif
                                         </td>
                                         <td class="py-3 px-4">
-                                            @if($trx->duitku_reference)
-                                                <code class="text-[9px] font-mono bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 px-1.5 py-0.5 rounded">{{ $trx->duitku_reference }}</code>
+                                            @if($trx->duitku_reference || $trx->gateway_provider)
+                                                <code class="text-[9px] font-mono bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 px-1.5 py-0.5 rounded">{{ $trx->duitku_reference ?: strtoupper($trx->gateway_provider) }}</code>
                                             @else
                                                 <span class="text-slate-400 text-[10px]">—</span>
                                             @endif
@@ -3486,7 +3476,7 @@
                                                             wire:click="syncGatewayStatus('{{ $trx->id }}')" 
                                                             wire:loading.attr="disabled"
                                                             class="inline-flex items-center gap-1 px-2.5 py-1 text-[9px] font-black rounded-xl bg-amber-500 hover:bg-amber-600 text-white shadow-xs transition active:scale-95"
-                                                            title="Cek status pembayaran ke Duitku secara real-time">
+                                                            title="Cek status pembayaran ke Gateway secara real-time">
                                                         <svg wire:loading.class="animate-spin" wire:target="syncGatewayStatus('{{ $trx->id }}')" class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
                                                         <span>Cek Status</span>
                                                     </button>
@@ -3498,10 +3488,8 @@
                                                         class="inline-flex items-center gap-1 px-2.5 py-1 text-[9px] font-extrabold rounded-xl transition-all
                                                         bg-indigo-500/10 text-indigo-700 dark:text-indigo-400 hover:bg-indigo-500/20 border border-indigo-500/20 dark:border-indigo-500/30">
                                                         <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/></svg>
-                                                        {{ $breakdownCount }} Tagihan
+                                                        <span>Rincian ({{ $breakdownCount }})</span>
                                                     </button>
-                                                @else
-                                                    <span class="text-slate-400 text-[10px]">—</span>
                                                 @endif
                                             </div>
                                         </td>
@@ -3509,7 +3497,6 @@
                                 @empty
                                     <tr>
                                         <td colspan="9" class="py-16 text-center text-slate-400 font-semibold">
-                                            <div class="flex flex-col items-center gap-3">
                                                 <svg class="w-10 h-10 text-slate-200 dark:text-slate-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
                                                 <span class="text-sm">Tidak ada transaksi yang cocok dengan filter ini.</span>
                                                 @if($gatewaySearch || $gatewayStatus || $gatewayChannel || $gatewayStartDate || $gatewayEndDate)
@@ -3585,7 +3572,7 @@
                                 </div>
                                 @if($selectedGatewayTrxData['duitku_reference'] !== '—')
                                     <div class="ml-auto">
-                                        <span class="text-slate-400 text-[9px] uppercase font-bold block">Ref. Duitku</span>
+                                        <span class="text-slate-400 text-[9px] uppercase font-bold block">Ref. Gateway</span>
                                         <code class="text-[10px] font-mono text-slate-500 dark:text-slate-400">{{ $selectedGatewayTrxData['duitku_reference'] }}</code>
                                     </div>
                                 @endif
@@ -3668,7 +3655,7 @@
                         </div>
                         <h2 class="font-black text-xl text-slate-900 dark:text-slate-100 tracking-tight">Settlement Report &amp; Alokasi Kas Komplek</h2>
                         <p class="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-2xl">
-                            Pencocokan arus dana masuk dari Duitku ke rekening pondok serta pemisahan porsi anggaran per unit (Pondok, Madrasah, Dapur Majek, dan Kas per Komplek Asrama).
+                            Pencocokan arus dana masuk dari Payment Gateway ke rekening pondok serta pemisahan porsi anggaran per unit (Pondok, Madrasah, Dapur Majek, dan Kas per Komplek Asrama).
                         </p>
                     </div>
 
@@ -3739,7 +3726,7 @@
                                 <span class="text-[11px] font-bold text-slate-400">Sumber:</span>
                                 <select wire:model.live="settlementSource" 
                                         class="text-xs font-bold rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white px-2.5 py-1.5 focus:ring-2 focus:ring-sky-500">
-                                    <option value="gateway">⚡ Khusus Online (Duitku)</option>
+                                    <option value="gateway">⚡ Khusus Online (Gateway)</option>
                                     <option value="kasir">💵 Khusus Kasir Manual</option>
                                     <option value="all">🌐 Semua Pembayaran</option>
                                 </select>
@@ -3778,7 +3765,7 @@
                             - Rp {{ number_format($settlementReport['total_mdr'], 0, ',', '.') }}
                         </div>
                         <div class="text-[11px] text-rose-500/80">
-                            Fee Duitku (Ditanggung Wali)
+                            Fee Gateway / MDR (Ditanggung Wali)
                         </div>
                     </div>
 

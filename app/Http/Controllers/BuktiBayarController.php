@@ -59,7 +59,7 @@ class BuktiBayarController extends Controller
             'type'              => 'gateway',
             'app_name'          => config('app.name', 'Elvith'),
             'no_bukti'          => $trx->merchant_order_id,
-            'duitku_reference'  => $trx->duitku_reference ?? '—',
+            'duitku_reference'  => $trx->duitku_reference ?: ($trx->gateway_provider ? strtoupper($trx->gateway_provider) : '—'),
             'santri_name'       => $trx->person?->name ?? '—',
             'payment_method'    => ($trx->channel_label ?? $trx->payment_channel ?? '—') . ' (Online)',
             'payment_date'      => $trx->created_at->translatedFormat('d F Y, H:i') . ' WIB',
@@ -193,7 +193,7 @@ class BuktiBayarController extends Controller
             'payment_method'  => match (strtolower($firstPayment->payment_method ?? '')) {
                 'cash'            => 'Tunai',
                 'transfer'        => 'Transfer Bank',
-                'gateway_duitku'  => 'Gateway Online (Duitku)',
+                'gateway_duitku'  => 'Pembayaran Online (Gateway)',
                 default           => strtoupper($firstPayment->payment_method ?? '—'),
             },
             'breakdown'       => $breakdown,

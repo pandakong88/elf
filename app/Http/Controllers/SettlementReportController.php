@@ -170,7 +170,7 @@ class SettlementReportController extends Controller
         }
 
         $sourceLabel = match ($source) {
-            'gateway' => '⚡ Khusus Gateway Online (Duitku)',
+            'gateway' => '⚡ Khusus Gateway Online',
             'kasir'   => '💵 Khusus Kasir Manual (Tunai / Bank)',
             default   => '🌐 Seluruh Pembayaran (Gateway + Kasir)',
         };
@@ -244,7 +244,7 @@ class SettlementReportController extends Controller
                             'name'      => $person->name ?? '—',
                             'room_name' => $activeAssignment?->room?->name ?? '-',
                             'paid_date' => $trx->created_at->locale('id')->translatedFormat('d M Y, H:i'),
-                            'method'    => ($trx->channel_label ?? $trx->payment_channel ?? 'Online') . ' (Duitku)',
+                            'method'    => ($trx->channel_label ?? $trx->payment_channel ?? 'Online') . ' (Online Gateway)',
                             'amount'    => $amt,
                         ];
                     }

@@ -920,7 +920,7 @@ class DashboardTagihan extends Component
                 'id'           => $trx->id,
                 'source'       => 'gateway',
                 'order_id'     => $trx->merchant_order_id,
-                'method_label' => ($trx->channel_label ?? $trx->payment_channel ?? 'Online') . ' (Duitku)',
+                'method_label' => ($trx->channel_label ?? $trx->payment_channel ?? 'Online') . ' (Online Gateway)',
                 'channel_code' => $trx->payment_channel,
                 'amount'       => (float) $trx->total_amount,
                 'bill_amount'  => (float) $trx->bill_amount,
