@@ -281,4 +281,23 @@ class ManualTransferVerificationTest extends TestCase
         $this->assertEquals('rejected', $sub->status);
         $this->assertEquals('Bukti transfer buram atau tidak terbaca', $sub->rejection_reason);
     }
+
+    public function test_proof_url_accessor_and_streaming_endpoint(): void
+    {
+        // Create dummy proof image on public disk
+        \Illuminate\Support\Facades\Storage::disk('public')->put('transfer-proofs/test_proof.webp', 'fake-image-binary-data');
+
+        $sub = $this->createSubmission($this->santriPutra);
+        $sub->update(['proof_image_path' => 'transfer-proofs/test_proof.webp']);
+
+        $this->assertNotNull($sub->proof_url);
+        $this->assertStringContainsString('/transfer-proof/' . $sub->id . '/view', $sub->proof_url);
+
+        // Test GET streaming endpoint
+        $response = $this->get($sub->proof_url);
+        $response->assertStatus(200);
+
+        // Clean up
+        \Illuminate\Support\Facades\Storage::disk('public')->delete('transfer-proofs/test_proof.webp');
+    }
 }

@@ -68,6 +68,10 @@ class ManualTransferSubmission extends Model
         return $prefix . $random;
     }
 
+    protected $appends = [
+        'proof_url',
+    ];
+
     public function getTotalPaidAttribute(): float
     {
         return (float) ($this->total_transfer_amount ?? 0);
@@ -81,5 +85,13 @@ class ManualTransferSubmission extends Model
     public function getDestinationBankAttribute(): ?string
     {
         return $this->bank_destination;
+    }
+
+    public function getProofUrlAttribute(): ?string
+    {
+        if (empty($this->proof_image_path)) {
+            return null;
+        }
+        return route('transfer-proof.view', ['id' => $this->id]);
     }
 }

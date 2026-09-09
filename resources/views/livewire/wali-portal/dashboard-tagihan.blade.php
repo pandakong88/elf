@@ -1158,7 +1158,7 @@
                             $isPending  = $sub->status === 'pending';
                             $isApproved = $sub->status === 'approved';
                             $isRejected = $sub->status === 'rejected';
-                            $proofUrl   = $sub->proof_image_path ? asset('storage/' . $sub->proof_image_path) : null;
+                            $proofUrl   = $sub->proof_url ?: ($sub->proof_image_path ? asset('storage/' . $sub->proof_image_path) : null);
                         @endphp
                         <div class="bg-white dark:bg-slate-900 border rounded-3xl p-4 space-y-3 shadow-xs {{ $isPending ? 'border-amber-300 dark:border-amber-700/60 bg-amber-50/20' : ($isRejected ? 'border-rose-300 dark:border-rose-700/60 bg-rose-50/20' : 'border-emerald-300 dark:border-emerald-700/60 bg-emerald-50/20') }}">
                             

@@ -4646,7 +4646,7 @@
                                         <td class="px-5 py-4 text-center whitespace-nowrap">
                                             @if($sub->proof_image_path)
                                                 <button type="button" wire:click="openTransferVerifyModal('{{ $sub->id }}')" class="relative group inline-block rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 w-12 h-12 shadow-2xs hover:scale-105 transition-all">
-                                                    <img src="{{ Storage::url($sub->proof_image_path) }}" alt="Bukti" class="w-full h-full object-cover"/>
+                                                    <img src="{{ $sub->proof_url ?: Storage::url($sub->proof_image_path) }}" alt="Bukti" class="w-full h-full object-cover"/>
                                                     <div class="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-xs">🔍</div>
                                                 </button>
                                             @else
@@ -5589,10 +5589,10 @@
 
                         @if($selectedTransferData->proof_image_path)
                             <div class="flex-1 min-h-[260px] bg-slate-950 rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-800 relative group flex items-center justify-center p-2">
-                                <img src="{{ Storage::url($selectedTransferData->proof_image_path) }}"
+                                <img src="{{ $selectedTransferData->proof_url ?: Storage::url($selectedTransferData->proof_image_path) }}"
                                      alt="Struk Transfer"
                                      class="max-h-[380px] w-auto object-contain rounded-xl shadow-lg"/>
-                                <a href="{{ Storage::url($selectedTransferData->proof_image_path) }}"
+                                <a href="{{ $selectedTransferData->proof_url ?: Storage::url($selectedTransferData->proof_image_path) }}"
                                    target="_blank"
                                    class="absolute bottom-3 right-3 px-3 py-1.5 bg-black/70 hover:bg-black text-white text-[11px] font-bold rounded-xl backdrop-blur-xs flex items-center gap-1.5 opacity-90 hover:opacity-100 transition-all">
                                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>

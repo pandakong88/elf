@@ -5,12 +5,47 @@ namespace App\Http\Controllers;
 use App\Modules\Keuangan\Models\BillPayment;
 use App\Modules\Keuangan\Models\Bill;
 use App\Modules\Keuangan\Models\PaymentTransaction;
+use App\Modules\Keuangan\Models\ManualTransferSubmission;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
 
 class BuktiBayarController extends Controller
 {
+    /**
+     * Stream / display uploaded manual transfer proof image directly from storage.
+     * Works without symlink or exec requirements on shared hosting.
+     */
+    public function viewProofImage(string $id)
+    {
+        $submission = ManualTransferSubmission::findOrFail($id);
+
+        if (empty($submission->proof_image_path)) {
+            abort(404, 'Bukti transfer tidak ditemukan.');
+        }
+
+        $fullPath = storage_path('app/public/' . $submission->proof_image_path);
+
+        if (!file_exists($fullPath)) {
+            $altJpg  = preg_replace('/\.(webp|png)$/i', '.jpg', $fullPath);
+            $altWebp = preg_replace('/\.(jpg|jpeg|png)$/i', '.webp', $fullPath);
+            $altPng  = preg_replace('/\.(jpg|jpeg|webp)$/i', '.png', $fullPath);
+
+            if (file_exists($altJpg)) {
+                $fullPath = $altJpg;
+            } elseif (file_exists($altWebp)) {
+                $fullPath = $altWebp;
+            } elseif (file_exists($altPng)) {
+                $fullPath = $altPng;
+            } else {
+                abort(404, 'File gambar bukti tidak ditemukan di server.');
+            }
+        }
+
+        return response()->file($fullPath, [
+            'Cache-Control' => 'public, max-age=86400',
+        ]);
+    }
     /**
      * Generate PDF bukti bayar untuk transaksi gateway (Duitku).
      * Wali hanya boleh akses miliknya. Admin/Bendahara bebas.

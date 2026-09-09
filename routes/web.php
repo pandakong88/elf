@@ -43,6 +43,10 @@ Route::get('/keuangan/kuitansi/{receiptNo}/pdf', [\App\Http\Controllers\BuktiBay
     ->name('bukti-bayar.kuitansi.pdf');
 Route::get('/keuangan/bukti-bayar/kasir/{paymentId}', [\App\Http\Controllers\BuktiBayarController::class, 'kasir'])
     ->name('bukti-bayar.kasir');
+
+// Stream bukti transfer manual langsung (Bypass web server symlink requirement)
+Route::get('/transfer-proof/{id}/view', [\App\Http\Controllers\BuktiBayarController::class, 'viewProofImage'])
+    ->name('transfer-proof.view');
 // ─── Storage Static Fallback (Jika symlink public/storage hosting belum aktif) ──
 Route::get('/storage/{path}', function (string $path) {
     $fullPath = storage_path('app/public/' . $path);
