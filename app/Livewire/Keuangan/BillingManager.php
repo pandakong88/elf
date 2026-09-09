@@ -593,7 +593,7 @@ class BillingManager extends Component
     }
 
     /**
-     * Cek & sinkronkan status transaksi spesifik langsung ke API Duitku.
+     * Cek & sinkronkan status transaksi spesifik langsung ke API Gateway (DOKU / Duitku).
      */
     public function syncGatewayStatus(string $trxId): void
     {
@@ -604,6 +604,27 @@ class BillingManager extends Component
         }
 
         try {
+            if ($trx->gateway_provider === 'doku') {
+                $doku = app(\App\Modules\Keuangan\Services\DokuService::class);
+                $res = $doku->checkOrderStatus($trx->merchant_order_id);
+                $status = strtoupper($res['transaction']['status'] ?? ($res['order']['status'] ?? ($res['status'] ?? '')));
+
+                if ($status === 'SUCCESS' || $status === 'PAID') {
+                    $doku->handleSuccessfulPayment($trx, $res);
+                    $this->toastSuccess("Transaksi DOKU {$trx->merchant_order_id} berhasil disinkronkan: SUKSES (LUNAS)!");
+                } elseif (in_array($status, ['FAILED', 'EXPIRED', 'CANCELLED'])) {
+                    $trx->update([
+                        'status'         => $status === 'EXPIRED' ? 'expired' : 'failed',
+                        'failure_reason' => $res['transaction']['status_message'] ?? 'Pembayaran gagal/expired di DOKU.',
+                    ]);
+                    $this->toastInfo("Status transaksi DOKU: GAGAL / EXPIRED.");
+                } else {
+                    $this->toastWarning("Status transaksi DOKU masih PENDING (Menunggu Pembayaran).");
+                }
+                return;
+            }
+
+            // Default Duitku
             $duitku = app(\App\Modules\Keuangan\Services\DuitkuService::class);
             $res = $duitku->checkTransactionStatus($trx->merchant_order_id);
 
@@ -631,12 +652,12 @@ class BillingManager extends Component
                 $this->toastWarning("Respon dari Duitku: [{$statusCode}] {$statusMessage}");
             }
         } catch (\Throwable $e) {
-            $this->toastError("Gagal menghubungi API Duitku: " . $e->getMessage());
+            $this->toastError("Gagal menghubungi server Gateway: " . $e->getMessage());
         }
     }
 
     /**
-     * Sinkronkan semua transaksi yang masih berstatus pending ke API Duitku.
+     * Sinkronkan semua transaksi yang masih berstatus pending ke API Gateway (DOKU / Duitku).
      */
     public function syncAllPendingGateway(): void
     {
@@ -651,11 +672,28 @@ class BillingManager extends Component
         }
 
         $duitku       = app(\App\Modules\Keuangan\Services\DuitkuService::class);
+        $doku         = app(\App\Modules\Keuangan\Services\DokuService::class);
         $successCount = 0;
         $failedCount  = 0;
 
         foreach ($pendingTransactions as $trx) {
             try {
+                if ($trx->gateway_provider === 'doku') {
+                    $res = $doku->checkOrderStatus($trx->merchant_order_id);
+                    $status = strtoupper($res['transaction']['status'] ?? ($res['order']['status'] ?? ($res['status'] ?? '')));
+                    if ($status === 'SUCCESS' || $status === 'PAID') {
+                        $doku->handleSuccessfulPayment($trx, $res);
+                        $successCount++;
+                    } elseif (in_array($status, ['FAILED', 'EXPIRED', 'CANCELLED'])) {
+                        $trx->update([
+                            'status'         => $status === 'EXPIRED' ? 'expired' : 'failed',
+                            'failure_reason' => 'Expired/Failed di DOKU',
+                        ]);
+                        $failedCount++;
+                    }
+                    continue;
+                }
+
                 $res = $duitku->checkTransactionStatus($trx->merchant_order_id);
                 $statusCode = (string) ($res['statusCode'] ?? ($res['status_code'] ?? ''));
 
@@ -670,7 +708,7 @@ class BillingManager extends Component
                 } elseif ($statusCode === '02') {
                     $trx->update([
                         'status'         => 'failed',
-                        'failure_reason' => $res['statusMessage'] ?? 'Expired',
+                        'failure_reason' => 'Expired / Dibatalkan',
                     ]);
                     $failedCount++;
                 }

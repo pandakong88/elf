@@ -78,22 +78,22 @@ class DokuService
      * @param string $timestamp
      * @return array Array header DOKU lengkap
      */
-    public function generateHeaders(string $targetPath, string $bodyJson, ?string $requestId = null, ?string $timestamp = null): array
+    public function generateHeaders(string $targetPath, string $bodyJson = '', ?string $requestId = null, ?string $timestamp = null): array
     {
         $clientId  = $this->getClientId();
         $secretKey = $this->getSecretKey();
         $requestId = $requestId ?: (string) Str::uuid();
         $timestamp = $timestamp ?: gmdate('Y-m-d\TH:i:s\Z');
 
-        // 1. Digest Body
-        $digest = base64_encode(hash('sha256', $bodyJson, true));
-
-        // 2. Component String
         $componentString = "Client-Id:" . $clientId . "\n"
                          . "Request-Id:" . $requestId . "\n"
                          . "Request-Timestamp:" . $timestamp . "\n"
-                         . "Request-Target:" . $targetPath . "\n"
-                         . "Digest:" . $digest;
+                         . "Request-Target:" . $targetPath;
+
+        if ($bodyJson !== '') {
+            $digest = base64_encode(hash('sha256', $bodyJson, true));
+            $componentString .= "\nDigest:" . $digest;
+        }
 
         // 3. Signature HMAC-SHA256
         $signature = "HMACSHA256=" . base64_encode(hash_hmac('sha256', $componentString, $secretKey, true));
@@ -377,6 +377,137 @@ class DokuService
                 'message'    => 'Error Exception: ' . $e->getMessage(),
                 'latency_ms' => $latency,
             ];
+        }
+    }
+
+    /**
+     * Cek status pesanan/transaksi langsung ke DOKU API.
+     *
+     * @param string $invoiceNumber
+     * @return array
+     */
+    public function checkOrderStatus(string $invoiceNumber): array
+    {
+        $targetPath = "/orders/v1/status/{$invoiceNumber}";
+        $headers = $this->generateHeaders($targetPath, '');
+        $apiUrl = rtrim($this->getBaseUrl(), '/') . $targetPath;
+
+        try {
+            $response = Http::withHeaders($headers)
+                ->timeout(15)
+                ->get($apiUrl);
+
+            $resData = $response->json();
+            Log::info('[DokuService] checkOrderStatus', [
+                'invoice_number' => $invoiceNumber,
+                'status_code'    => $response->status(),
+                'response'       => $resData,
+            ]);
+
+            return $resData ?? [];
+        } catch (\Exception $e) {
+            Log::error('[DokuService] checkOrderStatus exception', [
+                'invoice_number' => $invoiceNumber,
+                'error'          => $e->getMessage(),
+            ]);
+            return [];
+        }
+    }
+
+    /**
+     * Proses pelunasan pembayaran sukses DOKU secara tuntas & idempotent.
+     */
+    public function handleSuccessfulPayment(PaymentTransaction $trx, array $payload = []): void
+    {
+        if ($trx->status !== 'success') {
+            $trx->update([
+                'status'               => 'success',
+                'callback_received_at' => $trx->callback_received_at ?: now(),
+            ]);
+        }
+
+        $now = now();
+        $receiptNo = \App\Modules\Keuangan\Models\BillPayment::generateReceiptNo();
+        $paymentGroupId = (string) Str::uuid();
+
+        // Tentukan user sistem pencatat
+        $loggedBy = $trx->user_id;
+        if (!$loggedBy || !\App\Models\User::where('id', $loggedBy)->exists()) {
+            $loggedBy = \App\Models\User::whereHas('roles', function($q) {
+                $q->whereIn('name', ['super-admin', 'admin', 'bendahara-putra', 'bendahara-putri']);
+            })->value('id') ?? \App\Models\User::value('id');
+        }
+
+        // Proses Pelunasan Tagihan (Bills)
+        $breakdown = $trx->bill_breakdown ?? [];
+        if (empty($breakdown) && !empty($trx->bill_ids)) {
+            foreach ($trx->bill_ids as $bId) {
+                $b = Bill::find($bId);
+                if ($b) {
+                    $breakdown[] = [
+                        'bill_id'      => $b->id,
+                        'config_label' => $b->title ?: 'Tagihan',
+                        'amount'       => (float) ($b->remaining_amount ?? $b->amount),
+                    ];
+                }
+            }
+        }
+
+        foreach ($breakdown as $item) {
+            if (empty($item['bill_id'])) continue;
+            $bill = Bill::find($item['bill_id']);
+            if (!$bill) continue;
+
+            $amountPaid = (float) ($item['amount'] ?? $bill->remaining_amount ?? 0);
+            if ($amountPaid <= 0) continue;
+
+            $existingPayment = \App\Modules\Keuangan\Models\BillPayment::where('bill_id', $bill->id)
+                ->where('notes', 'like', "%{$trx->merchant_order_id}%")
+                ->first();
+
+            if (!$existingPayment) {
+                \App\Modules\Keuangan\Models\BillPayment::create([
+                    'bill_id'          => $bill->id,
+                    'receipt_no'       => $receiptNo,
+                    'payment_group_id' => $paymentGroupId,
+                    'amount_paid'      => $amountPaid,
+                    'payment_method'   => 'gateway_duitku',
+                    'payment_date'     => $now,
+                    'logged_by'        => $loggedBy,
+                    'notes'            => 'Pembayaran DOKU Gateway [' . $trx->merchant_order_id . ' · ' . ($trx->payment_channel ?: 'DOKU') . ']',
+                ]);
+
+                $bill->recalculateStatus();
+            }
+        }
+
+        // Titipan Uang Saku Santri (jika ada)
+        if ($trx->pocket_money_amount > 0) {
+            $existingDeposit = \App\Modules\Keuangan\Models\PocketMoneyDeposit::where('reference_id', $trx->id)->first();
+            if (!$existingDeposit) {
+                \App\Modules\Keuangan\Models\PocketMoneyDeposit::create([
+                    'person_id'    => $trx->person_id,
+                    'amount'       => $trx->pocket_money_amount,
+                    'source'       => 'gateway_duitku',
+                    'reference_id' => $trx->id,
+                    'status'       => 'received',
+                    'notes'        => 'Titipan uang saku via DOKU [' . $trx->merchant_order_id . ']',
+                    'received_at'  => $now,
+                    'received_by'  => $loggedBy,
+                ]);
+            }
+        }
+
+        // Kirim WhatsApp jika service aktif
+        try {
+            if (class_exists(\App\Services\WhatsAppService::class) && $trx->person) {
+                $wa = app(\App\Services\WhatsAppService::class);
+                if (method_exists($wa, 'sendPaymentSuccessReceipt')) {
+                    $wa->sendPaymentSuccessReceipt($trx, $receiptNo);
+                }
+            }
+        } catch (\Throwable $e) {
+            Log::warning('[DokuService] WhatsApp receipt notification failed: ' . $e->getMessage());
         }
     }
 }
