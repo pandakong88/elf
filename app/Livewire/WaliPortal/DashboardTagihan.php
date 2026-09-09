@@ -63,6 +63,7 @@ class DashboardTagihan extends Component
 
     // Bayar Online (DOKU & Duitku)
     public string $selectedChannel = '';
+    public string $selectedDokuCategory = 'va';
     public bool $isProcessingPayment = false;
     public ?string $paymentError = null;
 
@@ -563,6 +564,31 @@ class DashboardTagihan extends Component
         return $this->getBillTypeLabel($bill->bill_type);
     }
 
+    public function selectDokuCategory(string $category): void
+    {
+        $categories = config('doku.channel_categories', []);
+        if (array_key_exists($category, $categories)) {
+            $this->selectedDokuCategory = $category;
+        }
+    }
+
+    public function getDokuCategories(): array
+    {
+        return config('doku.channel_categories', []);
+    }
+
+    public function getDokuCategoryFee(): float
+    {
+        $dokuService = app(DokuService::class);
+        $baseTotal = $this->getGrandTotalTransfer();
+        return $dokuService->calculateCategoryFee($this->selectedDokuCategory, $baseTotal);
+    }
+
+    public function getDokuGrandTotal(): float
+    {
+        return $this->getGrandTotalTransfer() + $this->getDokuCategoryFee();
+    }
+
     /**
      * Inisiasi pembayaran online otomatis via DOKU Hosted Checkout.
      */
@@ -598,6 +624,7 @@ class DashboardTagihan extends Component
                 pocketMoney:   $pocketMoney,
                 userId:        auth()->id(),
                 customAmounts: $this->customAmounts,
+                category:      $this->selectedDokuCategory,
             );
 
             $this->redirect($transaction->payment_url, navigate: false);

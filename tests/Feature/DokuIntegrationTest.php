@@ -140,22 +140,26 @@ class DokuIntegrationTest extends TestCase
             bills: [$bill],
             personId: $this->santri->id,
             pocketMoney: 100000,
-            userId: $this->admin->id
+            userId: $this->admin->id,
+            category: 'va'
         );
 
         $this->assertInstanceOf(PaymentTransaction::class, $transaction);
         $this->assertEquals('doku', $transaction->gateway_provider);
         $this->assertEquals('pending', $transaction->status);
         $this->assertEquals(350000, $transaction->bill_amount);
+        $this->assertEquals(3500, $transaction->mdr_amount);
         $this->assertEquals(100000, $transaction->pocket_money_amount);
-        $this->assertEquals(450000, $transaction->total_amount);
+        $this->assertEquals(453500, $transaction->total_amount);
+        $this->assertEquals(450000, $transaction->net_amount);
         $this->assertEquals('https://sandbox.doku.com/checkout/pay/TOKEN12345', $transaction->payment_url);
 
         $this->assertDatabaseHas('payment_transactions', [
             'id'                  => $transaction->id,
             'merchant_order_id'   => $transaction->merchant_order_id,
             'gateway_provider'    => 'doku',
-            'total_amount'        => 450000,
+            'total_amount'        => 453500,
+            'mdr_amount'          => 3500,
             'pocket_money_amount' => 100000,
             'status'              => 'pending',
         ]);

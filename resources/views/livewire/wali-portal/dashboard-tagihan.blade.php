@@ -866,52 +866,93 @@
                     </div>
                 @endif
 
-                <!-- ─── FORM GATEWAY DOKU (HOSTED CHECKOUT) ───────────────────── -->
+                <!-- ─── FORM GATEWAY DOKU (HOSTED CHECKOUT WITH CATEGORY SELECTION) ── -->
                 @if($checkoutMethod === 'doku' && $isDokuEnabled)
-                    <div class="space-y-3 pt-1">
-                        <div class="bg-slate-50 dark:bg-slate-950 p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 space-y-3 text-xs">
-                            <div class="flex items-center justify-between pb-2 border-b border-slate-200/80 dark:border-slate-800/80">
-                                <span class="font-bold text-slate-700 dark:text-slate-300">Total Pembayaran:</span>
-                                <span class="font-mono font-black text-sm text-emerald-600 dark:text-emerald-400">
+                    <div class="space-y-3.5 pt-1">
+                        <!-- Pilihan Saluran / Kategori Pembayaran -->
+                        <div>
+                            <label class="block text-[11px] font-black uppercase text-slate-700 dark:text-slate-300 mb-2 flex items-center justify-between">
+                                <span>Pilih Saluran Pembayaran:</span>
+                                <span class="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold">Diverifikasi Otomatis ⚡</span>
+                            </label>
+
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                @php
+                                    $dokuCategories = $this->getDokuCategories();
+                                @endphp
+
+                                @foreach($dokuCategories as $catKey => $cat)
+                                    @php
+                                        $isSelected = ($selectedDokuCategory === $catKey);
+                                        $estFee = app(\App\Modules\Keuangan\Services\DokuService::class)->calculateCategoryFee($catKey, $this->getGrandTotalTransfer());
+                                    @endphp
+                                    <button type="button"
+                                            wire:click="selectDokuCategory('{{ $catKey }}')"
+                                            class="p-3 rounded-xl border text-left transition-all relative flex flex-col justify-between gap-2 {{ $isSelected ? 'bg-emerald-50/70 dark:bg-emerald-950/40 border-emerald-500 text-slate-900 dark:text-white shadow-xs ring-1 ring-emerald-500' : 'bg-slate-50/60 dark:bg-slate-900/50 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:border-emerald-300 dark:hover:border-emerald-700' }}">
+                                        <div class="flex items-start justify-between gap-2">
+                                            <div class="flex items-center gap-2">
+                                                @if($catKey === 'va')
+                                                    <span class="text-base">🏦</span>
+                                                @elseif($catKey === 'minimarket')
+                                                    <span class="text-base">🏪</span>
+                                                @elseif($catKey === 'ewallet')
+                                                    <span class="text-base">📱</span>
+                                                @else
+                                                    <span class="text-base">⚡</span>
+                                                @endif
+                                                <span class="text-xs font-bold leading-tight">{{ $cat['name'] }}</span>
+                                            </div>
+                                            <div class="w-4 h-4 rounded-full border flex items-center justify-center shrink-0 {{ $isSelected ? 'border-emerald-600 bg-emerald-600 text-white' : 'border-slate-300 dark:border-slate-600' }}">
+                                                @if($isSelected)
+                                                    <svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
+                                                @endif
+                                            </div>
+                                        </div>
+
+                                        <p class="text-[10px] text-slate-500 dark:text-slate-400 line-clamp-1">
+                                            {{ $cat['description'] }}
+                                        </p>
+
+                                        <div class="pt-1.5 border-t border-slate-200/50 dark:border-slate-800/50 flex items-center justify-between text-[10px]">
+                                            <span class="text-slate-400 font-semibold">Biaya Layanan:</span>
+                                            <span class="font-bold text-emerald-600 dark:text-emerald-400 font-mono">
+                                                + Rp {{ number_format($estFee, 0, ',', '.') }}
+                                            </span>
+                                        </div>
+                                    </button>
+                                @endforeach
+                            </div>
+                        </div>
+
+                        <!-- Ringkasan Rincian Biaya -->
+                        <div class="bg-slate-50 dark:bg-slate-950 p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 space-y-2 text-xs">
+                            <div class="flex items-center justify-between text-[11px] text-slate-600 dark:text-slate-400">
+                                <span>Tagihan Pokok:</span>
+                                <span class="font-mono font-semibold text-slate-800 dark:text-slate-200">
                                     Rp {{ number_format($this->getGrandTotalTransfer(), 0, ',', '.') }}
                                 </span>
                             </div>
 
-                            <div class="space-y-2 text-[11px] text-slate-600 dark:text-slate-400">
-                                <p class="font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
-                                    <svg class="w-4 h-4 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                                    </svg>
-                                    <span>Saluran Pembayaran yang Tersedia:</span>
-                                </p>
-                                <ul class="space-y-1.5 pl-0.5">
-                                    <li class="flex items-start gap-2">
-                                        <svg class="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"/>
-                                        </svg>
-                                        <span><strong>QRIS Instan:</strong> GoPay, OVO, DANA, ShopeePay, LinkAja, BCA Mobile & Semua M-Banking</span>
-                                    </li>
-                                    <li class="flex items-start gap-2">
-                                        <svg class="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
-                                        </svg>
-                                        <span><strong>Virtual Account:</strong> BCA, Mandiri, BRI, BNI, BSI, Permata, CIMB Niaga, Danamon</span>
-                                    </li>
-                                    <li class="flex items-start gap-2">
-                                        <svg class="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
-                                        </svg>
-                                        <span><strong>Gerai Retail:</strong> Alfamart, Indomaret, Pos Indonesia</span>
-                                    </li>
-                                </ul>
+                            <div class="flex items-center justify-between text-[11px] text-slate-600 dark:text-slate-400 pb-2 border-b border-slate-200/80 dark:border-slate-800/80">
+                                <span>Biaya Layanan Gateway:</span>
+                                <span class="font-mono font-semibold text-emerald-600 dark:text-emerald-400">
+                                    + Rp {{ number_format($this->getDokuCategoryFee(), 0, ',', '.') }}
+                                </span>
                             </div>
 
-                            <div class="p-2.5 bg-emerald-50/80 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800/50 rounded-lg text-[11px] text-emerald-800 dark:text-emerald-300 flex items-start gap-2">
-                                <svg class="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                                </svg>
-                                <span>Tagihan terverifikasi secara real-time setelah pembayaran berhasil. Tidak perlu konfirmasi manual atau mengunggah bukti transfer.</span>
+                            <div class="flex items-center justify-between pt-0.5 font-bold">
+                                <span class="text-slate-800 dark:text-slate-200 text-xs">Total Pembayaran:</span>
+                                <span class="font-mono font-black text-sm text-emerald-600 dark:text-emerald-400">
+                                    Rp {{ number_format($this->getDokuGrandTotal(), 0, ',', '.') }}
+                                </span>
                             </div>
+                        </div>
+
+                        <div class="p-2.5 bg-emerald-50/80 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800/50 rounded-lg text-[11px] text-emerald-800 dark:text-emerald-300 flex items-start gap-2">
+                            <svg class="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                            <span>Tagihan terverifikasi secara instan/otomatis begitu pembayaran Anda selesai di DOKU. Tidak perlu unggah bukti struk.</span>
                         </div>
 
                         <!-- Tombol Lanjut ke DOKU -->
