@@ -47,7 +47,19 @@ Route::get('/keuangan/bukti-bayar/kasir/{paymentId}', [\App\Http\Controllers\Buk
 Route::get('/storage/{path}', function (string $path) {
     $fullPath = storage_path('app/public/' . $path);
     if (!file_exists($fullPath)) {
-        abort(404, 'File bukti/media tidak ditemukan.');
+        $altJpg  = preg_replace('/\.(webp|png)$/i', '.jpg', $fullPath);
+        $altWebp = preg_replace('/\.(jpg|jpeg|png)$/i', '.webp', $fullPath);
+        $altPng  = preg_replace('/\.(jpg|jpeg|webp)$/i', '.png', $fullPath);
+
+        if (file_exists($altJpg)) {
+            $fullPath = $altJpg;
+        } elseif (file_exists($altWebp)) {
+            $fullPath = $altWebp;
+        } elseif (file_exists($altPng)) {
+            $fullPath = $altPng;
+        } else {
+            abort(404, 'File bukti/media tidak ditemukan.');
+        }
     }
     return response()->file($fullPath, [
         'Cache-Control' => 'public, max-age=86400',

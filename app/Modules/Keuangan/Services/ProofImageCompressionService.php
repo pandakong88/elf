@@ -31,17 +31,18 @@ class ProofImageCompressionService
         // Ensure target folder exists
         Storage::disk($disk)->makeDirectory($folder);
 
-        $filename = 'proof_' . date('Ymd_His') . '_' . Str::random(8) . '.webp';
+        $extension = function_exists('imagewebp') ? 'webp' : 'jpg';
+        $filename = 'proof_' . date('Ymd_His') . '_' . Str::random(8) . '.' . $extension;
         $relativeTarget = $folder . '/' . $filename;
         $absoluteTarget = Storage::disk($disk)->path($relativeTarget);
 
         // Try processing with PHP GD
         if (extension_loaded('gd') && function_exists('imagecreatefromstring')) {
             $compressed = $this->compressWithGD($filePath, $absoluteTarget, $maxDimension, $quality);
-            if ($compressed) {
+            if ($compressed && file_exists($absoluteTarget)) {
                 return [
                     'path'          => $relativeTarget,
-                    'size'          => file_exists($absoluteTarget) ? filesize($absoluteTarget) : 0,
+                    'size'          => filesize($absoluteTarget),
                     'original_size' => $originalSize,
                 ];
             }
@@ -116,13 +117,12 @@ class ProofImageCompressionService
             $origHeight
         );
 
-        // Save as WebP if supported, otherwise fallback to JPEG
+        // Save as WebP if supported, otherwise JPEG
         $success = false;
-        if (function_exists('imagewebp')) {
+        if (str_ends_with(strtolower($targetPath), '.webp') && function_exists('imagewebp')) {
             $success = imagewebp($resizedImage, $targetPath, $quality);
         } else {
-            $jpgTarget = preg_replace('/\.webp$/i', '.jpg', $targetPath);
-            $success = imagejpeg($resizedImage, $jpgTarget, $quality);
+            $success = imagejpeg($resizedImage, $targetPath, $quality);
         }
 
         imagedestroy($sourceImage);
