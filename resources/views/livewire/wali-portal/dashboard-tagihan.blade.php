@@ -101,20 +101,20 @@
         </div>
     </div>
 
-    <!-- ─── 3 TAB NAVIGASI UTAMA (UKURAN BESAR & NYAMAN) ─────────────────── -->
-    <div class="grid grid-cols-3 gap-1.5 p-1.5 bg-slate-200/80 dark:bg-slate-800/80 rounded-2xl border border-slate-300 dark:border-slate-700/60 shadow-xs">
+    <!-- ─── 4 TAB NAVIGASI UTAMA (UKURAN BESAR & NYAMAN) ─────────────────── -->
+    <div class="grid grid-cols-4 gap-1 p-1.5 bg-slate-200/80 dark:bg-slate-800/80 rounded-2xl border border-slate-300 dark:border-slate-700/60 shadow-xs">
         <button type="button" 
                 wire:click="setPortalTab('tagihan')" 
-                class="py-2.5 px-2 rounded-xl text-xs font-black transition-all flex flex-col items-center justify-center gap-0.5 {{ $portalTab === 'tagihan' ? 'bg-white dark:bg-slate-900 text-emerald-700 dark:text-emerald-400 shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900' }}">
+                class="py-2.5 px-1 rounded-xl text-xs font-black transition-all flex flex-col items-center justify-center gap-0.5 {{ $portalTab === 'tagihan' ? 'bg-white dark:bg-slate-900 text-emerald-700 dark:text-emerald-400 shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900' }}">
             <span class="text-sm">📋</span>
-            <span>Tagihan</span>
+            <span class="text-[11px] sm:text-xs">Tagihan</span>
         </button>
 
         <button type="button" 
                 wire:click="setPortalTab('bayar')" 
-                class="py-2.5 px-2 rounded-xl text-xs font-black transition-all flex flex-col items-center justify-center gap-0.5 relative {{ $portalTab === 'bayar' ? 'bg-white dark:bg-slate-900 text-emerald-700 dark:text-emerald-400 shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900' }}">
+                class="py-2.5 px-1 rounded-xl text-xs font-black transition-all flex flex-col items-center justify-center gap-0.5 relative {{ $portalTab === 'bayar' ? 'bg-white dark:bg-slate-900 text-emerald-700 dark:text-emerald-400 shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900' }}">
             <span class="text-sm">💳</span>
-            <span>Bayar / Transfer</span>
+            <span class="text-[11px] sm:text-xs">Bayar</span>
             @if($totalHarusDibayarNow > 0)
                 <span class="absolute top-1 right-2 w-2 h-2 rounded-full bg-amber-500 ring-2 ring-white"></span>
             @endif
@@ -122,9 +122,16 @@
 
         <button type="button" 
                 wire:click="setPortalTab('riwayat')" 
-                class="py-2.5 px-2 rounded-xl text-xs font-black transition-all flex flex-col items-center justify-center gap-0.5 {{ $portalTab === 'riwayat' ? 'bg-white dark:bg-slate-900 text-emerald-700 dark:text-emerald-400 shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900' }}">
+                class="py-2.5 px-1 rounded-xl text-xs font-black transition-all flex flex-col items-center justify-center gap-0.5 {{ $portalTab === 'riwayat' ? 'bg-white dark:bg-slate-900 text-emerald-700 dark:text-emerald-400 shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900' }}">
             <span class="text-sm">📜</span>
-            <span>Riwayat</span>
+            <span class="text-[11px] sm:text-xs">Riwayat</span>
+        </button>
+
+        <button type="button" 
+                wire:click="setPortalTab('rekap')" 
+                class="py-2.5 px-1 rounded-xl text-xs font-black transition-all flex flex-col items-center justify-center gap-0.5 {{ $portalTab === 'rekap' ? 'bg-white dark:bg-slate-900 text-emerald-700 dark:text-emerald-400 shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900' }}">
+            <span class="text-sm">📊</span>
+            <span class="text-[11px] sm:text-xs">Rekap</span>
         </button>
     </div>
 
@@ -1483,6 +1490,215 @@
                     </div>
                 @endif
             </div>
+
+        </div>
+    @endif
+
+
+    <!-- =================================================================== -->
+    <!-- TAB 4: REKAPITULASI KEUANGAN TAHUNAN (STATUS LUNAS 1 TAHUN)         -->
+    <!-- =================================================================== -->
+    @if($portalTab === 'rekap')
+        <div class="space-y-4">
+
+            <!-- ─── HEADER PILIH TAHUN REKAP ─────────────────────────────────── -->
+            <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-3.5 shadow-xs flex items-center justify-between gap-3">
+                <div class="flex items-center gap-2">
+                    <span class="text-base">📊</span>
+                    <div>
+                        <h4 class="text-xs font-black text-slate-800 dark:text-slate-200 uppercase tracking-wide">
+                            Rekapitulasi Tahunan
+                        </h4>
+                        <p class="text-[10px] text-slate-400">Ringkasan status kelunasan tagihan ananda</p>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-1.5">
+                    <label class="text-[10px] font-black uppercase text-slate-400">Tahun:</label>
+                    <select wire:model.live="rekapYear"
+                            class="text-xs font-black rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-200 py-1 px-2.5 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500">
+                        @foreach($rekapAvailableYears as $ry)
+                            <option value="{{ $ry }}">Tahun {{ $ry }}</option>
+                        @endforeach
+                    </select>
+                </div>
+            </div>
+
+            <!-- ─── CARD RINGKASAN PROGRESS KELUNASAN ───────────────────────── -->
+            <div class="bg-gradient-to-br from-slate-900 to-slate-800 text-white rounded-3xl p-5 shadow-sm space-y-4 border border-slate-700">
+                <div class="flex items-center justify-between">
+                    <span class="text-[11px] font-bold text-emerald-300 uppercase tracking-wider">Kelunasan Tahun {{ $targetRekapYear }}</span>
+                    <span class="text-xs font-black px-2.5 py-0.5 rounded-full {{ $rekapPercentPaid >= 100 ? 'bg-emerald-500 text-slate-950' : 'bg-amber-400/20 text-amber-300 border border-amber-400/30' }}">
+                        {{ $rekapPercentPaid }}% Terbayar
+                    </span>
+                </div>
+
+                <!-- Progress Bar -->
+                <div class="w-full bg-slate-800 rounded-full h-3.5 p-0.5 border border-slate-700 overflow-hidden">
+                    <div class="bg-gradient-to-r from-emerald-500 to-teal-400 h-full rounded-full transition-all duration-500 shadow-sm"
+                         style="width: {{ $rekapPercentPaid }}%"></div>
+                </div>
+
+                <!-- 3 Kotak Statistik Rekap -->
+                <div class="grid grid-cols-3 gap-2 pt-1 border-t border-slate-800 text-center">
+                    <div class="bg-white/5 rounded-2xl p-2.5 border border-white/5">
+                        <span class="block text-[9px] uppercase font-bold text-slate-400">Total Tagihan</span>
+                        <strong class="text-xs sm:text-sm font-black text-white block mt-0.5">
+                            Rp {{ number_format($rekapTotalTagihan, 0, ',', '.') }}
+                        </strong>
+                    </div>
+                    <div class="bg-emerald-500/10 rounded-2xl p-2.5 border border-emerald-500/20">
+                        <span class="block text-[9px] uppercase font-bold text-emerald-300">Sudah Masuk</span>
+                        <strong class="text-xs sm:text-sm font-black text-emerald-400 block mt-0.5">
+                            Rp {{ number_format($rekapTotalPaid, 0, ',', '.') }}
+                        </strong>
+                    </div>
+                    <div class="bg-rose-500/10 rounded-2xl p-2.5 border border-rose-500/20">
+                        <span class="block text-[9px] uppercase font-bold text-rose-300">Sisa Kurang</span>
+                        <strong class="text-xs sm:text-sm font-black {{ $rekapTotalRemaining > 0 ? 'text-rose-400' : 'text-slate-400' }} block mt-0.5">
+                            Rp {{ number_format($rekapTotalRemaining, 0, ',', '.') }}
+                        </strong>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ─── 1. MATRIKS 12 BULAN SYAHRIAH / SPP ──────────────────────── -->
+            <div class="space-y-3">
+                <div class="flex items-center justify-between px-1">
+                    <h3 class="text-xs font-black uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                        <span>📅</span>
+                        <span>Syahriah / SPP Bulanan (Tahun {{ $targetRekapYear }})</span>
+                    </h3>
+                </div>
+
+                <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2.5">
+                    @foreach($rekapMonthlyMatrix as $mNum => $mItem)
+                        @php
+                            $isPaid    = $mItem['status'] === 'paid';
+                            $isPartial = $mItem['status'] === 'partial';
+                            $isUnpaid  = $mItem['status'] === 'unpaid';
+                            $isNone    = $mItem['status'] === 'none';
+                        @endphp
+                        <div class="p-3.5 rounded-2xl border transition-all flex flex-col justify-between shadow-2xs {{ $isPaid ? 'bg-emerald-50/60 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-800/60' : ($isPartial ? 'bg-amber-50/60 dark:bg-amber-950/20 border-amber-200 dark:border-amber-800/60' : ($isUnpaid ? 'bg-white dark:bg-slate-900 border-rose-200 dark:border-rose-900/60' : 'bg-slate-50 dark:bg-slate-800/40 border-slate-200 dark:border-slate-800 opacity-60')) }}">
+                            <div>
+                                <div class="flex items-center justify-between gap-1 mb-1.5">
+                                    <span class="font-extrabold text-xs text-slate-800 dark:text-slate-200">
+                                        {{ $mItem['month_name'] }}
+                                    </span>
+                                    @if($isPaid)
+                                        <span class="w-4 h-4 rounded-full bg-emerald-500 text-white flex items-center justify-center text-[10px] font-black shrink-0">✓</span>
+                                    @elseif($isPartial)
+                                        <span class="w-4 h-4 rounded-full bg-amber-500 text-white flex items-center justify-center text-[10px] font-black shrink-0">⏳</span>
+                                    @elseif($isUnpaid)
+                                        <span class="w-4 h-4 rounded-full bg-rose-500 text-white flex items-center justify-center text-[10px] font-black shrink-0">✕</span>
+                                    @endif
+                                </div>
+
+                                @if($mItem['has_bill'])
+                                    <div class="text-[11px] font-black {{ $isPaid ? 'text-emerald-700 dark:text-emerald-400' : ($isPartial ? 'text-amber-700 dark:text-amber-400' : 'text-slate-900 dark:text-white') }}">
+                                        Rp {{ number_format($mItem['amount'], 0, ',', '.') }}
+                                    </div>
+
+                                    @if($isPartial)
+                                        <div class="text-[9px] text-amber-600 dark:text-amber-400 font-semibold mt-0.5 leading-tight">
+                                            Masuk: Rp {{ number_format($mItem['amount_paid'], 0, ',', '.') }}<br>
+                                            Sisa: Rp {{ number_format($mItem['remaining'], 0, ',', '.') }}
+                                        </div>
+                                    @elseif($isUnpaid)
+                                        <span class="inline-block text-[9px] font-bold text-rose-600 dark:text-rose-400 mt-0.5">
+                                            Belum Lunas
+                                        </span>
+                                    @elseif($isPaid)
+                                        <span class="inline-block text-[9px] font-bold text-emerald-600 dark:text-emerald-400 mt-0.5">
+                                            Lunas
+                                        </span>
+                                    @endif
+                                @else
+                                    <span class="text-[10px] text-slate-400 italic">Tidak ada tagihan</span>
+                                @endif
+                            </div>
+
+                            @if(($isUnpaid || $isPartial) && !empty($mItem['bill_ids']))
+                                <button type="button" 
+                                        wire:click="payFromRekap({{ json_encode($mItem['bill_ids']) }})"
+                                        class="mt-2.5 w-full py-1 px-2 bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white font-bold rounded-lg text-[10px] transition-all text-center flex items-center justify-center gap-1 shadow-2xs">
+                                    <span>Bayar</span>
+                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+                                </button>
+                            @endif
+                        </div>
+                    @endforeach
+                </div>
+            </div>
+
+            <!-- ─── 2. TAGIHAN NON-BULANAN (KITAB, GEDUNG, SEMESTER, DLL) ────── -->
+            @if($rekapNonMonthlyBills->isNotEmpty())
+                <div class="space-y-3 pt-2">
+                    <div class="flex items-center justify-between px-1">
+                        <h3 class="text-xs font-black uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                            <span>📦</span>
+                            <span>Tagihan Non-Bulanan (Gedung, Kitab & Kegiatan)</span>
+                            <span class="text-[10px] font-bold text-slate-400">({{ $rekapNonMonthlyBills->count() }})</span>
+                        </h3>
+                    </div>
+
+                    <div class="space-y-2.5">
+                        @foreach($rekapNonMonthlyBills as $bItem)
+                            @php
+                                $isPaid    = $bItem['status'] === 'paid';
+                                $isPartial = $bItem['status'] === 'partial';
+                                $isUnpaid  = $bItem['status'] === 'unpaid';
+                            @endphp
+                            <div class="bg-white dark:bg-slate-900 border rounded-3xl p-4 shadow-xs space-y-3 {{ $isPaid ? 'border-emerald-200 dark:border-emerald-900/50 bg-emerald-50/10' : ($isPartial ? 'border-amber-200 dark:border-amber-900/50 bg-amber-50/10' : 'border-slate-200 dark:border-slate-800') }}">
+                                <div class="flex items-start justify-between gap-2">
+                                    <div>
+                                        <h4 class="text-xs font-black text-slate-900 dark:text-white">
+                                            {{ $bItem['title'] }}
+                                        </h4>
+                                        @if(!empty($bItem['period_label']))
+                                            <span class="text-[10px] text-slate-400 block">
+                                                Periode: {{ $bItem['period_label'] }}
+                                            </span>
+                                        @endif
+                                    </div>
+                                    <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase shrink-0 {{ $isPaid ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800' : ($isPartial ? 'bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300 border border-amber-200 dark:border-amber-800' : 'bg-rose-100 text-rose-800 dark:bg-rose-950/60 dark:text-rose-300 border border-rose-200 dark:border-rose-800') }}">
+                                        {{ $bItem['status_label'] }}
+                                    </span>
+                                </div>
+
+                                <!-- Progress Bar Per Item -->
+                                <div class="space-y-1">
+                                    <div class="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-2 overflow-hidden">
+                                        <div class="h-full rounded-full transition-all duration-300 {{ $isPaid ? 'bg-emerald-500' : ($isPartial ? 'bg-amber-500' : 'bg-rose-500') }}"
+                                             style="width: {{ $bItem['percentage'] }}%"></div>
+                                    </div>
+                                    <div class="flex items-center justify-between text-[10px] text-slate-500 dark:text-slate-400">
+                                        <span>Terbayar: <strong>Rp {{ number_format($bItem['amount_paid'], 0, ',', '.') }}</strong> ({{ $bItem['percentage'] }}%)</span>
+                                        <span>Total: <strong>Rp {{ number_format($bItem['amount'], 0, ',', '.') }}</strong></span>
+                                    </div>
+                                </div>
+
+                                @if($bItem['remaining'] > 0)
+                                    <div class="flex items-center justify-between pt-1 border-t border-slate-100 dark:border-slate-800">
+                                        <div class="text-[11px]">
+                                            <span class="text-slate-400 text-[10px]">Sisa Kurang:</span>
+                                            <strong class="text-rose-600 dark:text-rose-400 font-extrabold ml-1">
+                                                Rp {{ number_format($bItem['remaining'], 0, ',', '.') }}
+                                            </strong>
+                                        </div>
+                                        <button type="button" 
+                                                wire:click="payFromRekap(['{{ $bItem['id'] }}'])"
+                                                class="py-1.5 px-3 bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white font-bold rounded-xl text-xs transition-all flex items-center gap-1 shadow-xs">
+                                            <span>Bayar Pos Ini</span>
+                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+                                        </button>
+                                    </div>
+                                @endif
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+            @endif
 
         </div>
     @endif

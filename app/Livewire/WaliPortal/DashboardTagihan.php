@@ -33,6 +33,8 @@ class DashboardTagihan extends Component
     public string $historyYear   = ''; // '' (Semua Tahun) | '2026'
     public string $historyMonth  = ''; // '' (Semua Bulan) | '1'..'12'
 
+    public string $rekapYear    = ''; // '' default to current year
+
     // Checklist Tagihan yang dipilih wali
     public array $selectedBillIds = [];
     public bool $isInitialized = false;
@@ -80,6 +82,7 @@ class DashboardTagihan extends Component
     public function mount(string $personId)
     {
         $this->personId = $personId;
+        $this->rekapYear = (string) date('Y');
         if (!DokuService::isEnabled()) {
             $this->checkoutMethod = 'manual';
         }
@@ -87,10 +90,29 @@ class DashboardTagihan extends Component
 
     public function setPortalTab(string $tab): void
     {
-        $this->portalTab = in_array($tab, ['tagihan', 'bayar', 'riwayat']) ? $tab : 'tagihan';
+        $this->portalTab = in_array($tab, ['tagihan', 'bayar', 'riwayat', 'rekap']) ? $tab : 'tagihan';
         $this->manualSuccessMessage = null;
         $this->manualErrorMessage = null;
         $this->fifoNotice = null;
+    }
+
+    public function payFromRekap(array $billIds): void
+    {
+        $this->fifoNotice = null;
+        $allUnpaidIds = Bill::where('person_id', $this->personId)
+            ->whereIn('status', ['unpaid', 'partial'])
+            ->pluck('id')
+            ->map('strval')
+            ->toArray();
+
+        // Only select bills that are actually unpaid
+        $billsToSelect = array_values(array_intersect(array_map('strval', $billIds), $allUnpaidIds));
+
+        if (!empty($billsToSelect)) {
+            $this->selectedBillIds = $billsToSelect;
+        }
+
+        $this->setPortalTab('bayar');
     }
 
     public function switchTab(string $tab): void
@@ -1063,6 +1085,116 @@ class DashboardTagihan extends Component
         $futureUnpaidList = $partition['future'];
         $hasPastUnpaid = $pastUnpaidList->isNotEmpty();
 
+        // ─── Rekapitulasi Tahunan (Financial Summary Matrix) ─────────────────
+        $targetRekapYear = $this->rekapYear ? (int)$this->rekapYear : (int)date('Y');
+        $allPersonBills = Bill::where('person_id', $this->personId)->with('config')->get();
+
+        $rekapAvailableYears = $allPersonBills->pluck('period_year')
+            ->filter()
+            ->map(fn($y) => (int)$y)
+            ->push((int)date('Y'))
+            ->unique()
+            ->sortDesc()
+            ->values();
+
+        $yearBills = $allPersonBills->filter(function ($b) use ($targetRekapYear) {
+            return (int)$b->period_year === $targetRekapYear;
+        });
+
+        $rekapTotalTagihan   = (float)$yearBills->sum('amount');
+        $rekapTotalPaid      = (float)$yearBills->sum('amount_paid');
+        $rekapTotalRemaining = max(0, $rekapTotalTagihan - $rekapTotalPaid);
+        $rekapPercentPaid    = $rekapTotalTagihan > 0 ? min(100, (int)round(($rekapTotalPaid / $rekapTotalTagihan) * 100)) : 100;
+
+        // 1. Syahriah / Bulanan 12-Month Matrix
+        $monthlyBills = $yearBills->filter(function ($b) {
+            $interval = strtolower($b->config?->interval ?? '');
+            return $b->period_month && ($interval === 'monthly' || str_contains(strtolower($b->bill_type), 'syahriah') || str_contains(strtolower($b->bill_type), 'spp'));
+        });
+
+        $rekapMonthlyMatrix = [];
+        $monthsMap = [
+            1 => 'Januari', 2 => 'Februari', 3 => 'Maret', 4 => 'April',
+            5 => 'Mei', 6 => 'Juni', 7 => 'Juli', 8 => 'Agustus',
+            9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Desember'
+        ];
+
+        foreach ($monthsMap as $mNum => $mName) {
+            $mBills = $monthlyBills->filter(fn($b) => (int)$b->period_month === $mNum);
+
+            if ($mBills->isEmpty()) {
+                $rekapMonthlyMatrix[$mNum] = [
+                    'month_num'    => $mNum,
+                    'month_name'   => $mName,
+                    'has_bill'     => false,
+                    'status'       => 'none',
+                    'status_label' => 'Tidak Ada',
+                    'amount'       => 0,
+                    'amount_paid'  => 0,
+                    'remaining'    => 0,
+                    'bill_ids'     => [],
+                ];
+            } else {
+                $mTotal = (float)$mBills->sum('amount');
+                $mPaid  = (float)$mBills->sum('amount_paid');
+                $mRem   = max(0, $mTotal - $mPaid);
+
+                $mStatus = match(true) {
+                    $mRem <= 0              => 'paid',
+                    $mPaid > 0 && $mRem > 0 => 'partial',
+                    default                 => 'unpaid',
+                };
+
+                $rekapMonthlyMatrix[$mNum] = [
+                    'month_num'    => $mNum,
+                    'month_name'   => $mName,
+                    'has_bill'     => true,
+                    'status'       => $mStatus,
+                    'status_label' => match($mStatus) {
+                        'paid'    => 'Lunas',
+                        'partial' => 'Dicicil',
+                        'unpaid'  => 'Belum Bayar',
+                    },
+                    'amount'       => $mTotal,
+                    'amount_paid'  => $mPaid,
+                    'remaining'    => $mRem,
+                    'bill_ids'     => $mBills->pluck('id')->map('strval')->toArray(),
+                ];
+            }
+        }
+
+        // 2. Non-Monthly Bills (Kitab, Gedung, Seragam, Semesteran, Event, dll)
+        $rekapNonMonthlyBills = $yearBills->filter(function ($b) use ($monthlyBills) {
+            return !$monthlyBills->contains('id', $b->id);
+        })->map(function ($b) {
+            $amount = (float)$b->amount;
+            $paid   = (float)$b->amount_paid;
+            $rem    = max(0, $amount - $paid);
+            $pct    = $amount > 0 ? min(100, (int)round(($paid / $amount) * 100)) : 100;
+
+            $status = match(true) {
+                $rem <= 0              => 'paid',
+                $paid > 0 && $rem > 0  => 'partial',
+                default                => 'unpaid',
+            };
+
+            return [
+                'id'           => (string)$b->id,
+                'title'        => $this->getBillDisplayName($b),
+                'period_label' => $this->getBillPeriodLabel($b),
+                'amount'       => $amount,
+                'amount_paid'  => $paid,
+                'remaining'    => $rem,
+                'percentage'   => $pct,
+                'status'       => $status,
+                'status_label' => match($status) {
+                    'paid'    => 'Lunas',
+                    'partial' => 'Dicicil',
+                    'unpaid'  => 'Belum Bayar',
+                },
+            ];
+        })->values();
+
         return view('livewire.wali-portal.dashboard-tagihan', [
             'portalTab'               => $this->portalTab,
             'santri'                  => $santri,
@@ -1103,6 +1235,15 @@ class DashboardTagihan extends Component
             'paymentHistory'          => $paymentHistory,
             'historyYears'            => $historyYears,
             'lastUpdatedLabel'        => $lastUpdatedLabel,
+            // Data Rekapitulasi Tahunan
+            'targetRekapYear'         => $targetRekapYear,
+            'rekapAvailableYears'     => $rekapAvailableYears,
+            'rekapTotalTagihan'       => $rekapTotalTagihan,
+            'rekapTotalPaid'          => $rekapTotalPaid,
+            'rekapTotalRemaining'     => $rekapTotalRemaining,
+            'rekapPercentPaid'        => $rekapPercentPaid,
+            'rekapMonthlyMatrix'      => $rekapMonthlyMatrix,
+            'rekapNonMonthlyBills'    => $rekapNonMonthlyBills,
         ])->layout('layouts.wali-portal', ['title' => 'Portal Wali — ' . $santri->name]);
     }
 }
