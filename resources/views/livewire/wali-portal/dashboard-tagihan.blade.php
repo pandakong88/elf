@@ -1155,12 +1155,16 @@
 
                     @foreach($manualSubmissions as $sub)
                         @php
-                            $isPending  = $sub->status === 'pending';
-                            $isApproved = $sub->status === 'approved';
-                            $isRejected = $sub->status === 'rejected';
-                            $proofUrl   = $sub->proof_url ?: ($sub->proof_image_path ? asset('storage/' . $sub->proof_image_path) : null);
+                            $isPending   = $sub->status === 'pending';
+                            $isApproved  = $sub->status === 'approved';
+                            $isRejected  = $sub->status === 'rejected';
+                            $proofUrl    = $sub->proof_url ?: ($sub->proof_image_path ? asset('storage/' . $sub->proof_image_path) : null);
+                            
+                            // Deteksi apakah tagihan pada submission yang ditolak ini sudah terselesaikan/lunas
+                            $unpaidCount = !empty($sub->bill_ids) ? count(array_intersect((array) $sub->bill_ids, $allUnpaidIds ?? [])) : 0;
+                            $isResolved  = $isRejected && !empty($sub->bill_ids) && ($unpaidCount === 0);
                         @endphp
-                        <div class="bg-white dark:bg-slate-900 border rounded-3xl p-4 space-y-3 shadow-xs {{ $isPending ? 'border-amber-300 dark:border-amber-700/60 bg-amber-50/20' : ($isRejected ? 'border-rose-300 dark:border-rose-700/60 bg-rose-50/20' : 'border-emerald-300 dark:border-emerald-700/60 bg-emerald-50/20') }}">
+                        <div class="bg-white dark:bg-slate-900 border rounded-3xl p-4 space-y-3 shadow-xs {{ $isPending ? 'border-amber-300 dark:border-amber-700/60 bg-amber-50/20' : ($isRejected ? ($isResolved ? 'border-slate-300 dark:border-slate-700/60 bg-slate-50/40 opacity-80' : 'border-rose-300 dark:border-rose-700/60 bg-rose-50/20') : 'border-emerald-300 dark:border-emerald-700/60 bg-emerald-50/20') }}">
                             
                             <!-- Header Bar -->
                             <div class="flex items-center justify-between text-xs flex-wrap gap-2">
@@ -1183,9 +1187,15 @@
                                         ✓ Disetujui (Sah)
                                     </span>
                                 @elseif($isRejected)
-                                    <span class="px-2.5 py-0.5 bg-rose-500/15 text-rose-700 dark:text-rose-300 border border-rose-500/30 rounded-xl text-[10px] font-black uppercase">
-                                        ✕ Perlu Diperbaiki
-                                    </span>
+                                    @if($isResolved)
+                                        <span class="px-2.5 py-0.5 bg-slate-500/15 text-slate-600 dark:text-slate-400 border border-slate-500/30 rounded-xl text-[10px] font-black uppercase">
+                                            ✕ Ditolak (Sudah Diganti)
+                                        </span>
+                                    @else
+                                        <span class="px-2.5 py-0.5 bg-rose-500/15 text-rose-700 dark:text-rose-300 border border-rose-500/30 rounded-xl text-[10px] font-black uppercase">
+                                            ✕ Perlu Diperbaiki
+                                        </span>
+                                    @endif
                                 @endif
                             </div>
 
@@ -1243,7 +1253,7 @@
 
                                     <div x-show="showDetail" x-collapse x-cloak class="mt-2 space-y-1.5 bg-slate-50 dark:bg-slate-800/50 p-2.5 rounded-2xl border border-slate-100 dark:border-slate-800">
                                         @foreach($sub->bill_breakdown as $bItem)
-                                            <div class="flex items-start justify-between text-xs py-1 border-b border-slate-200/50 dark:border-slate-700/50 last:border-0">
+                                             <div class="flex items-start justify-between text-xs py-1 border-b border-slate-200/50 dark:border-slate-700/50 last:border-0">
                                                 <div>
                                                     <div class="font-bold text-slate-800 dark:text-slate-200">{{ $bItem['config_label'] ?? 'Tagihan' }}</div>
                                                     <div class="text-[10px] text-slate-500 dark:text-slate-400">{{ $bItem['period_label'] ?? '' }}</div>
@@ -1270,12 +1280,20 @@
                                         <strong class="block text-[10px] font-black uppercase text-rose-700 dark:text-rose-400">Alasan Penolakan dari Bendahara:</strong>
                                         <p class="mt-0.5 text-xs font-medium">{{ $sub->rejection_reason ?: 'Bukti transfer tidak terbaca atau nominal tidak sesuai mutasi.' }}</p>
                                     </div>
-                                    <button type="button" 
-                                            wire:click="retryManualSubmission('{{ $sub->id }}')"
-                                            class="w-full py-2 bg-rose-600 hover:bg-rose-500 text-white font-bold rounded-xl text-xs text-center transition-all shadow-xs flex items-center justify-center gap-1.5 active:scale-98">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
-                                        <span>Perbaiki & Upload Ulang Bukti Transfer</span>
-                                    </button>
+
+                                    @if($isResolved)
+                                        <div class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-100 dark:bg-emerald-950/60 border border-emerald-300 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300 rounded-xl text-[11px] font-bold w-full justify-center">
+                                            <svg class="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+                                            <span>Tagihan ini sudah lunas melalui pembayaran / revisi berikutnya</span>
+                                        </div>
+                                    @else
+                                        <button type="button" 
+                                                wire:click="retryManualSubmission('{{ $sub->id }}')"
+                                                class="w-full py-2 bg-rose-600 hover:bg-rose-500 text-white font-bold rounded-xl text-xs text-center transition-all shadow-xs flex items-center justify-center gap-1.5 active:scale-98">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+                                            <span>Perbaiki & Upload Ulang Bukti Transfer</span>
+                                        </button>
+                                    @endif
                                 </div>
                             @endif
 
