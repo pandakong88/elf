@@ -1,6 +1,6 @@
 <div class="space-y-8">
     <!-- Header Page -->
-    <div class="bg-gradient-to-r from-slate-900 via-slate-800 to-emerald-950 text-white rounded-3xl p-6 sm:p-8 border border-slate-800 shadow-xl relative overflow-hidden">
+    <div class="bg-slate-950 bg-gradient-to-r from-slate-900 via-slate-800 to-emerald-950 text-white rounded-3xl p-6 sm:p-8 border border-slate-800 shadow-xl relative overflow-hidden" style="background-color: #020617;">
         <div class="absolute -right-16 -top-16 w-64 h-64 bg-emerald-500/10 rounded-full blur-3xl"></div>
         <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
             <div>

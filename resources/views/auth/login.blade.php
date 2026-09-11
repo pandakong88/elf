@@ -11,12 +11,12 @@
         }
     </style>
 </head>
-<body class="bg-slate-900 text-slate-100 antialiased min-h-screen flex items-center justify-center p-3 sm:p-4 md:p-6">
+<body class="bg-slate-900 text-slate-100 antialiased min-h-screen flex items-center justify-center p-3 sm:p-4 md:p-6" style="background-color: #0f172a;">
 
-    <div class="w-full max-w-5xl grid grid-cols-1 md:grid-cols-12 gap-6 md:gap-8 bg-slate-950/80 border border-slate-800/80 rounded-2xl sm:rounded-3xl p-4 sm:p-6 md:p-8 backdrop-blur-xl shadow-2xl my-auto">
+    <div class="w-full max-w-5xl grid grid-cols-1 md:grid-cols-12 gap-6 md:gap-8 bg-slate-950 border border-slate-800/80 rounded-2xl sm:rounded-3xl p-4 sm:p-6 md:p-8 backdrop-blur-xl shadow-2xl my-auto" style="background-color: #020617;">
         
         <!-- Brand & Info Panel (Left) -->
-        <div class="md:col-span-5 flex flex-col justify-between p-6 sm:p-8 rounded-2xl bg-gradient-to-br from-slate-950 via-emerald-950 to-slate-950 text-white shadow-xl border border-emerald-500/20 overflow-hidden relative group">
+        <div class="md:col-span-5 flex flex-col justify-between p-6 sm:p-8 rounded-2xl bg-slate-950 bg-gradient-to-br from-slate-950 via-emerald-950 to-slate-950 text-white shadow-xl border border-emerald-500/20 overflow-hidden relative group" style="background-color: #020617;">
             <!-- Decorative blur shapes -->
             <div class="absolute -top-12 -right-12 w-36 sm:w-40 h-36 sm:h-40 bg-emerald-500/15 rounded-full blur-2xl group-hover:scale-125 transition-transform duration-700"></div>
             <div class="absolute -bottom-16 -left-16 w-48 sm:w-52 h-48 sm:h-52 bg-teal-500/15 rounded-full blur-3xl group-hover:scale-125 transition-transform duration-700"></div>
