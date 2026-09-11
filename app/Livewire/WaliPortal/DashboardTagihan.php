@@ -972,7 +972,7 @@ class DashboardTagihan extends Component
                 'date_fmt'     => $trx->created_at->locale('id')->translatedFormat('d M Y • H:i') . ' WIB',
                 'breakdown'    => $breakdown,
                 'preview_url'  => route('bukti-bayar.gateway', $trx->id),
-                'pdf_url'      => route('bukti-bayar.gateway', $trx->id),
+                'pdf_url'      => route('bukti-bayar.gateway.pdf', $trx->id),
                 'status'       => 'Lunas (Online)',
             ];
         });

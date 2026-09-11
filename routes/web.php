@@ -31,10 +31,12 @@ Route::post('/duitku/callback', [\App\Http\Controllers\DuitkuCallbackController:
     ->name('duitku.callback')
     ->withoutMiddleware([\Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class]);
 
-// ─── Bukti Pembayaran PDF ─────────────────────────────────────────────────────
-// Wali portal — unduh PDF bukti bayar gateway (auth check di controller)
+// ─── Bukti Pembayaran Web Preview & PDF ──────────────────────────────────────────
+// Wali portal & Bendahara — Preview Kuitansi Gateway & Unduh PDF
 Route::get('/portal-wali/bukti-bayar/gateway/{trxId}', [\App\Http\Controllers\BuktiBayarController::class, 'gateway'])
     ->name('bukti-bayar.gateway');
+Route::get('/portal-wali/bukti-bayar/gateway/{trxId}/pdf', [\App\Http\Controllers\BuktiBayarController::class, 'gatewayPdf'])
+    ->name('bukti-bayar.gateway.pdf');
 
 // Admin/Bendahara & Portal Wali — Preview Kuitansi & Unduh PDF
 Route::get('/keuangan/kuitansi/{receiptNo}', [\App\Http\Controllers\BuktiBayarController::class, 'kuitansi'])

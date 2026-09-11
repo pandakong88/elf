@@ -47,35 +47,40 @@ class BuktiBayarController extends Controller
         ]);
     }
     /**
-     * Generate PDF bukti bayar untuk transaksi gateway (Duitku).
-     * Wali hanya boleh akses miliknya. Admin/Bendahara bebas.
+     * Helper privat untuk mengekstrak dan memformat data transaksi gateway (Duitku/DOKU).
      */
-    public function gateway(string $trxId): Response
+    private function getGatewayData(string $trxId): array
     {
-        $trx = PaymentTransaction::with('person')->findOrFail($trxId);
-
-        // Auth check — wali hanya boleh lihat miliknya
-        $user = Auth::user();
-        if ($user->hasRole(['wali'])) {
-            $waliPersonId = $user->person?->id ?? null;
-            if (!$waliPersonId || $trx->person_id !== $waliPersonId) {
-                abort(403, 'Akses ditolak.');
-            }
-        }
+        $trx = PaymentTransaction::with([
+            'person.activeMadrasahEnrollment.kelas',
+            'person.activeRoomAssignment.room.dormitory',
+        ])
+        ->where('id', $trxId)
+        ->orWhere('merchant_order_id', $trxId)
+        ->orWhere('duitku_reference', $trxId)
+        ->firstOrFail();
 
         // Hanya bisa cetak bukti transaksi sukses
         if ($trx->status !== 'success') {
             abort(400, 'Bukti hanya tersedia untuk transaksi yang berhasil.');
         }
 
+        $santri = $trx->person;
+        $santriPersonId = $santri?->id;
+
         // Enrich breakdown dengan label human-readable jika record lama belum punya
         $months   = [1=>'Januari',2=>'Februari',3=>'Maret',4=>'April',5=>'Mei',6=>'Juni',
                      7=>'Juli',8=>'Agustus',9=>'September',10=>'Oktober',11=>'November',12=>'Desember'];
         $breakdown = collect($trx->bill_breakdown ?? [])->map(function ($item) use ($months) {
             if (!empty($item['config_label']) && !empty($item['period_label'])) {
-                return $item;
+                return [
+                    'config_label' => $item['config_label'],
+                    'period_label' => $item['period_label'],
+                    'amount'       => (float)($item['pay_portion'] ?? ($item['amount'] ?? 0)),
+                    'is_partial'   => !empty($item['is_partial']),
+                ];
             }
-            $bill     = Bill::with('config')->find($item['bill_id']);
+            $bill     = Bill::with('config')->find($item['bill_id'] ?? null);
             $interval = $bill?->config?->interval ?? '';
             if ($interval === 'semester') {
                 $period = 'Semester ' . ($bill->period_month) . '/' . ($bill->period_year);
@@ -84,31 +89,103 @@ class BuktiBayarController extends Controller
             } else {
                 $period = ($months[$bill?->period_month ?? 0] ?? '') . ' ' . ($bill?->period_year ?? '');
             }
-            return array_merge($item, [
+            return [
                 'config_label' => $bill?->config?->label ?? ucwords(str_replace('_', ' ', $item['bill_type'] ?? '')),
                 'period_label' => trim($period),
-            ]);
+                'amount'       => (float)($item['pay_portion'] ?? ($item['amount'] ?? 0)),
+                'is_partial'   => !empty($item['is_partial']),
+            ];
         })->all();
 
-        $data = [
+        // Deteksi info kelas & komplek santri
+        $kelasName = $santri?->activeMadrasahEnrollment?->kelas?->name ?? '—';
+        $dormName  = $santri?->activeRoomAssignment?->room?->dormitory?->name ?? '—';
+        $roomName  = $santri?->activeRoomAssignment?->room?->name ?? '';
+        $dormFull  = $roomName ? ($dormName . ' - ' . $roomName) : $dormName;
+
+        // Dynamic Back URL & Back Label
+        $user = Auth::user();
+        $fromParam = request()->query('from', '');
+        $referer = request()->headers->get('referer', '');
+
+        if ($fromParam === 'portal-wali' || str_contains($referer, '/portal-wali')) {
+            $backUrl = $santriPersonId ? route('portal-wali.dashboard', $santriPersonId) : route('portal-wali.search');
+            $backLabel = 'Kembali ke Data Santri';
+        } elseif ($fromParam === 'payments_log') {
+            $backUrl = route('keuangan.billing', ['tab' => 'payments_log']);
+            $backLabel = 'Kembali ke Riwayat Pembayaran';
+        } elseif (!$user || ($user && $user->hasRole('wali-santri'))) {
+            $backUrl = $santriPersonId ? route('portal-wali.dashboard', $santriPersonId) : route('portal-wali.search');
+            $backLabel = 'Kembali ke Data Santri';
+        } elseif ($user && $user->hasAnyRole(['super-admin', 'pengasuh', 'manajemen', 'bendahara-pondok', 'bendahara-putra', 'bendahara-putri', 'bendahara-madin', 'bendahara-unit', 'admin-data'])) {
+            $backUrl = route('keuangan.billing', ['tab' => 'payments_log']);
+            $backLabel = 'Kembali ke Riwayat Pembayaran';
+        } else {
+            $backUrl = $santriPersonId ? route('portal-wali.dashboard', $santriPersonId) : route('portal-wali.search');
+            $backLabel = $santriPersonId ? 'Kembali ke Data Santri' : 'Kembali ke Riwayat Pembayaran';
+        }
+
+        $paymentDate = $trx->created_at ? $trx->created_at->translatedFormat('d F Y') : now()->translatedFormat('d F Y');
+        $paymentTime = $trx->created_at ? $trx->created_at->format('H:i') . ' WIB' : '';
+        $methodLabel = ($trx->channel_label ?? $trx->payment_channel ?? 'Online') . ' (' . (strtoupper($trx->gateway_provider ?: 'Payment Gateway')) . ')';
+
+        $totalAmount = (float) $trx->total_amount;
+        $billAmount  = (float) $trx->bill_amount;
+        $mdrAmount   = (float) $trx->mdr_amount;
+
+        $reference = $trx->duitku_reference ?: ($trx->gateway_provider ? strtoupper($trx->gateway_provider) : '—');
+
+        return [
             'type'              => 'gateway',
             'app_name'          => config('app.name', 'Elvith'),
+            'trx_id'            => $trx->id,
+            'receipt_no'        => $trx->merchant_order_id,
             'no_bukti'          => $trx->merchant_order_id,
-            'duitku_reference'  => $trx->duitku_reference ?: ($trx->gateway_provider ? strtoupper($trx->gateway_provider) : '—'),
-            'santri_name'       => $trx->person?->name ?? '—',
-            'payment_method'    => ($trx->channel_label ?? $trx->payment_channel ?? '—') . ' (Online)',
-            'payment_date'      => $trx->created_at->translatedFormat('d F Y, H:i') . ' WIB',
+            'duitku_reference'  => $reference,
+            'santri_id'         => $santriPersonId,
+            'santri_name'       => $santri?->name ?? '—',
+            'santri_gender'     => $santri?->gender === 'P' ? 'Putri' : 'Putra',
+            'kelas_name'        => $kelasName,
+            'dorm_name'         => $dormFull,
+            'cashier_name'      => 'Sistem Otomatis (Payment Gateway)',
+            'payment_method'    => $methodLabel,
+            'payment_date'      => $paymentDate,
+            'payment_time'      => $paymentTime,
             'breakdown'         => $breakdown,
-            'bill_amount'       => (float) $trx->bill_amount,
-            'mdr_amount'        => (float) $trx->mdr_amount,
-            'total_amount'      => (float) $trx->total_amount,
+            'bill_amount'       => $billAmount,
+            'mdr_amount'        => $mdrAmount,
+            'total_amount'      => $totalAmount,
+            'tendered_amount'   => $totalAmount,
+            'change_amount'     => 0.0,
+            'terbilang'         => $this->terbilang($totalAmount),
+            'notes'             => 'Ref Gateway: ' . ($reference !== '—' ? $reference : $trx->merchant_order_id),
             'generated_at'      => now()->translatedFormat('d F Y, H:i') . ' WIB',
+            'back_url'          => $backUrl,
+            'back_label'        => $backLabel,
+            'pdf_download_url'  => route('bukti-bayar.gateway.pdf', $trx->id),
         ];
+    }
 
-        $pdf = Pdf::loadView('pdf.bukti-pembayaran', $data)
+    /**
+     * Halaman Web Preview Bukti Bayar Gateway (On-Screen View).
+     */
+    public function gateway(string $trxId)
+    {
+        $data = $this->getGatewayData($trxId);
+        return view('keuangan.kuitansi-preview', $data);
+    }
+
+    /**
+     * Unduh file PDF Bukti Bayar Gateway secara langsung.
+     */
+    public function gatewayPdf(string $trxId): Response
+    {
+        $data = $this->getGatewayData($trxId);
+
+        $pdf = Pdf::loadView('pdf.kuitansi-kasir', $data)
                   ->setPaper('a4', 'portrait');
 
-        $filename = 'Bukti-Bayar-' . $trx->merchant_order_id . '.pdf';
+        $filename = 'Bukti-Bayar-' . $data['receipt_no'] . '.pdf';
         return $pdf->download($filename);
     }
 

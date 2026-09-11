@@ -864,7 +864,7 @@
                     <i class="fa-solid fa-print"></i>
                     <span>Cetak <span class="desktop-only">Kuitansi</span></span>
                 </button>
-                <a href="{{ route('bukti-bayar.kuitansi.pdf', $receipt_no) }}" class="btn-nav btn-download" title="Unduh PDF">
+                <a href="{{ $pdf_download_url ?? route('bukti-bayar.kuitansi.pdf', $receipt_no) }}" class="btn-nav btn-download" title="Unduh PDF">
                     <i class="fa-solid fa-download"></i>
                     <span>Unduh <span class="desktop-only">PDF</span></span>
                 </a>
@@ -894,7 +894,7 @@
                         </div>
                     </div>
                     <div class="doc-identity">
-                        <div class="doc-title-badge">Kuitansi Pembayaran</div>
+                        <div class="doc-title-badge">{{ ($type ?? '') === 'gateway' ? 'Bukti Bayar Online' : 'Kuitansi Pembayaran' }}</div>
                         <div class="doc-no">{{ $receipt_no }}</div>
                     </div>
                 </div>
@@ -905,7 +905,7 @@
                         <div class="status-icon-circle">
                             <i class="fa-solid fa-check"></i>
                         </div>
-                        <div class="status-main-label">PEMBAYARAN RESMI &bull; LUNAS</div>
+                        <div class="status-main-label">{{ ($type ?? '') === 'gateway' ? 'PEMBAYARAN ONLINE SAH • LUNAS' : 'PEMBAYARAN RESMI • LUNAS' }}</div>
                     </div>
                     <div class="status-strip-right">
                         <i class="fa-regular fa-clock"></i>
@@ -947,7 +947,7 @@
                             </span>
                         </div>
                         <div class="bento-row">
-                            <span class="bento-label"><i class="fa-solid fa-user-tie"></i> Petugas Kasir</span>
+                            <span class="bento-label"><i class="fa-solid fa-user-tie"></i> {{ ($type ?? '') === 'gateway' ? 'Verifikasi' : 'Petugas Kasir' }}</span>
                             <span class="bento-val">{{ $cashier_name }}</span>
                         </div>
                     </div>
@@ -993,6 +993,17 @@
 
                     <!-- Totals & Calculations -->
                     <div class="totals-section">
+                        @if(isset($mdr_amount) && $mdr_amount > 0)
+                            <div class="total-item-row">
+                                <span>Nominal Tagihan:</span>
+                                <span class="mono" style="font-weight: 600; color: #334155;">Rp {{ number_format($bill_amount, 0, ',', '.') }}</span>
+                            </div>
+                            <div class="total-item-row">
+                                <span>Biaya Layanan Gateway:</span>
+                                <span class="mono" style="font-weight: 600; color: #ef4444;">+ Rp {{ number_format($mdr_amount, 0, ',', '.') }}</span>
+                            </div>
+                        @endif
+
                         @if($payment_method === 'Tunai' && $tendered_amount > $total_amount)
                             <div class="total-item-row">
                                 <span>Uang Tunai Diterima:</span>
@@ -1033,7 +1044,7 @@
                     </div>
 
                     <div class="sig-block">
-                        <div class="sig-caption">Kasir / Bendahara Pondok,</div>
+                        <div class="sig-caption">{{ ($type ?? '') === 'gateway' ? 'Verifikasi Sistem,' : 'Kasir / Bendahara Pondok,' }}</div>
                         <div class="sig-line">{{ $cashier_name }}</div>
                     </div>
                 </div>
