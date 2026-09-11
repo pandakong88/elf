@@ -332,7 +332,7 @@
                 <div class="space-y-6">
 
                     <!-- ─── HEADER BANNER EKSEKUTIF BENDAHARA ─────────────────── -->
-                    <div class="relative overflow-hidden rounded-3xl bg-gradient-to-br from-emerald-800 via-teal-900 to-slate-900 p-6 text-white shadow-lg border border-emerald-700/50">
+                    <div class="relative overflow-hidden rounded-3xl bg-emerald-900 bg-gradient-to-br from-emerald-800 via-teal-900 to-slate-900 p-6 text-white shadow-lg border border-emerald-700/50" style="background-color: #064e3b;">
                         <div class="relative z-10 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                             <div>
                                 <div class="inline-flex items-center gap-2 px-3 py-1 bg-white/10 backdrop-blur-md rounded-full text-[11px] font-bold text-emerald-200 mb-2 border border-white/15">

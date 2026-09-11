@@ -156,7 +156,7 @@
             
             <!-- Summary Banner Status Tagihan -->
             @if($totalHarusDibayarNow <= 0)
-                <div class="bg-gradient-to-br from-emerald-500 to-teal-700 text-white rounded-3xl p-5 shadow-sm text-center space-y-2">
+                <div class="bg-emerald-600 bg-gradient-to-br from-emerald-500 to-teal-700 text-white rounded-3xl p-5 shadow-sm text-center space-y-2" style="background-color: #059669;">
                     <div class="w-12 h-12 rounded-full bg-white/20 text-white text-2xl flex items-center justify-center mx-auto">
                         ✓
                     </div>
@@ -166,7 +166,7 @@
                     </p>
                 </div>
             @else
-                <div class="bg-gradient-to-br from-slate-900 to-slate-800 text-white rounded-3xl p-5 shadow-sm space-y-3 border border-slate-700">
+                <div class="bg-slate-900 bg-gradient-to-br from-slate-900 to-slate-800 text-white rounded-3xl p-5 shadow-sm space-y-3 border border-slate-700" style="background-color: #0f172a;">
                     <div class="flex items-center justify-between">
                         <span class="text-[11px] font-bold text-amber-300 uppercase tracking-wider">Total Tagihan Saat Ini</span>
                         <span class="text-[10px] bg-amber-400/20 text-amber-300 border border-amber-400/30 px-2 py-0.5 rounded-full font-bold">
@@ -757,7 +757,7 @@
             @php
                 $grandTotal = $this->getGrandTotalTransfer();
             @endphp
-            <div x-data="{ showDetail: false }" class="bg-gradient-to-br from-emerald-950 via-slate-900 to-slate-950 text-white border border-emerald-800/80 rounded-2xl p-4 space-y-2.5 shadow-sm">
+            <div x-data="{ showDetail: false }" class="bg-slate-950 bg-gradient-to-br from-emerald-950 via-slate-900 to-slate-950 text-white border border-emerald-800/80 rounded-2xl p-4 space-y-2.5 shadow-sm" style="background-color: #020617;">
                 
                 <!-- Row Tagihan Terpilih (Interactive Accordion) -->
                 <div>
