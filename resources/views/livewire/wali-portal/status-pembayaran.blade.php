@@ -128,7 +128,7 @@
 
                 <div id="printableReceipt" class="bg-white dark:bg-slate-900 border-2 border-emerald-300 dark:border-emerald-700/60 rounded-3xl overflow-hidden shadow-lg transition-colors text-left">
                     {{-- Header Gradient Accent --}}
-                    <div class="h-2 bg-gradient-to-r from-emerald-500 via-teal-500 to-sky-500"></div>
+                    <div class="h-2 bg-emerald-500 bg-gradient-to-r from-emerald-500 via-teal-500 to-sky-500" style="background-color: #10b981;"></div>
 
                     <div class="p-5 space-y-4">
                         {{-- Receipt Header --}}

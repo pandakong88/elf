@@ -100,7 +100,7 @@
                 <!-- Animated Pulse Radar Icon -->
                 <div class="relative w-20 h-20 mx-auto flex items-center justify-center">
                     <div class="absolute inset-0 bg-emerald-500/10 dark:bg-emerald-400/10 rounded-full animate-ping"></div>
-                    <div class="absolute inset-2 bg-gradient-to-tr from-emerald-600 via-teal-600 to-emerald-700 rounded-2xl shadow-lg flex items-center justify-center transform -rotate-3 hover:rotate-0 transition-transform">
+                    <div class="absolute inset-2 bg-emerald-600 bg-gradient-to-tr from-emerald-600 via-teal-600 to-emerald-700 rounded-2xl shadow-lg flex items-center justify-center transform -rotate-3 hover:rotate-0 transition-transform" style="background-color: #059669;">
                         <svg class="w-9 h-9 text-white animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
                         </svg>
@@ -154,7 +154,7 @@
                         <div class="bg-white dark:bg-slate-900 border-2 border-slate-200/80 dark:border-slate-800 hover:border-emerald-500 dark:hover:border-emerald-500/70 rounded-3xl p-4 shadow-sm hover:shadow-md transition-all space-y-3">
                             <div class="flex items-center gap-3.5">
                                 <!-- Avatar -->
-                                <div class="w-13 h-13 rounded-2xl bg-emerald-700 text-white flex items-center justify-center font-black text-lg shrink-0 shadow-md overflow-hidden border-2 border-emerald-600">
+                                <div class="w-13 h-13 rounded-2xl bg-emerald-700 text-white flex items-center justify-center font-black text-lg shrink-0 shadow-md overflow-hidden border-2 border-emerald-600" style="background-color: #047857;">
                                     @if($s->photo)
                                         <img src="{{ Storage::url($s->photo) }}" alt="{{ $s->name }}" class="w-full h-full object-cover">
                                     @else
