@@ -3,7 +3,7 @@
     {{-- ============================================================ --}}
     {{-- HERO SECTION                                                  --}}
     {{-- ============================================================ --}}
-    <section class="relative overflow-hidden bg-gradient-to-br from-slate-950 via-emerald-950 to-slate-950 pt-24 pb-36 text-white">
+    <section class="relative overflow-hidden bg-slate-950 bg-gradient-to-br from-slate-950 via-emerald-950 to-slate-950 pt-24 pb-36 text-white" style="background-color: #020617;">
         {{-- Background overlay dari CMS --}}
         @if(!empty($data['hero_image_url']))
             <div class="absolute inset-0 bg-cover bg-center opacity-20 mix-blend-overlay" style="background-image: url('{{ $data['hero_image_url'] }}')"></div>
@@ -163,7 +163,7 @@
     {{-- QUOTE SPOTLIGHT — VISI UTAMA                                  --}}
     {{-- ============================================================ --}}
     <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-28">
-        <div class="relative rounded-[2.5rem] bg-gradient-to-br from-emerald-950 to-slate-950 border border-emerald-500/20 p-10 sm:p-16 text-white shadow-2xl overflow-hidden">
+        <div class="relative rounded-[2.5rem] bg-slate-950 bg-gradient-to-br from-emerald-950 to-slate-950 border border-emerald-500/20 p-10 sm:p-16 text-white shadow-2xl overflow-hidden" style="background-color: #020617;">
             <div class="absolute -left-16 -top-16 w-56 h-56 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none"></div>
             <div class="absolute -right-16 -bottom-16 w-56 h-56 bg-amber-500/8 rounded-full blur-3xl pointer-events-none"></div>
             <div class="absolute inset-0 opacity-[0.02]" style="background-image: radial-gradient(circle, #ffffff 1px, transparent 1px); background-size: 28px 28px;"></div>
@@ -415,7 +415,7 @@
     {{-- BUKU PEDOMAN SANTRI                                           --}}
     {{-- ============================================================ --}}
     <section class="max-w-5xl mx-auto px-4 sm:px-6 py-28">
-        <div class="p-8 sm:p-14 bg-gradient-to-br from-emerald-800 via-emerald-900 to-emerald-950 rounded-[2rem] text-white shadow-2xl relative overflow-hidden">
+        <div class="p-8 sm:p-14 bg-emerald-950 bg-gradient-to-br from-emerald-800 via-emerald-900 to-emerald-950 rounded-[2rem] text-white shadow-2xl relative overflow-hidden" style="background-color: #064e3b;">
             <div class="absolute -right-8 -top-8 w-40 h-40 bg-white/5 rounded-full blur-2xl pointer-events-none"></div>
             <div class="absolute -left-8 -bottom-8 w-40 h-40 bg-amber-400/5 rounded-full blur-2xl pointer-events-none"></div>
             <div class="absolute inset-0 opacity-[0.03]" style="background-image: radial-gradient(circle, #ffffff 1px, transparent 1px); background-size: 24px 24px;"></div>

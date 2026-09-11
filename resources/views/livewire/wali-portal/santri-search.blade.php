@@ -1,6 +1,6 @@
 <div class="space-y-5">
     <!-- Welcome Card -->
-    <div class="bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 dark:from-emerald-800 dark:to-slate-900 rounded-3xl p-5 text-white shadow-lg relative overflow-hidden transition-colors">
+    <div class="bg-emerald-700 bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 dark:from-emerald-800 dark:to-slate-900 rounded-3xl p-5 text-white shadow-lg relative overflow-hidden transition-colors" style="background-color: #047857;">
         <div class="absolute -right-6 -bottom-6 w-28 h-28 bg-white/10 rounded-full blur-xl"></div>
         
         <div class="relative z-10 space-y-2">
