@@ -822,7 +822,7 @@
                 @endphp
 
                 <!-- Segmented Tabs Pembayaran -->
-                <div class="grid {{ $isDokuEnabled ? 'grid-cols-2' : 'grid-cols-1' }} gap-1.5 p-1 bg-slate-100 dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-slate-800">
+                <div class="grid grid-cols-2 gap-1.5 p-1 bg-slate-100 dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-slate-800">
                     {{-- 1. Transfer Manual (Default) --}}
                     <button type="button" 
                             wire:click="setCheckoutMethod('manual')"
@@ -833,7 +833,7 @@
                         <span>Transfer Manual</span>
                     </button>
 
-                    {{-- 2. Bayar Online (Hanya muncul jika diaktifkan) --}}
+                    {{-- 2. Bayar Online --}}
                     @if($isDokuEnabled)
                         <button type="button" 
                                 wire:click="setCheckoutMethod('doku')"
@@ -843,6 +843,15 @@
                             </svg>
                             <span>Bayar Online</span>
                         </button>
+                    @else
+                        <div class="py-2.5 px-3 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 text-slate-400 dark:text-slate-500 bg-slate-200/50 dark:bg-slate-900/60 cursor-not-allowed border border-dashed border-slate-300 dark:border-slate-700"
+                             title="Fitur pembayaran online sedang dinonaktifkan oleh pihak pesantren">
+                            <svg class="w-4 h-4 text-slate-400 dark:text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/>
+                            </svg>
+                            <span>Bayar Online</span>
+                            <span class="text-[9px] font-black uppercase text-amber-700 dark:text-amber-300 bg-amber-100 dark:bg-amber-950/80 px-1.5 py-0.5 rounded-md border border-amber-300 dark:border-amber-700">Off</span>
+                        </div>
                     @endif
                 </div>
 
