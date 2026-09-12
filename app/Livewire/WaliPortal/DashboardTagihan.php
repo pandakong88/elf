@@ -220,12 +220,7 @@ class DashboardTagihan extends Component
         } elseif ($mode === 'past_only') {
             $this->selectedBillIds = $pastIds;
         } elseif ($mode === 'current_only') {
-            if (!empty($pastIds)) {
-                $this->selectedBillIds = array_values(array_unique(array_merge($pastIds, $currentIds)));
-                $this->fifoNotice = 'Tunggakan bulan lalu otomatis diikutsertakan karena wajib diselesaikan terlebih dahulu.';
-            } else {
-                $this->selectedBillIds = $currentIds;
-            }
+            $this->selectedBillIds = $currentIds;
         } elseif ($mode === 'none') {
             $this->selectedBillIds = [];
         }
@@ -234,50 +229,77 @@ class DashboardTagihan extends Component
     public function toggleBillSelection(string $billId): void
     {
         $this->fifoNotice = null;
-        $partition = $this->getUnpaidBillsPartition();
-        $pastIds = $partition['past']->pluck('id')->toArray();
-        $currentIds = $partition['current']->pluck('id')->toArray();
-        $futureIds = $partition['future']->pluck('id')->toArray();
+        $targetBill = Bill::with('config')->find($billId);
+        if (!$targetBill) {
+            return;
+        }
+
+        $interval = $targetBill->config?->interval ?? '';
+        $isEvent = in_array($interval, ['once', 'insidental', 'event', 'sekali']) || in_array($targetBill->bill_type, ['kitab', 'pendaftaran', 'event_iuran']);
 
         $isSelected = in_array($billId, $this->selectedBillIds);
 
-        if ($isSelected) {
-            // Uncheck bill
-            $this->selectedBillIds = array_values(array_diff($this->selectedBillIds, [$billId]));
+        // Tagihan insidental / event / kitab: Bebas dipilih secara mandiri tanpa aturan FIFO
+        if ($isEvent) {
+            if ($isSelected) {
+                $this->selectedBillIds = array_values(array_diff($this->selectedBillIds, [$billId]));
+            } else {
+                $this->selectedBillIds[] = $billId;
+            }
+            return;
+        }
 
-            // If user unchecks a past bill, current & future bills must also be unchecked (FIFO)
-            if (in_array($billId, $pastIds)) {
-                $intersect = array_intersect($this->selectedBillIds, array_merge($currentIds, $futureIds));
-                if (!empty($intersect)) {
-                    $this->selectedBillIds = array_values(array_diff($this->selectedBillIds, array_merge($currentIds, $futureIds)));
-                    $this->fifoNotice = 'Tagihan bulan berjalan/mendatang disesuaikan karena tunggakan lama belum dipilih.';
-                }
-            } elseif (in_array($billId, $currentIds)) {
-                $intersectFuture = array_intersect($this->selectedBillIds, $futureIds);
-                if (!empty($intersectFuture)) {
-                    $this->selectedBillIds = array_values(array_diff($this->selectedBillIds, $futureIds));
-                    $this->fifoNotice = 'Tagihan bulan mendatang disesuaikan karena tagihan bulan ini belum dipilih.';
-                }
+        // Tagihan berkala (Syahriah, Majek, Kas Komplek, dll):
+        // Aturan FIFO HANYA berlaku untuk pos/jenis tagihan yang sama
+        $sameTypeBillsQuery = Bill::with('config')
+            ->where('person_id', $this->personId)
+            ->whereIn('status', ['unpaid', 'partial']);
+
+        if ($targetBill->billing_config_id) {
+            $sameTypeBillsQuery->where('billing_config_id', $targetBill->billing_config_id);
+        } else {
+            $sameTypeBillsQuery->where('bill_type', $targetBill->bill_type);
+        }
+
+        $sameTypeBills = $sameTypeBillsQuery->get()->sort(function($a, $b) {
+            $periodA = ($a->period_year ?? 2000) * 10000 + ($a->period_month ?? 1) * 100 + ($a->period_sub ?? 0);
+            $periodB = ($b->period_year ?? 2000) * 10000 + ($b->period_month ?? 1) * 100 + ($b->period_sub ?? 0);
+            if ($periodA !== $periodB) return $periodA <=> $periodB;
+            return $a->created_at <=> $b->created_at;
+        })->values();
+
+        $billIndex = $sameTypeBills->search(fn($b) => $b->id === $billId);
+        if ($billIndex === false) {
+            if ($isSelected) {
+                $this->selectedBillIds = array_values(array_diff($this->selectedBillIds, [$billId]));
+            } else {
+                $this->selectedBillIds[] = $billId;
+            }
+            return;
+        }
+
+        $configLabel = $this->getBillDisplayName($targetBill);
+
+        if ($isSelected) {
+            // Uncheck: Uncheck tagihan ini beserta tagihan setelahnya (hanya untuk jenis yang sama)
+            $billsToUncheck = $sameTypeBills->slice($billIndex)->pluck('id')->toArray();
+            $intersectFuture = array_intersect($this->selectedBillIds, array_slice($billsToUncheck, 1));
+
+            $this->selectedBillIds = array_values(array_diff($this->selectedBillIds, $billsToUncheck));
+
+            if (!empty($intersectFuture)) {
+                $this->fifoNotice = 'Tagihan bulan berjalan/mendatang disesuaikan karena tunggakan lama belum dipilih.';
             }
         } else {
-            // Check bill
-            if (in_array($billId, $currentIds)) {
-                $missingPast = array_diff($pastIds, $this->selectedBillIds);
-                if (!empty($missingPast)) {
-                    $this->selectedBillIds = array_values(array_unique(array_merge($this->selectedBillIds, $pastIds, [$billId])));
-                    $this->fifoNotice = 'Tagihan tunggakan bulan sebelumnya otomatis diikutsertakan agar urutan pelunasan tertib.';
-                    return;
-                }
-            } elseif (in_array($billId, $futureIds)) {
-                $missingMandatory = array_diff(array_merge($pastIds, $currentIds), $this->selectedBillIds);
-                if (!empty($missingMandatory)) {
-                    $this->selectedBillIds = array_values(array_unique(array_merge($this->selectedBillIds, $pastIds, $currentIds, [$billId])));
-                    $this->fifoNotice = 'Tunggakan & tagihan bulan ini otomatis diikutsertakan sebelum membayar bulan depan.';
-                    return;
-                }
-            }
+            // Check: Check tagihan ini beserta tunggakan sebelumnya (hanya untuk jenis yang sama)
+            $billsToCheck = $sameTypeBills->slice(0, $billIndex + 1)->pluck('id')->toArray();
+            $missingOlder = array_diff($billsToCheck, $this->selectedBillIds);
 
-            $this->selectedBillIds[] = $billId;
+            $this->selectedBillIds = array_values(array_unique(array_merge($this->selectedBillIds, $billsToCheck)));
+
+            if (count($missingOlder) > 1) {
+                $this->fifoNotice = 'Tagihan tunggakan bulan sebelumnya otomatis diikutsertakan agar urutan pelunasan tertib.';
+            }
         }
     }
 

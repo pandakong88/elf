@@ -378,6 +378,85 @@ class PortalWaliV2Test extends TestCase
             ->assertSet('senderBank', 'BCA')
             ->assertSet('senderAccountName', 'Ibu Fatimah');
     }
+
+    public function test_fifo_strictly_per_category_allows_independent_kitab_or_other_category(): void
+    {
+        $santri = $this->santri;
+        $this->actingAs($this->admin);
+
+        // 1. Past unpaid SPP Pondok (Bulan Lalu)
+        $pastSppPondok = Bill::create([
+            'person_id'    => $santri->id,
+            'bill_type'    => 'syahriah_pondok',
+            'title'        => 'SPP Pondok Bulan Lalu',
+            'amount'       => 200000,
+            'amount_paid'  => 0,
+            'status'       => 'unpaid',
+            'period_month' => now()->subMonth()->month,
+            'period_year'  => now()->subMonth()->year,
+            'created_by'   => $this->admin->id,
+        ]);
+
+        // 2. Current SPP Pondok (Bulan Ini)
+        $currentSppPondok = Bill::create([
+            'person_id'    => $santri->id,
+            'bill_type'    => 'syahriah_pondok',
+            'title'        => 'SPP Pondok Bulan Ini',
+            'amount'       => 200000,
+            'amount_paid'  => 0,
+            'status'       => 'unpaid',
+            'period_month' => now()->month,
+            'period_year'  => now()->year,
+            'created_by'   => $this->admin->id,
+        ]);
+
+        // 3. Independent Kitab Bill
+        $kitabBill = Bill::create([
+            'person_id'    => $santri->id,
+            'bill_type'    => 'kitab',
+            'title'        => 'Kitab Kuning Santri',
+            'amount'       => 100000,
+            'amount_paid'  => 0,
+            'status'       => 'unpaid',
+            'period_year'  => now()->year,
+            'created_by'   => $this->admin->id,
+        ]);
+
+        // 4. Independent Madrasah Bill (Bulan Ini)
+        $madrasahBill = Bill::create([
+            'person_id'    => $santri->id,
+            'bill_type'    => 'syahriah_madrasah',
+            'title'        => 'Syahriah Madrasah',
+            'amount'       => 75000,
+            'amount_paid'  => 0,
+            'status'       => 'unpaid',
+            'period_month' => now()->month,
+            'period_year'  => now()->year,
+            'created_by'   => $this->admin->id,
+        ]);
+
+        $test = Livewire::test(DashboardTagihan::class, ['personId' => $santri->id])
+            ->call('setPortalTab', 'bayar')
+            ->call('selectQuickMode', 'none')
+            ->assertSet('selectedBillIds', []);
+
+        // Selecting Kitab alone should work without dragging past SPP Pondok
+        $test->call('toggleBillSelection', $kitabBill->id)
+            ->assertSet('selectedBillIds', [$kitabBill->id])
+            ->assertSet('fifoNotice', null);
+
+        // Selecting Madrasah alone should work without dragging past SPP Pondok
+        $test->call('toggleBillSelection', $madrasahBill->id)
+            ->assertSet('selectedBillIds', [$kitabBill->id, $madrasahBill->id]);
+
+        // Selecting Current SPP Pondok SHOULD drag Past SPP Pondok (same category FIFO)
+        $test->call('toggleBillSelection', $currentSppPondok->id)
+            ->assertSet('selectedBillIds', [$kitabBill->id, $madrasahBill->id, $pastSppPondok->id, $currentSppPondok->id]);
+
+        // Deselecting Past SPP Pondok should deselect Current SPP Pondok ONLY, keeping Kitab & Madrasah selected!
+        $test->call('toggleBillSelection', $pastSppPondok->id)
+            ->assertSet('selectedBillIds', [$kitabBill->id, $madrasahBill->id]);
+    }
 }
 
 
