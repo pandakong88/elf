@@ -457,6 +457,26 @@ class PortalWaliV2Test extends TestCase
         $test->call('toggleBillSelection', $pastSppPondok->id)
             ->assertSet('selectedBillIds', [$kitabBill->id, $madrasahBill->id]);
     }
+
+    public function test_default_checkout_method_is_manual_and_shows_disabled_notice_when_online_off(): void
+    {
+        $santri = $this->santri;
+        $this->actingAs($this->admin);
+
+        // Turn OFF DOKU online payment
+        \App\Modules\Core\Models\LandingPageContent::updateOrCreate(
+            ['key' => 'doku_enabled'],
+            ['section' => 'payment_gateway', 'title' => 'DOKU Enabled', 'value' => '0']
+        );
+
+        $test = Livewire::test(DashboardTagihan::class, ['personId' => $santri->id])
+            ->assertSet('checkoutMethod', 'manual')
+            ->call('setPortalTab', 'bayar')
+            ->assertSee('Transfer Manual')
+            ->assertSee('Fitur Pembayaran Online Sedang Dimatikan')
+            ->call('setCheckoutMethod', 'doku')
+            ->assertSet('checkoutMethod', 'manual');
+    }
 }
 
 

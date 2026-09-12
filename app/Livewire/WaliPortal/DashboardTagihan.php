@@ -50,7 +50,7 @@ class DashboardTagihan extends Component
     public array $presetPocketMoney = [100000, 150000, 200000, 250000];
 
     // ─── Form Checkout Pembayaran ─────────────────────────────────────────────
-    public string $checkoutMethod = 'doku'; // 'doku' | 'manual' | 'duitku'
+    public string $checkoutMethod = 'manual'; // 'manual' | 'doku' | 'duitku'
     public $proofImage; // Temporary uploaded image
     public string $senderBank = '';
     public string $senderAccountName = '';
@@ -80,9 +80,7 @@ class DashboardTagihan extends Component
     public function mount(string $personId)
     {
         $this->personId = $personId;
-        if (!DokuService::isEnabled()) {
-            $this->checkoutMethod = 'manual';
-        }
+        $this->checkoutMethod = 'manual';
     }
 
     public function setPortalTab(string $tab): void
@@ -121,6 +119,10 @@ class DashboardTagihan extends Component
 
     public function setCheckoutMethod(string $method): void
     {
+        if ($method === 'doku' && !DokuService::isEnabled()) {
+            $this->checkoutMethod = 'manual';
+            return;
+        }
         $this->checkoutMethod = in_array($method, ['doku', 'manual', 'duitku']) ? $method : 'manual';
     }
 
