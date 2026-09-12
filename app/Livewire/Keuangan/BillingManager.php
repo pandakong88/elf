@@ -44,6 +44,13 @@ class BillingManager extends Component
     public bool $showCategoryModal = false;
     public ?string $modalCategoryKey = null;
     public array $distributionChecklist = [];
+    public string $settlementBankFilter = '';
+    public array $dokuPayoutStatus = [
+        'is_disbursed'     => false,
+        'disbursed_at'     => null,
+        'destination_bank' => '',
+        'notes'            => '',
+    ];
 
     // Tab: Dynamic Billing Generator
     public ?string $genConfigId = null;
@@ -3008,6 +3015,33 @@ class BillingManager extends Component
         }
     }
 
+    public function toggleDokuPayoutStatus(?string $bank = null, ?string $notes = null): void
+    {
+        $current = $this->dokuPayoutStatus['is_disbursed'] ?? false;
+        $this->dokuPayoutStatus = [
+            'is_disbursed'     => !$current,
+            'disbursed_at'     => !$current ? now()->toDateTimeString() : null,
+            'destination_bank' => $bank ?? ($this->dokuPayoutStatus['destination_bank'] ?: 'BSI Operasional Pesantren'),
+            'notes'            => $notes ?? ($this->dokuPayoutStatus['notes'] ?? ''),
+        ];
+
+        if (!$current) {
+            $this->toastSuccess('Status DOKU Payout ditandai: Dana sudah dicairkan ke rekening bank.');
+        } else {
+            $this->toastInfo('Status DOKU Payout diubah kembali: Menunggu jadwal pencairan.');
+        }
+    }
+
+    public function getTransferBankOptionsProperty(): array
+    {
+        return ManualTransferSubmission::select('bank_destination')
+            ->whereNotNull('bank_destination')
+            ->where('bank_destination', '!=', '')
+            ->distinct()
+            ->pluck('bank_destination')
+            ->toArray();
+    }
+
     public function deleteSettlementSnapshot(string $id): void
     {
         $user = auth()->user();
@@ -3055,10 +3089,16 @@ class BillingManager extends Component
                     'cash_amount'     => $report['cash_amount'],
                     'cash_trx'        => $report['cash_trx'],
                 ],
-                'categories'  => $report['category_breakdown'],
-                'dormitories' => $report['dormitory_breakdown'],
-                'checklist'   => $this->distributionChecklist,
-                'period_label'=> $report['period_label'],
+                'categories'     => $report['category_breakdown'],
+                'dormitories'    => $report['dormitory_breakdown'],
+                'checklist'      => $this->distributionChecklist,
+                'doku_payout'    => $this->dokuPayoutStatus,
+                'bank_filter'    => $this->settlementBankFilter,
+                'period_label'   => $report['period_label'],
+                'target_metrics' => [
+                    'total_billed'        => $report['total_billed'] ?? 0,
+                    'realization_percent' => $report['realization_percent'] ?? 0,
+                ],
             ],
             'online_amount'  => $report['gateway_net'],
             'manual_amount'  => $report['transfer_amount'] + $report['cash_amount'],
@@ -3229,6 +3269,15 @@ class BillingManager extends Component
                       ->orWhereBetween('created_at', [$fromCarbon, $toCarbon]);
                 })
                 ->when($targetGender, fn($q, $g) => $q->whereHas('bill.person', fn($pq) => $pq->where('gender', $g)))
+                ->when($this->settlementBankFilter, function ($q, $bank) {
+                    $q->where(function ($subQ) use ($bank) {
+                        $subQ->where('payment_method', 'like', "%{$bank}%")
+                             ->orWhere('notes', 'like', "%{$bank}%")
+                             ->orWhereHas('bill.person.manualTransferSubmissions', function ($mq) use ($bank) {
+                                 $mq->where('status', 'approved')->where('bank_destination', $bank);
+                             });
+                    });
+                })
                 ->with(['bill.person.roomAssignments' => fn($q) => $q->active()->with('room.dormitory'), 'bill.config']);
 
             $kasirPayments = $kasirQuery->get();
@@ -3299,6 +3348,7 @@ class BillingManager extends Component
                       });
                 })
                 ->when($targetGender, fn($q, $g) => $q->whereHas('person', fn($pq) => $pq->where('gender', $g)))
+                ->when($this->settlementBankFilter, fn($q, $bank) => $q->where('bank_destination', $bank))
                 ->with(['person.roomAssignments' => fn($q) => $q->active()->with('room')])
                 ->get();
 
@@ -3329,12 +3379,19 @@ class BillingManager extends Component
 
         $periodLabel = \Carbon\Carbon::parse($dateFrom)->locale('id')->translatedFormat('d M Y') . ' s/d ' . \Carbon\Carbon::parse($dateTo)->locale('id')->translatedFormat('d M Y');
 
+        $totalBilled = (float) Bill::whereBetween('created_at', [$fromCarbon, $toCarbon])
+            ->when($targetGender, fn($q, $g) => $q->whereHas('person', fn($pq) => $pq->where('gender', $g)))
+            ->sum('amount');
+        $realizationPercent = $totalBilled > 0 ? min(100.0, round(($totalNet / $totalBilled) * 100, 1)) : 0.0;
+
         return [
             'period_label'        => $periodLabel,
             'total_gross'         => $totalGross,
             'total_mdr'           => $totalMdr,
             'total_net'           => $totalNet,
             'total_trx'           => $totalTrx,
+            'total_billed'        => $totalBilled,
+            'realization_percent' => $realizationPercent,
             'gateway_gross'       => $gatewayGross,
             'gateway_mdr'         => $gatewayMdr,
             'gateway_net'         => $gatewayNet,

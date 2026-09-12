@@ -474,4 +474,146 @@ class SettlementReportTest extends TestCase
             'id' => $snapshot->id,
         ]);
     }
+
+    public function test_settlement_excel_export_download(): void
+    {
+        $this->actingAs($this->admin);
+
+        PaymentTransaction::create([
+            'id'                  => (string) Str::uuid(),
+            'merchant_order_id'   => 'ORD-EXCEL-001',
+            'person_id'           => $this->santriPutra->id,
+            'bill_ids'            => ['bill-excel-1'],
+            'bill_breakdown'      => [
+                [
+                    'bill_id'      => 'bill-excel-1',
+                    'bill_type'    => 'syahriah_pondok',
+                    'config_label' => 'Syahriah Pondok',
+                    'pay_portion'  => 350000,
+                ],
+            ],
+            'bill_amount'         => 350000,
+            'pocket_money_amount' => 50000,
+            'admin_fee'           => 4000,
+            'mdr_amount'          => 3000,
+            'net_amount'          => 397000,
+            'total_amount'        => 404000,
+            'payment_channel'     => 'QRIS',
+            'status'              => 'success',
+            'callback_received_at'=> now(),
+        ]);
+
+        $response = $this->get(route('keuangan.settlement.export-excel', [
+            'date_from' => now()->startOfMonth()->toDateString(),
+            'date_to'   => now()->toDateString(),
+            'source'    => 'all',
+        ]));
+
+        $response->assertStatus(200);
+        $this->assertTrue(
+            str_contains($response->headers->get('content-type', ''), 'spreadsheetml') ||
+            str_contains($response->headers->get('content-disposition', ''), '.xlsx')
+        );
+    }
+
+    public function test_doku_payout_tracking_and_snapshot(): void
+    {
+        $this->actingAs($this->admin);
+
+        PaymentTransaction::create([
+            'id'                  => (string) Str::uuid(),
+            'merchant_order_id'   => 'ORD-PO-001',
+            'person_id'           => $this->santriPutra->id,
+            'bill_ids'            => ['bill-po-1'],
+            'bill_breakdown'      => [
+                [
+                    'bill_id'      => 'bill-po-1',
+                    'bill_type'    => 'syahriah_pondok',
+                    'config_label' => 'Syahriah Pondok',
+                    'pay_portion'  => 250000,
+                ],
+            ],
+            'bill_amount'         => 250000,
+            'pocket_money_amount' => 0,
+            'admin_fee'           => 4000,
+            'mdr_amount'          => 2000,
+            'net_amount'          => 248000,
+            'total_amount'        => 254000,
+            'payment_channel'     => 'QRIS',
+            'status'              => 'success',
+            'callback_received_at'=> now(),
+        ]);
+
+        $component = Livewire::test(BillingManager::class)
+            ->set('activeTab', 'settlement')
+            ->assertSet('dokuPayoutStatus.is_disbursed', false)
+            ->call('toggleDokuPayoutStatus', 'BSI Rekening Utama', 'Batch #009 Disbursed')
+            ->assertSet('dokuPayoutStatus.is_disbursed', true)
+            ->assertSet('dokuPayoutStatus.destination_bank', 'BSI Rekening Utama')
+            ->call('saveSettlementSnapshot');
+
+        $this->assertDatabaseHas('fund_distributions', [
+            'status' => 'distributed',
+        ]);
+
+        $snapshot = FundDistribution::latest()->first();
+        $this->assertNotNull($snapshot->breakdown);
+        $this->assertTrue($snapshot->breakdown['doku_payout']['is_disbursed']);
+        $this->assertEquals('BSI Rekening Utama', $snapshot->breakdown['doku_payout']['destination_bank']);
+    }
+
+    public function test_settlement_bank_filter_and_target_realization(): void
+    {
+        $this->actingAs($this->admin);
+
+        $bill = Bill::create([
+            'id'          => (string) Str::uuid(),
+            'person_id'   => $this->santriPutra->id,
+            'bill_type'   => 'kitab',
+            'amount'      => 150000,
+            'amount_paid' => 150000,
+            'status'      => 'paid',
+            'created_by'  => $this->admin->id,
+        ]);
+
+        ManualTransferSubmission::create([
+            'id'                    => (string) Str::uuid(),
+            'submission_code'       => 'TRF-BSI-999',
+            'person_id'             => $this->santriPutra->id,
+            'bill_ids'              => [$bill->id],
+            'bill_breakdown'        => [
+                ['bill_id' => $bill->id, 'config_label' => 'Kitab', 'amount' => 150000],
+            ],
+            'total_bills_amount'    => 150000,
+            'pocket_money_amount'   => 0,
+            'total_transfer_amount' => 150000,
+            'bank_destination'      => 'BSI',
+            'sender_bank'           => 'BCA',
+            'sender_account_name'   => 'Wali Santri',
+            'proof_image_path'      => 'proofs/test.jpg',
+            'status'                => 'approved',
+            'verified_at'           => now(),
+            'verified_by'           => $this->admin->id,
+        ]);
+
+        BillPayment::create([
+            'id'             => (string) Str::uuid(),
+            'bill_id'        => $bill->id,
+            'receipt_no'     => 'KW-BSI-999',
+            'amount_paid'    => 150000,
+            'payment_method' => 'transfer_bsi',
+            'payment_date'   => now()->toDateString(),
+            'logged_by'      => $this->admin->id,
+            'notes'          => 'Transfer manual BSI [TRF-BSI-999]',
+        ]);
+
+        $component = Livewire::test(BillingManager::class)
+            ->set('activeTab', 'settlement')
+            ->set('settlementSource', 'kasir')
+            ->set('settlementBankFilter', 'BSI');
+
+        $report = $component->get('settlementReport');
+        $this->assertEquals(150000, $report['transfer_amount']);
+        $this->assertGreaterThan(0, $report['realization_percent']);
+    }
 }

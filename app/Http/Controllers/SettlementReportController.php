@@ -9,6 +9,8 @@ use App\Modules\Keuangan\Models\BillPayment;
 use App\Modules\Keuangan\Models\PaymentTransaction;
 use App\Modules\Keuangan\Models\ManualTransferSubmission;
 use App\Modules\Keuangan\Models\FundDistribution;
+use App\Exports\SettlementReportExport;
+use Maatwebsite\Excel\Facades\Excel;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -228,6 +230,109 @@ class SettlementReportController extends Controller
         $pdf = Pdf::loadView('pdf.rekap-settlement', $data)->setPaper('a4', 'portrait');
 
         return $pdf->stream('Rekap-Settlement-' . Carbon::parse($dateFrom)->format('Ymd') . '-' . Carbon::parse($dateTo)->format('Ymd') . '.pdf');
+    }
+
+    /**
+     * Export Excel (.xlsx) Rekap Settlement 2-Sheet (Ringkasan & Rincian Santri)
+     */
+    public function exportExcel(Request $request)
+    {
+        $genderScope = $this->resolveGenderScope();
+        $targetGender = $genderScope ?: $request->query('gender', null);
+
+        $dateFrom = $request->query('date_from', now()->startOfMonth()->toDateString());
+        $dateTo   = $request->query('date_to', now()->toDateString());
+        $source   = $request->query('source', 'all');
+        $appName  = config('app.name', 'Pondok Pesantren Al-Fithroh');
+
+        $categoryKeys = ['syahriah_putra', 'syahriah_putri', 'madrasah', 'kitab', 'majek_pagi', 'majek_sore', 'pocket_money'];
+        $categoriesReport = [];
+        $allSantriList = [];
+
+        $gatewayNet  = 0.0;
+        $gatewayMdr  = 0.0;
+        $gatewayTrx  = 0;
+        $transferAmt = 0.0;
+        $transferTrx = 0;
+        $cashAmt     = 0.0;
+        $cashTrx     = 0;
+
+        foreach ($categoryKeys as $catKey) {
+            $catData = $this->getCategorySlipData($request, $catKey);
+            if ($catData['total_amount'] > 0) {
+                $categoriesReport[] = [
+                    'key'    => $catKey,
+                    'label'  => $catData['meta']['title'],
+                    'amount' => $catData['total_amount'],
+                    'count'  => count($catData['santri_list']),
+                ];
+
+                foreach ($catData['santri_list'] as $s) {
+                    $s['category_label'] = $catData['meta']['title'];
+                    $allSantriList[] = $s;
+
+                    $method = strtolower($s['method'] ?? '');
+                    if (str_contains($method, 'online')) {
+                        $gatewayNet += (float)$s['amount'];
+                        $gatewayTrx++;
+                    } elseif (str_contains($method, 'transfer') || str_contains($method, 'tf')) {
+                        $transferAmt += (float)$s['amount'];
+                        $transferTrx++;
+                    } else {
+                        $cashAmt += (float)$s['amount'];
+                        $cashTrx++;
+                    }
+                }
+            }
+        }
+
+        // Dormitories
+        $dormitories = Dormitory::active()
+            ->when($targetGender, fn($q, $g) => $q->where('gender', $g))
+            ->orderByRaw("gender ASC, name ASC")->get();
+
+        $dormReport = [];
+        foreach ($dormitories as $dorm) {
+            $dormData = $this->getDormitorySlipData($request, $dorm->id);
+            if ($dormData['total_amount'] > 0) {
+                $dormReport[] = [
+                    'dormitory_id'   => $dorm->id,
+                    'dormitory_name' => $dorm->name,
+                    'gender'         => $dorm->gender,
+                    'count_santri'   => count($dormData['santri_list']),
+                    'total_amount'   => $dormData['total_amount'],
+                ];
+            }
+        }
+
+        $periodLabel = Carbon::parse($dateFrom)->locale('id')->translatedFormat('d M Y') . ' s/d ' . Carbon::parse($dateTo)->locale('id')->translatedFormat('d M Y');
+
+        $totalNet   = $gatewayNet + $transferAmt + $cashAmt;
+        $totalGross = $totalNet + $gatewayMdr;
+        $totalTrx   = $gatewayTrx + $transferTrx + $cashTrx;
+
+        $reportData = [
+            'period_label'       => $periodLabel,
+            'gateway_gross'      => $gatewayNet + $gatewayMdr,
+            'gateway_mdr'        => $gatewayMdr,
+            'gateway_net'        => $gatewayNet,
+            'gateway_trx'        => $gatewayTrx,
+            'transfer_amount'    => $transferAmt,
+            'transfer_trx'       => $transferTrx,
+            'cash_amount'        => $cashAmt,
+            'cash_trx'           => $cashTrx,
+            'total_gross'        => $totalGross,
+            'total_mdr'          => $gatewayMdr,
+            'total_net'          => $totalNet,
+            'total_trx'          => $totalTrx,
+            'category_breakdown' => $categoriesReport,
+            'dormitory_breakdown'=> $dormReport,
+        ];
+
+        return Excel::download(
+            new SettlementReportExport($reportData, $allSantriList, [], $appName),
+            'Rekap-Settlement-' . Carbon::parse($dateFrom)->format('Ymd') . '-' . Carbon::parse($dateTo)->format('Ymd') . '.xlsx'
+        );
     }
 
     /**

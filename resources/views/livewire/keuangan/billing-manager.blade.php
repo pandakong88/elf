@@ -3709,6 +3709,15 @@
                             <span>Cetak Rekap PDF</span>
                         </a>
 
+                        {{-- Tombol Export Excel Multi-Sheet --}}
+                        <a href="{{ route('keuangan.settlement.export-excel', ['date_from' => $settlementDateFrom, 'date_to' => $settlementDateTo, 'source' => $settlementSource, 'bank' => $settlementBankFilter]) }}" 
+                           target="_blank"
+                           class="inline-flex items-center gap-2 px-4 py-2.5 bg-emerald-50 dark:bg-emerald-950/40 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 text-emerald-700 dark:text-emerald-300 font-extrabold text-xs rounded-2xl border border-emerald-300 dark:border-emerald-700 shadow-xs transition-all active:scale-95"
+                           title="Download Laporan Rekonsiliasi Excel 2-Sheet (Ringkasan & Rincian Santri)">
+                            <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                            <span>Export Excel (.xlsx)</span>
+                        </a>
+
                         {{-- Tombol Kunci & Simpan Distribusi (Khusus Pusat / Admin) --}}
                         @if($this->canLockSettlement())
                             <button type="button" 
@@ -3812,6 +3821,20 @@
                                     <option value="kasir">💵 Khusus Kasir &amp; Transfer Manual</option>
                                 </select>
                             </div>
+
+                            {{-- Bank Destination Filter --}}
+                            @if(count($this->transferBankOptions) > 0)
+                                <div class="flex items-center gap-1.5">
+                                    <span class="text-[11px] font-bold text-slate-400">Rek Bank:</span>
+                                    <select wire:model.live="settlementBankFilter" 
+                                            class="text-xs font-bold rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white px-2.5 py-1.5 focus:ring-2 focus:ring-sky-500">
+                                        <option value="">Semua Rek Bank</option>
+                                        @foreach($this->transferBankOptions as $bankOpt)
+                                            <option value="{{ $bankOpt }}">{{ $bankOpt }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                            @endif
                         </div>
                     </div>
                 </div>
@@ -3819,7 +3842,7 @@
                 {{-- 3. KPI Cards: 3 Sumber Uang & Total Bersih --}}
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                     {{-- Card 1: Gateway Online --}}
-                    <div class="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-xs space-y-1">
+                    <div class="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-xs space-y-2">
                         <div class="flex items-center justify-between text-sky-500">
                             <span class="text-[11px] font-extrabold uppercase tracking-wider">⚡ 1. Gateway Online</span>
                             <span class="p-1.5 bg-sky-50 dark:bg-sky-950/40 text-sky-600 dark:text-sky-400 rounded-xl font-mono text-[10px] font-bold">
@@ -3831,6 +3854,22 @@
                         </div>
                         <div class="text-[11px] text-slate-400">
                             Kotor: Rp {{ number_format($settlementReport['gateway_gross'], 0, ',', '.') }} | MDR: -Rp {{ number_format($settlementReport['gateway_mdr'], 0, ',', '.') }}
+                        </div>
+                        {{-- DOKU Payout Status Tracking --}}
+                        <div class="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                            <span class="text-[10px] font-bold text-slate-400">Status Payout Bank:</span>
+                            <button type="button" 
+                                    wire:click="toggleDokuPayoutStatus" 
+                                    class="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-extrabold transition {{ !empty($dokuPayoutStatus['is_disbursed']) ? 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700' : 'bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border border-amber-300 dark:border-amber-700' }}"
+                                    title="Klik untuk mengubah status pencairan dari payment gateway ke rekening penampung pondok">
+                                @if(!empty($dokuPayoutStatus['is_disbursed']))
+                                    <svg class="w-3 h-3 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+                                    <span>Sudah Masuk Rekening</span>
+                                @else
+                                    <svg class="w-3 h-3 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                    <span>Menunggu Payout DOKU</span>
+                                @endif
+                            </button>
                         </div>
                     </div>
 
@@ -3846,7 +3885,7 @@
                             Rp {{ number_format($settlementReport['transfer_amount'], 0, ',', '.') }}
                         </div>
                         <div class="text-[11px] text-slate-400">
-                            Mutasi BSI / BRI Terverifikasi (Utuh 100%)
+                            Mutasi Bank Terverifikasi (Utuh 100%)
                         </div>
                     </div>
 
@@ -3866,8 +3905,8 @@
                         </div>
                     </div>
 
-                    {{-- Card 4: Total Uang Masuk Bersih --}}
-                    <div class="bg-gradient-to-br from-emerald-500/10 to-transparent dark:from-emerald-950/40 dark:to-slate-900 p-5 rounded-3xl border-2 border-emerald-500/60 dark:border-emerald-500/40 shadow-sm space-y-1">
+                    {{-- Card 4: Total Uang Masuk Bersih & Target Realisasi --}}
+                    <div class="bg-gradient-to-br from-emerald-500/10 to-transparent dark:from-emerald-950/40 dark:to-slate-900 p-5 rounded-3xl border-2 border-emerald-500/60 dark:border-emerald-500/40 shadow-sm space-y-2">
                         <div class="flex items-center justify-between text-emerald-600 dark:text-emerald-400">
                             <span class="text-[11px] font-black uppercase tracking-wider">🎯 TOTAL UANG MASUK (BERSIH)</span>
                             <span class="p-1.5 bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 rounded-xl">
@@ -3877,9 +3916,22 @@
                         <div class="text-2xl font-black text-emerald-700 dark:text-emerald-300 font-mono">
                             Rp {{ number_format($settlementReport['total_net'], 0, ',', '.') }}
                         </div>
-                        <div class="text-[11px] font-bold text-emerald-600 dark:text-emerald-400">
-                            {{ $settlementReport['total_trx'] }} Total Transaksi Siap Dialokasikan
+                        <div class="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 flex items-center justify-between">
+                            <span>{{ $settlementReport['total_trx'] }} Transaksi Terhimpun</span>
+                            @if(($settlementReport['total_billed'] ?? 0) > 0)
+                                <span class="px-2 py-0.5 bg-emerald-200/60 dark:bg-emerald-800/40 rounded-full text-[10px] font-black">
+                                    {{ $settlementReport['realization_percent'] }}% Target
+                                </span>
+                            @endif
                         </div>
+                        @if(($settlementReport['total_billed'] ?? 0) > 0)
+                            <div class="w-full bg-emerald-200/50 dark:bg-emerald-950/80 rounded-full h-1.5 overflow-hidden">
+                                <div class="bg-emerald-500 h-1.5 rounded-full transition-all duration-500" style="width: {{ min(100, $settlementReport['realization_percent']) }}%"></div>
+                            </div>
+                            <div class="text-[10px] text-slate-400">
+                                Target Terbit: Rp {{ number_format($settlementReport['total_billed'], 0, ',', '.') }}
+                            </div>
+                        @endif
                     </div>
                 </div>
 
