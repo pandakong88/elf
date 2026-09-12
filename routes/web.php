@@ -124,6 +124,7 @@ Route::middleware('auth')->group(function () {
     // Rekonsiliasi & Settlement Reports (PDF)
     Route::get('/keuangan/settlement/pdf', [\App\Http\Controllers\SettlementReportController::class, 'downloadSettlementPdf'])->name('keuangan.settlement.pdf');
     Route::get('/keuangan/settlement/slip-komplek/{dormitoryId}', [\App\Http\Controllers\SettlementReportController::class, 'downloadSlipKomplekPdf'])->name('keuangan.settlement.slip-komplek');
+    Route::get('/keuangan/settlement/slip-kategori/{categoryKey}', [\App\Http\Controllers\SettlementReportController::class, 'downloadSlipKategoriPdf'])->name('keuangan.settlement.slip-kategori');
 
 
 

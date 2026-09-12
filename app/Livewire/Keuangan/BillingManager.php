@@ -41,6 +41,8 @@ class BillingManager extends Component
     public string $settlementNotes = '';
     public bool $showDormitoryModal = false;
     public ?string $modalDormitoryId = null;
+    public bool $showCategoryModal = false;
+    public ?string $modalCategoryKey = null;
 
     // Tab: Dynamic Billing Generator
     public ?string $genConfigId = null;
@@ -2951,6 +2953,25 @@ class BillingManager extends Component
         };
     }
 
+    public function openCategoryDetailModal(string $categoryKey): void
+    {
+        $this->modalCategoryKey   = $categoryKey;
+        $this->showCategoryModal = true;
+    }
+
+    public function closeCategoryDetailModal(): void
+    {
+        $this->showCategoryModal = false;
+        $this->modalCategoryKey   = null;
+    }
+
+    public function getPendingTransferCountProperty(): int
+    {
+        return ManualTransferSubmission::where('status', 'pending')
+            ->when($this->genderScope(), fn($q, $g) => $q->whereHas('person', fn($pq) => $pq->where('gender', $g)))
+            ->count();
+    }
+
     public function openDormitoryDetailModal(string $dormitoryId): void
     {
         $this->modalDormitoryId   = $dormitoryId;
@@ -3007,7 +3028,7 @@ class BillingManager extends Component
     {
         $dateFrom = $this->settlementDateFrom ?: now()->startOfMonth()->toDateString();
         $dateTo   = $this->settlementDateTo ?: now()->toDateString();
-        $source   = $this->settlementSource ?: 'gateway';
+        $source   = $this->settlementSource ?: 'all';
 
         $genderScope  = $this->genderScope();
         $targetGender = $genderScope ?: $this->settlementGender;
@@ -3020,16 +3041,27 @@ class BillingManager extends Component
         $totalNet   = 0.0;
         $totalTrx   = 0;
 
+        $gatewayGross = 0.0;
+        $gatewayMdr   = 0.0;
+        $gatewayNet   = 0.0;
+        $gatewayTrxCount = 0;
+
+        $transferAmount = 0.0;
+        $transferTrxCount = 0;
+
+        $cashAmount = 0.0;
+        $cashTrxCount = 0;
+
         $categories = [
-            'syahriah_putra' => ['key' => 'syahriah_putra', 'label' => 'Syahriah / SPP Pondok Putra', 'desc' => 'Operasional pesantren unit putra', 'amount' => 0.0, 'count' => 0, 'icon' => '🕌', 'color' => 'blue'],
-            'syahriah_putri' => ['key' => 'syahriah_putri', 'label' => 'Syahriah / SPP Pondok Putri', 'desc' => 'Operasional pesantren unit putri', 'amount' => 0.0, 'count' => 0, 'icon' => '🕌', 'color' => 'pink'],
-            'madrasah'       => ['key' => 'madrasah', 'label' => 'Syahriah Madrasah', 'desc' => 'Operasional pendidikan formal/diniyah', 'amount' => 0.0, 'count' => 0, 'icon' => '🏫', 'color' => 'emerald'],
-            'kitab'          => ['key' => 'kitab', 'label' => 'Biaya Kitab / Buku', 'desc' => 'Pengadaan sarana belajar santri', 'amount' => 0.0, 'count' => 0, 'icon' => '📚', 'color' => 'amber'],
-            'majek_pagi'     => ['key' => 'majek_pagi', 'label' => 'Katering Majek (Pagi)', 'desc' => 'Logistik konsumsi makan pagi santri', 'amount' => 0.0, 'count' => 0, 'icon' => '🍲', 'color' => 'orange'],
-            'majek_sore'     => ['key' => 'majek_sore', 'label' => 'Katering Majek (Sore)', 'desc' => 'Logistik konsumsi makan sore santri', 'amount' => 0.0, 'count' => 0, 'icon' => '🍲', 'color' => 'orange'],
-            'kas_komplek'    => ['key' => 'kas_komplek', 'label' => 'Kas Komplek / Asrama (Total)', 'desc' => 'Dana titipan kebersihan & kegiatan asrama', 'amount' => 0.0, 'count' => 0, 'icon' => '🏠', 'color' => 'indigo'],
-            'pocket_money'   => ['key' => 'pocket_money', 'label' => 'Titipan Uang Saku Santri', 'desc' => 'Dana titipan uang jajan santri via portal', 'amount' => 0.0, 'count' => 0, 'icon' => '💰', 'color' => 'purple'],
-            'lainnya'        => ['key' => 'lainnya', 'label' => 'Iuran Lainnya / Insidental', 'desc' => 'Pendaftaran, kebersihan, & event', 'amount' => 0.0, 'count' => 0, 'icon' => '🏷️', 'color' => 'slate'],
+            'syahriah_putra' => ['key' => 'syahriah_putra', 'label' => 'Syahriah / SPP Pondok Putra', 'desc' => 'Operasional pesantren unit putra', 'amount' => 0.0, 'count' => 0, 'icon' => '🕌', 'color' => 'blue', 'santri_list' => []],
+            'syahriah_putri' => ['key' => 'syahriah_putri', 'label' => 'Syahriah / SPP Pondok Putri', 'desc' => 'Operasional pesantren unit putri', 'amount' => 0.0, 'count' => 0, 'icon' => '🕌', 'color' => 'pink', 'santri_list' => []],
+            'madrasah'       => ['key' => 'madrasah', 'label' => 'Syahriah Madrasah', 'desc' => 'Operasional pendidikan formal/diniyah', 'amount' => 0.0, 'count' => 0, 'icon' => '🏫', 'color' => 'emerald', 'santri_list' => []],
+            'kitab'          => ['key' => 'kitab', 'label' => 'Biaya Kitab / Buku', 'desc' => 'Pengadaan sarana belajar santri', 'amount' => 0.0, 'count' => 0, 'icon' => '📚', 'color' => 'amber', 'santri_list' => []],
+            'majek_pagi'     => ['key' => 'majek_pagi', 'label' => 'Katering Majek (Pagi)', 'desc' => 'Logistik konsumsi makan pagi santri', 'amount' => 0.0, 'count' => 0, 'icon' => '🍲', 'color' => 'orange', 'santri_list' => []],
+            'majek_sore'     => ['key' => 'majek_sore', 'label' => 'Katering Majek (Sore)', 'desc' => 'Logistik konsumsi makan sore santri', 'amount' => 0.0, 'count' => 0, 'icon' => '🍲', 'color' => 'orange', 'santri_list' => []],
+            'kas_komplek'    => ['key' => 'kas_komplek', 'label' => 'Kas Komplek / Asrama (Total)', 'desc' => 'Dana titipan kebersihan & kegiatan asrama', 'amount' => 0.0, 'count' => 0, 'icon' => '🏠', 'color' => 'indigo', 'santri_list' => []],
+            'pocket_money'   => ['key' => 'pocket_money', 'label' => 'Titipan Uang Saku Santri', 'desc' => 'Dana titipan uang jajan santri via portal', 'amount' => 0.0, 'count' => 0, 'icon' => '💰', 'color' => 'purple', 'santri_list' => []],
+            'lainnya'        => ['key' => 'lainnya', 'label' => 'Iuran Lainnya / Insidental', 'desc' => 'Pendaftaran, kebersihan, & event', 'amount' => 0.0, 'count' => 0, 'icon' => '🏷️', 'color' => 'slate', 'santri_list' => []],
         ];
 
         $dormitories = Dormitory::active()
@@ -3065,6 +3097,7 @@ class BillingManager extends Component
 
             $gatewayTrx = $gatewayQuery->get();
             $totalTrx += $gatewayTrx->count();
+            $gatewayTrxCount += $gatewayTrx->count();
 
             foreach ($gatewayTrx as $trx) {
                 $netTrx = (float) ($trx->net_amount > 0 ? $trx->net_amount : ((float)$trx->bill_amount + (float)($trx->pocket_money_amount ?? 0)));
@@ -3072,15 +3105,32 @@ class BillingManager extends Component
                 $totalMdr   += (float) $trx->mdr_amount;
                 $totalNet   += $netTrx;
 
+                $gatewayGross += (float) $trx->total_amount;
+                $gatewayMdr   += (float) $trx->mdr_amount;
+                $gatewayNet   += $netTrx;
+
                 $person = $trx->person;
                 $activeAssignment = $person?->roomAssignments?->first();
                 $dormId = $activeAssignment?->room?->dormitory_id;
+                $roomName = $activeAssignment?->room?->name ?? '-';
 
                 foreach ($trx->bill_breakdown ?? [] as $item) {
                     $amt = (float) ($item['pay_portion'] ?? $item['net_amount'] ?? 0);
                     $type = $item['bill_type'] ?? '';
+                    $periodItemLabel = $item['period_label'] ?? $item['config_label'] ?? ucwords(str_replace('_', ' ', $type));
 
-                    $this->allocateCategory($categories, $type, $amt, $person?->gender, $item['config_label'] ?? null);
+                    $santriItem = [
+                        'nis'          => $person->nis ?? '-',
+                        'name'         => $person->name ?? '—',
+                        'gender'       => $person->gender ?? '-',
+                        'unit_info'    => $roomName,
+                        'period_label' => $periodItemLabel,
+                        'paid_date'    => $trx->created_at->locale('id')->translatedFormat('d M, H:i'),
+                        'method'       => ($trx->channel_label ?? $trx->payment_channel ?? 'Online') . ' (Online)',
+                        'amount'       => $amt,
+                    ];
+
+                    $this->allocateCategory($categories, $type, $amt, $person?->gender, $item['config_label'] ?? null, $santriItem);
 
                     if ($type === 'kas_komplek' && $dormId && isset($dormBreakdown[$dormId])) {
                         $dormBreakdown[$dormId]['total_amount'] += $amt;
@@ -3089,19 +3139,31 @@ class BillingManager extends Component
                             $dormBreakdown[$dormId]['santri_ids'][] = $person->id;
                         }
                         $dormBreakdown[$dormId]['santri_list'][] = [
-                            'nis'       => $person->nis ?? '-',
-                            'name'      => $person->name ?? '—',
-                            'room_name' => $activeAssignment?->room?->name ?? '-',
-                            'paid_date' => $trx->created_at->locale('id')->translatedFormat('d M, H:i'),
-                            'method'    => ($trx->channel_label ?? $trx->payment_channel ?? 'Online') . ' (Online Gateway)',
-                            'amount'    => $amt,
+                            'nis'          => $person->nis ?? '-',
+                            'name'         => $person->name ?? '—',
+                            'room_name'    => $roomName,
+                            'period_label' => $periodItemLabel,
+                            'paid_date'    => $trx->created_at->locale('id')->translatedFormat('d M, H:i'),
+                            'method'       => ($trx->channel_label ?? $trx->payment_channel ?? 'Online') . ' (Online)',
+                            'amount'       => $amt,
                         ];
                         $dormBreakdown[$dormId]['count_santri'] = count($dormBreakdown[$dormId]['santri_ids']);
                     }
                 }
 
                 if ((float)($trx->pocket_money_amount ?? 0) > 0) {
-                    $this->allocateCategory($categories, 'pocket_money', (float)$trx->pocket_money_amount, $person?->gender, 'Titipan Uang Saku Santri');
+                    $amtPm = (float) $trx->pocket_money_amount;
+                    $santriPmItem = [
+                        'nis'          => $person->nis ?? '-',
+                        'name'         => $person->name ?? '—',
+                        'gender'       => $person->gender ?? '-',
+                        'unit_info'    => $roomName,
+                        'period_label' => 'Titipan Uang Saku Santri',
+                        'paid_date'    => $trx->created_at->locale('id')->translatedFormat('d M, H:i'),
+                        'method'       => ($trx->channel_label ?? $trx->payment_channel ?? 'Online') . ' (Online)',
+                        'amount'       => $amtPm,
+                    ];
+                    $this->allocateCategory($categories, 'pocket_money', $amtPm, $person?->gender, 'Titipan Uang Saku Santri', $santriPmItem);
                 }
             }
         }
@@ -3127,13 +3189,35 @@ class BillingManager extends Component
                 $totalGross += $amt;
                 $totalNet   += $amt;
 
+                $method = strtolower($pay->payment_method ?? 'cash');
+                if (str_contains($method, 'transfer') || str_contains($method, 'tf')) {
+                    $transferAmount += $amt;
+                    $transferTrxCount++;
+                } else {
+                    $cashAmount += $amt;
+                    $cashTrxCount++;
+                }
+
                 $bill = $pay->bill;
                 $person = $bill?->person;
                 $activeAssignment = $person?->roomAssignments?->first();
                 $dormId = $activeAssignment?->room?->dormitory_id;
+                $roomName = $activeAssignment?->room?->name ?? '-';
                 $type = $bill?->bill_type ?? '';
+                $periodItemLabel = $bill?->period_formatted ?: ($bill?->config?->label ?: ucwords(str_replace('_', ' ', $type)));
 
-                $this->allocateCategory($categories, $type, $amt, $person?->gender, $bill?->config?->label ?? null);
+                $santriItem = [
+                    'nis'          => $person->nis ?? '-',
+                    'name'         => $person->name ?? '—',
+                    'gender'       => $person->gender ?? '-',
+                    'unit_info'    => $roomName,
+                    'period_label' => $periodItemLabel,
+                    'paid_date'    => $pay->payment_date ? \Carbon\Carbon::parse($pay->payment_date)->locale('id')->translatedFormat('d M Y') : '-',
+                    'method'       => strtoupper($pay->payment_method ?? 'Kasir'),
+                    'amount'       => $amt,
+                ];
+
+                $this->allocateCategory($categories, $type, $amt, $person?->gender, $bill?->config?->label ?? null, $santriItem);
 
                 if ($type === 'kas_komplek' && $dormId && isset($dormBreakdown[$dormId])) {
                     $dormBreakdown[$dormId]['total_amount'] += $amt;
@@ -3142,12 +3226,13 @@ class BillingManager extends Component
                         $dormBreakdown[$dormId]['santri_ids'][] = $person->id;
                     }
                     $dormBreakdown[$dormId]['santri_list'][] = [
-                        'nis'       => $person->nis ?? '-',
-                        'name'      => $person->name ?? '—',
-                        'room_name' => $activeAssignment?->room?->name ?? '-',
-                        'paid_date' => $pay->payment_date ? \Carbon\Carbon::parse($pay->payment_date)->locale('id')->translatedFormat('d M Y') : '-',
-                        'method'    => strtoupper($pay->payment_method ?? 'Kasir'),
-                        'amount'    => $amt,
+                        'nis'          => $person->nis ?? '-',
+                        'name'         => $person->name ?? '—',
+                        'room_name'    => $roomName,
+                        'period_label' => $periodItemLabel,
+                        'paid_date'    => $pay->payment_date ? \Carbon\Carbon::parse($pay->payment_date)->locale('id')->translatedFormat('d M Y') : '-',
+                        'method'       => strtoupper($pay->payment_method ?? 'Kasir'),
+                        'amount'       => $amt,
                     ];
                     $dormBreakdown[$dormId]['count_santri'] = count($dormBreakdown[$dormId]['santri_ids']);
                 }
@@ -3164,14 +3249,31 @@ class BillingManager extends Component
                       });
                 })
                 ->when($targetGender, fn($q, $g) => $q->whereHas('person', fn($pq) => $pq->where('gender', $g)))
-                ->with('person')
+                ->with(['person.roomAssignments' => fn($q) => $q->active()->with('room')])
                 ->get();
 
             foreach ($manualSubsWithPocket as $mSub) {
                 $amtPm = (float) $mSub->pocket_money_amount;
                 $totalGross += $amtPm;
                 $totalNet   += $amtPm;
-                $this->allocateCategory($categories, 'pocket_money', $amtPm, $mSub->person?->gender, 'Titipan Uang Saku Santri');
+                $transferAmount += $amtPm;
+                $transferTrxCount++;
+
+                $person = $mSub->person;
+                $roomName = $person?->roomAssignments?->first()?->room?->name ?? '-';
+
+                $santriPmItem = [
+                    'nis'          => $person?->nis ?? '-',
+                    'name'         => $person?->name ?? '—',
+                    'gender'       => $person?->gender ?? '-',
+                    'unit_info'    => $roomName,
+                    'period_label' => 'Titipan Uang Saku Santri',
+                    'paid_date'    => $mSub->verified_at ? \Carbon\Carbon::parse($mSub->verified_at)->locale('id')->translatedFormat('d M Y, H:i') : '-',
+                    'method'       => 'Transfer Bank (Manual)',
+                    'amount'       => $amtPm,
+                ];
+
+                $this->allocateCategory($categories, 'pocket_money', $amtPm, $mSub->person?->gender, 'Titipan Uang Saku Santri', $santriPmItem);
             }
         }
 
@@ -3183,64 +3285,51 @@ class BillingManager extends Component
             'total_mdr'           => $totalMdr,
             'total_net'           => $totalNet,
             'total_trx'           => $totalTrx,
+            'gateway_gross'       => $gatewayGross,
+            'gateway_mdr'         => $gatewayMdr,
+            'gateway_net'         => $gatewayNet,
+            'gateway_trx'         => $gatewayTrxCount,
+            'transfer_amount'     => $transferAmount,
+            'transfer_trx'        => $transferTrxCount,
+            'cash_amount'         => $cashAmount,
+            'cash_trx'            => $cashTrxCount,
             'category_breakdown'  => array_values(array_filter($categories, fn($c) => $c['amount'] > 0)),
             'dormitory_breakdown' => array_values(array_filter($dormBreakdown, fn($d) => $d['total_amount'] > 0)),
         ];
     }
 
-    private function allocateCategory(array &$categories, string $type, float $amt, ?string $gender = null, ?string $customLabel = null): void
+    private function allocateCategory(array &$categories, string $type, float $amt, ?string $gender = null, ?string $customLabel = null, ?array $santriItem = null): void
     {
-        switch ($type) {
-            case 'pocket_money':
-                $categories['pocket_money']['amount'] += $amt;
-                $categories['pocket_money']['count']++;
-                break;
-            case 'syahriah_pondok':
-                if ($gender === 'P') {
-                    $categories['syahriah_putri']['amount'] += $amt;
-                    $categories['syahriah_putri']['count']++;
-                } else {
-                    $categories['syahriah_putra']['amount'] += $amt;
-                    $categories['syahriah_putra']['count']++;
-                }
-                break;
-            case 'syahriah_madrasah':
-                $categories['madrasah']['amount'] += $amt;
-                $categories['madrasah']['count']++;
-                break;
-            case 'kitab':
-                $categories['kitab']['amount'] += $amt;
-                $categories['kitab']['count']++;
-                break;
-            case 'majek_pagi':
-                $categories['majek_pagi']['amount'] += $amt;
-                $categories['majek_pagi']['count']++;
-                break;
-            case 'majek_sore':
-                $categories['majek_sore']['amount'] += $amt;
-                $categories['majek_sore']['count']++;
-                break;
-            case 'kas_komplek':
-                $categories['kas_komplek']['amount'] += $amt;
-                $categories['kas_komplek']['count']++;
-                break;
-            default:
-                $key = !empty($customLabel) ? Str::slug($customLabel, '_') : (!empty($type) ? $type : 'lainnya');
-                if (!isset($categories[$key])) {
-                    $label = $customLabel ?: ucwords(str_replace('_', ' ', $key));
-                    $categories[$key] = [
-                        'key'    => $key,
-                        'label'  => $label,
-                        'desc'   => 'Pos Tagihan ' . $label,
-                        'amount' => 0.0,
-                        'count'  => 0,
-                        'icon'   => '🏷️',
-                        'color'  => 'slate',
-                    ];
-                }
-                $categories[$key]['amount'] += $amt;
-                $categories[$key]['count']++;
-                break;
+        $targetKey = match ($type) {
+            'pocket_money'      => 'pocket_money',
+            'syahriah_pondok'   => ($gender === 'P' ? 'syahriah_putri' : 'syahriah_putra'),
+            'syahriah_madrasah' => 'madrasah',
+            'kitab'             => 'kitab',
+            'majek_pagi'        => 'majek_pagi',
+            'majek_sore'        => 'majek_sore',
+            'kas_komplek'       => 'kas_komplek',
+            default             => (!empty($customLabel) ? Str::slug($customLabel, '_') : (!empty($type) ? $type : 'lainnya')),
+        };
+
+        if (!isset($categories[$targetKey])) {
+            $label = $customLabel ?: ucwords(str_replace('_', ' ', $targetKey));
+            $categories[$targetKey] = [
+                'key'         => $targetKey,
+                'label'       => $label,
+                'desc'        => 'Pos Tagihan ' . $label,
+                'amount'      => 0.0,
+                'count'       => 0,
+                'icon'        => '🏷️',
+                'color'       => 'slate',
+                'santri_list' => [],
+            ];
+        }
+
+        $categories[$targetKey]['amount'] += $amt;
+        $categories[$targetKey]['count']++;
+
+        if ($santriItem) {
+            $categories[$targetKey]['santri_list'][] = $santriItem;
         }
     }
 
@@ -3872,6 +3961,17 @@ class BillingManager extends Component
             }
         }
 
+        // Modal category santri list
+        $modalCategoryData = null;
+        if ($this->showCategoryModal && $this->modalCategoryKey) {
+            foreach ($settlementReport['category_breakdown'] as $cb) {
+                if ($cb['key'] === $this->modalCategoryKey) {
+                    $modalCategoryData = $cb;
+                    break;
+                }
+            }
+        }
+
         // ─── Query Verifikasi Transfer Manual (Portal Wali) ───────────────
         $targetTransferGender = $this->genderScope() ?: ($this->transferGenderFilter ?: null);
 
@@ -4084,6 +4184,7 @@ class BillingManager extends Component
             'settlementReport'    => $settlementReport,
             'savedDistributions'  => $savedDistributions,
             'modalDormitoryData'  => $modalDormitoryData,
+            'modalCategoryData'   => $modalCategoryData,
             'registrationItems'   => $registrationItems,
             'santriSearchResults' => $santriSearch,
             'recentSantri'        => $recentSantri,

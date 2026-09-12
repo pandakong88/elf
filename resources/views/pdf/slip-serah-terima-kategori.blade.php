@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
-    <title>Slip Serah Terima Kas Komplek - {{ $dormitory->name }}</title>
+    <title>Slip Serah Terima {{ $meta['title'] }}</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -26,19 +26,19 @@
         .doc-title { font-size: 13px; font-weight: bold; color: #0f172a; text-align: right; }
         .doc-sub { font-size: 9px; color: #64748b; text-align: right; margin-top: 2px; }
 
-        /* ── BANNER KOMPLEK ── */
-        .dorm-banner {
+        /* ── BANNER KATEGORI ── */
+        .category-banner {
             background: #f8fafc;
             border: 1.5px solid #cbd5e1;
             border-radius: 8px;
             padding: 12px 16px;
             margin-bottom: 16px;
         }
-        .dorm-banner table { width: 100%; border-collapse: collapse; }
-        .dorm-name { font-size: 14px; font-weight: bold; color: #0f172a; }
-        .dorm-unit { font-size: 10px; color: #64748b; margin-top: 2px; }
-        .dorm-total-label { font-size: 9px; text-transform: uppercase; color: #64748b; text-align: right; font-weight: bold; }
-        .dorm-total-val { font-size: 16px; font-weight: bold; color: #047857; text-align: right; font-family: "DejaVu Sans Mono", monospace; margin-top: 2px; }
+        .category-banner table { width: 100%; border-collapse: collapse; }
+        .cat-name { font-size: 14px; font-weight: bold; color: #0f172a; }
+        .cat-unit { font-size: 10px; color: #64748b; margin-top: 2px; }
+        .cat-total-label { font-size: 9px; text-transform: uppercase; color: #64748b; text-align: right; font-weight: bold; }
+        .cat-total-val { font-size: 16px; font-weight: bold; color: #047857; text-align: right; font-family: "DejaVu Sans Mono", monospace; margin-top: 2px; }
 
         /* ── TABLE SANTRI ── */
         .data-table {
@@ -118,24 +118,24 @@
                     <div class="inst-sub">Sistem Manajemen Keuangan & Pembukuan Pesantren</div>
                 </td>
                 <td>
-                    <div class="doc-title">SLIP SERAH TERIMA KAS KOMPLEK</div>
+                    <div class="doc-title">SLIP SERAH TERIMA DANA</div>
                     <div class="doc-sub">Periode: <strong>{{ $period_label }}</strong></div>
                 </td>
             </tr>
         </table>
     </div>
 
-    {{-- BANNER KOMPLEK --}}
-    <div class="dorm-banner">
+    {{-- BANNER KATEGORI --}}
+    <div class="category-banner">
         <table>
             <tr>
                 <td>
-                    <div class="dorm-name">🏠 {{ $dormitory->name }}</div>
-                    <div class="dorm-unit">Unit: {{ $dormitory->gender === 'L' ? 'Putra' : 'Putri' }} &bull; Total Santri Membayar: <strong>{{ count($santri_list) }} Santri</strong></div>
+                    <div class="cat-name">{{ $meta['title'] }}</div>
+                    <div class="cat-unit">Peruntukan: <strong>{{ $meta['unit_label'] }}</strong> &bull; Total Transaksi/Santri: <strong>{{ count($santri_list) }} Data</strong></div>
                 </td>
                 <td>
-                    <div class="dorm-total-label">Total Dana Kas Diserahkan</div>
-                    <div class="dorm-total-val">Rp {{ number_format($total_amount, 0, ',', '.') }}</div>
+                    <div class="cat-total-label">Total Dana Diserahkan</div>
+                    <div class="cat-total-val">Rp {{ number_format($total_amount, 0, ',', '.') }}</div>
                 </td>
             </tr>
         </table>
@@ -143,7 +143,7 @@
 
     {{-- PERNYATAAN SERAH TERIMA --}}
     <div class="handover-box">
-        Telah diserahkan dana titipan <strong>Kas Komplek {{ $dormitory->name }}</strong> dari Bendahara Pusat Pesantren kepada Pengurus/Bendahara Komplek sebesar <strong>Rp {{ number_format($total_amount, 0, ',', '.') }}</strong> ({{ count($santri_list) }} santri terlampir di bawah) untuk dipergunakan sebagaimana mestinya sesuai ketentuan pengelolaan komplek.
+        Telah diserahkan dana penerimaan <strong>{{ $meta['title'] }}</strong> dari Bendahara Pusat Pesantren kepada <strong>{{ $meta['recipient_role'] }}</strong> sebesar <strong>Rp {{ number_format($total_amount, 0, ',', '.') }}</strong> ({{ count($santri_list) }} santri terlampir di bawah) untuk dicatatkan dan dipergunakan sesuai dengan peruntukannya.
     </div>
 
     {{-- DAFTAR SANTRI --}}
@@ -153,28 +153,32 @@
                 <th style="width: 4%;">#</th>
                 <th style="width: 12%;">NIS</th>
                 <th>Nama Santri</th>
-                <th style="width: 12%;">Kamar</th>
-                <th style="width: 18%;">Periode Kas</th>
-                <th style="width: 14%;">Tgl Bayar</th>
-                <th style="width: 14%;">Metode</th>
-                <th class="right" style="width: 15%;">Jumlah Kas</th>
+                <th style="width: 12%;">Kamar/Kelas</th>
+                <th style="width: 20%;">Rincian / Periode</th>
+                <th style="width: 13%;">Tgl Bayar</th>
+                <th style="width: 13%;">Metode</th>
+                <th class="right" style="width: 16%;">Nominal</th>
             </tr>
         </thead>
         <tbody>
-            @foreach($santri_list as $i => $s)
+            @forelse($santri_list as $i => $s)
             <tr>
                 <td style="text-align: center; color: #94a3b8;">{{ $i + 1 }}</td>
                 <td style="font-family: monospace;">{{ $s['nis'] ?? '-' }}</td>
                 <td><strong>{{ $s['name'] }}</strong></td>
-                <td>{{ $s['room_name'] ?? '-' }}</td>
-                <td><span style="color: #0369a1; font-weight: bold;">{{ $s['period_label'] ?? 'Kas Asrama' }}</span></td>
+                <td>{{ $s['unit_info'] ?? '-' }}</td>
+                <td><span style="color: #0369a1; font-weight: bold;">{{ $s['period_label'] ?? $meta['title'] }}</span></td>
                 <td>{{ $s['paid_date'] ?? '-' }}</td>
                 <td>{{ $s['method'] ?? 'Online' }}</td>
                 <td class="right"><strong>Rp {{ number_format($s['amount'], 0, ',', '.') }}</strong></td>
             </tr>
-            @endforeach
+            @empty
+            <tr>
+                <td colspan="8" style="text-align: center; padding: 20px; color: #94a3b8;">Tidak ada santri yang membayar pos ini pada periode tanggal yang dipilih.</td>
+            </tr>
+            @endforelse
             <tr class="total-row">
-                <td colspan="7" style="text-align: right;">TOTAL KAS KOMPLEK {{ strtoupper($dormitory->name) }}:</td>
+                <td colspan="7" style="text-align: right;">TOTAL DANA {{ strtoupper($meta['title']) }}:</td>
                 <td class="right"><strong>Rp {{ number_format($total_amount, 0, ',', '.') }}</strong></td>
             </tr>
         </tbody>
@@ -193,14 +197,14 @@
                 <div>Yang Menerima,</div>
                 <div class="sig-space"></div>
                 <div class="sig-name">______________________</div>
-                <div class="sig-title">Lurah / Bendahara {{ $dormitory->name }}</div>
+                <div class="sig-title">{{ $meta['recipient_role'] }}</div>
             </td>
         </tr>
     </table>
 
     {{-- FOOTER --}}
     <div class="footer">
-        Dicetak pada {{ $generated_at }} melalui Sistem Keuangan {{ $app_name }}.
+        Dicetak pada {{ $generated_at }} melalui Sistem Keuangan {{ $app_name }}. Dokumen ini sah sebagai tanda serah terima internal kas.
     </div>
 
 </body>

@@ -278,12 +278,13 @@ class SettlementReportController extends Controller
                         $amt = (float) ($item['pay_portion'] ?? $item['net_amount'] ?? 0);
                         $totalAmount += $amt;
                         $santriList[] = [
-                            'nis'       => $person?->nis ?? '-',
-                            'name'      => $person?->name ?? '—',
-                            'room_name' => $activeAssignment?->room?->name ?? '-',
-                            'paid_date' => $trx->created_at->locale('id')->translatedFormat('d M Y, H:i'),
-                            'method'    => ($trx->channel_label ?? $trx->payment_channel ?? 'Online') . ' (Online Gateway)',
-                            'amount'    => $amt,
+                            'nis'          => $person?->nis ?? '-',
+                            'name'         => $person?->name ?? '—',
+                            'room_name'    => $activeAssignment?->room?->name ?? '-',
+                            'period_label' => $item['period_label'] ?? $item['config_label'] ?? 'Kas Asrama',
+                            'paid_date'    => $trx->created_at->locale('id')->translatedFormat('d M Y, H:i'),
+                            'method'       => ($trx->channel_label ?? $trx->payment_channel ?? 'Online') . ' (Online Gateway)',
+                            'amount'       => $amt,
                         ];
                     }
                 }
@@ -306,7 +307,7 @@ class SettlementReportController extends Controller
                             $rq->active()->whereHas('room', fn($r) => $r->where('dormitory_id', $dormitoryId));
                         });
                 })
-                ->with(['bill.person.roomAssignments' => fn($q) => $q->active()->with('room')])
+                ->with(['bill.person.roomAssignments' => fn($q) => $q->active()->with('room'), 'bill.config'])
                 ->get();
 
             foreach ($kasirPayments as $pay) {
@@ -317,12 +318,13 @@ class SettlementReportController extends Controller
 
                 $totalAmount += $amt;
                 $santriList[] = [
-                    'nis'       => $person?->nis ?? '-',
-                    'name'      => $person?->name ?? '—',
-                    'room_name' => $activeAssignment?->room?->name ?? '-',
-                    'paid_date' => $pay->payment_date ? Carbon::parse($pay->payment_date)->locale('id')->translatedFormat('d M Y') : '-',
-                    'method'    => strtoupper($pay->payment_method ?? 'Kasir'),
-                    'amount'    => $amt,
+                    'nis'          => $person?->nis ?? '-',
+                    'name'         => $person?->name ?? '—',
+                    'room_name'    => $activeAssignment?->room?->name ?? '-',
+                    'period_label' => $bill?->period_formatted ?: ($bill?->config?->label ?: 'Kas Asrama'),
+                    'paid_date'    => $pay->payment_date ? Carbon::parse($pay->payment_date)->locale('id')->translatedFormat('d M Y') : '-',
+                    'method'       => strtoupper($pay->payment_method ?? 'Kasir'),
+                    'amount'       => $amt,
                 ];
             }
         }
@@ -342,6 +344,266 @@ class SettlementReportController extends Controller
         $pdf = Pdf::loadView('pdf.slip-kas-komplek', $data)->setPaper('a4', 'portrait');
 
         return $pdf->stream('Slip-Kas-Komplek-' . str_replace(' ', '-', $dormitory->name) . '.pdf');
+    }
+
+    /**
+     * Download PDF Slip Serah Terima Dana per Pos Kategori (Madrasah, Kitab, Majek, Uang Saku, dll).
+     */
+    public function downloadSlipKategoriPdf(Request $request, string $categoryKey): Response
+    {
+        $genderScope = $this->resolveGenderScope();
+        $targetGender = $genderScope ?: $request->query('gender', null);
+
+        $dateFrom   = $request->query('date_from', now()->startOfMonth()->toDateString());
+        $dateTo     = $request->query('date_to', now()->toDateString());
+        $source     = $request->query('source', 'all');
+
+        $fromCarbon = Carbon::parse($dateFrom)->startOfDay();
+        $toCarbon   = Carbon::parse($dateTo)->endOfDay();
+        $appName    = config('app.name', 'Pondok Pesantren Al-Fithroh');
+
+        $meta = match ($categoryKey) {
+            'syahriah_putra' => [
+                'title'          => 'SPP / Syahriah Pondok Putra',
+                'recipient_role' => 'Bendahara Pondok Putra',
+                'unit_label'     => 'Unit Putra',
+                'filter_gender'  => 'L',
+                'bill_type'      => 'syahriah_pondok',
+            ],
+            'syahriah_putri' => [
+                'title'          => 'SPP / Syahriah Pondok Putri',
+                'recipient_role' => 'Bendahara Pondok Putri',
+                'unit_label'     => 'Unit Putri',
+                'filter_gender'  => 'P',
+                'bill_type'      => 'syahriah_pondok',
+            ],
+            'madrasah' => [
+                'title'          => 'Syahriah / SPP Madrasah',
+                'recipient_role' => 'Bendahara Madrasah / Pendidikan',
+                'unit_label'     => 'Bagian Pendidikan Madrasah',
+                'filter_gender'  => null,
+                'bill_type'      => 'syahriah_madrasah',
+            ],
+            'kitab' => [
+                'title'          => 'Biaya Kitab & Sarana Belajar',
+                'recipient_role' => 'Pengurus Kitab & Perpustakaan',
+                'unit_label'     => 'Bagian Pengadaan Kitab',
+                'filter_gender'  => null,
+                'bill_type'      => 'kitab',
+            ],
+            'majek_pagi' => [
+                'title'          => 'Katering Majek (Makan Pagi)',
+                'recipient_role' => 'Pengurus Dapur & Logistik Santri',
+                'unit_label'     => 'Bagian Konsumsi Santri',
+                'filter_gender'  => null,
+                'bill_type'      => 'majek_pagi',
+            ],
+            'majek_sore' => [
+                'title'          => 'Katering Majek (Makan Sore)',
+                'recipient_role' => 'Pengurus Dapur & Logistik Santri',
+                'unit_label'     => 'Bagian Konsumsi Santri',
+                'filter_gender'  => null,
+                'bill_type'      => 'majek_sore',
+            ],
+            'kas_komplek' => [
+                'title'          => 'Kas Komplek / Asrama Santri',
+                'recipient_role' => 'Koordinator Pengurus Asrama',
+                'unit_label'     => 'Bagian Kepengasuhan & Asrama',
+                'filter_gender'  => null,
+                'bill_type'      => 'kas_komplek',
+            ],
+            'pocket_money' => [
+                'title'          => 'Titipan Uang Saku Santri',
+                'recipient_role' => 'Pengelola Uang Saku / Kantin Santri',
+                'unit_label'     => 'Bagian Pengelolaan Uang Saku',
+                'filter_gender'  => null,
+                'bill_type'      => 'pocket_money',
+            ],
+            default => [
+                'title'          => 'Alokasi ' . ucwords(str_replace('_', ' ', $categoryKey)),
+                'recipient_role' => 'Pengurus Terkait',
+                'unit_label'     => 'Bagian Terkait',
+                'filter_gender'  => null,
+                'bill_type'      => $categoryKey,
+            ],
+        };
+
+        if ($meta['filter_gender'] && $targetGender && $targetGender !== $meta['filter_gender']) {
+            abort(403, 'Akses ditolak untuk unit ini.');
+        }
+
+        $effectiveGender = $meta['filter_gender'] ?: $targetGender;
+
+        $santriList = [];
+        $totalAmount = 0.0;
+
+        // Khusus Titipan Uang Saku
+        if ($categoryKey === 'pocket_money') {
+            if ($source === 'gateway' || $source === 'all') {
+                $gtx = PaymentTransaction::where('status', 'success')
+                    ->where('pocket_money_amount', '>', 0)
+                    ->where(function ($q) use ($fromCarbon, $toCarbon) {
+                        $q->whereBetween('callback_received_at', [$fromCarbon, $toCarbon])
+                          ->orWhere(function ($oq) use ($fromCarbon, $toCarbon) {
+                              $oq->whereNull('callback_received_at')
+                                 ->whereBetween('created_at', [$fromCarbon, $toCarbon]);
+                          });
+                    })
+                    ->when($effectiveGender, fn($q, $g) => $q->whereHas('person', fn($pq) => $pq->where('gender', $g)))
+                    ->with(['person.roomAssignments' => fn($q) => $q->active()->with('room.dormitory'), 'person.madrasahEnrollments' => fn($q) => $q->where('is_active', true)->with('kelas')])
+                    ->get();
+
+                foreach ($gtx as $trx) {
+                    $person = $trx->person;
+                    $room = $person?->roomAssignments?->first()?->room?->name ?? '-';
+                    $amt = (float) $trx->pocket_money_amount;
+                    $totalAmount += $amt;
+
+                    $santriList[] = [
+                        'nis'          => $person?->nis ?? '-',
+                        'name'         => $person?->name ?? '—',
+                        'unit_info'    => $room,
+                        'period_label' => 'Titipan Uang Saku',
+                        'paid_date'    => $trx->created_at->locale('id')->translatedFormat('d M Y, H:i'),
+                        'method'       => ($trx->channel_label ?? $trx->payment_channel ?? 'Online') . ' (Online)',
+                        'amount'       => $amt,
+                    ];
+                }
+            }
+
+            if ($source === 'kasir' || $source === 'all') {
+                $manualSubs = ManualTransferSubmission::where('status', 'approved')
+                    ->where('pocket_money_amount', '>', 0)
+                    ->where(function ($q) use ($fromCarbon, $toCarbon) {
+                        $q->whereBetween('verified_at', [$fromCarbon, $toCarbon])
+                          ->orWhere(function ($oq) use ($fromCarbon, $toCarbon) {
+                              $oq->whereNull('verified_at')
+                                 ->whereBetween('created_at', [$fromCarbon, $toCarbon]);
+                          });
+                    })
+                    ->when($effectiveGender, fn($q, $g) => $q->whereHas('person', fn($pq) => $pq->where('gender', $g)))
+                    ->with(['person.roomAssignments' => fn($q) => $q->active()->with('room.dormitory')])
+                    ->get();
+
+                foreach ($manualSubs as $mSub) {
+                    $person = $mSub->person;
+                    $room = $person?->roomAssignments?->first()?->room?->name ?? '-';
+                    $amt = (float) $mSub->pocket_money_amount;
+                    $totalAmount += $amt;
+
+                    $santriList[] = [
+                        'nis'          => $person?->nis ?? '-',
+                        'name'         => $person?->name ?? '—',
+                        'unit_info'    => $room,
+                        'period_label' => 'Titipan Uang Saku',
+                        'paid_date'    => $mSub->verified_at ? Carbon::parse($mSub->verified_at)->locale('id')->translatedFormat('d M Y, H:i') : '-',
+                        'method'       => 'Transfer Bank (Manual)',
+                        'amount'       => $amt,
+                    ];
+                }
+            }
+        } else {
+            // Pos Tagihan Normal (Syahriah, Madrasah, Kitab, Majek, Kas Komplek, dll)
+            $billType = $meta['bill_type'];
+
+            // 1. Gateway
+            if ($source === 'gateway' || $source === 'all') {
+                $gtx = PaymentTransaction::where('status', 'success')
+                    ->where(function ($q) use ($fromCarbon, $toCarbon) {
+                        $q->whereBetween('callback_received_at', [$fromCarbon, $toCarbon])
+                          ->orWhere(function ($oq) use ($fromCarbon, $toCarbon) {
+                              $oq->whereNull('callback_received_at')
+                                 ->whereBetween('created_at', [$fromCarbon, $toCarbon]);
+                          });
+                    })
+                    ->when($effectiveGender, fn($q, $g) => $q->whereHas('person', fn($pq) => $pq->where('gender', $g)))
+                    ->with(['person.roomAssignments' => fn($q) => $q->active()->with('room.dormitory'), 'person.madrasahEnrollments' => fn($q) => $q->where('is_active', true)->with('kelas')])
+                    ->get();
+
+                foreach ($gtx as $trx) {
+                    $person = $trx->person;
+                    $room = $person?->roomAssignments?->first()?->room?->name ?? '-';
+
+                    foreach ($trx->bill_breakdown ?? [] as $item) {
+                        $itemType = $item['bill_type'] ?? '';
+                        if ($itemType === $billType || ($billType === 'syahriah_pondok' && in_array($categoryKey, ['syahriah_putra', 'syahriah_putri']))) {
+                            if ($categoryKey === 'syahriah_putra' && $person?->gender !== 'L') continue;
+                            if ($categoryKey === 'syahriah_putri' && $person?->gender !== 'P') continue;
+
+                            $amt = (float) ($item['pay_portion'] ?? $item['net_amount'] ?? 0);
+                            $totalAmount += $amt;
+
+                            $santriList[] = [
+                                'nis'          => $person?->nis ?? '-',
+                                'name'         => $person?->name ?? '—',
+                                'unit_info'    => $room,
+                                'period_label' => $item['period_label'] ?? $item['config_label'] ?? $meta['title'],
+                                'paid_date'    => $trx->created_at->locale('id')->translatedFormat('d M Y, H:i'),
+                                'method'       => ($trx->channel_label ?? $trx->payment_channel ?? 'Online') . ' (Online)',
+                                'amount'       => $amt,
+                            ];
+                        }
+                    }
+                }
+            }
+
+            // 2. Kasir
+            if ($source === 'kasir' || $source === 'all') {
+                $kasirPayments = BillPayment::where(function ($q) {
+                        $q->where('payment_method', 'not like', 'gateway%')
+                          ->orWhereNull('payment_method');
+                    })
+                    ->where(function ($q) use ($dateFrom, $dateTo, $fromCarbon, $toCarbon) {
+                        $q->whereBetween('payment_date', [$dateFrom, $dateTo])
+                          ->orWhereBetween('created_at', [$fromCarbon, $toCarbon]);
+                    })
+                    ->whereHas('bill', function ($q) use ($billType, $effectiveGender) {
+                        $q->where('bill_type', $billType)
+                            ->when($effectiveGender, fn($bq, $g) => $bq->whereHas('person', fn($pq) => $pq->where('gender', $g)));
+                    })
+                    ->with(['bill.person.roomAssignments' => fn($q) => $q->active()->with('room.dormitory'), 'bill.config'])
+                    ->get();
+
+                foreach ($kasirPayments as $pay) {
+                    $bill = $pay->bill;
+                    $person = $bill?->person;
+                    $room = $person?->roomAssignments?->first()?->room?->name ?? '-';
+
+                    if ($categoryKey === 'syahriah_putra' && $person?->gender !== 'L') continue;
+                    if ($categoryKey === 'syahriah_putri' && $person?->gender !== 'P') continue;
+
+                    $amt = (float) $pay->amount_paid;
+                    $totalAmount += $amt;
+
+                    $santriList[] = [
+                        'nis'          => $person?->nis ?? '-',
+                        'name'         => $person?->name ?? '—',
+                        'unit_info'    => $room,
+                        'period_label' => $bill?->period_formatted ?: ($bill?->config?->label ?: $meta['title']),
+                        'paid_date'    => $pay->payment_date ? Carbon::parse($pay->payment_date)->locale('id')->translatedFormat('d M Y') : '-',
+                        'method'       => strtoupper($pay->payment_method ?? 'Kasir'),
+                        'amount'       => $amt,
+                    ];
+                }
+            }
+        }
+
+        $periodLabel = Carbon::parse($dateFrom)->locale('id')->translatedFormat('d M Y') . ' s/d ' . Carbon::parse($dateTo)->locale('id')->translatedFormat('d M Y');
+
+        $data = [
+            'app_name'       => $appName,
+            'category_key'   => $categoryKey,
+            'meta'           => $meta,
+            'period_label'   => $periodLabel,
+            'total_amount'   => $totalAmount,
+            'santri_list'    => $santriList,
+            'generated_at'   => now()->locale('id')->translatedFormat('d F Y, H:i') . ' WIB',
+            'generated_by'   => auth()->user()?->name ?? 'Bendahara Pusat',
+        ];
+
+        $pdf = Pdf::loadView('pdf.slip-serah-terima-kategori', $data)->setPaper('a4', 'portrait');
+
+        return $pdf->stream('Slip-Serah-Terima-' . \Illuminate\Support\Str::slug($meta['title']) . '.pdf');
     }
 
     private function allocateToCategory(array &$categories, string $type, float $amt, ?string $gender = null, ?string $customLabel = null): void

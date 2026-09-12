@@ -109,7 +109,7 @@ class SettlementReportTest extends TestCase
 
         $test = Livewire::test(BillingManager::class)
             ->set('activeTab', 'settlement')
-            ->assertSee('Settlement Report')
+            ->assertSee('Rekonsiliasi &amp; Tutup Buku Kas', false)
             ->assertSee('279.000')
             ->assertSee('4.000')
             ->assertSee('275.000')
@@ -224,41 +224,140 @@ class SettlementReportTest extends TestCase
         $response->assertHeader('content-type', 'application/pdf');
     }
 
-    public function test_save_settlement_snapshot_to_fund_distribution(): void
+    public function test_settlement_slip_kategori_pdf_download(): void
     {
         $this->actingAs($this->admin);
 
+        $bill = Bill::create([
+            'person_id'   => $this->santriPutra->id,
+            'bill_type'   => 'madrasah',
+            'title'       => 'Madrasah Diniyah',
+            'amount'      => 75000,
+            'amount_paid' => 75000,
+            'status'      => 'paid',
+            'created_by'  => $this->admin->id,
+        ]);
+
+        BillPayment::create([
+            'bill_id'        => $bill->id,
+            'amount_paid'    => 75000,
+            'payment_date'   => now()->toDateString(),
+            'payment_method' => 'cash',
+            'receipt_no'     => 'KSR-MDR-01',
+            'logged_by'      => $this->admin->id,
+        ]);
+
+        $response = $this->get(route('keuangan.settlement.slip-kategori', [
+            'categoryKey' => 'madrasah',
+            'date_from'   => now()->startOfMonth()->toDateString(),
+            'date_to'     => now()->toDateString(),
+            'source'      => 'all',
+        ]));
+
+        $response->assertStatus(200);
+        $response->assertHeader('content-type', 'application/pdf');
+    }
+
+    public function test_settlement_report_3_sources_breakdown(): void
+    {
+        $this->actingAs($this->admin);
+
+        // 1. Payment Gateway (DOKU)
         PaymentTransaction::create([
             'id'                  => (string) Str::uuid(),
-            'merchant_order_id'   => 'ORD-SNAP-01',
+            'merchant_order_id'   => 'ORD-GW-01',
             'person_id'           => $this->santriPutra->id,
-            'bill_ids'            => ['bill-snap'],
+            'bill_ids'            => ['bill-gw'],
             'bill_breakdown'      => [
-                [
-                    'bill_id'      => 'bill-snap',
-                    'bill_type'    => 'syahriah_pondok',
-                    'config_label' => 'Syahriah Pondok',
-                    'pay_portion'  => 150000,
-                ],
+                ['bill_id' => 'bill-gw', 'bill_type' => 'syahriah_pondok', 'config_label' => 'Syahriah Pondok', 'pay_portion' => 100000],
             ],
-            'bill_amount'         => 150000,
-            'pocket_money_amount' => 0,
-            'mdr_amount'          => 2000,
-            'total_amount'        => 152000,
+            'bill_amount'         => 100000,
+            'pocket_money_amount' => 50000,
+            'mdr_amount'          => 2500,
+            'total_amount'        => 152500,
             'net_amount'          => 150000,
+            'payment_channel'     => 'QRIS',
             'status'              => 'success',
             'callback_received_at'=> now(),
         ]);
 
-        Livewire::test(BillingManager::class)
-            ->set('activeTab', 'settlement')
-            ->set('settlementNotes', 'Tutup buku pekan ke-2')
-            ->call('saveSettlementSnapshot');
-
-        $this->assertDatabaseHas('fund_distributions', [
-            'notes' => 'Tutup buku pekan ke-2',
-            'total_net' => 150000,
-            'status' => 'distributed',
+        // 2. Manual Transfer Submission
+        $billTrf = Bill::create([
+            'person_id'   => $this->santriPutra->id,
+            'bill_type'   => 'kitab',
+            'title'       => 'Kitab Kuning',
+            'amount'      => 60000,
+            'amount_paid' => 60000,
+            'status'      => 'paid',
+            'created_by'  => $this->admin->id,
         ]);
+
+        BillPayment::create([
+            'bill_id'        => $billTrf->id,
+            'amount_paid'    => 60000,
+            'payment_date'   => now()->toDateString(),
+            'payment_method' => 'transfer_manual',
+            'receipt_no'     => 'TRF-001',
+            'logged_by'      => $this->admin->id,
+        ]);
+
+        ManualTransferSubmission::create([
+            'submission_code'       => 'TRF-001',
+            'person_id'             => $this->santriPutra->id,
+            'bill_ids'              => [$billTrf->id],
+            'bill_breakdown'        => [
+                ['bill_id' => $billTrf->id, 'config_label' => 'Kitab Kuning', 'amount' => 60000],
+            ],
+            'total_bills_amount'    => 60000,
+            'pocket_money_amount'   => 40000,
+            'total_transfer_amount' => 100000,
+            'bank_destination'      => 'BSI',
+            'sender_bank'           => 'Mandiri',
+            'sender_account_name'   => 'Wali Fatih',
+            'proof_image_path'      => 'proofs/trf.jpg',
+            'status'                => 'approved',
+            'verified_at'           => now(),
+            'verified_by'           => $this->admin->id,
+        ]);
+
+        // 3. Cashier Cash
+        $billCash = Bill::create([
+            'person_id'   => $this->santriPutra->id,
+            'bill_type'   => 'madrasah',
+            'title'       => 'Madrasah Diniyah',
+            'amount'      => 50000,
+            'amount_paid' => 50000,
+            'status'      => 'paid',
+            'created_by'  => $this->admin->id,
+        ]);
+
+        BillPayment::create([
+            'bill_id'        => $billCash->id,
+            'amount_paid'    => 50000,
+            'payment_date'   => now()->toDateString(),
+            'payment_method' => 'cash',
+            'receipt_no'     => 'KSR-CASH-01',
+            'logged_by'      => $this->admin->id,
+        ]);
+
+        $test = Livewire::test(BillingManager::class)
+            ->set('activeTab', 'settlement')
+            ->set('settlementSource', 'all');
+
+        $report = $test->get('settlementReport');
+
+        $this->assertEquals(150000, $report['gateway_net']);
+        $this->assertEquals(2500, $report['gateway_mdr']);
+        $this->assertEquals(100000, $report['transfer_amount']);
+        $this->assertEquals(50000, $report['cash_amount']);
+        $this->assertEquals(300000, $report['total_net']);
+        $this->assertEquals(3, $report['total_trx']);
+
+        // Test Category Detail Modal
+        $test->call('openCategoryDetailModal', 'madrasah')
+            ->assertSet('showCategoryModal', true)
+            ->assertSet('modalCategoryKey', 'madrasah')
+            ->assertSee('Syahriah Madrasah')
+            ->assertSee('Muhammad Fatih');
     }
 }

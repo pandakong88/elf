@@ -3649,17 +3649,49 @@
                     <div>
                         <div class="flex items-center gap-2 mb-1">
                             <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-sky-500/10 text-sky-600 dark:text-sky-400 border border-sky-500/20">
-                                🏦 Rekonsiliasi &amp; Distribusi Dana
+                                🏦 Rekonsiliasi &amp; Tutup Buku Kas
                             </span>
                             <span class="text-xs text-slate-400 font-semibold">• Periode: <strong class="text-slate-700 dark:text-slate-200">{{ $settlementReport['period_label'] }}</strong></span>
                         </div>
-                        <h2 class="font-black text-xl text-slate-900 dark:text-slate-100 tracking-tight">Settlement Report &amp; Alokasi Kas Komplek</h2>
+                        <h2 class="font-black text-xl text-slate-900 dark:text-slate-100 tracking-tight">Rekonsiliasi &amp; Tutup Buku Kas (Settlement)</h2>
                         <p class="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-2xl">
-                            Pencocokan arus dana masuk dari Payment Gateway ke rekening pondok serta pemisahan porsi anggaran per unit (Pondok, Madrasah, Dapur Majek, dan Kas per Komplek Asrama).
+                            Pusat kendali rekonsiliasi 3 sumber dana (Payment Gateway DOKU, Transfer Bank Manual, dan Setoran Tunai Kasir/Komplek) serta pembagian porsi peruntukan kas per unit.
                         </p>
                     </div>
 
                     <div class="flex flex-wrap items-center gap-2 shrink-0">
+                        {{-- Tombol Salin Format WhatsApp --}}
+                        <div x-data="{
+                            copied: false,
+                            copyText() {
+                                let text = `*📊 LAPORAN REKONSILIASI & TUTUP BUKU KAS*\n` +
+                                           `*Periode:* {{ $settlementReport['period_label'] }}\n` +
+                                           `*Pesantren:* {{ config('app.name', 'Pondok Pesantren Al-Fithroh') }}\n\n` +
+                                           `*💰 1. RINGKASAN SUMBER UANG MASUK (BERSIH):*\n` +
+                                           `• ⚡ Gateway Online (DOKU): Rp {{ number_format($settlementReport['gateway_net'], 0, ',', '.') }}\n` +
+                                           `• 🏦 Transfer Bank Manual: Rp {{ number_format($settlementReport['transfer_amount'], 0, ',', '.') }}\n` +
+                                           `• 💵 Setoran Tunai / Kasir: Rp {{ number_format($settlementReport['cash_amount'], 0, ',', '.') }}\n` +
+                                           `👉 *TOTAL UANG MASUK BERSIH: Rp {{ number_format($settlementReport['total_net'], 0, ',', '.') }}*\n` +
+                                           `_(Gross: Rp {{ number_format($settlementReport['total_gross'], 0, ',', '.') }} | MDR: -Rp {{ number_format($settlementReport['total_mdr'], 0, ',', '.') }})_\n\n` +
+                                           `*📌 2. DISTRIBUSI ALOKASI POS DANA:*\n` +
+                                           @foreach($settlementReport['category_breakdown'] as $cat)
+                                           `• {{ $cat['icon'] ?? '•' }} {{ $cat['label'] }}: Rp {{ number_format($cat['amount'], 0, ',', '.') }} ({{ $cat['count'] }} item)\n` +
+                                           @endforeach
+                                           `\n_Laporan dibuat otomatis melalui Sistem Keuangan Pesantren._`;
+                                navigator.clipboard.writeText(text).then(() => {
+                                    this.copied = true;
+                                    setTimeout(() => this.copied = false, 2500);
+                                });
+                            }
+                        }">
+                            <button type="button" 
+                                    @click="copyText()"
+                                    class="inline-flex items-center gap-2 px-4 py-2.5 bg-emerald-50 dark:bg-emerald-950/40 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 text-emerald-700 dark:text-emerald-300 font-extrabold text-xs rounded-2xl border border-emerald-300 dark:border-emerald-700 shadow-xs transition-all active:scale-95">
+                                <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                                <span x-text="copied ? 'Tersalin ke WA!' : 'Salin Format WA'"></span>
+                            </button>
+                        </div>
+
                         {{-- Tombol Cetak PDF Rekap --}}
                         <a href="{{ route('keuangan.settlement.pdf', ['date_from' => $settlementDateFrom, 'date_to' => $settlementDateTo, 'source' => $settlementSource]) }}" 
                            target="_blank"
@@ -3678,6 +3710,46 @@
                                 <span>Kunci &amp; Simpan Rekap</span>
                             </button>
                         @endif
+                    </div>
+                </div>
+
+                {{-- Checklist & Peringatan Pra-Tutup Buku --}}
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    @if($this->pendingTransferCount > 0)
+                        <div class="bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-800/60 p-4 rounded-2xl flex items-center justify-between gap-3">
+                            <div class="flex items-center gap-2.5">
+                                <span class="p-2 bg-amber-500/20 text-amber-600 dark:text-amber-400 rounded-xl">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                                </span>
+                                <div>
+                                    <h4 class="text-xs font-black text-amber-900 dark:text-amber-200">Ada {{ $this->pendingTransferCount }} Bukti Transfer Belum Diverifikasi</h4>
+                                    <p class="text-[11px] text-amber-700 dark:text-amber-400">Verifikasi pengajuan transfer manual sebelum tutup buku agar mutasi lengkap.</p>
+                                </div>
+                            </div>
+                            <button type="button" 
+                                    wire:click="$set('activeTab', 'transfer_manual')"
+                                    class="shrink-0 px-3 py-1.5 bg-amber-600 hover:bg-amber-500 text-white rounded-xl text-xs font-bold transition shadow-xs">
+                                Periksa Bukti
+                            </button>
+                        </div>
+                    @endif
+
+                    <div class="bg-slate-50 dark:bg-slate-950/50 border border-slate-200 dark:border-slate-800 p-4 rounded-2xl flex items-center justify-between gap-3 {{ $this->pendingTransferCount == 0 ? 'md:col-span-2' : '' }}">
+                        <div class="flex items-center gap-2.5">
+                            <span class="p-2 bg-sky-500/10 text-sky-600 dark:text-sky-400 rounded-xl">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/></svg>
+                            </span>
+                            <div>
+                                <h4 class="text-xs font-black text-slate-800 dark:text-slate-200">Terima Uang Tunai dari Pengurus Komplek / Kamar?</h4>
+                                <p class="text-[11px] text-slate-500 dark:text-slate-400">Input cepat setoran kolektif santri per asrama atau kelas melalui lembar setoran.</p>
+                            </div>
+                        </div>
+                        <a href="{{ route('keuangan.lembar-setoran') }}" 
+                           target="_blank"
+                           class="shrink-0 px-3 py-1.5 bg-sky-600 hover:bg-sky-500 text-white rounded-xl text-xs font-bold transition shadow-xs flex items-center gap-1">
+                            <span>Lembar Kolektif</span>
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+                        </a>
                     </div>
                 </div>
 
@@ -3726,53 +3798,69 @@
                                 <span class="text-[11px] font-bold text-slate-400">Sumber:</span>
                                 <select wire:model.live="settlementSource" 
                                         class="text-xs font-bold rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white px-2.5 py-1.5 focus:ring-2 focus:ring-sky-500">
-                                    <option value="gateway">⚡ Khusus Online (Gateway)</option>
-                                    <option value="kasir">💵 Khusus Kasir Manual</option>
-                                    <option value="all">🌐 Semua Pembayaran</option>
+                                    <option value="all">🌐 Semua Pembayaran (Gabungan)</option>
+                                    <option value="gateway">⚡ Khusus Online Gateway (DOKU)</option>
+                                    <option value="kasir">💵 Khusus Kasir &amp; Transfer Manual</option>
                                 </select>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                {{-- 3. KPI Cards: Arus Kas & Rekonsiliasi --}}
+                {{-- 3. KPI Cards: 3 Sumber Uang & Total Bersih --}}
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                    {{-- Card 1: Gross --}}
+                    {{-- Card 1: Gateway Online --}}
                     <div class="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-xs space-y-1">
-                        <div class="flex items-center justify-between text-slate-400">
-                            <span class="text-[11px] font-extrabold uppercase tracking-wider">Total Uang Diterima (Gross)</span>
-                            <span class="p-1.5 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-xl">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        <div class="flex items-center justify-between text-sky-500">
+                            <span class="text-[11px] font-extrabold uppercase tracking-wider">⚡ 1. Gateway Online</span>
+                            <span class="p-1.5 bg-sky-50 dark:bg-sky-950/40 text-sky-600 dark:text-sky-400 rounded-xl font-mono text-[10px] font-bold">
+                                {{ $settlementReport['gateway_trx'] }} Trx
                             </span>
                         </div>
                         <div class="text-2xl font-black text-slate-900 dark:text-slate-100 font-mono">
-                            Rp {{ number_format($settlementReport['total_gross'], 0, ',', '.') }}
+                            Rp {{ number_format($settlementReport['gateway_net'], 0, ',', '.') }}
                         </div>
                         <div class="text-[11px] text-slate-400">
-                            Dibayar oleh wali via QRIS &amp; VA
+                            Kotor: Rp {{ number_format($settlementReport['gateway_gross'], 0, ',', '.') }} | MDR: -Rp {{ number_format($settlementReport['gateway_mdr'], 0, ',', '.') }}
                         </div>
                     </div>
 
-                    {{-- Card 2: MDR Fee --}}
-                    <div class="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-rose-200/60 dark:border-rose-900/40 shadow-xs space-y-1">
-                        <div class="flex items-center justify-between text-rose-500">
-                            <span class="text-[11px] font-extrabold uppercase tracking-wider">Biaya Layanan (MDR)</span>
-                            <span class="p-1.5 bg-rose-100 dark:bg-rose-500/20 text-rose-600 dark:text-rose-400 rounded-xl">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6"/></svg>
+                    {{-- Card 2: Transfer Bank Manual --}}
+                    <div class="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-xs space-y-1">
+                        <div class="flex items-center justify-between text-indigo-500">
+                            <span class="text-[11px] font-extrabold uppercase tracking-wider">🏦 2. Transfer Bank</span>
+                            <span class="p-1.5 bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 rounded-xl font-mono text-[10px] font-bold">
+                                {{ $settlementReport['transfer_trx'] }} Trx
                             </span>
                         </div>
-                        <div class="text-2xl font-black text-rose-600 dark:text-rose-400 font-mono">
-                            - Rp {{ number_format($settlementReport['total_mdr'], 0, ',', '.') }}
+                        <div class="text-2xl font-black text-slate-900 dark:text-slate-100 font-mono">
+                            Rp {{ number_format($settlementReport['transfer_amount'], 0, ',', '.') }}
                         </div>
-                        <div class="text-[11px] text-rose-500/80">
-                            Fee Gateway / MDR (Ditanggung Wali)
+                        <div class="text-[11px] text-slate-400">
+                            Mutasi BSI / BRI Terverifikasi (Utuh 100%)
                         </div>
                     </div>
 
-                    {{-- Card 3: Net Settlement --}}
+                    {{-- Card 3: Kasir Tunai / Setoran Fisik --}}
+                    <div class="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-xs space-y-1">
+                        <div class="flex items-center justify-between text-amber-600">
+                            <span class="text-[11px] font-extrabold uppercase tracking-wider">💵 3. Kasir Tunai Fisik</span>
+                            <span class="p-1.5 bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 rounded-xl font-mono text-[10px] font-bold">
+                                {{ $settlementReport['cash_trx'] }} Trx
+                            </span>
+                        </div>
+                        <div class="text-2xl font-black text-slate-900 dark:text-slate-100 font-mono">
+                            Rp {{ number_format($settlementReport['cash_amount'], 0, ',', '.') }}
+                        </div>
+                        <div class="text-[11px] text-slate-400">
+                            Uang Tunai Fisik Meja Kasir / Brankas
+                        </div>
+                    </div>
+
+                    {{-- Card 4: Total Uang Masuk Bersih --}}
                     <div class="bg-gradient-to-br from-emerald-500/10 to-transparent dark:from-emerald-950/40 dark:to-slate-900 p-5 rounded-3xl border-2 border-emerald-500/60 dark:border-emerald-500/40 shadow-sm space-y-1">
                         <div class="flex items-center justify-between text-emerald-600 dark:text-emerald-400">
-                            <span class="text-[11px] font-black uppercase tracking-wider">Dana Bersih Cair (Net)</span>
+                            <span class="text-[11px] font-black uppercase tracking-wider">🎯 TOTAL UANG MASUK (BERSIH)</span>
                             <span class="p-1.5 bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 rounded-xl">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                             </span>
@@ -3781,23 +3869,7 @@
                             Rp {{ number_format($settlementReport['total_net'], 0, ',', '.') }}
                         </div>
                         <div class="text-[11px] font-bold text-emerald-600 dark:text-emerald-400">
-                            Dana masuk ke rekening pondok
-                        </div>
-                    </div>
-
-                    {{-- Card 4: Volume Trx --}}
-                    <div class="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-xs space-y-1">
-                        <div class="flex items-center justify-between text-sky-500">
-                            <span class="text-[11px] font-extrabold uppercase tracking-wider">Total Transaksi</span>
-                            <span class="p-1.5 bg-sky-100 dark:bg-sky-500/20 text-sky-600 dark:text-sky-400 rounded-xl">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
-                            </span>
-                        </div>
-                        <div class="text-2xl font-black text-slate-900 dark:text-slate-100">
-                            {{ $settlementReport['total_trx'] }} <span class="text-xs font-normal text-slate-400">Trx</span>
-                        </div>
-                        <div class="text-[11px] text-slate-400">
-                            Status Berhasil (Success)
+                            {{ $settlementReport['total_trx'] }} Total Transaksi Siap Dialokasikan
                         </div>
                     </div>
                 </div>
@@ -3811,7 +3883,7 @@
                             </span>
                             <div>
                                 <h3 class="font-extrabold text-sm text-slate-900 dark:text-slate-100">1. Alokasi Pembagian Pos Anggaran Utama</h3>
-                                <p class="text-[11px] text-slate-400">Distribusi dana bersih ke kas operasional masing-masing unit</p>
+                                <p class="text-[11px] text-slate-400">Distribusi dana bersih ke kas operasional masing-masing unit dengan rincian santri &amp; slip serah terima</p>
                             </div>
                         </div>
                     </div>
@@ -3824,6 +3896,7 @@
                                     <th class="py-3 px-4 text-center">Jumlah Tagihan</th>
                                     <th class="py-3 px-4">Porsi (%)</th>
                                     <th class="py-3 px-6 text-right">Total Dana Bersih</th>
+                                    <th class="py-3 px-6 text-center">Aksi Dokumen &amp; Rincian</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
@@ -3846,7 +3919,7 @@
                                         <td class="py-3.5 px-4 text-center font-bold text-slate-600 dark:text-slate-300">
                                             {{ $cat['count'] }} item
                                         </td>
-                                        <td class="py-3.5 px-4 w-48">
+                                        <td class="py-3.5 px-4 w-44">
                                             <div class="flex items-center gap-2">
                                                 <div class="flex-1 h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
                                                     <div class="h-full bg-indigo-500 rounded-full" style="width: {{ min(100, $percent) }}%"></div>
@@ -3857,10 +3930,31 @@
                                         <td class="py-3.5 px-6 text-right font-black text-sm text-slate-900 dark:text-white font-mono">
                                             Rp {{ number_format($cat['amount'], 0, ',', '.') }}
                                         </td>
+                                        <td class="py-3.5 px-6 text-center">
+                                            <div class="inline-flex items-center gap-1.5">
+                                                {{-- Tombol Lihat Santri --}}
+                                                <button type="button" 
+                                                        wire:click="openCategoryDetailModal('{{ $cat['key'] }}')"
+                                                        class="px-2.5 py-1.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-xl text-[11px] font-extrabold border border-slate-200 dark:border-slate-700 transition flex items-center gap-1"
+                                                        title="Lihat Rincian Santri">
+                                                    <svg class="w-3.5 h-3.5 text-sky-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                                                    <span>Lihat Santri</span>
+                                                </button>
+
+                                                {{-- Tombol Cetak Slip PDF --}}
+                                                <a href="{{ route('keuangan.settlement.slip-kategori', ['categoryKey' => $cat['key'], 'date_from' => $settlementDateFrom, 'date_to' => $settlementDateTo, 'source' => $settlementSource]) }}" 
+                                                   target="_blank"
+                                                   class="px-2.5 py-1.5 bg-indigo-50 dark:bg-indigo-950/40 hover:bg-indigo-100 dark:hover:bg-indigo-900/60 text-indigo-700 dark:text-indigo-300 rounded-xl text-[11px] font-extrabold border border-indigo-300 dark:border-indigo-700 transition flex items-center gap-1"
+                                                   title="Cetak Slip Serah Terima PDF">
+                                                    <svg class="w-3.5 h-3.5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                                                    <span>Slip PDF</span>
+                                                </a>
+                                            </div>
+                                        </td>
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="4" class="py-10 text-center text-slate-400 font-semibold">
+                                        <td colspan="5" class="py-10 text-center text-slate-400 font-semibold">
                                             Belum ada data pembayaran dalam rentang tanggal ini.
                                         </td>
                                     </tr>
@@ -3876,6 +3970,7 @@
                                     <td class="py-3.5 px-6 text-right text-base text-indigo-600 dark:text-indigo-400 font-mono">
                                         Rp {{ number_format($settlementReport['total_net'], 0, ',', '.') }}
                                     </td>
+                                    <td></td>
                                 </tr>
                             </tfoot>
                         </table>
@@ -4036,15 +4131,12 @@
                     @endif
                 </div>
 
-                {{-- 7. MODAL: Drill-down Santri per Komplek --}}
+                {{-- 7. MODAL 1: Detail Santri per Asrama (Kas Komplek) --}}
                 @if($showDormitoryModal && !empty($modalDormitoryData))
                     <div class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-                        {{-- Backdrop --}}
                         <div class="fixed inset-0" wire:click="closeDormitoryDetailModal"></div>
 
-                        {{-- Modal Content --}}
-                        <div class="relative z-10 bg-white dark:bg-slate-900 rounded-3xl shadow-2xl w-full max-w-2xl max-h-[85vh] flex flex-col border border-slate-200 dark:border-slate-800 overflow-hidden">
-                            {{-- Header --}}
+                        <div class="relative z-10 bg-white dark:bg-slate-900 rounded-3xl shadow-2xl w-full max-w-3xl max-h-[85vh] flex flex-col border border-slate-200 dark:border-slate-800 overflow-hidden">
                             <div class="px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-emerald-500/5">
                                 <div>
                                     <div class="flex items-center gap-2">
@@ -4062,7 +4154,6 @@
                                 </div>
                             </div>
 
-                            {{-- Table Santri --}}
                             <div class="overflow-y-auto flex-1 p-4">
                                 <table class="w-full text-xs text-left border-collapse">
                                     <thead>
@@ -4070,6 +4161,7 @@
                                             <th class="py-2.5 px-3">#</th>
                                             <th class="py-2.5 px-3">Nama Santri</th>
                                             <th class="py-2.5 px-3">Kamar</th>
+                                            <th class="py-2.5 px-3">Periode Kas</th>
                                             <th class="py-2.5 px-3">Waktu Bayar</th>
                                             <th class="py-2.5 px-3">Metode</th>
                                             <th class="py-2.5 px-3 text-right">Nominal</th>
@@ -4086,6 +4178,9 @@
                                                 <td class="py-2.5 px-3 text-slate-600 dark:text-slate-400 font-medium">
                                                     {{ $santri['room_name'] }}
                                                 </td>
+                                                <td class="py-2.5 px-3">
+                                                    <span class="text-sky-600 dark:text-sky-400 font-bold text-[11px]">{{ $santri['period_label'] ?? 'Kas Asrama' }}</span>
+                                                </td>
                                                 <td class="py-2.5 px-3 text-slate-500 text-[11px]">
                                                     {{ $santri['paid_date'] }}
                                                 </td>
@@ -4101,7 +4196,6 @@
                                 </table>
                             </div>
 
-                            {{-- Footer --}}
                             <div class="px-6 py-3.5 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-950/40">
                                 <a href="{{ route('keuangan.settlement.slip-komplek', ['dormitoryId' => $modalDormitoryData['dormitory_id'], 'date_from' => $settlementDateFrom, 'date_to' => $settlementDateTo, 'source' => $settlementSource]) }}" 
                                    target="_blank"
@@ -4111,6 +4205,88 @@
                                 </a>
 
                                 <button type="button" wire:click="closeDormitoryDetailModal" class="px-4 py-1.5 bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold rounded-xl text-xs transition">
+                                    Tutup
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                @endif
+
+                {{-- 8. MODAL 2: Detail Santri per Pos Kategori (Generic Modal) --}}
+                @if($showCategoryModal && !empty($modalCategoryData))
+                    <div class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+                        <div class="fixed inset-0" wire:click="closeCategoryDetailModal"></div>
+
+                        <div class="relative z-10 bg-white dark:bg-slate-900 rounded-3xl shadow-2xl w-full max-w-3xl max-h-[85vh] flex flex-col border border-slate-200 dark:border-slate-800 overflow-hidden">
+                            <div class="px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-indigo-500/5">
+                                <div>
+                                    <div class="flex items-center gap-2">
+                                        <span class="text-base">{{ $modalCategoryData['icon'] ?? '🏷️' }}</span>
+                                        <h3 class="font-extrabold text-base text-slate-900 dark:text-white">{{ $modalCategoryData['label'] }}</h3>
+                                    </div>
+                                    <p class="text-xs text-slate-400 mt-0.5">Daftar {{ count($modalCategoryData['santri_list'] ?? []) }} santri yang telah membayar pos ini</p>
+                                </div>
+                                <div class="text-right">
+                                    <span class="text-[10px] text-slate-400 uppercase font-bold block">Total Dana Terkumpul</span>
+                                    <span class="text-base font-black text-indigo-600 dark:text-indigo-400 font-mono">Rp {{ number_format($modalCategoryData['amount'], 0, ',', '.') }}</span>
+                                </div>
+                            </div>
+
+                            <div class="overflow-y-auto flex-1 p-4">
+                                <table class="w-full text-xs text-left border-collapse">
+                                    <thead>
+                                        <tr class="bg-slate-50 dark:bg-slate-950 text-slate-400 uppercase font-black text-[9px] tracking-wider border-b border-slate-100 dark:border-slate-800">
+                                            <th class="py-2.5 px-3">#</th>
+                                            <th class="py-2.5 px-3">Nama Santri</th>
+                                            <th class="py-2.5 px-3">Kamar/Unit</th>
+                                            <th class="py-2.5 px-3">Rincian / Periode</th>
+                                            <th class="py-2.5 px-3">Waktu Bayar</th>
+                                            <th class="py-2.5 px-3">Metode</th>
+                                            <th class="py-2.5 px-3 text-right">Nominal</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+                                        @forelse($modalCategoryData['santri_list'] ?? [] as $idx => $santri)
+                                            <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/30">
+                                                <td class="py-2.5 px-3 text-slate-400 font-bold">{{ $idx + 1 }}</td>
+                                                <td class="py-2.5 px-3">
+                                                    <strong class="text-slate-800 dark:text-slate-200 block">{{ $santri['name'] }}</strong>
+                                                    <span class="text-[10px] font-mono text-slate-400">NIS: {{ $santri['nis'] }}</span>
+                                                </td>
+                                                <td class="py-2.5 px-3 text-slate-600 dark:text-slate-400 font-medium">
+                                                    {{ $santri['unit_info'] ?? '-' }}
+                                                </td>
+                                                <td class="py-2.5 px-3">
+                                                    <span class="text-indigo-600 dark:text-indigo-400 font-bold text-[11px]">{{ $santri['period_label'] ?? $modalCategoryData['label'] }}</span>
+                                                </td>
+                                                <td class="py-2.5 px-3 text-slate-500 text-[11px]">
+                                                    {{ $santri['paid_date'] }}
+                                                </td>
+                                                <td class="py-2.5 px-3 text-[10px] text-slate-500 font-bold">
+                                                    {{ $santri['method'] }}
+                                                </td>
+                                                <td class="py-2.5 px-3 text-right font-black font-mono text-slate-900 dark:text-white">
+                                                    Rp {{ number_format($santri['amount'], 0, ',', '.') }}
+                                                </td>
+                                            </tr>
+                                        @empty
+                                            <tr>
+                                                <td colspan="7" class="py-8 text-center text-slate-400">Tidak ada rincian santri untuk periode ini.</td>
+                                            </tr>
+                                        @endforelse
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <div class="px-6 py-3.5 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-950/40">
+                                <a href="{{ route('keuangan.settlement.slip-kategori', ['categoryKey' => $modalCategoryData['key'], 'date_from' => $settlementDateFrom, 'date_to' => $settlementDateTo, 'source' => $settlementSource]) }}" 
+                                   target="_blank"
+                                   class="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-bold transition shadow-xs">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                                    <span>Cetak Slip Serah Terima (PDF)</span>
+                                </a>
+
+                                <button type="button" wire:click="closeCategoryDetailModal" class="px-4 py-1.5 bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold rounded-xl text-xs transition">
                                     Tutup
                                 </button>
                             </div>
