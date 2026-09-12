@@ -822,7 +822,7 @@
                 @endphp
 
                 <!-- Segmented Tabs Pembayaran -->
-                <div class="grid grid-cols-2 gap-1.5 p-1 bg-slate-100 dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-slate-800">
+                <div class="grid {{ $isDokuEnabled ? 'grid-cols-2' : 'grid-cols-1' }} gap-1.5 p-1 bg-slate-100 dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-slate-800">
                     {{-- 1. Transfer Manual (Default) --}}
                     <button type="button" 
                             wire:click="setCheckoutMethod('manual')"
@@ -833,7 +833,7 @@
                         <span>Transfer Manual</span>
                     </button>
 
-                    {{-- 2. Bayar Online (Gateway DOKU) --}}
+                    {{-- 2. Bayar Online (Hanya muncul jika diaktifkan) --}}
                     @if($isDokuEnabled)
                         <button type="button" 
                                 wire:click="setCheckoutMethod('doku')"
@@ -843,31 +843,8 @@
                             </svg>
                             <span>Bayar Online</span>
                         </button>
-                    @else
-                        <div class="py-2.5 px-3 rounded-lg text-xs font-bold flex items-center justify-center gap-2 text-slate-400 dark:text-slate-500 bg-slate-200/50 dark:bg-slate-900/60 cursor-not-allowed border border-dashed border-slate-300 dark:border-slate-700"
-                             title="Fitur pembayaran online sedang dinonaktifkan oleh pihak pesantren">
-                            <svg class="w-4 h-4 text-slate-400 dark:text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/>
-                            </svg>
-                            <span>Bayar Online <span class="text-[10px] font-bold text-amber-600 dark:text-amber-400 bg-amber-100 dark:bg-amber-950/60 px-1.5 py-0.2 rounded ml-1">Off</span></span>
-                        </div>
                     @endif
                 </div>
-
-                {{-- Banner Keterangan Jika Online Payment Dimatikan --}}
-                @if(!$isDokuEnabled)
-                    <div class="p-3 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 rounded-xl flex items-start gap-2.5 text-xs text-amber-800 dark:text-amber-300 shadow-2xs">
-                        <svg class="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                        </svg>
-                        <div class="space-y-0.5">
-                            <span class="font-black text-amber-900 dark:text-amber-200 block">Fitur Pembayaran Online Sedang Dimatikan</span>
-                            <span class="text-[11px] text-amber-700 dark:text-amber-400 block leading-relaxed">
-                                Saat ini pembayaran via gateway online dinonaktifkan sementara. Silakan gunakan metode <strong>Transfer Bank Manual</strong> di bawah ini, lalu unggah bukti transfer untuk diverifikasi oleh bendahara.
-                            </span>
-                        </div>
-                    </div>
-                @endif
 
                 @if(!empty($paymentError))
                     <div class="p-3 bg-rose-50 dark:bg-rose-950/40 border border-rose-300 dark:border-rose-700 rounded-xl flex items-start gap-2.5 text-xs text-rose-900 dark:text-rose-200">

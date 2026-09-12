@@ -458,7 +458,7 @@ class PortalWaliV2Test extends TestCase
             ->assertSet('selectedBillIds', [$kitabBill->id, $madrasahBill->id]);
     }
 
-    public function test_default_checkout_method_is_manual_and_shows_disabled_notice_when_online_off(): void
+    public function test_default_checkout_method_is_manual_and_hides_online_when_disabled(): void
     {
         $santri = $this->santri;
         $this->actingAs($this->admin);
@@ -473,7 +473,7 @@ class PortalWaliV2Test extends TestCase
             ->assertSet('checkoutMethod', 'manual')
             ->call('setPortalTab', 'bayar')
             ->assertSee('Transfer Manual')
-            ->assertSee('Fitur Pembayaran Online Sedang Dimatikan')
+            ->assertDontSee('Bayar Online')
             ->call('setCheckoutMethod', 'doku')
             ->assertSet('checkoutMethod', 'manual');
     }
