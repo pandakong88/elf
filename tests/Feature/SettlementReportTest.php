@@ -109,7 +109,7 @@ class SettlementReportTest extends TestCase
 
         $test = Livewire::test(BillingManager::class)
             ->set('activeTab', 'settlement')
-            ->assertSee('Rekonsiliasi &amp; Tutup Buku Kas', false)
+            ->assertSee('Rekonsiliasi &amp; Pembagian Dana', false)
             ->assertSee('279.000')
             ->assertSee('4.000')
             ->assertSee('275.000')

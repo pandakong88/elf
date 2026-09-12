@@ -301,8 +301,7 @@
             @if($this->canViewSettlementTab())
                 <button wire:click="$set('activeTab', 'settlement')" class="px-5 py-3 text-xs font-bold transition-all border-b-2 flex items-center gap-2 whitespace-nowrap {{ $activeTab === 'settlement' ? 'border-sky-500 text-sky-600 dark:text-sky-400' : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300' }}">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3"/></svg>
-                    <span>Rekonsiliasi &amp; Settlement</span>
-                    <span class="inline-flex items-center justify-center px-1.5 py-0.5 text-[9px] font-black bg-sky-500/10 text-sky-600 dark:text-sky-400 border border-sky-500/30 rounded-full">Fase 4</span>
+                    <span>Rekonsiliasi &amp; Bagi Dana</span>
                 </button>
             @endif
             <button wire:click="$set('activeTab', 'payments_log')" class="px-5 py-3 text-xs font-bold transition-all border-b-2 flex items-center gap-2 whitespace-nowrap {{ $activeTab === 'payments_log' ? 'border-emerald-500 text-emerald-600 dark:text-emerald-400' : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300' }}">
@@ -526,15 +525,15 @@
                                 </div>
                             </button>
 
-                            <!-- 4. Rekonsiliasi & Settlement -->
+                            <!-- 4. Rekonsiliasi & Bagi Dana -->
                             <button type="button" wire:click="$set('activeTab', 'settlement')"
                                     class="p-3 bg-slate-50 dark:bg-slate-800/60 hover:bg-sky-50 dark:hover:bg-sky-950/40 border border-slate-200/80 dark:border-slate-700/80 hover:border-sky-500/50 rounded-2xl text-left transition-all group flex flex-col justify-between">
                                 <div class="w-8 h-8 rounded-xl bg-sky-100 dark:bg-sky-900/50 text-sky-700 dark:text-sky-300 flex items-center justify-center text-base mb-2 group-hover:scale-110 transition-transform">
                                     ⚖️
                                 </div>
                                 <div>
-                                    <strong class="text-xs font-black text-slate-900 dark:text-white block group-hover:text-sky-600 dark:group-hover:text-sky-400">Rekonsiliasi & Setor</strong>
-                                    <span class="text-[10px] text-slate-500 dark:text-slate-400 block mt-0.5">Rekap distribusi kasir & bank</span>
+                                    <strong class="text-xs font-black text-slate-900 dark:text-white block group-hover:text-sky-600 dark:group-hover:text-sky-400">Rekonsiliasi &amp; Bagi Dana</strong>
+                                    <span class="text-[10px] text-slate-500 dark:text-slate-400 block mt-0.5">Rekap pembagian kas per unit</span>
                                 </div>
                             </button>
 
@@ -3649,11 +3648,11 @@
                     <div>
                         <div class="flex items-center gap-2 mb-1">
                             <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-sky-500/10 text-sky-600 dark:text-sky-400 border border-sky-500/20">
-                                🏦 Rekonsiliasi &amp; Tutup Buku Kas
+                                🏦 Rekonsiliasi &amp; Pembagian Dana
                             </span>
                             <span class="text-xs text-slate-400 font-semibold">• Periode: <strong class="text-slate-700 dark:text-slate-200">{{ $settlementReport['period_label'] }}</strong></span>
                         </div>
-                        <h2 class="font-black text-xl text-slate-900 dark:text-slate-100 tracking-tight">Rekonsiliasi &amp; Tutup Buku Kas (Settlement)</h2>
+                        <h2 class="font-black text-xl text-slate-900 dark:text-slate-100 tracking-tight">Rekonsiliasi &amp; Pembagian Dana Kas</h2>
                         <p class="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-2xl">
                             Pusat kendali rekonsiliasi 3 sumber dana (Payment Gateway DOKU, Transfer Bank Manual, dan Setoran Tunai Kasir/Komplek) serta pembagian porsi peruntukan kas per unit.
                         </p>
