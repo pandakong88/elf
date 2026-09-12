@@ -37,7 +37,7 @@ class BillingManager extends Component
     public string $settlementDateFrom = '';
     public string $settlementDateTo = '';
     public string $settlementPreset = 'this_month'; // 'today' | 'last_7_days' | 'this_month' | 'last_month' | 'custom'
-    public string $settlementSource = 'gateway'; // 'gateway' | 'kasir' | 'all'
+    public string $settlementSource = 'all'; // 'gateway' | 'kasir' | 'all'
     public string $settlementGender = ''; // '' | 'L' | 'P'
     public string $settlementNotes = '';
     public bool $showDormitoryModal = false;

@@ -3663,9 +3663,13 @@
                         <div x-data="{
                             copied: false,
                             copyText() {
-                                let text = `*📊 LAPORAN REKONSILIASI & TUTUP BUKU KAS*\n` +
-                                           `*Periode:* {{ $settlementReport['period_label'] }}\n` +
-                                           `*Pesantren:* {{ config('app.name', 'Pondok Pesantren Al-Fithroh') }}\n\n` +
+                                let unitLabel = '{{ $this->genderScope() === 'L' ? 'Putra (Banin)' : ($this->genderScope() === 'P' ? 'Putri (Banat)' : ($settlementGender === 'L' ? 'Putra (Banin)' : ($settlementGender === 'P' ? 'Putri (Banat)' : 'Semua Unit (Konsolidasi)'))) }}';
+                                let sourceLabel = '{{ $settlementSource === 'gateway' ? 'Khusus Online (DOKU)' : ($settlementSource === 'kasir' ? 'Khusus Kasir & Transfer' : 'Semua Sumber (Gabungan)') }}';
+                                let text = `*📊 LAPORAN REKONSILIASI & PEMBAGIAN DANA KAS*\n` +
+                                           `*Periode:* {{ addslashes($settlementReport['period_label'] ?? '') }}\n` +
+                                           `*Unit:* ` + unitLabel + `\n` +
+                                           `*Sumber Dana:* ` + sourceLabel + `\n` +
+                                           `*Pesantren:* {{ addslashes(config('app.name', 'Pondok Pesantren Al-Fithroh')) }}\n\n` +
                                            `*💰 1. RINGKASAN SUMBER UANG MASUK (BERSIH):*\n` +
                                            `• ⚡ Gateway Online (DOKU): Rp {{ number_format($settlementReport['gateway_net'], 0, ',', '.') }}\n` +
                                            `• 🏦 Transfer Bank Manual: Rp {{ number_format($settlementReport['transfer_amount'], 0, ',', '.') }}\n` +
@@ -3674,13 +3678,38 @@
                                            `_(Gross: Rp {{ number_format($settlementReport['total_gross'], 0, ',', '.') }} | MDR: -Rp {{ number_format($settlementReport['total_mdr'], 0, ',', '.') }})_\n\n` +
                                            `*📌 2. DISTRIBUSI ALOKASI POS DANA:*\n` +
                                            @foreach($settlementReport['category_breakdown'] as $cat)
-                                           `• {{ $cat['icon'] ?? '•' }} {{ $cat['label'] }}: Rp {{ number_format($cat['amount'], 0, ',', '.') }} ({{ $cat['count'] }} item)\n` +
+                                           `• {{ $cat['icon'] ?? '•' }} {{ addslashes($cat['label']) }}: Rp {{ number_format($cat['amount'], 0, ',', '.') }} ({{ $cat['count'] }} item)\n` +
                                            @endforeach
                                            `\n_Laporan dibuat otomatis melalui Sistem Keuangan Pesantren._`;
-                                navigator.clipboard.writeText(text).then(() => {
+
+                                if (navigator.clipboard && window.isSecureContext) {
+                                    navigator.clipboard.writeText(text).then(() => {
+                                        this.copied = true;
+                                        setTimeout(() => this.copied = false, 2500);
+                                    }).catch(() => {
+                                        this.fallbackCopy(text);
+                                    });
+                                } else {
+                                    this.fallbackCopy(text);
+                                }
+                            },
+                            fallbackCopy(text) {
+                                let textArea = document.createElement('textarea');
+                                textArea.value = text;
+                                textArea.style.position = 'fixed';
+                                textArea.style.left = '-999999px';
+                                textArea.style.top = '-999999px';
+                                document.body.appendChild(textArea);
+                                textArea.focus();
+                                textArea.select();
+                                try {
+                                    document.execCommand('copy');
                                     this.copied = true;
                                     setTimeout(() => this.copied = false, 2500);
-                                });
+                                } catch (err) {
+                                    console.error('Gagal menyalin:', err);
+                                }
+                                document.body.removeChild(textArea);
                             }
                         }">
                             <button type="button" 

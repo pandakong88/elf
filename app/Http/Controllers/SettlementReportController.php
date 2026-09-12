@@ -50,7 +50,7 @@ class SettlementReportController extends Controller
 
         $dateFrom = $request->query('date_from', now()->startOfMonth()->toDateString());
         $dateTo   = $request->query('date_to', now()->toDateString());
-        $source   = $request->query('source', 'gateway'); // 'gateway' | 'kasir' | 'all'
+        $source   = $request->query('source', 'all'); // 'gateway' | 'kasir' | 'all'
         $targetGender = $genderScope ?: $request->query('gender', null);
 
         $fromCarbon = Carbon::parse($dateFrom)->startOfDay();
