@@ -47,7 +47,7 @@ class DashboardTagihan extends Component
     public bool $includePocketMoney = false;
     public float $pocketMoneyAmount = 0.0;
     public string $customPocketMoney = '';
-    public array $presetPocketMoney = [50000, 100000, 200000, 500000];
+    public array $presetPocketMoney = [100000, 150000, 200000, 250000];
 
     // ─── Form Checkout Pembayaran ─────────────────────────────────────────────
     public string $checkoutMethod = 'doku'; // 'doku' | 'manual' | 'duitku'

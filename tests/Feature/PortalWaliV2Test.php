@@ -83,7 +83,7 @@ class PortalWaliV2Test extends TestCase
             ->call('setPortalTab', 'bayar')
             ->set('selectedBillIds', [$bill->id])
             ->set('includePocketMoney', true)
-            ->call('selectPresetPocketMoney', 50000)
+            ->call('selectPresetPocketMoney', 100000)
             ->set('senderBank', 'BCA')
             ->set('senderAccountName', 'Bpk. Orang Tua')
             ->set('proofImage', $fakeImage)
@@ -95,7 +95,7 @@ class PortalWaliV2Test extends TestCase
             'person_id'           => $santri->id,
             'sender_account_name' => 'Bpk. Orang Tua',
             'sender_bank'         => 'BCA',
-            'pocket_money_amount' => 50000,
+            'pocket_money_amount' => 100000,
             'status'              => 'pending',
         ]);
     }
