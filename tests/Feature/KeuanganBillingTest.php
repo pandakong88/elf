@@ -305,5 +305,42 @@ class KeuanganBillingTest extends TestCase
             ->call('$set', 'activeTab', 'cashier')
             ->assertSet('activeTab', 'cashier');
     }
+
+    public function test_semester_bill_period_formatting(): void
+    {
+        $santri = Person::create([
+            'id'     => Str::uuid()->toString(),
+            'name'   => 'Ahmad Semester Test',
+            'gender' => 'L',
+        ]);
+
+        // 1. Syahriah Madrasah Semester 1 (period_month = 1)
+        $billSem1 = Bill::create([
+            'id'           => Str::uuid()->toString(),
+            'person_id'    => $santri->id,
+            'bill_type'    => 'syahriah_madrasah',
+            'period_month' => 1,
+            'period_year'  => 2026,
+            'amount'       => 150000.00,
+            'amount_paid'  => 0.00,
+            'status'       => 'unpaid',
+            'created_by'   => $this->admin->id,
+        ]);
+        $this->assertEquals('Semester 1 2026', $billSem1->period_formatted);
+
+        // 2. Syahriah Madrasah Semester 2 (period_month = 7)
+        $billSem2 = Bill::create([
+            'id'           => Str::uuid()->toString(),
+            'person_id'    => $santri->id,
+            'bill_type'    => 'syahriah_madrasah',
+            'period_month' => 7,
+            'period_year'  => 2026,
+            'amount'       => 150000.00,
+            'amount_paid'  => 0.00,
+            'status'       => 'unpaid',
+            'created_by'   => $this->admin->id,
+        ]);
+        $this->assertEquals('Semester 2 2026', $billSem2->period_formatted);
+    }
 }
 

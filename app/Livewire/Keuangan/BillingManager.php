@@ -566,11 +566,11 @@ class BillingManager extends Component
                 $enriched[] = $item;
                 continue;
             }
-            // Fallback: lazy-load dari DB untuk record lama
             $bill = Bill::with('config')->find($item['bill_id']);
             $interval = $bill?->config?->interval ?? '';
-            if ($interval === 'semester') {
-                $periodLabel = 'Semester ' . ($bill->period_month) . '/' . ($bill->period_year);
+            if (in_array($interval, ['semester', '2x_yearly']) || ($bill && $bill->bill_type === 'syahriah_madrasah')) {
+                $sem = $bill->period_sub ?: ($bill->period_month && $bill->period_month <= 6 ? 1 : 2);
+                $periodLabel = 'Semester ' . $sem . '/' . ($bill->period_year ?? '');
             } elseif (in_array($interval, ['once', 'insidental', 'event', 'sekali'])) {
                 $periodLabel = 'Event ' . ($bill?->period_year ?? '');
             } else {
@@ -2514,8 +2514,9 @@ class BillingManager extends Component
 
         $periodLabel = '—';
         if ($bill) {
-            if ($config && $config->interval === 'semester') {
-                $periodLabel = 'Semester ' . $bill->period_month . ' / ' . $bill->period_year;
+            if (($config && in_array($config->interval, ['semester', '2x_yearly'])) || $bill->bill_type === 'syahriah_madrasah') {
+                $sem = $bill->period_sub ?: ($bill->period_month && $bill->period_month <= 6 ? 1 : 2);
+                $periodLabel = 'Semester ' . $sem . ' / ' . $bill->period_year;
             } elseif ($config && in_array($config->interval, ['once', 'insidental', 'event', 'sekali'])) {
                 $periodLabel = 'Event / ' . $bill->period_year;
             } else {

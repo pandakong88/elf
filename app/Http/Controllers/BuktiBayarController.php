@@ -82,8 +82,9 @@ class BuktiBayarController extends Controller
             }
             $bill     = Bill::with('config')->find($item['bill_id'] ?? null);
             $interval = $bill?->config?->interval ?? '';
-            if ($interval === 'semester') {
-                $period = 'Semester ' . ($bill->period_month) . '/' . ($bill->period_year);
+            if (in_array($interval, ['semester', '2x_yearly']) || ($bill && $bill->bill_type === 'syahriah_madrasah')) {
+                $sem = $bill->period_sub ?: ($bill->period_month && $bill->period_month <= 6 ? 1 : 2);
+                $period = 'Semester ' . $sem . '/' . ($bill->period_year ?? '');
             } elseif (in_array($interval, ['once', 'insidental', 'event', 'sekali'])) {
                 $period = 'Event ' . ($bill?->period_year ?? '');
             } else {
@@ -222,9 +223,11 @@ class BuktiBayarController extends Controller
         foreach ($payments as $p) {
             $b = $p->bill;
             $interval = $b?->config?->interval ?? '';
+            $isSemester = in_array($interval, ['semester', '2x_yearly']) || ($b && $b->bill_type === 'syahriah_madrasah');
+            $sem = $b ? ($b->period_sub ?: ($b->period_month && $b->period_month <= 6 ? 1 : 2)) : 1;
             $period = match(true) {
-                $interval === 'semester'                                       => 'Semester ' . $b->period_month . '/' . $b->period_year,
-                in_array($interval, ['once', 'insidental', 'event', 'sekali']) => 'Event ' . ($b->period_year ?? ''),
+                $isSemester                                                    => 'Semester ' . $sem . '/' . ($b?->period_year ?? ''),
+                in_array($interval, ['once', 'insidental', 'event', 'sekali']) => 'Event ' . ($b?->period_year ?? ''),
                 default                                                        => ($months[$b?->period_month ?? 0] ?? '') . ' ' . ($b?->period_year ?? ''),
             };
 
