@@ -412,6 +412,8 @@ class DokuIntegrationTest extends TestCase
 
         Livewire::test(DashboardTagihan::class, ['personId' => $this->santri->id])
             ->call('setPortalTab', 'bayar')
+            ->assertSet('checkoutMethod', 'manual')
+            ->call('setCheckoutMethod', 'doku')
             ->assertSet('checkoutMethod', 'doku')
             ->set('selectedBillIds', [$bill->id])
             ->call('payViaDoku')
