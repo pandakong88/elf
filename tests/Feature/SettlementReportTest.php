@@ -639,4 +639,44 @@ class SettlementReportTest extends TestCase
             ->set('settlementDateFrom', '2026-05-01')
             ->assertSet('settlementPreset', 'custom');
     }
+
+    public function test_settlement_excel_export_with_gender_parameter(): void
+    {
+        $this->actingAs($this->admin);
+
+        $responsePutra = $this->get(route('keuangan.settlement.export-excel', [
+            'date_from' => now()->startOfMonth()->toDateString(),
+            'date_to'   => now()->toDateString(),
+            'source'    => 'all',
+            'gender'    => 'L',
+        ]));
+
+        $responsePutra->assertStatus(200);
+        $this->assertTrue(str_contains($responsePutra->headers->get('content-disposition', ''), 'Putra'));
+
+        $responsePutri = $this->get(route('keuangan.settlement.export-excel', [
+            'date_from' => now()->startOfMonth()->toDateString(),
+            'date_to'   => now()->toDateString(),
+            'source'    => 'all',
+            'gender'    => 'P',
+        ]));
+
+        $responsePutri->assertStatus(200);
+        $this->assertTrue(str_contains($responsePutri->headers->get('content-disposition', ''), 'Putri'));
+    }
+
+    public function test_settlement_pdf_with_gender_parameter(): void
+    {
+        $this->actingAs($this->admin);
+
+        $response = $this->get(route('keuangan.settlement.pdf', [
+            'date_from' => now()->startOfMonth()->toDateString(),
+            'date_to'   => now()->toDateString(),
+            'source'    => 'all',
+            'gender'    => 'L',
+        ]));
+
+        $response->assertStatus(200);
+        $response->assertHeader('content-type', 'application/pdf');
+    }
 }

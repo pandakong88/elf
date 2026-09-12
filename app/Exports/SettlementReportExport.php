@@ -24,15 +24,34 @@ class SettlementReportExport implements WithMultipleSheets
         protected array $reportData,
         protected array $allSantriList,
         protected array $checklist = [],
-        protected string $appName = 'Pondok Pesantren Al-Fithroh'
+        protected string $appName = 'Pondok Pesantren Al-Fithroh',
+        protected ?string $targetGender = null
     ) {}
 
     public function sheets(): array
     {
-        return [
-            new SettlementSummarySheet($this->reportData, $this->checklist, $this->appName),
-            new SettlementSantriDetailSheet($this->allSantriList),
+        $sheets = [
+            new SettlementSummarySheet($this->reportData, $this->checklist, $this->appName, $this->targetGender),
         ];
+
+        if ($this->targetGender === 'L') {
+            $sheets[] = new SettlementSantriDetailSheet($this->allSantriList, 'Rincian Santri Putra');
+        } elseif ($this->targetGender === 'P') {
+            $sheets[] = new SettlementSantriDetailSheet($this->allSantriList, 'Rincian Santri Putri');
+        } else {
+            $santriPutra = array_values(array_filter($this->allSantriList, fn($s) => ($s['gender'] ?? '') === 'L'));
+            $santriPutri = array_values(array_filter($this->allSantriList, fn($s) => ($s['gender'] ?? '') === 'P'));
+
+            if (count($santriPutra) > 0) {
+                $sheets[] = new SettlementSantriDetailSheet($santriPutra, 'Rincian Santri Putra');
+            }
+            if (count($santriPutri) > 0) {
+                $sheets[] = new SettlementSantriDetailSheet($santriPutri, 'Rincian Santri Putri');
+            }
+            $sheets[] = new SettlementSantriDetailSheet($this->allSantriList, 'Seluruh Santri (Gabungan)');
+        }
+
+        return $sheets;
     }
 }
 
@@ -41,21 +60,32 @@ class SettlementSummarySheet implements FromArray, WithTitle, ShouldAutoSize, Wi
     public function __construct(
         protected array $report,
         protected array $checklist,
-        protected string $appName
+        protected string $appName,
+        protected ?string $targetGender = null
     ) {}
 
     public function title(): string
     {
-        return 'Ringkasan & Alokasi Kas';
+        return match ($this->targetGender) {
+            'L' => 'Ringkasan Kas Putra',
+            'P' => 'Ringkasan Kas Putri',
+            default => 'Ringkasan Konsolidasi',
+        };
     }
 
     public function array(): array
     {
         $rows = [];
 
+        $unitTitle = match ($this->targetGender) {
+            'L' => 'LAPORAN REKONSILIASI KAS (UNIT PUTRA)',
+            'P' => 'LAPORAN REKONSILIASI KAS (UNIT PUTRI)',
+            default => 'LAPORAN KONSOLIDASI REKONSILIASI & TUTUP BUKU KAS',
+        };
+
         // Title
         $rows[] = [strtoupper($this->appName)];
-        $rows[] = ['LAPORAN REKONSILIASI & TUTUP BUKU KAS (SETTLEMENT)'];
+        $rows[] = [$unitTitle];
         $rows[] = ['Periode: ' . ($this->report['period_label'] ?? '-') . ' | Dicetak: ' . now()->locale('id')->translatedFormat('d F Y, H:i') . ' WIB'];
         $rows[] = ['']; // Blank row
 
@@ -178,12 +208,13 @@ class SettlementSantriDetailSheet implements FromCollection, WithHeadings, WithM
     private int $rowNumber = 0;
 
     public function __construct(
-        protected array $santriList
+        protected array $santriList,
+        protected string $customTitle = 'Rincian Santri Pembayar'
     ) {}
 
     public function title(): string
     {
-        return 'Rincian Santri Pembayar';
+        return $this->customTitle;
     }
 
     public function collection()

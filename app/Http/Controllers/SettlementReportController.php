@@ -211,12 +211,25 @@ class SettlementReportController extends Controller
 
         $periodLabel = Carbon::parse($dateFrom)->locale('id')->translatedFormat('d M Y') . ' s/d ' . Carbon::parse($dateTo)->locale('id')->translatedFormat('d M Y');
 
+        $genderLabel = match ($targetGender) {
+            'L' => 'Unit Putra',
+            'P' => 'Unit Putri',
+            default => 'Semua Unit (Konsolidasi)',
+        };
+
+        $genderSuffix = match ($targetGender) {
+            'L' => '-Putra',
+            'P' => '-Putri',
+            default => '-Konsolidasi',
+        };
+
         $activeDormBreakdown = array_values(array_filter($dormBreakdown, fn($d) => $d['total_amount'] > 0));
 
         $data = [
             'app_name'            => $appName,
             'period_label'        => $periodLabel,
             'source_label'        => $sourceLabel,
+            'gender_label'        => $genderLabel,
             'total_gross'         => $totalGross,
             'total_mdr'           => $totalMdr,
             'total_net'           => $totalNet,
@@ -229,11 +242,11 @@ class SettlementReportController extends Controller
 
         $pdf = Pdf::loadView('pdf.rekap-settlement', $data)->setPaper('a4', 'portrait');
 
-        return $pdf->stream('Rekap-Settlement-' . Carbon::parse($dateFrom)->format('Ymd') . '-' . Carbon::parse($dateTo)->format('Ymd') . '.pdf');
+        return $pdf->stream('Rekap-Settlement' . $genderSuffix . '-' . Carbon::parse($dateFrom)->format('Ymd') . '-' . Carbon::parse($dateTo)->format('Ymd') . '.pdf');
     }
 
     /**
-     * Export Excel (.xlsx) Rekap Settlement 2-Sheet (Ringkasan & Rincian Santri)
+     * Export Excel (.xlsx) Rekap Settlement Multi-Sheet (Ringkasan & Rincian Santri)
      */
     public function exportExcel(Request $request)
     {
@@ -245,7 +258,12 @@ class SettlementReportController extends Controller
         $source   = $request->query('source', 'all');
         $appName  = config('app.name', 'Pondok Pesantren Al-Fithroh');
 
-        $categoryKeys = ['syahriah_putra', 'syahriah_putri', 'madrasah', 'kitab', 'majek_pagi', 'majek_sore', 'pocket_money'];
+        $categoryKeys = match ($targetGender) {
+            'L' => ['syahriah_putra', 'madrasah', 'kitab', 'majek_pagi', 'majek_sore', 'pocket_money'],
+            'P' => ['syahriah_putri', 'madrasah', 'kitab', 'majek_pagi', 'majek_sore', 'pocket_money'],
+            default => ['syahriah_putra', 'syahriah_putri', 'madrasah', 'kitab', 'majek_pagi', 'majek_sore', 'pocket_money'],
+        };
+
         $categoriesReport = [];
         $allSantriList = [];
 
@@ -329,9 +347,15 @@ class SettlementReportController extends Controller
             'dormitory_breakdown'=> $dormReport,
         ];
 
+        $genderSuffix = match ($targetGender) {
+            'L' => '-Putra',
+            'P' => '-Putri',
+            default => '-Konsolidasi',
+        };
+
         return Excel::download(
-            new SettlementReportExport($reportData, $allSantriList, [], $appName),
-            'Rekap-Settlement-' . Carbon::parse($dateFrom)->format('Ymd') . '-' . Carbon::parse($dateTo)->format('Ymd') . '.xlsx'
+            new SettlementReportExport($reportData, $allSantriList, [], $appName, $targetGender),
+            'Rekap-Settlement' . $genderSuffix . '-' . Carbon::parse($dateFrom)->format('Ymd') . '-' . Carbon::parse($dateTo)->format('Ymd') . '.xlsx'
         );
     }
 

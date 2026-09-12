@@ -3693,7 +3693,7 @@
                         </div>
 
                         {{-- Tombol Cetak Semua Slip (Batch PDF) --}}
-                        <a href="{{ route('keuangan.settlement.batch-slips', ['date_from' => $settlementDateFrom, 'date_to' => $settlementDateTo, 'source' => $settlementSource]) }}" 
+                        <a href="{{ route('keuangan.settlement.batch-slips', ['date_from' => $settlementDateFrom, 'date_to' => $settlementDateTo, 'source' => $settlementSource, 'gender' => $this->genderScope() ?: $settlementGender]) }}" 
                            target="_blank"
                            class="inline-flex items-center gap-2 px-4 py-2.5 bg-indigo-50 dark:bg-indigo-950/40 hover:bg-indigo-100 dark:hover:bg-indigo-900/60 text-indigo-700 dark:text-indigo-300 font-extrabold text-xs rounded-2xl border border-indigo-300 dark:border-indigo-700 shadow-xs transition-all active:scale-95"
                            title="Cetak Seluruh Slip Serah Terima (1 File PDF)">
@@ -3702,7 +3702,7 @@
                         </a>
 
                         {{-- Tombol Cetak PDF Rekap --}}
-                        <a href="{{ route('keuangan.settlement.pdf', ['date_from' => $settlementDateFrom, 'date_to' => $settlementDateTo, 'source' => $settlementSource]) }}" 
+                        <a href="{{ route('keuangan.settlement.pdf', ['date_from' => $settlementDateFrom, 'date_to' => $settlementDateTo, 'source' => $settlementSource, 'gender' => $this->genderScope() ?: $settlementGender]) }}" 
                            target="_blank"
                            class="inline-flex items-center gap-2 px-4 py-2.5 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-extrabold text-xs rounded-2xl border border-slate-200 dark:border-slate-700 shadow-xs transition-all active:scale-95">
                             <svg class="w-4 h-4 text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
@@ -3710,10 +3710,10 @@
                         </a>
 
                         {{-- Tombol Export Excel Multi-Sheet --}}
-                        <a href="{{ route('keuangan.settlement.export-excel', ['date_from' => $settlementDateFrom, 'date_to' => $settlementDateTo, 'source' => $settlementSource, 'bank' => $settlementBankFilter]) }}" 
+                        <a href="{{ route('keuangan.settlement.export-excel', ['date_from' => $settlementDateFrom, 'date_to' => $settlementDateTo, 'source' => $settlementSource, 'bank' => $settlementBankFilter, 'gender' => $this->genderScope() ?: $settlementGender]) }}" 
                            target="_blank"
                            class="inline-flex items-center gap-2 px-4 py-2.5 bg-emerald-50 dark:bg-emerald-950/40 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 text-emerald-700 dark:text-emerald-300 font-extrabold text-xs rounded-2xl border border-emerald-300 dark:border-emerald-700 shadow-xs transition-all active:scale-95"
-                           title="Download Laporan Rekonsiliasi Excel 2-Sheet (Ringkasan & Rincian Santri)">
+                           title="Download Laporan Rekonsiliasi Excel Multi-Sheet (Ringkasan & Rincian Santri)">
                             <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
                             <span>Export Excel (.xlsx)</span>
                         </a>
@@ -3797,6 +3797,24 @@
 
                         {{-- Date Inputs & Source Selector --}}
                         <div class="flex items-center gap-3 flex-wrap">
+                            {{-- Unit / Gender Selector --}}
+                            @if($this->genderScope())
+                                <div class="flex items-center gap-1.5 px-3 py-1.5 bg-sky-50 dark:bg-sky-950/40 border border-sky-200 dark:border-sky-800 rounded-xl text-xs font-bold text-sky-800 dark:text-sky-300">
+                                    <svg class="w-3.5 h-3.5 text-sky-600 dark:text-sky-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+                                    <span>Unit: {{ $this->genderScope() === 'L' ? 'Putra (Banin)' : 'Putri (Banat)' }}</span>
+                                </div>
+                            @else
+                                <div class="flex items-center gap-1.5">
+                                    <span class="text-[11px] font-bold text-slate-400">Unit:</span>
+                                    <select wire:model.live="settlementGender" 
+                                            class="text-xs font-bold rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white px-2.5 py-1.5 focus:ring-2 focus:ring-sky-500">
+                                        <option value="">🌐 Semua Unit (Konsolidasi)</option>
+                                        <option value="L">🕌 Unit Putra (Banin)</option>
+                                        <option value="P">🧕 Unit Putri (Banat)</option>
+                                    </select>
+                                </div>
+                            @endif
+
                             {{-- Date From --}}
                             <div class="flex items-center gap-1.5">
                                 <span class="text-[11px] font-bold text-slate-400">Dari:</span>

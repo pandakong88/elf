@@ -119,8 +119,16 @@
                     <div class="inst-sub">Sistem Manajemen Keuangan & Pembukuan Pesantren</div>
                 </td>
                 <td>
-                    <div class="doc-title">REKAP REKONSILIASI & DISTRIBUSI DANA</div>
-                    <div class="doc-sub">Periode: <strong>{{ $period_label }}</strong> &bull; Sumber: {{ $source_label }}</div>
+                    <div class="doc-title">
+                        @if(($gender_label ?? '') === 'Unit Putra')
+                            REKAP REKONSILIASI KAS (UNIT PUTRA)
+                        @elseif(($gender_label ?? '') === 'Unit Putri')
+                            REKAP REKONSILIASI KAS (UNIT PUTRI)
+                        @else
+                            REKAP KONSOLIDASI REKONSILIASI KAS
+                        @endif
+                    </div>
+                    <div class="doc-sub">Periode: <strong>{{ $period_label }}</strong> &bull; {{ $gender_label ?? 'Semua Unit' }} &bull; {{ $source_label }}</div>
                 </td>
             </tr>
         </table>
