@@ -616,4 +616,27 @@ class SettlementReportTest extends TestCase
         $this->assertEquals(150000, $report['transfer_amount']);
         $this->assertGreaterThan(0, $report['realization_percent']);
     }
+
+    public function test_quick_date_presets_and_active_tracking(): void
+    {
+        $this->actingAs($this->admin);
+
+        Livewire::test(BillingManager::class)
+            ->set('activeTab', 'settlement')
+            ->assertSet('settlementPreset', 'this_month')
+            ->call('setSettlementQuickDate', 'today')
+            ->assertSet('settlementPreset', 'today')
+            ->assertSet('settlementDateFrom', now()->toDateString())
+            ->assertSet('settlementDateTo', now()->toDateString())
+            ->call('setSettlementQuickDate', 'last_7_days')
+            ->assertSet('settlementPreset', 'last_7_days')
+            ->assertSet('settlementDateFrom', now()->subDays(6)->toDateString())
+            ->assertSet('settlementDateTo', now()->toDateString())
+            ->call('setSettlementQuickDate', 'last_month')
+            ->assertSet('settlementPreset', 'last_month')
+            ->assertSet('settlementDateFrom', now()->subMonth()->startOfMonth()->toDateString())
+            ->assertSet('settlementDateTo', now()->subMonth()->endOfMonth()->toDateString())
+            ->set('settlementDateFrom', '2026-05-01')
+            ->assertSet('settlementPreset', 'custom');
+    }
 }

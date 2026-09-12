@@ -3778,19 +3778,19 @@
                         <div class="flex items-center gap-1.5 flex-wrap">
                             <span class="text-[11px] font-bold text-slate-400 mr-1">Preset Cepat:</span>
                             <button type="button" wire:click="setSettlementQuickDate('today')" 
-                                    class="px-2.5 py-1 rounded-xl text-xs font-bold bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 transition">
+                                    class="px-3 py-1 rounded-xl text-xs font-bold transition {{ $settlementPreset === 'today' ? 'bg-sky-600 text-white shadow-xs' : 'bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700' }}">
                                 Hari Ini
                             </button>
                             <button type="button" wire:click="setSettlementQuickDate('last_7_days')" 
-                                    class="px-2.5 py-1 rounded-xl text-xs font-bold bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 transition">
+                                    class="px-3 py-1 rounded-xl text-xs font-bold transition {{ $settlementPreset === 'last_7_days' ? 'bg-sky-600 text-white shadow-xs' : 'bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700' }}">
                                 7 Hari Terakhir
                             </button>
                             <button type="button" wire:click="setSettlementQuickDate('this_month')" 
-                                    class="px-2.5 py-1 rounded-xl text-xs font-bold bg-sky-100 dark:bg-sky-500/20 text-sky-700 dark:text-sky-300 border border-sky-300 dark:border-sky-500/30 transition">
+                                    class="px-3 py-1 rounded-xl text-xs font-bold transition {{ $settlementPreset === 'this_month' ? 'bg-sky-600 text-white shadow-xs' : 'bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700' }}">
                                 Bulan Ini
                             </button>
                             <button type="button" wire:click="setSettlementQuickDate('last_month')" 
-                                    class="px-2.5 py-1 rounded-xl text-xs font-bold bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 transition">
+                                    class="px-3 py-1 rounded-xl text-xs font-bold transition {{ $settlementPreset === 'last_month' ? 'bg-sky-600 text-white shadow-xs' : 'bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700' }}">
                                 Bulan Lalu
                             </button>
                         </div>

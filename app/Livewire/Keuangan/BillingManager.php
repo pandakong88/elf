@@ -36,6 +36,7 @@ class BillingManager extends Component
     // Tab: Rekonsiliasi & Settlement (Fase 4)
     public string $settlementDateFrom = '';
     public string $settlementDateTo = '';
+    public string $settlementPreset = 'this_month'; // 'today' | 'last_7_days' | 'this_month' | 'last_month' | 'custom'
     public string $settlementSource = 'gateway'; // 'gateway' | 'kasir' | 'all'
     public string $settlementGender = ''; // '' | 'L' | 'P'
     public string $settlementNotes = '';
@@ -2940,25 +2941,36 @@ class BillingManager extends Component
 
     public function setSettlementQuickDate(string $preset): void
     {
-        match ($preset) {
-            'today' => [
-                $this->settlementDateFrom = now()->toDateString(),
-                $this->settlementDateTo   = now()->toDateString(),
-            ],
-            'last_7_days' => [
-                $this->settlementDateFrom = now()->subDays(6)->toDateString(),
-                $this->settlementDateTo   = now()->toDateString(),
-            ],
-            'this_month' => [
-                $this->settlementDateFrom = now()->startOfMonth()->toDateString(),
-                $this->settlementDateTo   = now()->toDateString(),
-            ],
-            'last_month' => [
-                $this->settlementDateFrom = now()->subMonth()->startOfMonth()->toDateString(),
-                $this->settlementDateTo   = now()->subMonth()->endOfMonth()->toDateString(),
-            ],
-            default => null,
-        };
+        $this->settlementPreset = $preset;
+
+        switch ($preset) {
+            case 'today':
+                $this->settlementDateFrom = now()->toDateString();
+                $this->settlementDateTo   = now()->toDateString();
+                break;
+            case 'last_7_days':
+                $this->settlementDateFrom = now()->subDays(6)->toDateString();
+                $this->settlementDateTo   = now()->toDateString();
+                break;
+            case 'this_month':
+                $this->settlementDateFrom = now()->startOfMonth()->toDateString();
+                $this->settlementDateTo   = now()->toDateString();
+                break;
+            case 'last_month':
+                $this->settlementDateFrom = now()->subMonth()->startOfMonth()->toDateString();
+                $this->settlementDateTo   = now()->subMonth()->endOfMonth()->toDateString();
+                break;
+        }
+    }
+
+    public function updatedSettlementDateFrom(): void
+    {
+        $this->settlementPreset = 'custom';
+    }
+
+    public function updatedSettlementDateTo(): void
+    {
+        $this->settlementPreset = 'custom';
     }
 
     public function openCategoryDetailModal(string $categoryKey): void
@@ -3264,8 +3276,8 @@ class BillingManager extends Component
                     $q->where('payment_method', 'not like', 'gateway%')
                       ->orWhereNull('payment_method');
                 })
-                ->where(function ($q) use ($dateFrom, $dateTo, $fromCarbon, $toCarbon) {
-                    $q->whereBetween('payment_date', [$dateFrom, $dateTo])
+                ->where(function ($q) use ($fromCarbon, $toCarbon) {
+                    $q->whereBetween('payment_date', [$fromCarbon, $toCarbon])
                       ->orWhereBetween('created_at', [$fromCarbon, $toCarbon]);
                 })
                 ->when($targetGender, fn($q, $g) => $q->whereHas('bill.person', fn($pq) => $pq->where('gender', $g)))
