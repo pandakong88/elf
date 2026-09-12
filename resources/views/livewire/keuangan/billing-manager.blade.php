@@ -3692,6 +3692,15 @@
                             </button>
                         </div>
 
+                        {{-- Tombol Cetak Semua Slip (Batch PDF) --}}
+                        <a href="{{ route('keuangan.settlement.batch-slips', ['date_from' => $settlementDateFrom, 'date_to' => $settlementDateTo, 'source' => $settlementSource]) }}" 
+                           target="_blank"
+                           class="inline-flex items-center gap-2 px-4 py-2.5 bg-indigo-50 dark:bg-indigo-950/40 hover:bg-indigo-100 dark:hover:bg-indigo-900/60 text-indigo-700 dark:text-indigo-300 font-extrabold text-xs rounded-2xl border border-indigo-300 dark:border-indigo-700 shadow-xs transition-all active:scale-95"
+                           title="Cetak Seluruh Slip Serah Terima (1 File PDF)">
+                            <svg class="w-4 h-4 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+                            <span>Cetak Semua Slip (Batch PDF)</span>
+                        </a>
+
                         {{-- Tombol Cetak PDF Rekap --}}
                         <a href="{{ route('keuangan.settlement.pdf', ['date_from' => $settlementDateFrom, 'date_to' => $settlementDateTo, 'source' => $settlementSource]) }}" 
                            target="_blank"
@@ -3883,7 +3892,7 @@
                             </span>
                             <div>
                                 <h3 class="font-extrabold text-sm text-slate-900 dark:text-slate-100">1. Alokasi Pembagian Pos Anggaran Utama</h3>
-                                <p class="text-[11px] text-slate-400">Distribusi dana bersih ke kas operasional masing-masing unit dengan rincian santri &amp; slip serah terima</p>
+                                <p class="text-[11px] text-slate-400">Distribusi dana bersih ke kas operasional masing-masing unit dengan checklist serah terima &amp; slip PDF</p>
                             </div>
                         </div>
                     </div>
@@ -3896,17 +3905,21 @@
                                     <th class="py-3 px-4 text-center">Jumlah Tagihan</th>
                                     <th class="py-3 px-4">Porsi (%)</th>
                                     <th class="py-3 px-6 text-right">Total Dana Bersih</th>
+                                    <th class="py-3 px-4 text-center">Status Penyerahan Dana</th>
                                     <th class="py-3 px-6 text-center">Aksi Dokumen &amp; Rincian</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
                                 @forelse($settlementReport['category_breakdown'] as $cat)
                                     @php
+                                        $catKey = $cat['key'];
+                                        $chk = $distributionChecklist[$catKey] ?? null;
+                                        $isHanded = !empty($chk['handed_over']);
                                         $percent = $settlementReport['total_net'] > 0 
                                             ? round(($cat['amount'] / $settlementReport['total_net']) * 100, 1) 
                                             : 0;
                                     @endphp
-                                    <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/20 transition-colors">
+                                    <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/20 transition-colors {{ $isHanded ? 'bg-emerald-50/20 dark:bg-emerald-950/10' : '' }}">
                                         <td class="py-3.5 px-6">
                                             <div class="flex items-center gap-2.5">
                                                 <span class="text-base">{{ $cat['icon'] ?? '🏷️' }}</span>
@@ -3919,7 +3932,7 @@
                                         <td class="py-3.5 px-4 text-center font-bold text-slate-600 dark:text-slate-300">
                                             {{ $cat['count'] }} item
                                         </td>
-                                        <td class="py-3.5 px-4 w-44">
+                                        <td class="py-3.5 px-4 w-36">
                                             <div class="flex items-center gap-2">
                                                 <div class="flex-1 h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
                                                     <div class="h-full bg-indigo-500 rounded-full" style="width: {{ min(100, $percent) }}%"></div>
@@ -3929,6 +3942,21 @@
                                         </td>
                                         <td class="py-3.5 px-6 text-right font-black text-sm text-slate-900 dark:text-white font-mono">
                                             Rp {{ number_format($cat['amount'], 0, ',', '.') }}
+                                        </td>
+                                        {{-- Interactive Handover Checklist & Note --}}
+                                        <td class="py-3.5 px-4 text-center">
+                                            <div class="flex flex-col items-center gap-1">
+                                                <button type="button" 
+                                                        wire:click="toggleHandoverStatus('{{ $catKey }}')"
+                                                        class="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-[11px] font-extrabold border transition shadow-2xs {{ $isHanded ? 'bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 border-emerald-300 dark:border-emerald-700' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:bg-slate-200' }}">
+                                                    <span>{{ $isHanded ? '✔ Sudah Diserahkan' : '⏳ Belum Diserahkan' }}</span>
+                                                </button>
+                                                <input type="text" 
+                                                       value="{{ $chk['recipient_note'] ?? '' }}" 
+                                                       wire:change="updateHandoverNote('{{ $catKey }}', $event.target.value)"
+                                                       placeholder="Catatan penerima..." 
+                                                       class="w-36 text-[10px] py-0.5 px-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-slate-700 dark:text-slate-300 focus:ring-1 focus:ring-indigo-500">
+                                            </div>
                                         </td>
                                         <td class="py-3.5 px-6 text-center">
                                             <div class="inline-flex items-center gap-1.5">
@@ -3954,7 +3982,7 @@
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="5" class="py-10 text-center text-slate-400 font-semibold">
+                                        <td colspan="6" class="py-10 text-center text-slate-400 font-semibold">
                                             Belum ada data pembayaran dalam rentang tanggal ini.
                                         </td>
                                     </tr>
@@ -3970,7 +3998,7 @@
                                     <td class="py-3.5 px-6 text-right text-base text-indigo-600 dark:text-indigo-400 font-mono">
                                         Rp {{ number_format($settlementReport['total_net'], 0, ',', '.') }}
                                     </td>
-                                    <td></td>
+                                    <td colspan="2"></td>
                                 </tr>
                             </tfoot>
                         </table>
@@ -3999,12 +4027,18 @@
                                     <th class="py-3 px-4">Unit</th>
                                     <th class="py-3 px-4 text-center">Jumlah Santri / Tagihan</th>
                                     <th class="py-3 px-6 text-right">Total Kas Terkumpul</th>
+                                    <th class="py-3 px-4 text-center">Status Serah Terima</th>
                                     <th class="py-3 px-6 text-center">Aksi Dokumen &amp; Rincian</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
                                 @forelse($settlementReport['dormitory_breakdown'] as $dorm)
-                                    <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/20 transition-colors">
+                                    @php
+                                        $dormKey = 'dorm_' . $dorm['dormitory_id'];
+                                        $chk = $distributionChecklist[$dormKey] ?? null;
+                                        $isHanded = !empty($chk['handed_over']);
+                                    @endphp
+                                    <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/20 transition-colors {{ $isHanded ? 'bg-emerald-50/20 dark:bg-emerald-950/10' : '' }}">
                                         <td class="py-3.5 px-6">
                                             <div class="flex items-center gap-2">
                                                 <span class="text-base">🏠</span>
@@ -4023,6 +4057,14 @@
                                         </td>
                                         <td class="py-3.5 px-6 text-right font-black text-sm text-emerald-600 dark:text-emerald-400 font-mono">
                                             Rp {{ number_format($dorm['total_amount'], 0, ',', '.') }}
+                                        </td>
+                                        {{-- Checklist status per Dormitory --}}
+                                        <td class="py-3.5 px-4 text-center">
+                                            <button type="button" 
+                                                    wire:click="toggleHandoverStatus('{{ $dormKey }}')"
+                                                    class="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-[10px] font-extrabold border transition shadow-2xs {{ $isHanded ? 'bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 border-emerald-300 dark:border-emerald-700' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:bg-slate-200' }}">
+                                                <span>{{ $isHanded ? '✔ Diserahkan' : '⏳ Belum' }}</span>
+                                            </button>
                                         </td>
                                         <td class="py-3.5 px-6 text-center">
                                             <div class="inline-flex items-center gap-1.5">
@@ -4047,7 +4089,7 @@
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="5" class="py-10 text-center text-slate-400 font-semibold">
+                                        <td colspan="6" class="py-10 text-center text-slate-400 font-semibold">
                                             Tidak ada pembayaran Kas Komplek dalam periode ini.
                                         </td>
                                     </tr>
@@ -4064,7 +4106,7 @@
                                     <td class="py-3.5 px-6 text-right text-base text-emerald-600 dark:text-emerald-400 font-mono">
                                         Rp {{ number_format(collect($settlementReport['dormitory_breakdown'])->sum('total_amount'), 0, ',', '.') }}
                                     </td>
-                                    <td></td>
+                                    <td colspan="2"></td>
                                 </tr>
                             </tfoot>
                             @endif
@@ -4080,7 +4122,7 @@
                         </span>
                         <div>
                             <h3 class="font-extrabold text-sm text-slate-900 dark:text-slate-100">Riwayat Audit Rekonsiliasi &amp; Distribusi Tersimpan</h3>
-                            <p class="text-[11px] text-slate-400">Snapshot data rekonsiliasi yang pernah dikunci dan dicatat sebelumnya</p>
+                            <p class="text-[11px] text-slate-400">Snapshot data rekonsiliasi yang pernah dikunci dan dicatat sebelumnya (Lengkap Berita Acara PDF)</p>
                         </div>
                     </div>
 
@@ -4094,6 +4136,7 @@
                                         <th class="py-3 px-4">Waktu Kunci</th>
                                         <th class="py-3 px-4 text-right">Dana Bersih (Net)</th>
                                         <th class="py-3 px-4">Catatan</th>
+                                        <th class="py-3 px-4 text-center">Aksi Berita Acara</th>
                                     </tr>
                                 </thead>
                                 <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
@@ -4113,6 +4156,29 @@
                                             </td>
                                             <td class="py-3 px-4 text-slate-500 text-[11px]">
                                                 {{ $dist->notes ?? '—' }}
+                                            </td>
+                                            <td class="py-3 px-4 text-center">
+                                                <div class="inline-flex items-center gap-1.5">
+                                                    {{-- Tombol Cetak Berita Acara PDF --}}
+                                                    <a href="{{ route('keuangan.settlement.snapshot-pdf', $dist->id) }}" 
+                                                       target="_blank"
+                                                       class="px-2.5 py-1.5 bg-sky-50 dark:bg-sky-950/40 hover:bg-sky-100 dark:hover:bg-sky-900/60 text-sky-700 dark:text-sky-300 rounded-xl text-[11px] font-extrabold border border-sky-300 dark:border-sky-700 transition flex items-center gap-1"
+                                                       title="Cetak Berita Acara Tutup Kas">
+                                                        <svg class="w-3.5 h-3.5 text-sky-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                                                        <span>Berita Acara</span>
+                                                    </a>
+
+                                                    {{-- Tombol Buka Kunci / Hapus Snapshot (Super Admin Only) --}}
+                                                    @if(auth()->user()?->hasRole('super-admin'))
+                                                        <button type="button" 
+                                                                wire:click="deleteSettlementSnapshot('{{ $dist->id }}')"
+                                                                wire:confirm="Apakah Anda yakin ingin membuka kunci rekonsiliasi dan menghapus arsip snapshot ini?"
+                                                                class="px-2 py-1.5 text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-xl text-[11px] font-bold transition"
+                                                                title="Buka Kunci & Hapus Snapshot">
+                                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                                        </button>
+                                                    @endif
+                                                </div>
                                             </td>
                                         </tr>
                                     @endforeach

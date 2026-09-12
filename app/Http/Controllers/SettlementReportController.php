@@ -8,6 +8,7 @@ use App\Modules\Keuangan\Models\Bill;
 use App\Modules\Keuangan\Models\BillPayment;
 use App\Modules\Keuangan\Models\PaymentTransaction;
 use App\Modules\Keuangan\Models\ManualTransferSubmission;
+use App\Modules\Keuangan\Models\FundDistribution;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -235,7 +236,6 @@ class SettlementReportController extends Controller
     public function downloadSlipKomplekPdf(Request $request, string $dormitoryId): Response
     {
         $genderScope = $this->resolveGenderScope();
-
         $dormitory = Dormitory::findOrFail($dormitoryId);
 
         if ($genderScope && $dormitory->gender !== $genderScope) {
@@ -244,11 +244,37 @@ class SettlementReportController extends Controller
 
         $dateFrom  = $request->query('date_from', now()->startOfMonth()->toDateString());
         $dateTo    = $request->query('date_to', now()->toDateString());
-        $source    = $request->query('source', 'gateway');
+        $appName   = config('app.name', 'Pondok Pesantren Al-Fithroh');
+        $periodLabel = Carbon::parse($dateFrom)->locale('id')->translatedFormat('d M Y') . ' s/d ' . Carbon::parse($dateTo)->locale('id')->translatedFormat('d M Y');
+
+        $dormData = $this->getDormitorySlipData($request, $dormitoryId);
+
+        $data = [
+            'app_name'     => $appName,
+            'dormitory'    => $dormitory,
+            'period_label' => $periodLabel,
+            'total_amount' => $dormData['total_amount'],
+            'santri_list'  => $dormData['santri_list'],
+            'generated_at' => now()->locale('id')->translatedFormat('d F Y, H:i') . ' WIB',
+            'generated_by' => auth()->user()?->name ?? 'Bendahara Pusat',
+        ];
+
+        $pdf = Pdf::loadView('pdf.slip-kas-komplek', $data)->setPaper('a4', 'portrait');
+
+        return $pdf->stream('Slip-Kas-' . \Illuminate\Support\Str::slug($dormitory->name) . '.pdf');
+    }
+
+    /**
+     * Helper data gathering untuk Slip Kas Komplek
+     */
+    public function getDormitorySlipData(Request $request, string $dormitoryId): array
+    {
+        $dateFrom   = $request->query('date_from', now()->startOfMonth()->toDateString());
+        $dateTo     = $request->query('date_to', now()->toDateString());
+        $source     = $request->query('source', 'all');
 
         $fromCarbon = Carbon::parse($dateFrom)->startOfDay();
         $toCarbon   = Carbon::parse($dateTo)->endOfDay();
-        $appName    = config('app.name', 'Pondok Pesantren Al-Fithroh');
 
         $santriList = [];
         $totalAmount = 0.0;
@@ -329,21 +355,10 @@ class SettlementReportController extends Controller
             }
         }
 
-        $periodLabel = Carbon::parse($dateFrom)->locale('id')->translatedFormat('d M Y') . ' s/d ' . Carbon::parse($dateTo)->locale('id')->translatedFormat('d M Y');
-
-        $data = [
-            'app_name'     => $appName,
-            'dormitory'    => $dormitory,
-            'period_label' => $periodLabel,
+        return [
             'total_amount' => $totalAmount,
             'santri_list'  => $santriList,
-            'generated_at' => now()->locale('id')->translatedFormat('d F Y, H:i') . ' WIB',
-            'generated_by' => auth()->user()?->name ?? 'Bendahara Pusat',
         ];
-
-        $pdf = Pdf::loadView('pdf.slip-kas-komplek', $data)->setPaper('a4', 'portrait');
-
-        return $pdf->stream('Slip-Kas-Komplek-' . str_replace(' ', '-', $dormitory->name) . '.pdf');
     }
 
     /**
@@ -354,13 +369,48 @@ class SettlementReportController extends Controller
         $genderScope = $this->resolveGenderScope();
         $targetGender = $genderScope ?: $request->query('gender', null);
 
+        $catData = $this->getCategorySlipData($request, $categoryKey);
+        $meta    = $catData['meta'];
+
+        if ($meta['filter_gender'] && $targetGender && $targetGender !== $meta['filter_gender']) {
+            abort(403, 'Akses ditolak untuk unit ini.');
+        }
+
+        $dateFrom   = $request->query('date_from', now()->startOfMonth()->toDateString());
+        $dateTo     = $request->query('date_to', now()->toDateString());
+        $appName    = config('app.name', 'Pondok Pesantren Al-Fithroh');
+        $periodLabel = Carbon::parse($dateFrom)->locale('id')->translatedFormat('d M Y') . ' s/d ' . Carbon::parse($dateTo)->locale('id')->translatedFormat('d M Y');
+
+        $data = [
+            'app_name'       => $appName,
+            'category_key'   => $categoryKey,
+            'meta'           => $meta,
+            'period_label'   => $periodLabel,
+            'total_amount'   => $catData['total_amount'],
+            'santri_list'    => $catData['santri_list'],
+            'generated_at'   => now()->locale('id')->translatedFormat('d F Y, H:i') . ' WIB',
+            'generated_by'   => auth()->user()?->name ?? 'Bendahara Pusat',
+        ];
+
+        $pdf = Pdf::loadView('pdf.slip-serah-terima-kategori', $data)->setPaper('a4', 'portrait');
+
+        return $pdf->stream('Slip-Serah-Terima-' . \Illuminate\Support\Str::slug($meta['title']) . '.pdf');
+    }
+
+    /**
+     * Helper data gathering untuk Slip Kategori
+     */
+    public function getCategorySlipData(Request $request, string $categoryKey): array
+    {
+        $genderScope = $this->resolveGenderScope();
+        $targetGender = $genderScope ?: $request->query('gender', null);
+
         $dateFrom   = $request->query('date_from', now()->startOfMonth()->toDateString());
         $dateTo     = $request->query('date_to', now()->toDateString());
         $source     = $request->query('source', 'all');
 
         $fromCarbon = Carbon::parse($dateFrom)->startOfDay();
         $toCarbon   = Carbon::parse($dateTo)->endOfDay();
-        $appName    = config('app.name', 'Pondok Pesantren Al-Fithroh');
 
         $meta = match ($categoryKey) {
             'syahriah_putra' => [
@@ -427,10 +477,6 @@ class SettlementReportController extends Controller
                 'bill_type'      => $categoryKey,
             ],
         };
-
-        if ($meta['filter_gender'] && $targetGender && $targetGender !== $meta['filter_gender']) {
-            abort(403, 'Akses ditolak untuk unit ini.');
-        }
 
         $effectiveGender = $meta['filter_gender'] ?: $targetGender;
 
@@ -503,7 +549,7 @@ class SettlementReportController extends Controller
                 }
             }
         } else {
-            // Pos Tagihan Normal (Syahriah, Madrasah, Kitab, Majek, Kas Komplek, dll)
+            // Pos Tagihan Normal
             $billType = $meta['bill_type'];
 
             // 1. Gateway
@@ -517,7 +563,7 @@ class SettlementReportController extends Controller
                           });
                     })
                     ->when($effectiveGender, fn($q, $g) => $q->whereHas('person', fn($pq) => $pq->where('gender', $g)))
-                    ->with(['person.roomAssignments' => fn($q) => $q->active()->with('room.dormitory'), 'person.madrasahEnrollments' => fn($q) => $q->where('is_active', true)->with('kelas')])
+                    ->with(['person.roomAssignments' => fn($q) => $q->active()->with('room.dormitory')])
                     ->get();
 
                 foreach ($gtx as $trx) {
@@ -547,7 +593,7 @@ class SettlementReportController extends Controller
                 }
             }
 
-            // 2. Kasir
+            // 2. Kasir & Transfer Manual
             if ($source === 'kasir' || $source === 'all') {
                 $kasirPayments = BillPayment::where(function ($q) {
                         $q->where('payment_method', 'not like', 'gateway%')
@@ -588,22 +634,102 @@ class SettlementReportController extends Controller
             }
         }
 
+        return [
+            'meta'         => $meta,
+            'total_amount' => $totalAmount,
+            'santri_list'  => $santriList,
+        ];
+    }
+
+    /**
+     * Download Batch Slip Serah Terima (Seluruh Pos & Asrama dalam 1 Dokumen PDF).
+     */
+    public function downloadBatchSlipsPdf(Request $request): Response
+    {
+        $genderScope = $this->resolveGenderScope();
+        $targetGender = $genderScope ?: $request->query('gender', null);
+
+        $dateFrom   = $request->query('date_from', now()->startOfMonth()->toDateString());
+        $dateTo     = $request->query('date_to', now()->toDateString());
+        $appName    = config('app.name', 'Pondok Pesantren Al-Fithroh');
         $periodLabel = Carbon::parse($dateFrom)->locale('id')->translatedFormat('d M Y') . ' s/d ' . Carbon::parse($dateTo)->locale('id')->translatedFormat('d M Y');
 
+        $categoryKeys = ['syahriah_putra', 'syahriah_putri', 'madrasah', 'kitab', 'majek_pagi', 'majek_sore', 'pocket_money'];
+        $slips = [];
+
+        foreach ($categoryKeys as $catKey) {
+            $catData = $this->getCategorySlipData($request, $catKey);
+            if ($catData['total_amount'] > 0) {
+                $slips[] = [
+                    'type'         => 'kategori',
+                    'meta'         => $catData['meta'],
+                    'total_amount' => $catData['total_amount'],
+                    'santri_list'  => $catData['santri_list'],
+                ];
+            }
+        }
+
+        $dormitories = Dormitory::active()
+            ->when($targetGender, fn($q, $g) => $q->where('gender', $g))
+            ->orderByRaw("gender ASC, name ASC")->get();
+
+        foreach ($dormitories as $dorm) {
+            $dormData = $this->getDormitorySlipData($request, $dorm->id);
+            if ($dormData['total_amount'] > 0) {
+                $slips[] = [
+                    'type'         => 'komplek',
+                    'meta'         => [
+                        'title'          => 'Kas Komplek ' . $dorm->name,
+                        'recipient_role' => 'Bendahara ' . $dorm->name,
+                        'unit_label'     => 'Asrama ' . ($dorm->gender === 'P' ? 'Putri' : 'Putra'),
+                    ],
+                    'dormitory'    => $dorm,
+                    'total_amount' => $dormData['total_amount'],
+                    'santri_list'  => $dormData['santri_list'],
+                ];
+            }
+        }
+
         $data = [
-            'app_name'       => $appName,
-            'category_key'   => $categoryKey,
-            'meta'           => $meta,
-            'period_label'   => $periodLabel,
-            'total_amount'   => $totalAmount,
-            'santri_list'    => $santriList,
-            'generated_at'   => now()->locale('id')->translatedFormat('d F Y, H:i') . ' WIB',
-            'generated_by'   => auth()->user()?->name ?? 'Bendahara Pusat',
+            'app_name'     => $appName,
+            'period_label' => $periodLabel,
+            'slips'        => $slips,
+            'generated_at' => now()->locale('id')->translatedFormat('d F Y, H:i') . ' WIB',
+            'generated_by' => auth()->user()?->name ?? 'Bendahara Pusat',
         ];
 
-        $pdf = Pdf::loadView('pdf.slip-serah-terima-kategori', $data)->setPaper('a4', 'portrait');
+        $pdf = Pdf::loadView('pdf.slip-batch-all', $data)->setPaper('a4', 'portrait');
 
-        return $pdf->stream('Slip-Serah-Terima-' . \Illuminate\Support\Str::slug($meta['title']) . '.pdf');
+        return $pdf->stream('Batch-Slip-Serah-Terima-' . Carbon::parse($dateFrom)->format('Ymd') . '.pdf');
+    }
+
+    /**
+     * Download PDF Berita Acara Rekonsiliasi & Tutup Buku Kas dari Snapshot.
+     */
+    public function downloadSnapshotPdf(Request $request, string $id): Response
+    {
+        $genderScope = $this->resolveGenderScope();
+        $snapshot = FundDistribution::with('distributor')->findOrFail($id);
+
+        if ($genderScope && $snapshot->gender !== 'A' && $snapshot->gender !== $genderScope) {
+            abort(403, 'Akses ditolak untuk arsip rekonsiliasi unit ini.');
+        }
+
+        $appName = config('app.name', 'Pondok Pesantren Al-Fithroh');
+        $periodLabel = $snapshot->period_from->locale('id')->translatedFormat('d M Y') . ' s/d ' . $snapshot->period_to->locale('id')->translatedFormat('d M Y');
+
+        $data = [
+            'app_name'     => $appName,
+            'snapshot'     => $snapshot,
+            'period_label' => $periodLabel,
+            'breakdown'    => $snapshot->breakdown ?? [],
+            'generated_at' => now()->locale('id')->translatedFormat('d F Y, H:i') . ' WIB',
+            'generated_by' => auth()->user()?->name ?? 'Bendahara Pusat',
+        ];
+
+        $pdf = Pdf::loadView('pdf.berita-acara-settlement', $data)->setPaper('a4', 'portrait');
+
+        return $pdf->stream('Berita-Acara-Rekonsiliasi-Kas-' . $snapshot->period_from->format('Ymd') . '.pdf');
     }
 
     private function allocateToCategory(array &$categories, string $type, float $amt, ?string $gender = null, ?string $customLabel = null): void

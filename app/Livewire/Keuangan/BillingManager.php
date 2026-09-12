@@ -43,6 +43,7 @@ class BillingManager extends Component
     public ?string $modalDormitoryId = null;
     public bool $showCategoryModal = false;
     public ?string $modalCategoryKey = null;
+    public array $distributionChecklist = [];
 
     // Tab: Dynamic Billing Generator
     public ?string $genConfigId = null;
@@ -2984,6 +2985,43 @@ class BillingManager extends Component
         $this->modalDormitoryId   = null;
     }
 
+    public function toggleHandoverStatus(string $key, ?string $recipientNote = null): void
+    {
+        $current = $this->distributionChecklist[$key]['handed_over'] ?? false;
+        $this->distributionChecklist[$key] = [
+            'handed_over'    => !$current,
+            'recipient_note' => $recipientNote ?? ($this->distributionChecklist[$key]['recipient_note'] ?? ''),
+            'handed_at'      => !$current ? now()->toDateTimeString() : null,
+        ];
+    }
+
+    public function updateHandoverNote(string $key, string $note): void
+    {
+        if (!isset($this->distributionChecklist[$key])) {
+            $this->distributionChecklist[$key] = [
+                'handed_over'    => false,
+                'recipient_note' => $note,
+                'handed_at'      => null,
+            ];
+        } else {
+            $this->distributionChecklist[$key]['recipient_note'] = $note;
+        }
+    }
+
+    public function deleteSettlementSnapshot(string $id): void
+    {
+        $user = auth()->user();
+        if (!$user || !$user->hasRole('super-admin')) {
+            $this->toastError('Hanya Super Admin yang dapat membuka/menghapus kunci buku rekonsiliasi.');
+            return;
+        }
+
+        $snapshot = FundDistribution::findOrFail($id);
+        $snapshot->delete();
+
+        $this->toastSuccess('Kunci buku rekonsiliasi berhasil dibuka & snapshot dihapus.');
+    }
+
     public function saveSettlementSnapshot(): void
     {
         if (!$this->canLockSettlement()) {
@@ -3007,13 +3045,25 @@ class BillingManager extends Component
             'total_mdr'      => $report['total_mdr'],
             'total_net'      => $report['total_net'],
             'breakdown'      => [
+                'sources'     => [
+                    'gateway_gross'   => $report['gateway_gross'],
+                    'gateway_mdr'     => $report['gateway_mdr'],
+                    'gateway_net'     => $report['gateway_net'],
+                    'gateway_trx'     => $report['gateway_trx'],
+                    'transfer_amount' => $report['transfer_amount'],
+                    'transfer_trx'    => $report['transfer_trx'],
+                    'cash_amount'     => $report['cash_amount'],
+                    'cash_trx'        => $report['cash_trx'],
+                ],
                 'categories'  => $report['category_breakdown'],
                 'dormitories' => $report['dormitory_breakdown'],
+                'checklist'   => $this->distributionChecklist,
+                'period_label'=> $report['period_label'],
             ],
-            'online_amount'  => $report['total_net'],
-            'manual_amount'  => 0,
-            'online_count'   => $report['total_trx'],
-            'manual_count'   => 0,
+            'online_amount'  => $report['gateway_net'],
+            'manual_amount'  => $report['transfer_amount'] + $report['cash_amount'],
+            'online_count'   => $report['gateway_trx'],
+            'manual_count'   => $report['transfer_trx'] + $report['cash_trx'],
             'status'         => 'distributed',
             'distributed_at' => now(),
             'distributed_by' => auth()->id(),

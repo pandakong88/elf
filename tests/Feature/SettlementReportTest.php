@@ -360,4 +360,118 @@ class SettlementReportTest extends TestCase
             ->assertSee('Syahriah Madrasah')
             ->assertSee('Muhammad Fatih');
     }
+
+    public function test_batch_slips_pdf_download(): void
+    {
+        $this->actingAs($this->admin);
+
+        $bill = Bill::create([
+            'person_id'   => $this->santriPutra->id,
+            'bill_type'   => 'madrasah',
+            'title'       => 'Madrasah Diniyah',
+            'amount'      => 80000,
+            'amount_paid' => 80000,
+            'status'      => 'paid',
+            'created_by'  => $this->admin->id,
+        ]);
+
+        BillPayment::create([
+            'bill_id'        => $bill->id,
+            'amount_paid'    => 80000,
+            'payment_date'   => now()->toDateString(),
+            'payment_method' => 'cash',
+            'receipt_no'     => 'KSR-BATCH-01',
+            'logged_by'      => $this->admin->id,
+        ]);
+
+        $response = $this->get(route('keuangan.settlement.batch-slips', [
+            'date_from' => now()->startOfMonth()->toDateString(),
+            'date_to'   => now()->toDateString(),
+            'source'    => 'all',
+        ]));
+
+        $response->assertStatus(200);
+        $response->assertHeader('content-type', 'application/pdf');
+    }
+
+    public function test_snapshot_berita_acara_pdf_download(): void
+    {
+        $this->actingAs($this->admin);
+
+        $snapshot = FundDistribution::create([
+            'id'             => (string) Str::uuid(),
+            'period_from'    => now()->startOfMonth()->toDateString(),
+            'period_to'      => now()->toDateString(),
+            'gender'         => 'A',
+            'total_gross'    => 500000,
+            'total_mdr'      => 5000,
+            'total_net'      => 495000,
+            'breakdown'      => [
+                'categories' => [
+                    ['label' => 'Syahriah Madrasah', 'amount' => 495000, 'count' => 5],
+                ],
+                'sources'    => [
+                    'gateway_net'     => 300000,
+                    'gateway_mdr'     => 5000,
+                    'gateway_gross'   => 305000,
+                    'transfer_amount' => 100000,
+                    'cash_amount'     => 95000,
+                ],
+            ],
+            'online_amount'  => 300000,
+            'manual_amount'  => 195000,
+            'online_count'   => 3,
+            'manual_count'   => 2,
+            'status'         => 'distributed',
+            'distributed_at' => now(),
+            'distributed_by' => $this->admin->id,
+            'notes'          => 'Tutup kas resmi',
+        ]);
+
+        $response = $this->get(route('keuangan.settlement.snapshot-pdf', $snapshot->id));
+
+        $response->assertStatus(200);
+        $response->assertHeader('content-type', 'application/pdf');
+    }
+
+    public function test_interactive_handover_checklist_and_note(): void
+    {
+        $this->actingAs($this->admin);
+
+        Livewire::test(BillingManager::class)
+            ->set('activeTab', 'settlement')
+            ->call('toggleHandoverStatus', 'madrasah', 'Diserahkan ke Ust. Hasan')
+            ->assertSet('distributionChecklist.madrasah.handed_over', true)
+            ->assertSet('distributionChecklist.madrasah.recipient_note', 'Diserahkan ke Ust. Hasan')
+            ->call('updateHandoverNote', 'madrasah', 'Diserahkan ke Ust. Hasan (Lunas Tunai)')
+            ->assertSet('distributionChecklist.madrasah.recipient_note', 'Diserahkan ke Ust. Hasan (Lunas Tunai)')
+            ->call('toggleHandoverStatus', 'madrasah')
+            ->assertSet('distributionChecklist.madrasah.handed_over', false);
+    }
+
+    public function test_delete_settlement_snapshot_by_super_admin(): void
+    {
+        $this->actingAs($this->admin);
+
+        $snapshot = FundDistribution::create([
+            'id'             => (string) Str::uuid(),
+            'period_from'    => now()->startOfMonth()->toDateString(),
+            'period_to'      => now()->toDateString(),
+            'gender'         => 'A',
+            'total_gross'    => 100000,
+            'total_mdr'      => 0,
+            'total_net'      => 100000,
+            'status'         => 'distributed',
+            'distributed_at' => now(),
+            'distributed_by' => $this->admin->id,
+        ]);
+
+        Livewire::test(BillingManager::class)
+            ->set('activeTab', 'settlement')
+            ->call('deleteSettlementSnapshot', $snapshot->id);
+
+        $this->assertDatabaseMissing('fund_distributions', [
+            'id' => $snapshot->id,
+        ]);
+    }
 }
