@@ -107,6 +107,9 @@ class SantriSearch extends Component
 
         $contents = LandingPageContent::all()->pluck('value', 'key')->toArray();
 
+        $waPutra = DashboardTagihan::normalizeWaNumber($contents['wali_wa_putra'] ?? '6281234567890');
+        $waPutri = DashboardTagihan::normalizeWaNumber($contents['wali_wa_putri'] ?? '6285713285438');
+
         $putraData = [
             'bank1_name' => $contents['wali_bank1_name_putra'] ?? 'Bank Syariah Indonesia (BSI)',
             'bsi'        => $contents['wali_bsi_putra'] ?? '7123456789',
@@ -116,7 +119,7 @@ class SantriSearch extends Component
             'bri_an'     => $contents['wali_bri_putra_an'] ?? '',
             'wa'         => $contents['wali_wa_putra'] ?? '6281234567890',
             'wa_name'    => $contents['wali_wa_putra_name'] ?? 'Bendahara Putra Al-Fithroh',
-            'wa_url'     => 'https://wa.me/' . preg_replace('/[^0-9]/', '', $contents['wali_wa_putra'] ?? '6281234567890') . '?text=' . urlencode("Assalamu'alaikum Bendahara Putra Al-Fithroh, saya ingin bertanya info seputar tagihan santri."),
+            'wa_url'     => 'https://wa.me/' . $waPutra . '?text=' . urlencode("Assalamu'alaikum Bendahara Putra Al-Fithroh, saya ingin bertanya info seputar tagihan santri."),
         ];
 
         $putriData = [
@@ -128,7 +131,7 @@ class SantriSearch extends Component
             'bri_an'     => $contents['wali_bri_putri_an'] ?? '',
             'wa'         => $contents['wali_wa_putri'] ?? '6285713285438',
             'wa_name'    => $contents['wali_wa_putri_name'] ?? 'Bendahara Putri Al-Fithroh',
-            'wa_url'     => 'https://wa.me/' . preg_replace('/[^0-9]/', '', $contents['wali_wa_putri'] ?? '6285713285438') . '?text=' . urlencode("Assalamu'alaikum Bendahara Putri Al-Fithroh, saya ingin bertanya info seputar tagihan santri."),
+            'wa_url'     => 'https://wa.me/' . $waPutri . '?text=' . urlencode("Assalamu'alaikum Bendahara Putri Al-Fithroh, saya ingin bertanya info seputar tagihan santri."),
         ];
 
         $waliAnnouncement = $contents['wali_announcement'] ?? '';

@@ -480,21 +480,66 @@ class DashboardTagihan extends Component
         }
     }
 
+    public static function normalizeWaNumber(?string $phone): string
+    {
+        if (empty($phone)) {
+            return '';
+        }
+        $clean = preg_replace('/[^0-9]/', '', $phone);
+        if (empty($clean)) {
+            return '';
+        }
+        if (str_starts_with($clean, '0')) {
+            $clean = '62' . substr($clean, 1);
+        } elseif (str_starts_with($clean, '8')) {
+            $clean = '62' . $clean;
+        } elseif (str_starts_with($clean, '620')) {
+            $clean = '62' . substr($clean, 3);
+        }
+
+        return $clean;
+    }
+
+    public function isPutriSantri(?Person $santri): bool
+    {
+        if (!$santri) {
+            return false;
+        }
+
+        $g = strtoupper(trim((string)$santri->gender));
+        if (in_array($g, ['P', 'FEMALE', 'PEREMPUAN', 'PUTRI'])) {
+            return true;
+        }
+        if (in_array($g, ['L', 'MALE', 'LAKI-LAKI', 'PUTRA'])) {
+            return false;
+        }
+
+        $dormGender = strtoupper((string)($santri->roomAssignments?->first()?->room?->dormitory?->gender ?? ''));
+        if (in_array($dormGender, ['P', 'FEMALE', 'PEREMPUAN', 'PUTRI'])) {
+            return true;
+        }
+
+        return false;
+    }
+
     public function getSubmissionWaUrl(ManualTransferSubmission $sub): string
     {
-        $santri = Person::find($this->personId);
+        $santri = Person::with([
+            'roomAssignments' => fn($q) => $q->where('is_active', true)->with('room.dormitory'),
+        ])->find($this->personId);
+
         $contents = LandingPageContent::getContent();
-        $isPutri = ($santri?->gender === 'female');
+        $isPutri = $this->isPutriSantri($santri);
 
         if ($isPutri) {
-            $waBendahara = $contents['wali_wa_putri'] ?? '6281234567891';
+            $waBendahara = $contents['wali_wa_putri'] ?? '6285713285438';
             $waName      = $contents['wali_wa_putri_name'] ?? 'Bendahara Putri Al-Fithroh';
         } else {
             $waBendahara = $contents['wali_wa_putra'] ?? '6281234567890';
             $waName      = $contents['wali_wa_putra_name'] ?? 'Bendahara Putra Al-Fithroh';
         }
 
-        $cleanWa = preg_replace('/[^0-9]/', '', $waBendahara);
+        $cleanWa = static::normalizeWaNumber($waBendahara);
         $santriName = $santri?->name ?? 'Santri';
 
         $lines = [];
@@ -808,7 +853,7 @@ class DashboardTagihan extends Component
         ])->findOrFail($this->personId);
 
         $contents = LandingPageContent::all()->pluck('value', 'key')->toArray();
-        $isPutri = ($santri->gender === 'P');
+        $isPutri = $this->isPutriSantri($santri);
 
         if ($isPutri) {
             $bank1Name   = $contents['wali_bank1_name_putri'] ?? 'Bank Syariah Indonesia (BSI)';
@@ -819,7 +864,7 @@ class DashboardTagihan extends Component
             $briRekening = $contents['wali_bri_putri'] ?? '001201009876505';
             $briAn       = $contents['wali_bri_putri_an'] ?? 'Yayasan Al-Fithroh Putri';
 
-            $waBendahara = $contents['wali_wa_putri'] ?? '6281234567891';
+            $waBendahara = $contents['wali_wa_putri'] ?? '6285713285438';
             $waName      = $contents['wali_wa_putri_name'] ?? 'Bendahara Putri Al-Fithroh';
         } else {
             $bank1Name   = $contents['wali_bank1_name_putra'] ?? 'Bank Syariah Indonesia (BSI)';
@@ -834,7 +879,7 @@ class DashboardTagihan extends Component
             $waName      = $contents['wali_wa_putra_name'] ?? 'Bendahara Putra Al-Fithroh';
         }
 
-        $cleanWa     = preg_replace('/[^0-9]/', '', $waBendahara);
+        $cleanWa     = static::normalizeWaNumber($waBendahara);
         $directWaUrl = 'https://wa.me/' . $cleanWa . '?text=' . urlencode("Assalamu'alaikum {$waName}, saya Wali Santri dari {$santri->name} ingin konfirmasi pembayaran.");
 
         $now = now();

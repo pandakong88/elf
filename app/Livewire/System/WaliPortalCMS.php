@@ -73,7 +73,7 @@ class WaliPortalCMS extends Component
         $this->rekening_bri_putri      = $contents['wali_bri_putri'] ?? '';
         $this->rekening_bri_putri_an   = $contents['wali_bri_putri_an'] ?? '';
 
-        $this->wa_bendahara_putri      = $contents['wali_wa_putri'] ?? '6281234567891';
+        $this->wa_bendahara_putri      = $contents['wali_wa_putri'] ?? '6285713285438';
         $this->wa_bendahara_putri_name = $contents['wali_wa_putri_name'] ?? 'Bendahara Putri Al-Fithroh';
 
         // Pengumuman
@@ -200,6 +200,10 @@ class WaliPortalCMS extends Component
             'faqItems.*.answer.required'   => 'Jawaban FAQ wajib diisi.',
         ]);
 
+        // Normalisasi nomor WhatsApp agar valid untuk wa.me
+        $this->wa_bendahara_putra = static::normalizeWaNumber($this->wa_bendahara_putra);
+        $this->wa_bendahara_putri = static::normalizeWaNumber($this->wa_bendahara_putri);
+
         $fields = [
             'wali_bank1_name_putra'  => ['section' => 'wali_portal', 'title' => 'Nama Bank 1 Putra', 'type' => 'text', 'value' => $this->bank1_name_putra],
             'wali_bsi_putra'         => ['section' => 'wali_portal', 'title' => 'No Rekening Bank 1 Putra', 'type' => 'text', 'value' => $this->rekening_bsi_putra],
@@ -268,6 +272,26 @@ class WaliPortalCMS extends Component
             ->log("Telah memperbarui konfigurasi Nama Bank, Rekening, WA Bendahara & FAQ CMS Portal Wali.");
 
         $this->toastSuccess('Pengaturan CMS Portal Wali (Bank, Rekening, WhatsApp & FAQ) berhasil disimpan.');
+    }
+
+    public static function normalizeWaNumber(?string $phone): string
+    {
+        if (empty($phone)) {
+            return '';
+        }
+        $clean = preg_replace('/[^0-9]/', '', $phone);
+        if (empty($clean)) {
+            return '';
+        }
+        if (str_starts_with($clean, '0')) {
+            $clean = '62' . substr($clean, 1);
+        } elseif (str_starts_with($clean, '8')) {
+            $clean = '62' . $clean;
+        } elseif (str_starts_with($clean, '620')) {
+            $clean = '62' . substr($clean, 3);
+        }
+
+        return $clean;
     }
 
     public function render()

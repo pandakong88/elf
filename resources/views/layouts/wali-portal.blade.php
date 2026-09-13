@@ -206,6 +206,9 @@
     @php
         $contents = \App\Modules\Core\Models\LandingPageContent::all()->pluck('value', 'key')->toArray();
 
+        $waPutraClean = \App\Livewire\WaliPortal\DashboardTagihan::normalizeWaNumber($contents['wali_wa_putra'] ?? '6281234567890');
+        $waPutriClean = \App\Livewire\WaliPortal\DashboardTagihan::normalizeWaNumber($contents['wali_wa_putri'] ?? '6285713285438');
+
         $drawerPutra = [
             'bank1_name' => $contents['wali_bank1_name_putra'] ?? 'Bank Syariah Indonesia (BSI)',
             'bsi'        => $contents['wali_bsi_putra'] ?? '7123456789',
@@ -215,7 +218,7 @@
             'bri_an'     => $contents['wali_bri_putra_an'] ?? 'Yayasan Al-Fithroh Putra',
             'wa'         => $contents['wali_wa_putra'] ?? '6281234567890',
             'wa_name'    => $contents['wali_wa_putra_name'] ?? 'Bendahara Putra Al-Fithroh',
-            'wa_url'     => 'https://wa.me/' . preg_replace('/[^0-9]/', '', $contents['wali_wa_putra'] ?? '6281234567890') . '?text=' . urlencode("Assalamu'alaikum Bendahara Putra Al-Fithroh, saya Wali Santri ingin konfirmasi pembayaran."),
+            'wa_url'     => 'https://wa.me/' . $waPutraClean . '?text=' . urlencode("Assalamu'alaikum Bendahara Putra Al-Fithroh, saya Wali Santri ingin konfirmasi pembayaran."),
         ];
 
         $drawerPutri = [
@@ -227,7 +230,7 @@
             'bri_an'     => $contents['wali_bri_putri_an'] ?? 'Yayasan Al-Fithroh Putri',
             'wa'         => $contents['wali_wa_putri'] ?? '6285713285438',
             'wa_name'    => $contents['wali_wa_putri_name'] ?? 'Bendahara Putri Al-Fithroh',
-            'wa_url'     => 'https://wa.me/' . preg_replace('/[^0-9]/', '', $contents['wali_wa_putri'] ?? '6285713285438') . '?text=' . urlencode("Assalamu'alaikum Bendahara Putri Al-Fithroh, saya Wali Santri ingin konfirmasi pembayaran."),
+            'wa_url'     => 'https://wa.me/' . $waPutriClean . '?text=' . urlencode("Assalamu'alaikum Bendahara Putri Al-Fithroh, saya Wali Santri ingin konfirmasi pembayaran."),
         ];
 
         $rawFaq = $contents['wali_faq_items'] ?? null;
