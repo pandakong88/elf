@@ -40,6 +40,9 @@ class WaliPortalCMS extends Component
     // Info Jadwal Rekap Bendahara (Banner Biru)
     public string $wali_rekap_info   = '';
 
+    // FAQ Items
+    public array $faqItems = [];
+
     public function mount()
     {
         // Enforce Authorization: Hanya Super Admin & Manajemen
@@ -78,6 +81,73 @@ class WaliPortalCMS extends Component
 
         // Info Jadwal Rekap
         $this->wali_rekap_info         = $contents['wali_rekap_info'] ?? 'Data tagihan diperbarui oleh bendahara setiap Tanggal 1 dan 15 setiap bulannya. Jika Bapak/Ibu sudah melakukan transfer namun status tagihan belum berubah, mohon bersabar hingga tanggal pembaruan berikutnya.';
+
+        // FAQ Items
+        $rawFaq = $contents['wali_faq_items'] ?? null;
+        if (!empty($rawFaq)) {
+            $decoded = is_string($rawFaq) ? json_decode($rawFaq, true) : $rawFaq;
+            $this->faqItems = is_array($decoded) ? array_values($decoded) : [];
+        }
+
+        if (empty($this->faqItems)) {
+            $this->faqItems = [
+                [
+                    'id' => 'faq_' . uniqid(),
+                    'question' => 'Bagaimana cara konfirmasi bukti pembayaran?',
+                    'answer' => 'Setelah melakukan transfer, foto resi/bukti bayar lalu kirimkan via WhatsApp ke nomor Bendahara yang tertera di menu atau unggah pada portal.',
+                ],
+                [
+                    'id' => 'faq_' . uniqid(),
+                    'question' => 'Apakah bisa membayar tunai secara langsung?',
+                    'answer' => 'Bisa. Pembayaran tunai diterima langsung di kantor Kasir Bendahara Pesantren.',
+                ],
+                [
+                    'id' => 'faq_' . uniqid(),
+                    'question' => 'Kapan batas waktu pembayaran tagihan bulanan santri?',
+                    'answer' => 'Pembayaran tagihan santri diharapkan dilakukan sebelum tanggal 10 setiap bulannya.',
+                ],
+                [
+                    'id' => 'faq_' . uniqid(),
+                    'question' => 'Bagaimana jika wali santri ingin mengajukan dispensasi atau keringanan?',
+                    'answer' => 'Wali santri dapat langsung menghubungi pihak pengasuhan atau bendahara pondok untuk konfirmasi dan pengajuan dispensasi.',
+                ],
+            ];
+        }
+    }
+
+    public function addFaqItem(): void
+    {
+        $this->faqItems[] = [
+            'id' => 'faq_' . uniqid(),
+            'question' => '',
+            'answer' => '',
+        ];
+    }
+
+    public function removeFaqItem(int $index): void
+    {
+        if (isset($this->faqItems[$index])) {
+            unset($this->faqItems[$index]);
+            $this->faqItems = array_values($this->faqItems);
+        }
+    }
+
+    public function moveFaqUp(int $index): void
+    {
+        if ($index > 0 && isset($this->faqItems[$index])) {
+            $temp = $this->faqItems[$index - 1];
+            $this->faqItems[$index - 1] = $this->faqItems[$index];
+            $this->faqItems[$index] = $temp;
+        }
+    }
+
+    public function moveFaqDown(int $index): void
+    {
+        if ($index < count($this->faqItems) - 1 && isset($this->faqItems[$index])) {
+            $temp = $this->faqItems[$index + 1];
+            $this->faqItems[$index + 1] = $this->faqItems[$index];
+            $this->faqItems[$index] = $temp;
+        }
     }
 
     public function save()
@@ -112,11 +182,17 @@ class WaliPortalCMS extends Component
 
             'wali_announcement'       => 'nullable|string|max:500',
             'wali_rekap_info'         => 'nullable|string|max:800',
+
+            'faqItems'                => 'nullable|array',
+            'faqItems.*.question'     => 'required|string|max:300',
+            'faqItems.*.answer'       => 'required|string|max:1500',
         ], [
-            'bank1_name_putra.required'   => 'Nama Bank 1 Putra wajib diisi.',
-            'rekening_bsi_putra.required' => 'Nomor Rekening Bank 1 Putra wajib diisi.',
-            'bank1_name_putri.required'   => 'Nama Bank 1 Putri wajib diisi.',
-            'rekening_bsi_putri.required' => 'Nomor Rekening Bank 1 Putri wajib diisi.',
+            'bank1_name_putra.required'    => 'Nama Bank 1 Putra wajib diisi.',
+            'rekening_bsi_putra.required'  => 'Nomor Rekening Bank 1 Putra wajib diisi.',
+            'bank1_name_putri.required'    => 'Nama Bank 1 Putri wajib diisi.',
+            'rekening_bsi_putri.required'  => 'Nomor Rekening Bank 1 Putri wajib diisi.',
+            'faqItems.*.question.required' => 'Pertanyaan FAQ wajib diisi.',
+            'faqItems.*.answer.required'   => 'Jawaban FAQ wajib diisi.',
         ]);
 
         $fields = [
@@ -158,11 +234,35 @@ class WaliPortalCMS extends Component
             );
         }
 
+        // Clean & Save FAQ items
+        $cleanFaq = [];
+        foreach ($this->faqItems as $item) {
+            $q = trim($item['question'] ?? '');
+            $a = trim($item['answer'] ?? '');
+            if ($q !== '' && $a !== '') {
+                $cleanFaq[] = [
+                    'id' => $item['id'] ?? ('faq_' . uniqid()),
+                    'question' => $q,
+                    'answer' => $a,
+                ];
+            }
+        }
+
+        LandingPageContent::updateOrCreate(
+            ['key' => 'wali_faq_items'],
+            [
+                'value'   => json_encode($cleanFaq, JSON_UNESCAPED_UNICODE),
+                'type'    => 'json',
+                'section' => 'wali_portal',
+                'title'   => 'Daftar Tanya Jawab (FAQ) Portal Wali',
+            ]
+        );
+
         activity('security')
             ->causedBy(auth()->user())
-            ->log("Telah memperbarui konfigurasi Nama Bank, Rekening & WA Bendahara CMS Portal Wali.");
+            ->log("Telah memperbarui konfigurasi Nama Bank, Rekening, WA Bendahara & FAQ CMS Portal Wali.");
 
-        $this->toastSuccess('Pengaturan Nama Bank, Rekening & WhatsApp Bendahara berhasil disimpan.');
+        $this->toastSuccess('Pengaturan CMS Portal Wali (Bank, Rekening, WhatsApp & FAQ) berhasil disimpan.');
     }
 
     public function render()

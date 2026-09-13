@@ -230,6 +230,32 @@
             'wa_url'     => 'https://wa.me/' . preg_replace('/[^0-9]/', '', $contents['wali_wa_putri'] ?? '6285713285438') . '?text=' . urlencode("Assalamu'alaikum Bendahara Putri Al-Fithroh, saya Wali Santri ingin konfirmasi pembayaran."),
         ];
 
+        $rawFaq = $contents['wali_faq_items'] ?? null;
+        $faqItems = [];
+        if (!empty($rawFaq)) {
+            $faqItems = is_string($rawFaq) ? json_decode($rawFaq, true) : $rawFaq;
+        }
+        if (empty($faqItems) || !is_array($faqItems)) {
+            $faqItems = [
+                [
+                    'question' => 'Bagaimana cara konfirmasi bukti pembayaran?',
+                    'answer'   => 'Setelah melakukan transfer, foto resi/bukti bayar lalu kirimkan via WhatsApp ke nomor Bendahara yang tertera di menu atau unggah pada portal.',
+                ],
+                [
+                    'question' => 'Apakah bisa membayar tunai secara langsung?',
+                    'answer'   => 'Bisa. Pembayaran tunai diterima langsung di kantor Kasir Bendahara Pesantren.',
+                ],
+                [
+                    'question' => 'Kapan batas waktu pembayaran tagihan bulanan santri?',
+                    'answer'   => 'Pembayaran tagihan santri diharapkan dilakukan sebelum tanggal 10 setiap bulannya.',
+                ],
+                [
+                    'question' => 'Bagaimana jika santri ingin mengajukan dispensasi?',
+                    'answer'   => 'Wali santri dapat langsung menghubungi pihak pengasuhan atau bendahara pondok untuk pengajuan dispensasi.',
+                ],
+            ];
+        }
+
         $initialTab = isset($isPutri) && $isPutri ? 'putri' : 'putra';
     @endphp
 
@@ -434,23 +460,45 @@
                         </div>
                     </div>
 
-                    <!-- 3. FAQ / Pertanyaan Umum -->
-                    <div class="space-y-2 pt-2 border-t border-slate-200 dark:border-slate-800">
-                        <h3 class="text-xs font-black uppercase text-slate-800 dark:text-slate-200 tracking-wider flex items-center gap-1.5">
-                            <svg class="w-4 h-4 text-amber-600 dark:text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                            <span>Tanya Jawab (FAQ)</span>
-                        </h3>
-                        <div class="space-y-2 text-[11px]">
-                            <div class="bg-slate-50 dark:bg-slate-950 p-2.5 rounded-xl border border-slate-200 dark:border-slate-800">
-                                <strong class="text-slate-800 dark:text-slate-200 block mb-0.5">Bagaimana cara kirim bukti bayar?</strong>
-                                <span class="text-slate-500 dark:text-slate-400">Setelah transfer, foto resi/bukti bayar lalu kirimkan via tombol WhatsApp Bendahara di atas.</span>
-                            </div>
-                            <div class="bg-slate-50 dark:bg-slate-950 p-2.5 rounded-xl border border-slate-200 dark:border-slate-800">
-                                <strong class="text-slate-800 dark:text-slate-200 block mb-0.5">Apakah bisa membayar tunai?</strong>
-                                <span class="text-slate-500 dark:text-slate-400">Bisa. Pembayaran tunai diterima langsung di kantor Kasir Bendahara Pesantren.</span>
+                    <!-- 3. FAQ / Pertanyaan Umum (Dinamis dari CMS) -->
+                    @if(!empty($faqItems))
+                        <div class="space-y-2 pt-2 border-t border-slate-200 dark:border-slate-800" x-data="{ activeFaq: null }">
+                            <h3 class="text-xs font-black uppercase text-slate-800 dark:text-slate-200 tracking-wider flex items-center gap-1.5">
+                                <svg class="w-4 h-4 text-amber-600 dark:text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                <span>Tanya Jawab (FAQ)</span>
+                            </h3>
+                            <div class="space-y-1.5">
+                                @foreach($faqItems as $index => $item)
+                                    @php
+                                        $q = is_array($item) ? ($item['question'] ?? '') : '';
+                                        $a = is_array($item) ? ($item['answer'] ?? '') : '';
+                                    @endphp
+                                    @if(!empty($q) && !empty($a))
+                                        <div class="bg-slate-50 dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden transition-all">
+                                            <button type="button" 
+                                                    @click="activeFaq = (activeFaq === {{ $index }} ? null : {{ $index }})" 
+                                                    class="w-full text-left p-2.5 flex items-start justify-between gap-2 transition-colors hover:bg-slate-100 dark:hover:bg-slate-900/80">
+                                                <span class="font-bold text-[11px] text-slate-800 dark:text-slate-200 leading-snug">
+                                                    {{ $q }}
+                                                </span>
+                                                <svg class="w-3.5 h-3.5 text-slate-400 shrink-0 mt-0.5 transition-transform duration-200" 
+                                                     :class="{ 'rotate-180 text-amber-500': activeFaq === {{ $index }} }" 
+                                                     fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/>
+                                                </svg>
+                                            </button>
+                                            <div x-show="activeFaq === {{ $index }}" 
+                                                 x-collapse 
+                                                 x-cloak
+                                                 class="px-2.5 pb-2.5 text-[11px] text-slate-600 dark:text-slate-400 border-t border-slate-200/60 dark:border-slate-800/80 pt-2 leading-relaxed bg-white/60 dark:bg-slate-900/40">
+                                                {!! nl2br(e($a)) !!}
+                                            </div>
+                                        </div>
+                                    @endif
+                                @endforeach
                             </div>
                         </div>
-                    </div>
+                    @endif
                 </div>
 
                 <!-- Drawer Footer -->

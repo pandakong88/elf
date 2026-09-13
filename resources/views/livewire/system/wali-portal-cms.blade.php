@@ -236,6 +236,127 @@
             </div>
         </div>
 
+        <!-- KELOLA TANYA JAWAB (FAQ) PORTAL WALI -->
+        <div class="bg-white dark:bg-slate-900 border border-amber-200 dark:border-amber-900/50 rounded-3xl p-6 shadow-sm space-y-6">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100 dark:border-slate-800">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-2xl bg-amber-100 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400 flex items-center justify-center shrink-0">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    </div>
+                    <div>
+                        <h3 class="text-sm sm:text-base font-extrabold text-slate-900 dark:text-slate-100">Kelola Tanya Jawab (FAQ) Portal Wali</h3>
+                        <p class="text-xs text-slate-400 mt-0.5">Daftar pertanyaan dan jawaban interaktif yang muncul pada Menu Bantuan Wali Santri.</p>
+                    </div>
+                </div>
+
+                <button type="button" 
+                        wire:click="addFaqItem"
+                        class="px-4 py-2 bg-amber-500 hover:bg-amber-600 active:bg-amber-700 text-white font-bold text-xs rounded-xl shadow-md transition-all flex items-center justify-center gap-1.5 self-start sm:self-auto">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                    <span>Tambah Pertanyaan FAQ</span>
+                </button>
+            </div>
+
+            <!-- List FAQ Items -->
+            @if(empty($faqItems))
+                <div class="text-center py-8 px-4 bg-slate-50 dark:bg-slate-950 rounded-2xl border border-dashed border-slate-300 dark:border-slate-800 space-y-3">
+                    <div class="w-12 h-12 rounded-full bg-amber-100 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center mx-auto text-xl font-bold">
+                        ❓
+                    </div>
+                    <div class="space-y-1">
+                        <p class="text-xs font-bold text-slate-700 dark:text-slate-300">Belum Ada Item FAQ</p>
+                        <p class="text-[11px] text-slate-400">Klik tombol di bawah untuk menambahkan pertanyaan baru.</p>
+                    </div>
+                    <button type="button" 
+                            wire:click="addFaqItem" 
+                            class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl transition-all shadow-sm">
+                        + Tambah FAQ Pertama
+                    </button>
+                </div>
+            @else
+                <div class="space-y-4">
+                    @foreach($faqItems as $index => $faq)
+                        <div wire:key="faq-item-{{ $faq['id'] ?? $index }}" 
+                             class="bg-slate-50 dark:bg-slate-950/80 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 sm:p-5 space-y-3.5 transition-all hover:border-amber-400/50 dark:hover:border-amber-500/30">
+                            
+                            <!-- Header Item FAQ -->
+                            <div class="flex items-center justify-between gap-3">
+                                <div class="flex items-center gap-2">
+                                    <span class="w-6 h-6 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-700 dark:text-amber-400 flex items-center justify-center text-[10px] font-black">
+                                        #{{ $index + 1 }}
+                                    </span>
+                                    <span class="text-xs font-bold text-slate-700 dark:text-slate-300">Item Pertanyaan & Jawaban</span>
+                                </div>
+
+                                <!-- Action Buttons (Move Up, Move Down, Delete) -->
+                                <div class="flex items-center gap-1">
+                                    <button type="button" 
+                                            wire:click="moveFaqUp({{ $index }})" 
+                                            @if($index === 0) disabled @endif
+                                            title="Pindahkan ke atas"
+                                            class="p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800 disabled:opacity-30 disabled:cursor-not-allowed transition-all">
+                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 15l7-7 7 7"/></svg>
+                                    </button>
+
+                                    <button type="button" 
+                                            wire:click="moveFaqDown({{ $index }})" 
+                                            @if($index === count($faqItems) - 1) disabled @endif
+                                            title="Pindahkan ke bawah"
+                                            class="p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800 disabled:opacity-30 disabled:cursor-not-allowed transition-all">
+                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/></svg>
+                                    </button>
+
+                                    <button type="button" 
+                                            wire:click="removeFaqItem({{ $index }})" 
+                                            title="Hapus Pertanyaan Ini"
+                                            class="p-1.5 rounded-lg border border-rose-200 dark:border-rose-900/50 text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-all ml-1">
+                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Input Pertanyaan -->
+                            <div>
+                                <label class="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
+                                    Pertanyaan (Question)
+                                </label>
+                                <input type="text" 
+                                       wire:model.defer="faqItems.{{ $index }}.question" 
+                                       placeholder="Contoh: Bagaimana cara konfirmasi bukti pembayaran?"
+                                       class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 rounded-xl px-3.5 py-2.5 text-xs font-bold text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-amber-500">
+                                @error('faqItems.' . $index . '.question')
+                                    <span class="text-[10px] text-rose-500 font-bold mt-1 block">{{ $message }}</span>
+                                @enderror
+                            </div>
+
+                            <!-- Textarea Jawaban -->
+                            <div>
+                                <label class="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
+                                    Jawaban (Answer)
+                                </label>
+                                <textarea wire:model.defer="faqItems.{{ $index }}.answer" 
+                                          rows="2"
+                                          placeholder="Contoh: Setelah melakukan transfer, foto resi/bukti bayar lalu kirimkan via tombol WhatsApp..."
+                                          class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 rounded-xl px-3.5 py-2 text-xs font-medium text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-amber-500 resize-none leading-relaxed"></textarea>
+                                @error('faqItems.' . $index . '.answer')
+                                    <span class="text-[10px] text-rose-500 font-bold mt-1 block">{{ $message }}</span>
+                                @enderror
+                            </div>
+                        </div>
+                    @endforeach
+
+                    <!-- Tombol Tambah Item di Bawah -->
+                    <div class="pt-2">
+                        <button type="button" 
+                                wire:click="addFaqItem"
+                                class="w-full py-2.5 bg-slate-100 hover:bg-amber-50 dark:bg-slate-800/60 dark:hover:bg-amber-950/20 text-slate-700 dark:text-slate-300 hover:text-amber-700 dark:hover:text-amber-400 border border-dashed border-slate-300 dark:border-slate-700 hover:border-amber-400 rounded-2xl font-bold text-xs transition-all flex items-center justify-center gap-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                            <span>+ Tambah Baris Pertanyaan Lainnya</span>
+                        </button>
+                    </div>
+                </div>
+            @endif
+        </div>
 
         <div class="flex justify-end pt-4">
             <button type="submit" 
