@@ -4,6 +4,7 @@ namespace App\Livewire\System;
 
 use Livewire\Component;
 use Livewire\WithFileUploads;
+use Livewire\WithPagination;
 use App\Livewire\Concerns\SendsToast;
 use App\Modules\Core\Models\Person;
 use App\Modules\Core\Models\PersonRole;
@@ -25,7 +26,7 @@ use PhpOffice\PhpSpreadsheet\IOFactory;
 
 class SantriImportManager extends Component
 {
-    use WithFileUploads, SendsToast;
+    use WithFileUploads, WithPagination, SendsToast;
 
     // Active Tab Navigation
     public string $activeTab = 'santri'; // 'santri', 'asrama', 'kelas', 'tunggakan'
@@ -98,6 +99,21 @@ class SantriImportManager extends Component
         } else {
             $this->selectedTunggakanIds = [];
         }
+    }
+
+    public function updatedTunggakanSearch(): void
+    {
+        $this->resetPage('tunggakanPage');
+    }
+
+    public function updatedTunggakanFilterType(): void
+    {
+        $this->resetPage('tunggakanPage');
+    }
+
+    public function updatedTunggakanFilterYear(): void
+    {
+        $this->resetPage('tunggakanPage');
     }
 
     public function openDeleteSingleTunggakan(string $billId): void
