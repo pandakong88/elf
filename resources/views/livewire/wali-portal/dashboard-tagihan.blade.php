@@ -1101,6 +1101,34 @@
     @if($portalTab === 'riwayat')
         <div class="space-y-4">
             
+            @if($manualSuccessMessage)
+                @php
+                    $latestSub = $latestSubmissionId ? \App\Modules\Keuangan\Models\ManualTransferSubmission::find($latestSubmissionId) : null;
+                @endphp
+                <div class="bg-emerald-50 dark:bg-emerald-950/40 border-2 border-emerald-500/40 rounded-3xl p-4 sm:p-5 shadow-md space-y-3">
+                    <div class="flex items-start gap-3">
+                        <div class="w-10 h-10 rounded-2xl bg-emerald-600 text-white flex items-center justify-center shrink-0 shadow-md text-lg font-black">
+                            ✓
+                        </div>
+                        <div class="space-y-1">
+                            <h4 class="text-sm font-black text-emerald-900 dark:text-emerald-200">Bukti Transfer Berhasil Dikirim!</h4>
+                            <p class="text-xs text-emerald-700 dark:text-emerald-400 font-medium leading-relaxed">
+                                {{ $manualSuccessMessage }}
+                            </p>
+                        </div>
+                    </div>
+                    @if($latestSub)
+                        <div class="pt-1 border-t border-emerald-200 dark:border-emerald-800/60">
+                            <a href="{{ $this->getSubmissionWaUrl($latestSub) }}" target="_blank"
+                               class="w-full py-3 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white font-extrabold rounded-2xl transition-all shadow-md flex items-center justify-center gap-2 text-xs">
+                                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981z"/></svg>
+                                <span>Kirim Rincian & Konfirmasi via WhatsApp Bendahara</span>
+                            </a>
+                        </div>
+                    @endif
+                </div>
+            @endif
+
             <!-- ─── BAR FILTER RIWAYAT (BULAN, TAHUN & METODE) ────────────────────────── -->
             <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-3.5 shadow-xs space-y-2.5">
                 <div class="flex items-center justify-between gap-2">
@@ -1322,13 +1350,12 @@
                                     <span class="flex items-center gap-1">
                                         <span>⏳ Sedang dicek mutasi bank oleh Bendahara</span>
                                     </span>
-                                    @if(!empty($directWaUrl))
-                                        <a href="{{ $directWaUrl . urlencode(' Konfirmasi Bukti Transfer: ' . $sub->submission_code) }}" target="_blank"
-                                           class="font-black text-emerald-600 dark:text-emerald-400 hover:underline inline-flex items-center gap-1">
-                                            <span>Chat Bendahara</span>
-                                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
-                                        </a>
-                                    @endif
+                                    <a href="{{ $this->getSubmissionWaUrl($sub) }}" target="_blank"
+                                       class="font-black text-emerald-600 dark:text-emerald-400 hover:underline inline-flex items-center gap-1">
+                                        <svg class="w-3.5 h-3.5 text-emerald-500" fill="currentColor" viewBox="0 0 24 24"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981z"/></svg>
+                                        <span>Chat Bendahara (Kirim Rincian)</span>
+                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+                                    </a>
                                 </div>
                             @endif
 

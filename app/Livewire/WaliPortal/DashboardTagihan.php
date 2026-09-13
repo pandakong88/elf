@@ -60,6 +60,7 @@ class DashboardTagihan extends Component
     // Status & Error
     public ?string $manualSuccessMessage = null;
     public ?string $manualErrorMessage = null;
+    public ?string $latestSubmissionId = null;
     public bool $isSubmittingManual = false;
 
     // Bayar Online (DOKU & Duitku)
@@ -465,6 +466,7 @@ class DashboardTagihan extends Component
 
             // Pindah ke tab riwayat & tampilkan notifikasi sukses
             $this->portalTab = 'riwayat';
+            $this->latestSubmissionId = $submission->id;
             $this->manualSuccessMessage = 'Alhamdulillah! Bukti transfer berhasil dikirim. Pengajuan Anda sedang diverifikasi oleh Bendahara Pondok.';
 
         } catch (\Exception $e) {
@@ -476,6 +478,63 @@ class DashboardTagihan extends Component
             $this->manualErrorMessage = 'Gagal menyimpan pengajuan: ' . $e->getMessage();
             $this->isSubmittingManual = false;
         }
+    }
+
+    public function getSubmissionWaUrl(ManualTransferSubmission $sub): string
+    {
+        $santri = Person::find($this->personId);
+        $contents = LandingPageContent::getContent();
+        $isPutri = ($santri?->gender === 'female');
+
+        if ($isPutri) {
+            $waBendahara = $contents['wali_wa_putri'] ?? '6281234567891';
+            $waName      = $contents['wali_wa_putri_name'] ?? 'Bendahara Putri Al-Fithroh';
+        } else {
+            $waBendahara = $contents['wali_wa_putra'] ?? '6281234567890';
+            $waName      = $contents['wali_wa_putra_name'] ?? 'Bendahara Putra Al-Fithroh';
+        }
+
+        $cleanWa = preg_replace('/[^0-9]/', '', $waBendahara);
+        $santriName = $santri?->name ?? 'Santri';
+
+        $lines = [];
+        $lines[] = "Assalamu'alaikum {$waName}, saya Wali Santri dari *{$santriName}* ingin konfirmasi pembayaran transfer.";
+        $lines[] = "";
+        $lines[] = "📋 *DATA KONFIRMASI:*";
+        $lines[] = "• *Kode Pengajuan:* " . $sub->submission_code;
+        $lines[] = "• *Waktu:* " . ($sub->created_at ? $sub->created_at->locale('id')->translatedFormat('d M Y, H:i') : now()->translatedFormat('d M Y, H:i')) . " WIB";
+        $lines[] = "• *Bank Tujuan:* " . strtoupper($sub->bank_destination ?? 'Pesantren');
+
+        if ($sub->sender_bank || $sub->sender_account_name) {
+            $senderInfo = trim(($sub->sender_bank ?? '') . ($sub->sender_account_name ? ' a.n. ' . $sub->sender_account_name : ''));
+            if ($senderInfo) {
+                $lines[] = "• *Pengirim:* " . $senderInfo;
+            }
+        }
+
+        $lines[] = "";
+        $lines[] = "📝 *RINCIAN PEMBAYARAN:*";
+        if (!empty($sub->bill_breakdown) && is_array($sub->bill_breakdown)) {
+            foreach ($sub->bill_breakdown as $item) {
+                $label = $item['config_label'] ?? 'Tagihan';
+                $period = !empty($item['period_label']) ? ' (' . $item['period_label'] . ')' : '';
+                $amount = number_format((float)($item['amount'] ?? 0), 0, ',', '.');
+                $lines[] = "• {$label}{$period}: Rp {$amount}";
+            }
+        }
+
+        if ($sub->pocket_money_amount > 0) {
+            $lines[] = "• Titipan Uang Saku: Rp " . number_format((float)$sub->pocket_money_amount, 0, ',', '.');
+        }
+
+        $lines[] = "";
+        $lines[] = "💰 *TOTAL TRANSFER:* *Rp " . number_format((float)$sub->total_transfer_amount, 0, ',', '.') . "*";
+        $lines[] = "";
+        $lines[] = "Bukti transfer telah saya unggah di Portal Wali Santri. Mohon untuk dicek dan diverifikasi. Terima kasih.";
+
+        $text = implode("\n", $lines);
+
+        return 'https://wa.me/' . $cleanWa . '?text=' . urlencode($text);
     }
 
     public function getBillTypeLabel(string $type): string
