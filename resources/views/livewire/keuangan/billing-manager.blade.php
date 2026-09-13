@@ -1358,6 +1358,12 @@
                                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
                                  Tambah Iuran Baru
                              </a>
+
+                             {{-- Import Tunggakan Excel --}}
+                             <a href="{{ route('setup.santri', ['tab' => 'tunggakan']) }}" class="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs font-bold transition-all shadow-md flex items-center gap-1.5" title="Import Saldo Awal / Tunggakan Tagihan Excel">
+                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                                 Impor Saldo Tunggakan
+                             </a>
                          </div>
                      </div>
                      <div class="overflow-x-auto">
@@ -1799,7 +1805,7 @@
                                                         <input type="checkbox" wire:model.live="selectedBillIds" value="{{ $tb->id }}" class="rounded text-rose-600 focus:ring-rose-500">
                                                     </td>
                                                     <td class="py-2 px-2 font-semibold text-slate-700 dark:text-slate-300">{{ $tb->config?->label ?? str_replace('_', ' ', $tb->bill_type) }}</td>
-                                                    <td class="py-2 px-2 text-center text-slate-500">{{ $monthNames[$tb->period_month] }} {{ $tb->period_year }}</td>
+                                                    <td class="py-2 px-2 text-center text-slate-500">{{ $tb->period_formatted }}</td>
                                                     <td class="py-2 px-2 text-right font-bold text-rose-600">Rp {{ number_format($tb->amount - $tb->amount_paid, 0, ',', '.') }}</td>
                                                 </tr>
                                             @endforeach
@@ -3063,13 +3069,12 @@
                                                                             <span class="text-[10px] text-slate-400 block font-medium">Periode: {{ $det['period'] }}</span>
                                                                         @endif
                                                                     </div>
-                                                            </span>
-                                                            <span class="font-mono font-semibold text-slate-700 dark:text-slate-300 shrink-0">
-                                                                Rp {{ number_format($item->amount_paid, 0, ',', '.') }}
-                                                            </span>
+                                                                    <span class="font-mono font-semibold text-slate-700 dark:text-slate-300 shrink-0">
+                                                                        Rp {{ number_format($det['amount'], 0, ',', '.') }}
+                                                                    </span>
+                                                                </div>
+                                                            @endforeach
                                                         </div>
-                                                    @endforeach
-                                                </div>
                                             </td>
 
                                             <!-- Total Dibayar -->

@@ -89,6 +89,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/system/santri/download-template', [\App\Http\Controllers\SystemController::class, 'downloadSantriImportTemplate'])->name('system.santri.download-template');
     Route::get('/system/asrama/download-template', [\App\Http\Controllers\SystemController::class, 'downloadAsramaImportTemplate'])->name('system.asrama.download-template');
     Route::get('/system/kelas/download-template', [\App\Http\Controllers\SystemController::class, 'downloadKelasImportTemplate'])->name('system.kelas.download-template');
+    Route::get('/system/tunggakan/download-template', [\App\Http\Controllers\SystemController::class, 'downloadTunggakanImportTemplate'])->name('system.tunggakan.download-template');
     
     // Livewire Kepengasuhan Pages
     Route::get('/kepengasuhan/asrama-kelas', \App\Livewire\Kepengasuhan\PusatKendaliAsramaKelas::class)->name('kepengasuhan.asrama-kelas');

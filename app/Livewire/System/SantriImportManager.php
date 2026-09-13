@@ -17,6 +17,8 @@ use App\Modules\Kepengasuhan\Models\RoomAssignment;
 use App\Modules\Kepengasuhan\Services\SiblingService;
 use App\Modules\Madrasah\Models\MadrasahKelas;
 use App\Modules\Madrasah\Models\MadrasahEnrollment;
+use App\Modules\Keuangan\Models\Bill;
+use App\Modules\Keuangan\Models\BillingConfiguration;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use PhpOffice\PhpSpreadsheet\IOFactory;
@@ -26,7 +28,7 @@ class SantriImportManager extends Component
     use WithFileUploads, SendsToast;
 
     // Active Tab Navigation
-    public string $activeTab = 'santri'; // 'santri', 'asrama', 'kelas'
+    public string $activeTab = 'santri'; // 'santri', 'asrama', 'kelas', 'tunggakan'
 
     // Excel Upload File
     public $excelFile;
@@ -46,17 +48,220 @@ class SantriImportManager extends Component
     public array $tempValidKelas = [];
     public array $tempInvalidKelas = [];
 
+    // Tunggakan Setup Modal & State
+    public bool $showTunggakanImportModal = false;
+    public bool $showTunggakanTemplateModal = false;
+    public array $tempValidTunggakan = [];
+    public array $tempInvalidTunggakan = [];
+
+    // Tunggakan Template Filter State
+    public string $templateDormitoryId = '';
+    public string $templateKelasId = '';
+    public string $templateGender = '';
+    public bool $templatePrefill = true;
+    public string $templateBillType = 'kebersihan';
+    public int $templateYear = 2025;
+
+    // Tunggakan Table Search & Deletion State
+    public string $tunggakanSearch = '';
+    public string $tunggakanFilterType = '';
+    public string $tunggakanFilterYear = '';
+    public array $selectedTunggakanIds = [];
+    public bool $selectAllTunggakan = false;
+    public bool $showDeleteTunggakanModal = false;
+    public ?string $deletingTunggakanId = null;
+    public ?string $deletingTunggakanName = null;
+    public ?string $deletingTunggakanNominal = null;
+    public bool $isBulkDeleteTunggakan = false;
+
+    public function updatedSelectAllTunggakan(bool $value): void
+    {
+        if ($value) {
+            $query = Bill::where('status', 'unpaid')
+                ->where(function($q) {
+                    $q->where('period_year', '<', 2026)->orWhere('notes', 'like', '%tunggakan%');
+                })
+                ->where('amount_paid', 0);
+
+            if (!empty($this->tunggakanSearch)) {
+                $s = trim($this->tunggakanSearch);
+                $query->whereHas('person', fn($pq) => $pq->where('name', 'like', "%{$s}%")->orWhere('nis', 'like', "%{$s}%"));
+            }
+            if (!empty($this->tunggakanFilterType)) {
+                $query->where('bill_type', $this->tunggakanFilterType);
+            }
+            if (!empty($this->tunggakanFilterYear)) {
+                $query->where('period_year', $this->tunggakanFilterYear);
+            }
+
+            $this->selectedTunggakanIds = $query->pluck('id')->map(fn($id) => (string)$id)->toArray();
+        } else {
+            $this->selectedTunggakanIds = [];
+        }
+    }
+
+    public function openDeleteSingleTunggakan(string $billId): void
+    {
+        $bill = Bill::with('person')->find($billId);
+        if (!$bill) {
+            $this->toastError('Data tagihan tidak ditemukan.');
+            return;
+        }
+
+        if ($bill->amount_paid > 0) {
+            $this->toastError('Tagihan ini tidak dapat dihapus karena sudah memiliki riwayat pembayaran.');
+            return;
+        }
+
+        $this->deletingTunggakanId = $bill->id;
+        $this->deletingTunggakanName = $bill->person?->name ?? 'Santri';
+        $this->deletingTunggakanNominal = 'Rp ' . number_format($bill->amount, 0, ',', '.');
+        $this->isBulkDeleteTunggakan = false;
+        $this->showDeleteTunggakanModal = true;
+    }
+
+    public function openBulkDeleteTunggakan(): void
+    {
+        if (empty($this->selectedTunggakanIds)) {
+            $this->toastError('Silakan pilih minimal satu tagihan tunggakan untuk dihapus.');
+            return;
+        }
+
+        $this->isBulkDeleteTunggakan = true;
+        $this->showDeleteTunggakanModal = true;
+    }
+
+    public function closeDeleteTunggakanModal(): void
+    {
+        $this->showDeleteTunggakanModal = false;
+        $this->deletingTunggakanId = null;
+        $this->deletingTunggakanName = null;
+        $this->deletingTunggakanNominal = null;
+        $this->isBulkDeleteTunggakan = false;
+    }
+
+    public function confirmDeleteTunggakan(): void
+    {
+        try {
+            if ($this->isBulkDeleteTunggakan) {
+                if (empty($this->selectedTunggakanIds)) {
+                    $this->closeDeleteTunggakanModal();
+                    return;
+                }
+
+                $deleted = Bill::whereIn('id', $this->selectedTunggakanIds)
+                    ->where('amount_paid', 0)
+                    ->delete();
+
+                activity('keuangan')
+                    ->causedBy(auth()->user())
+                    ->log("Menghapus {$deleted} data tagihan tunggakan lampau (Hapus Massal).");
+
+                $this->toastSuccess("Berhasil menghapus {$deleted} tagihan tunggakan!");
+                $this->selectedTunggakanIds = [];
+                $this->selectAllTunggakan = false;
+            } else {
+                if ($this->deletingTunggakanId) {
+                    $bill = Bill::where('id', $this->deletingTunggakanId)->where('amount_paid', 0)->first();
+                    if ($bill) {
+                        $bill->delete();
+                        activity('keuangan')
+                            ->causedBy(auth()->user())
+                            ->log("Menghapus tagihan tunggakan {$bill->bill_type} santri {$this->deletingTunggakanName} senilai {$this->deletingTunggakanNominal}.");
+
+                        $this->toastSuccess("Berhasil menghapus tagihan tunggakan {$this->deletingTunggakanName}.");
+                    }
+                }
+            }
+
+            $this->closeDeleteTunggakanModal();
+        } catch (\Exception $e) {
+            $this->toastError('Gagal menghapus tagihan: ' . $e->getMessage());
+        }
+    }
+
+    public function openTunggakanTemplateModal(): void
+    {
+        $this->showTunggakanTemplateModal = true;
+    }
+
+    public function closeTunggakanTemplateModal(): void
+    {
+        $this->showTunggakanTemplateModal = false;
+    }
+
+    public function resetTemplateFilters(): void
+    {
+        $this->templateDormitoryId = '';
+        $this->templateKelasId = '';
+        $this->templateGender = '';
+        $this->templatePrefill = true;
+        $this->templateBillType = 'kebersihan';
+        $this->templateYear = 2025;
+    }
+
+    public function getFilteredSantriPreviewProperty(): array
+    {
+        $query = Person::whereHas('activeRoles', function ($q) {
+            $q->where('role_type', 'santri')
+              ->where('enrollment_status', 'aktif');
+        })->with([
+            'activeRoomAssignment.room.dormitory',
+            'activeMadrasahEnrollment.kelas',
+        ]);
+
+        if ($this->templateGender) {
+            $query->where('gender', $this->templateGender);
+        }
+
+        if ($this->templateDormitoryId) {
+            $query->whereHas('activeRoomAssignment.room', function ($q) {
+                $q->where('dormitory_id', $this->templateDormitoryId);
+            });
+        }
+
+        if ($this->templateKelasId) {
+            $query->whereHas('activeMadrasahEnrollment', function ($q) {
+                $q->where('kelas_id', $this->templateKelasId);
+            });
+        }
+
+        $totalCount = (clone $query)->count();
+        $sampleList = $query->orderBy('name')->limit(6)->get();
+
+        return [
+            'total'   => $totalCount,
+            'samples' => $sampleList,
+        ];
+    }
+
+    public function getTunggakanDownloadUrlProperty(): string
+    {
+        return route('system.tunggakan.download-template', [
+            'dormitory_id' => $this->templateDormitoryId ?: null,
+            'kelas_id'     => $this->templateKelasId ?: null,
+            'gender'       => $this->templateGender ?: null,
+            'prefill'      => $this->templatePrefill ? 1 : 0,
+            'bill_type'    => $this->templateBillType,
+            'year'         => $this->templateYear,
+        ]);
+    }
+
     public function mount(): void
     {
         $user = auth()->user();
         if (! $user || (! $user->hasRole('super-admin') && ! $user->hasRole('manajemen'))) {
             abort(403, 'Anda tidak memiliki wewenang untuk mengakses Halaman Setup Data Master.');
         }
+
+        if (request()->query('tab') && in_array(request()->query('tab'), ['santri', 'asrama', 'kelas', 'tunggakan'])) {
+            $this->activeTab = request()->query('tab');
+        }
     }
 
     public function setTab(string $tab): void
     {
-        if (in_array($tab, ['santri', 'asrama', 'kelas'])) {
+        if (in_array($tab, ['santri', 'asrama', 'kelas', 'tunggakan'])) {
             $this->activeTab = $tab;
         }
     }
@@ -752,6 +957,214 @@ class SantriImportManager extends Component
         }
     }
 
+    // =========================================================================
+    // 4. SETUP SALDO AWAL & TUNGGAKAN TAGIHAN (EXCEL IMPORT)
+    // =========================================================================
+
+    public function openTunggakanImportModal(): void
+    {
+        $this->reset(['excelFile', 'tempValidTunggakan', 'tempInvalidTunggakan']);
+        $this->showTunggakanImportModal = true;
+    }
+
+    public function closeTunggakanImportModal(): void
+    {
+        $this->reset(['excelFile', 'tempValidTunggakan', 'tempInvalidTunggakan']);
+        $this->showTunggakanImportModal = false;
+    }
+
+    public function processTunggakanImport(): void
+    {
+        $this->validate([
+            'excelFile' => 'required|mimes:xlsx,xls|max:10240',
+        ], [
+            'excelFile.required' => 'File Excel wajib dipilih.',
+            'excelFile.mimes' => 'Format file harus berupa Excel (.xlsx atau .xls).',
+            'excelFile.max' => 'Ukuran file maksimal 10 MB.',
+        ]);
+
+        try {
+            $path = $this->excelFile->getRealPath();
+            $spreadsheet = IOFactory::load($path);
+            $worksheet = $spreadsheet->getActiveSheet();
+            $rows = $worksheet->toArray();
+
+            if (count($rows) <= 1) {
+                $this->toastError('File Excel kosong atau tidak memiliki baris data.');
+                return;
+            }
+
+            // Remove header row
+            array_shift($rows);
+
+            $valid = [];
+            $invalid = [];
+
+            // Load all active santri mapped by NIS, NIK, and ID for fast lookup
+            $santriList = Person::whereHas('activeRoles', function ($q) {
+                $q->where('role_type', 'santri')
+                  ->where('enrollment_status', 'aktif');
+            })->with(['activeRoles'])->get();
+
+            $santriByNis = [];
+            $santriByNik = [];
+            $santriById  = [];
+
+            foreach ($santriList as $s) {
+                if (!empty($s->nis)) {
+                    $santriByNis[trim((string)$s->nis)] = $s;
+                }
+                if (!empty($s->nik)) {
+                    $santriByNik[trim((string)$s->nik)] = $s;
+                }
+                $santriById[(string)$s->id] = $s;
+            }
+
+            foreach ($rows as $index => $row) {
+                $rowNum = $index + 2;
+
+                $nisRaw         = trim((string)($row[0] ?? ''));
+                $nameRaw        = trim((string)($row[1] ?? ''));
+                $billTypeRaw    = strtolower(trim((string)($row[2] ?? 'kebersihan')));
+                $periodYearRaw  = trim((string)($row[3] ?? '2025'));
+                $periodMonthRaw = trim((string)($row[4] ?? ''));
+                $amountRaw      = trim((string)($row[5] ?? '0'));
+                $notesRaw       = trim((string)($row[6] ?? ''));
+
+                // Ignore completely empty rows
+                if (empty($nisRaw) && empty($nameRaw) && empty($amountRaw)) {
+                    continue;
+                }
+
+                $errors = [];
+
+                // 1. Validasi NIS & Santri
+                if (empty($nisRaw)) {
+                    $errors[] = 'NIS Santri wajib diisi.';
+                    $matchedSantri = null;
+                } else {
+                    $matchedSantri = $santriByNis[$nisRaw] ?? $santriByNik[$nisRaw] ?? $santriById[$nisRaw] ?? null;
+                    if (!$matchedSantri) {
+                        $errors[] = "Santri dengan NIS/ID '{$nisRaw}' tidak ditemukan di sistem data santri aktif.";
+                    }
+                }
+
+                // 2. Validasi Jenis Tagihan
+                $allowedBillTypes = ['kebersihan', 'syahriah_pondok', 'syahriah_madrasah', 'kas_komplek', 'lainnya', 'pendaftaran', 'kitab_price', 'event'];
+                if (empty($billTypeRaw)) {
+                    $billTypeRaw = 'kebersihan';
+                } elseif (!in_array($billTypeRaw, $allowedBillTypes)) {
+                    $billTypeRaw = 'lainnya';
+                }
+
+                // 3. Validasi Tahun
+                $year = (int)$periodYearRaw;
+                if ($year < 2000 || $year > 2099) {
+                    $errors[] = "Tahun periode '{$periodYearRaw}' tidak valid (gunakan 4 digit tahun, misal 2025).";
+                }
+
+                // 4. Validasi Bulan (Opsional)
+                $month = null;
+                if (!empty($periodMonthRaw) && is_numeric($periodMonthRaw)) {
+                    $m = (int)$periodMonthRaw;
+                    if ($m >= 1 && $m <= 12) {
+                        $month = $m;
+                    } else {
+                        $errors[] = "Bulan periode '{$periodMonthRaw}' tidak valid (harus 1 s/d 12 atau kosongkan).";
+                    }
+                }
+
+                // 5. Validasi Nominal
+                $cleanAmount = preg_replace('/[^0-9]/', '', $amountRaw);
+                $amount = (float)$cleanAmount;
+                if ($cleanAmount === '' || $amount <= 0) {
+                    // Jika santri valid dan nominal kosong/0, lewati (santri tidak nunggak / sudah lunas)
+                    if ($matchedSantri && empty($errors)) {
+                        continue;
+                    }
+                    $errors[] = "Nominal tunggakan harus berupa angka lebih dari 0.";
+                }
+
+                $rowData = [
+                    'row_num'          => $rowNum,
+                    'nis'              => $nisRaw,
+                    'input_name'       => $nameRaw,
+                    'person_id'        => $matchedSantri?->id,
+                    'santri_name'      => $matchedSantri?->name ?? ($nameRaw ?: 'Tidak Diketahui'),
+                    'bill_type'        => $billTypeRaw,
+                    'period_year'      => $year,
+                    'period_month'     => $month,
+                    'amount'           => $amount,
+                    'formatted_amount' => 'Rp ' . number_format($amount, 0, ',', '.'),
+                    'notes'            => $notesRaw ?: 'Tunggakan saldo awal periode ' . ($month ? "Bulan {$month}/{$year}" : "Tahun {$year}"),
+                ];
+
+                if (!empty($errors)) {
+                    $rowData['errors'] = $errors;
+                    $invalid[] = $rowData;
+                } else {
+                    $valid[] = $rowData;
+                }
+            }
+
+            $this->tempValidTunggakan = $valid;
+            $this->tempInvalidTunggakan = $invalid;
+
+            if (empty($valid) && empty($invalid)) {
+                $this->toastError('Tidak ada baris data valid yang dapat diproses dari file Excel ini.');
+            } else {
+                $this->toastSuccess('File Excel berhasil dianalisis: ' . count($valid) . ' baris siap disimpan.');
+            }
+
+        } catch (\Exception $e) {
+            $this->toastError('Terjadi kesalahan saat membaca file Excel: ' . $e->getMessage());
+        }
+    }
+
+    public function commitTunggakanImport(): void
+    {
+        if (empty($this->tempValidTunggakan)) {
+            $this->toastError('Tidak ada data tunggakan valid untuk disimpan.');
+            return;
+        }
+
+        try {
+            $createdCount = 0;
+            $totalNominal = 0;
+
+            DB::transaction(function () use (&$createdCount, &$totalNominal) {
+                foreach ($this->tempValidTunggakan as $item) {
+                    Bill::create([
+                        'id'                => Str::uuid()->toString(),
+                        'person_id'         => $item['person_id'],
+                        'bill_type'         => $item['bill_type'],
+                        'billing_config_id' => null,
+                        'period_year'       => $item['period_year'],
+                        'period_month'      => $item['period_month'],
+                        'amount'            => $item['amount'],
+                        'amount_paid'       => 0.00,
+                        'status'            => 'unpaid',
+                        'notes'             => $item['notes'],
+                        'created_by'        => auth()->id(),
+                    ]);
+
+                    $createdCount++;
+                    $totalNominal += $item['amount'];
+                }
+            });
+
+            activity('keuangan')
+                ->causedBy(auth()->user())
+                ->log("Telah mengimpor {$createdCount} data saldo awal / tunggakan tagihan senilai Rp " . number_format($totalNominal, 0, ',', '.'));
+
+            $this->toastSuccess("Berhasil menyimpan {$createdCount} tagihan tunggakan baru (Total: Rp " . number_format($totalNominal, 0, ',', '.') . ")!");
+            $this->closeTunggakanImportModal();
+
+        } catch (\Exception $e) {
+            $this->toastError('Gagal menyimpan data tunggakan: ' . $e->getMessage());
+        }
+    }
+
     public function render()
     {
         // Stats
@@ -762,11 +1175,19 @@ class SantriImportManager extends Component
         $roomCount   = Room::where('is_active', true)->count();
         $kelasCount  = MadrasahKelas::where('is_active', true)->count();
 
+        // Tunggakan Stats
+        $tunggakanCount       = Bill::where('status', 'unpaid')->where(function($q) {
+            $q->where('period_year', '<', 2026)->orWhere('notes', 'like', '%tunggakan%');
+        })->count();
+        $tunggakanTotalAmount = Bill::where('status', 'unpaid')->where(function($q) {
+            $q->where('period_year', '<', 2026)->orWhere('notes', 'like', '%tunggakan%');
+        })->sum('amount');
+
         // Lists
         $recentSantri = Person::whereHas('activeRoles', fn($q) => $q->where('role_type', 'santri'))
             ->with(['activeRoles', 'santriProfile'])
             ->orderBy('created_at', 'desc')
-            ->paginate(15);
+            ->paginate(15, ['*'], 'santriPage');
 
         $recentDormitories = Dormitory::withCount('rooms')
             ->where('is_active', true)
@@ -777,16 +1198,41 @@ class SantriImportManager extends Component
             ->orderBy('name')
             ->get();
 
+        $tunggakanQuery = Bill::with(['person'])
+            ->where('status', 'unpaid')
+            ->where(function($q) {
+                $q->where('period_year', '<', 2026)->orWhere('notes', 'like', '%tunggakan%');
+            });
+
+        if (!empty($this->tunggakanSearch)) {
+            $s = trim($this->tunggakanSearch);
+            $tunggakanQuery->whereHas('person', fn($pq) => $pq->where('name', 'like', "%{$s}%")->orWhere('nis', 'like', "%{$s}%"));
+        }
+
+        if (!empty($this->tunggakanFilterType)) {
+            $tunggakanQuery->where('bill_type', $this->tunggakanFilterType);
+        }
+
+        if (!empty($this->tunggakanFilterYear)) {
+            $tunggakanQuery->where('period_year', $this->tunggakanFilterYear);
+        }
+
+        $recentTunggakan = $tunggakanQuery->orderBy('created_at', 'desc')
+            ->paginate(15, ['*'], 'tunggakanPage');
+
         return view('livewire.system.santri-import-manager', [
-            'santriCount'       => $santriCount,
-            'mukimCount'        => $mukimCount,
-            'lajuCount'         => $lajuCount,
-            'dormCount'         => $dormCount,
-            'roomCount'         => $roomCount,
-            'kelasCount'        => $kelasCount,
-            'recentSantri'      => $recentSantri,
-            'recentDormitories' => $recentDormitories,
-            'recentKelas'       => $recentKelas,
+            'santriCount'          => $santriCount,
+            'mukimCount'           => $mukimCount,
+            'lajuCount'            => $lajuCount,
+            'dormCount'            => $dormCount,
+            'roomCount'            => $roomCount,
+            'kelasCount'           => $kelasCount,
+            'tunggakanCount'       => $tunggakanCount,
+            'tunggakanTotalAmount' => $tunggakanTotalAmount,
+            'recentSantri'         => $recentSantri,
+            'recentDormitories'    => $recentDormitories,
+            'recentKelas'          => $recentKelas,
+            'recentTunggakan'      => $recentTunggakan,
         ])->layout('layouts.app');
     }
 }

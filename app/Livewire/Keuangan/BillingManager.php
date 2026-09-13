@@ -178,7 +178,7 @@ class BillingManager extends Component
     public float   $payAmount        = 0.00;
     public string  $payMethod        = 'CASH';
     public string  $payNotes         = '';
-    public int     $cashierYear;
+    public int     $cashierYear = 2026;
     public array   $recentSantriIds  = [];
     public bool    $showPaymentConfirmModal = false;
     public array   $previousSelectedBillIds = [];

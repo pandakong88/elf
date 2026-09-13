@@ -215,8 +215,8 @@ class LembarSetoranKolektif extends Component
             } else {
                 // Selecting / filling: auto-select/fill all prior unpaid bills of the same santri and billing config
                 $oldArrearsQuery = Bill::where('person_id', $bill->person_id)
-                    ->when($configId, fn($q) => $q->where('billing_config_id', $configId), fn($q) => $q->where('bill_type', $bill->bill_type))
                     ->whereIn('status', ['unpaid', 'partial']);
+                $oldArrearsQuery = $this->applyConfigOrTypeScope($oldArrearsQuery, $configId);
  
                 if (in_array($interval, ['once', 'insidental', 'event', 'sekali'])) {
                     $oldArrearsQuery->where('period_year', '<', (int)$firstY);
@@ -238,9 +238,8 @@ class LembarSetoranKolektif extends Component
                 
                 // Auto-fill prior grid bills
                 $priorBills = Bill::where('person_id', $bill->person_id)
-                    ->when($configId, fn($q) => $q->where('billing_config_id', $configId), fn($q) => $q->where('bill_type', $bill->bill_type))
-                    ->whereIn('status', ['unpaid', 'partial'])
-                    ->get();
+                    ->whereIn('status', ['unpaid', 'partial']);
+                $priorBills = $this->applyConfigOrTypeScope($priorBills, $configId)->get();
                 
                 foreach ($priorBills as $pb) {
                     if ($pb->id === $bill->id) continue;
@@ -274,8 +273,8 @@ class LembarSetoranKolektif extends Component
 
         // Calculate max arrears sum
         $oldArrearsQuery = Bill::where('person_id', $studentId)
-            ->when($configId, fn($q) => $q->where('billing_config_id', $configId), fn($q) => $q->where('bill_type', $this->activeBillType))
             ->whereIn('status', ['unpaid', 'partial']);
+        $oldArrearsQuery = $this->applyConfigOrTypeScope($oldArrearsQuery, $configId);
 
         $periods = $this->getRelevantPeriods();
         $firstPeriodKey = array_key_first($periods);
@@ -855,8 +854,8 @@ class LembarSetoranKolektif extends Component
                 [$m, $y] = explode('-', $periodKey);
                 
                 $billQuery = Bill::where('person_id', $santri->id)
-                    ->when($configId, fn($q) => $q->where('billing_config_id', $configId), fn($q) => $q->where('bill_type', $this->activeBillType))
                     ->where('period_year', (int)$y);
+                $billQuery = $this->applyConfigOrTypeScope($billQuery, $configId);
                 
                 if (!in_array($interval, ['once', 'insidental', 'event', 'sekali'])) {
                     $billQuery->where('period_month', (int)$m);
@@ -875,8 +874,8 @@ class LembarSetoranKolektif extends Component
             [$firstM, $firstY] = explode('-', $firstPeriodKey);
 
             $tunggakanLamaQuery = Bill::where('person_id', $santri->id)
-                ->when($configId, fn($q) => $q->where('billing_config_id', $configId), fn($q) => $q->where('bill_type', $this->activeBillType))
                 ->whereIn('status', ['unpaid', 'partial']);
+            $tunggakanLamaQuery = $this->applyConfigOrTypeScope($tunggakanLamaQuery, $configId);
 
             if (in_array($interval, ['once', 'insidental', 'event', 'sekali'])) {
                 $tunggakanLamaQuery->where('period_year', '<', (int)$firstY);
@@ -896,9 +895,9 @@ class LembarSetoranKolektif extends Component
 
             // Query prepaid until label (furthest future paid month)
             $furthestPaidQuery = Bill::where('person_id', $santri->id)
-                ->when($configId, fn($q) => $q->where('billing_config_id', $configId), fn($q) => $q->where('bill_type', $this->activeBillType))
                 ->where('status', 'paid')
                 ->where('period_year', '>', (int)$this->year);
+            $furthestPaidQuery = $this->applyConfigOrTypeScope($furthestPaidQuery, $configId);
 
             $furthestPaidBill = $furthestPaidQuery->orderBy('period_year', 'desc')
                 ->orderBy('period_month', 'desc')
@@ -1005,8 +1004,8 @@ class LembarSetoranKolektif extends Component
                 if ($amountToDistribute <= 0) continue;
 
                 $oldBillsQuery = Bill::where('person_id', $studentId)
-                    ->when($configId, fn($q) => $q->where('billing_config_id', $configId), fn($q) => $q->where('bill_type', $this->activeBillType))
                     ->whereIn('status', ['unpaid', 'partial']);
+                $oldBillsQuery = $this->applyConfigOrTypeScope($oldBillsQuery, $configId);
 
                 if (in_array($interval, ['once', 'insidental', 'event', 'sekali'])) {
                     $oldBillsQuery->where('period_year', '<', (int)$firstY);
@@ -1046,6 +1045,21 @@ class LembarSetoranKolektif extends Component
             "Berhasil mencatat setoran Rp " . number_format($totalAmountProcessed, 0, ',', '.') .
             " untuk {$billsProcessedCount} tagihan."
         );
+    }
+
+    private function applyConfigOrTypeScope($query, ?string $configId)
+    {
+        return $query->where(function($q) use ($configId) {
+            if ($configId) {
+                $q->where('billing_config_id', $configId)
+                  ->orWhere(function($sub) {
+                      $sub->whereNull('billing_config_id')
+                          ->where('bill_type', $this->activeBillType);
+                  });
+            } else {
+                $q->where('bill_type', $this->activeBillType);
+            }
+        });
     }
 
     public function render()
