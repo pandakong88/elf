@@ -542,23 +542,47 @@ class DashboardTagihan extends Component
         $cleanWa = static::normalizeWaNumber($waBendahara);
         $santriName = $santri?->name ?? 'Santri';
 
+        // Resolve Nama Bank & Nomor Rekening Tujuan dari CMS
+        $dest = strtoupper($sub->bank_destination ?? 'BSI');
+        $isBank1 = ($dest === 'BSI' || str_contains($dest, 'BSI') || str_contains($dest, '1'));
+
+        if ($isPutri) {
+            if ($isBank1) {
+                $bankName = $contents['wali_bank1_name_putri'] ?? 'Bank Syariah Indonesia (BSI)';
+                $rekNo    = $contents['wali_bsi_putri'] ?? '';
+            } else {
+                $bankName = $contents['wali_bank2_name_putri'] ?? 'Bank BRI';
+                $rekNo    = $contents['wali_bri_putri'] ?? '';
+            }
+        } else {
+            if ($isBank1) {
+                $bankName = $contents['wali_bank1_name_putra'] ?? 'Bank Syariah Indonesia (BSI)';
+                $rekNo    = $contents['wali_bsi_putra'] ?? '';
+            } else {
+                $bankName = $contents['wali_bank2_name_putra'] ?? 'Bank BRI';
+                $rekNo    = $contents['wali_bri_putra'] ?? '';
+            }
+        }
+
+        $destFormatted = $bankName . ($rekNo ? " ({$rekNo})" : '');
+
+        // Susun pesan yang simpel, rapi, dan mudah dibaca
         $lines = [];
-        $lines[] = "Assalamu'alaikum {$waName}, saya Wali Santri dari *{$santriName}* ingin konfirmasi pembayaran transfer.";
+        $lines[] = "Assalamu'alaikum {$waName},";
+        $lines[] = "Saya Wali Santri dari *{$santriName}* ingin konfirmasi pembayaran:";
         $lines[] = "";
-        $lines[] = "📋 *DATA KONFIRMASI:*";
-        $lines[] = "• *Kode Pengajuan:* " . $sub->submission_code;
-        $lines[] = "• *Waktu:* " . ($sub->created_at ? $sub->created_at->locale('id')->translatedFormat('d M Y, H:i') : now()->translatedFormat('d M Y, H:i')) . " WIB";
-        $lines[] = "• *Bank Tujuan:* " . strtoupper($sub->bank_destination ?? 'Pesantren');
+        $lines[] = "*No. Pengajuan:* " . $sub->submission_code;
+        $lines[] = "*Rekening Tujuan:* " . $destFormatted;
 
         if ($sub->sender_bank || $sub->sender_account_name) {
             $senderInfo = trim(($sub->sender_bank ?? '') . ($sub->sender_account_name ? ' a.n. ' . $sub->sender_account_name : ''));
             if ($senderInfo) {
-                $lines[] = "• *Pengirim:* " . $senderInfo;
+                $lines[] = "*Pengirim:* " . $senderInfo;
             }
         }
 
         $lines[] = "";
-        $lines[] = "📝 *RINCIAN PEMBAYARAN:*";
+        $lines[] = "*Rincian Pembayaran:*";
         if (!empty($sub->bill_breakdown) && is_array($sub->bill_breakdown)) {
             foreach ($sub->bill_breakdown as $item) {
                 $label = $item['config_label'] ?? 'Tagihan';
@@ -572,10 +596,9 @@ class DashboardTagihan extends Component
             $lines[] = "• Titipan Uang Saku: Rp " . number_format((float)$sub->pocket_money_amount, 0, ',', '.');
         }
 
+        $lines[] = "*Total: Rp " . number_format((float)$sub->total_transfer_amount, 0, ',', '.') . "*";
         $lines[] = "";
-        $lines[] = "💰 *TOTAL TRANSFER:* *Rp " . number_format((float)$sub->total_transfer_amount, 0, ',', '.') . "*";
-        $lines[] = "";
-        $lines[] = "Bukti transfer telah saya unggah di Portal Wali Santri. Mohon untuk dicek dan diverifikasi. Terima kasih.";
+        $lines[] = "Bukti transfer telah diunggah di portal. Mohon untuk dicek dan diverifikasi, terima kasih.";
 
         $text = implode("\n", $lines);
 
