@@ -5897,8 +5897,146 @@
 
     {{-- MODAL VERIFIKASI TRANSFER MANUAL (PORTAL WALI) --}}
     @if($showTransferVerifyModal && $selectedTransferData)
-        <div class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/70 backdrop-blur-xs">
-            <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-2xl w-full max-w-4xl overflow-hidden max-h-[92vh] flex flex-col animate-in fade-in zoom-in-95 duration-150">
+        <div class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/70 backdrop-blur-xs"
+             x-data="{ showConfirmApprove: false, showConfirmReject: false }">
+            <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-2xl w-full max-w-4xl overflow-hidden max-h-[92vh] flex flex-col animate-in fade-in zoom-in-95 duration-150 relative">
+
+                {{-- DIALOG KONFIRMASI PERSETUJUAN (ELEGANT CUSTOM POPUP) --}}
+                <div x-show="showConfirmApprove"
+                     x-cloak
+                     x-transition:enter="transition ease-out duration-200"
+                     x-transition:enter-start="opacity-0 scale-95"
+                     x-transition:enter-end="opacity-100 scale-100"
+                     x-transition:leave="transition ease-in duration-150"
+                     x-transition:leave-start="opacity-100 scale-100"
+                     x-transition:leave-end="opacity-0 scale-95"
+                     class="absolute inset-0 z-50 bg-slate-950/80 backdrop-blur-xs flex items-center justify-center p-4">
+                    <div class="bg-white dark:bg-slate-900 border border-emerald-500/30 rounded-3xl p-6 max-w-md w-full shadow-2xl space-y-4 text-center relative overflow-hidden">
+                        {{-- Top Glow Accent --}}
+                        <div class="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-emerald-400 via-teal-500 to-emerald-600"></div>
+
+                        {{-- Floating Icon --}}
+                        <div class="w-14 h-14 mx-auto rounded-2xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-3xl shadow-lg shadow-emerald-500/10">
+                            🧾
+                        </div>
+
+                        <div>
+                            <h3 class="text-base font-black text-slate-900 dark:text-white">
+                                Setujui & Terbitkan Kuitansi?
+                            </h3>
+                            <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                                Pastikan dana telah masuk di mutasi rekening pesantren sebelum menyetujui transaksi ini.
+                            </p>
+                        </div>
+
+                        {{-- Nominal Highlight Box --}}
+                        <div class="p-4 bg-gradient-to-br from-emerald-500/10 via-emerald-500/5 to-teal-500/10 border border-emerald-500/20 rounded-2xl space-y-1.5">
+                            <span class="text-[10px] font-black uppercase tracking-wider text-emerald-700 dark:text-emerald-400">Total Pembayaran Disetujui</span>
+                            <div class="text-2xl font-black text-emerald-600 dark:text-emerald-300">
+                                Rp {{ number_format($selectedTransferData->total_paid, 0, ',', '.') }}
+                            </div>
+                            <div class="pt-2 border-t border-emerald-500/15 text-[11px] text-slate-600 dark:text-slate-300 flex items-center justify-center gap-2">
+                                <span class="font-bold">{{ $selectedTransferData->person?->name }}</span>
+                                <span>•</span>
+                                <span class="font-mono text-slate-400">{{ $selectedTransferData->submission_code }}</span>
+                            </div>
+                        </div>
+
+                        {{-- Action Points Checklist --}}
+                        <div class="text-left space-y-2 bg-slate-50 dark:bg-slate-950/60 border border-slate-200/70 dark:border-slate-800 rounded-2xl p-3.5 text-xs text-slate-600 dark:text-slate-400">
+                            <div class="flex items-start gap-2">
+                                <span class="text-emerald-500 font-bold shrink-0">✓</span>
+                                <span>Kuitansi resmi digital akan diterbitkan otomatis.</span>
+                            </div>
+                            <div class="flex items-start gap-2">
+                                <span class="text-emerald-500 font-bold shrink-0">✓</span>
+                                <span>Tagihan santri akan otomatis berstatus <strong>Lunas / Terbayar</strong>.</span>
+                            </div>
+                            @if($selectedTransferData->pocket_money_amount > 0)
+                                <div class="flex items-start gap-2 text-amber-700 dark:text-amber-400 font-medium">
+                                    <span class="text-amber-500 font-bold shrink-0">💰</span>
+                                    <span>Uang saku <strong>Rp {{ number_format($selectedTransferData->pocket_money_amount, 0, ',', '.') }}</strong> dicatat ke kas titipan santri.</span>
+                                </div>
+                            @endif
+                        </div>
+
+                        {{-- Buttons --}}
+                        <div class="grid grid-cols-2 gap-3 pt-1">
+                            <button type="button"
+                                    @click="showConfirmApprove = false"
+                                    class="w-full py-2.5 px-4 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-bold transition-all">
+                                Periksa Lagi
+                            </button>
+                            <button type="button"
+                                    wire:click="approveTransferSubmission('{{ $selectedTransferData->id }}')"
+                                    wire:loading.attr="disabled"
+                                    class="w-full py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:scale-[0.98] text-white text-xs font-extrabold shadow-lg shadow-emerald-600/25 transition-all flex items-center justify-center gap-1.5">
+                                <span wire:loading.remove wire:target="approveTransferSubmission">✓ Ya, Setujui</span>
+                                <span wire:loading wire:target="approveTransferSubmission" class="inline-flex items-center gap-1.5">
+                                    <svg class="animate-spin h-3.5 w-3.5 text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                                    Memproses...
+                                </span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- DIALOG KONFIRMASI PENOLAKAN (ELEGANT CUSTOM POPUP) --}}
+                <div x-show="showConfirmReject"
+                     x-cloak
+                     x-transition:enter="transition ease-out duration-200"
+                     x-transition:enter-start="opacity-0 scale-95"
+                     x-transition:enter-end="opacity-100 scale-100"
+                     x-transition:leave="transition ease-in duration-150"
+                     x-transition:leave-start="opacity-100 scale-100"
+                     x-transition:leave-end="opacity-0 scale-95"
+                     class="absolute inset-0 z-50 bg-slate-950/80 backdrop-blur-xs flex items-center justify-center p-4">
+                    <div class="bg-white dark:bg-slate-900 border border-rose-500/30 rounded-3xl p-6 max-w-md w-full shadow-2xl space-y-4 text-center relative overflow-hidden">
+                        {{-- Top Glow Accent --}}
+                        <div class="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-rose-400 via-rose-500 to-red-600"></div>
+
+                        {{-- Floating Icon --}}
+                        <div class="w-14 h-14 mx-auto rounded-2xl bg-rose-50 dark:bg-rose-950/60 border border-rose-200 dark:border-rose-800 text-rose-600 dark:text-rose-400 flex items-center justify-center text-3xl shadow-lg shadow-rose-500/10">
+                            ⚠️
+                        </div>
+
+                        <div>
+                            <h3 class="text-base font-black text-slate-900 dark:text-white">
+                                Tolak Pengajuan Transfer?
+                            </h3>
+                            <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                                Status transfer akan ditandai <span class="text-rose-600 dark:text-rose-400 font-bold">Ditolak</span> dan wali santri dapat melihat alasan ini.
+                            </p>
+                        </div>
+
+                        {{-- Rejection Note Preview --}}
+                        <div class="p-3.5 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 rounded-2xl text-left space-y-1">
+                            <span class="text-[10px] font-black uppercase tracking-wider text-rose-700 dark:text-rose-400 block">Alasan Penolakan:</span>
+                            <div class="text-xs text-slate-800 dark:text-slate-200 italic font-medium">
+                                "{{ $transferRejectionReason ?: 'Belum mengisi alasan spesifik' }}"
+                            </div>
+                        </div>
+
+                        {{-- Buttons --}}
+                        <div class="grid grid-cols-2 gap-3 pt-1">
+                            <button type="button"
+                                    @click="showConfirmReject = false"
+                                    class="w-full py-2.5 px-4 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-bold transition-all">
+                                Batal
+                            </button>
+                            <button type="button"
+                                    wire:click="rejectTransferSubmission('{{ $selectedTransferData->id }}')"
+                                    wire:loading.attr="disabled"
+                                    class="w-full py-2.5 px-4 rounded-xl bg-rose-600 hover:bg-rose-700 active:scale-[0.98] text-white text-xs font-extrabold shadow-lg shadow-rose-600/25 transition-all flex items-center justify-center gap-1.5">
+                                <span wire:loading.remove wire:target="rejectTransferSubmission">❌ Ya, Tolak</span>
+                                <span wire:loading wire:target="rejectTransferSubmission" class="inline-flex items-center gap-1.5">
+                                    <svg class="animate-spin h-3.5 w-3.5 text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                                    Memproses...
+                                </span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
 
                 {{-- Modal Header --}}
                 <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100 dark:border-slate-800 shrink-0 bg-slate-50/50 dark:bg-slate-950/40">
@@ -6059,7 +6197,7 @@
                         @if($selectedTransferData->status === 'pending')
                             <div class="space-y-2 pt-2 border-t border-slate-100 dark:border-slate-800">
                                 <label class="block text-xs font-bold text-slate-600 dark:text-slate-400">
-                                    Alasan Penolakan <span class="text-slate-400 font-normal">(wajib diisi hanya jika ingin menolak transfer)</span>:
+                                    Alasan Penolakan <span class="text-slate-400 font-normal">(wajib diisi jika ingin menolak transfer)</span>:
                                 </label>
                                 <div class="flex flex-wrap gap-1.5">
                                     <button type="button" wire:click="setQuickRejectionReason('Bukti transfer buram atau tidak terbaca')" class="px-2 py-1 rounded-lg bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/40 dark:hover:bg-rose-900/40 text-[10px] text-rose-700 dark:text-rose-300 font-semibold border border-rose-200/60 dark:border-rose-800/60 transition">
@@ -6075,7 +6213,7 @@
                                         ⚡ Belum Ada di Mutasi
                                     </button>
                                 </div>
-                                <textarea wire:model="transferRejectionReason"
+                                <textarea wire:model.live="transferRejectionReason"
                                           rows="2"
                                           placeholder="Tulis alasan spesifik atau klik tombol cepat di atas..."
                                           class="w-full text-xs p-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-800 dark:text-slate-200 focus:ring-1 focus:ring-rose-400 focus:border-rose-400 outline-none"></textarea>
@@ -6094,24 +6232,15 @@
                     @if($selectedTransferData->status === 'pending')
                         <div class="flex items-center gap-2">
                             <button type="button"
-                                    wire:click="rejectTransferSubmission('{{ $selectedTransferData->id }}')"
-                                    wire:confirm="Yakin ingin MENOLAK pengajuan transfer ini? Pastikan Anda telah mengisi alasan penolakan."
-                                    wire:loading.attr="disabled"
-                                    class="px-4 py-2.5 bg-rose-100 hover:bg-rose-200 dark:bg-rose-950/50 dark:hover:bg-rose-900/50 text-rose-700 dark:text-rose-300 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5">
-                                <span wire:loading.remove wire:target="rejectTransferSubmission">❌ Tolak Pengajuan</span>
-                                <span wire:loading wire:target="rejectTransferSubmission">Memproses...</span>
+                                    @click="showConfirmReject = true"
+                                    class="px-4 py-2.5 bg-rose-100 hover:bg-rose-200 dark:bg-rose-950/50 dark:hover:bg-rose-900/50 text-rose-700 dark:text-rose-300 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer">
+                                <span>❌ Tolak Pengajuan</span>
                             </button>
 
                             <button type="button"
-                                    wire:click="approveTransferSubmission('{{ $selectedTransferData->id }}')"
-                                    wire:confirm="Setujui transfer sebesar Rp {{ number_format($selectedTransferData->total_paid, 0, ',', '.') }} dan terbitkan kuitansi resmi?"
-                                    wire:loading.attr="disabled"
-                                    class="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-extrabold shadow-lg shadow-emerald-500/20 transition-all flex items-center gap-2">
-                                <span wire:loading.remove wire:target="approveTransferSubmission">✓ Setujui &amp; Terbitkan Kuitansi</span>
-                                <span wire:loading wire:target="approveTransferSubmission" class="inline-flex items-center gap-2">
-                                    <svg class="animate-spin h-3.5 w-3.5 text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-                                    Menerbitkan Kuitansi...
-                                </span>
+                                    @click="showConfirmApprove = true"
+                                    class="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-extrabold shadow-lg shadow-emerald-500/20 transition-all flex items-center gap-2 cursor-pointer">
+                                <span>✓ Setujui &amp; Terbitkan Kuitansi</span>
                             </button>
                         </div>
                     @endif
