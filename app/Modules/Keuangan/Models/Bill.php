@@ -46,6 +46,36 @@ class Bill extends Model
 
     public function getPeriodFormattedAttribute(): string
     {
+        $interval = $this->config?->interval ?? '';
+
+        if (in_array($interval, ['semester', '2x_yearly']) || $this->bill_type === 'syahriah_madrasah') {
+            $s = $this->period_sub ?: ($this->period_month && $this->period_month <= 6 ? 1 : 2);
+            return $this->period_year ? "Semester {$s} {$this->period_year}" : "Semester {$s}";
+        }
+
+        if (in_array($interval, ['caturwulan', '3x_yearly'])) {
+            $cw = $this->period_sub ?: ($this->period_month ? ($this->period_month <= 4 ? 1 : ($this->period_month <= 8 ? 2 : 3)) : 1);
+            return $this->period_year ? "Caturwulan {$cw} {$this->period_year}" : "Caturwulan {$cw}";
+        }
+
+        if (in_array($interval, ['triwulan', '4x_yearly'])) {
+            $tw = $this->period_sub ?: ($this->period_month ? (int)ceil($this->period_month / 3) : 1);
+            return $this->period_year ? "Triwulan {$tw} {$this->period_year}" : "Triwulan {$tw}";
+        }
+
+        if (in_array($interval, ['bimulanan', '6x_yearly'])) {
+            $b = $this->period_sub ?: ($this->period_month ? (int)ceil($this->period_month / 2) : 1);
+            return $this->period_year ? "Dwibulanan {$b} {$this->period_year}" : "Dwibulanan {$b}";
+        }
+
+        if (in_array($interval, ['once', 'insidental', 'event', 'sekali'])) {
+            return $this->period_year ? "Event {$this->period_year}" : 'Sekali Bayar';
+        }
+
+        if ($interval === 'yearly') {
+            return $this->period_year ? "Tahunan {$this->period_year}" : 'Tahunan';
+        }
+
         $monthNames = [
             1 => 'Januari', 2 => 'Februari', 3 => 'Maret', 4 => 'April',
             5 => 'Mei', 6 => 'Juni', 7 => 'Juli', 8 => 'Agustus',
@@ -57,7 +87,6 @@ class Bill extends Model
             : ($this->period_year ? (string)$this->period_year : '-');
 
         if ($this->period_sub) {
-            $interval = $this->config?->interval;
             $maxSub = match($interval) {
                 'biweekly', '2x_monthly' => 2,
                 'trimonthly', '3x_monthly' => 3,

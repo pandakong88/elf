@@ -56,7 +56,7 @@ class StatusPembayaran extends Component
         // Refresh dari DB terlebih dahulu (mungkin callback sudah masuk)
         $this->transaction = $this->transaction->fresh();
 
-        if ($this->transaction->status === 'success') {
+        if (in_array($this->transaction->status, ['success', 'paid'])) {
             $this->uiState = 'success';
             $this->isDone  = true;
             return;
@@ -120,10 +120,10 @@ class StatusPembayaran extends Component
         }
 
         match ($this->transaction->status) {
-            'success' => ($this->uiState = 'success') && ($this->isDone = true),
-            'failed'  => ($this->uiState = 'failed')  && ($this->isDone = true),
-            'expired' => ($this->uiState = 'failed')  && ($this->isDone = true),
-            default   => $this->uiState = 'pending',
+            'success', 'paid' => ($this->uiState = 'success') && ($this->isDone = true),
+            'failed'          => ($this->uiState = 'failed')  && ($this->isDone = true),
+            'expired'         => ($this->uiState = 'failed')  && ($this->isDone = true),
+            default           => $this->uiState = 'pending',
         };
     }
 

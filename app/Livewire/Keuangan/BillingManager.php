@@ -20,6 +20,9 @@ use Illuminate\Support\Str;
 use App\Modules\Keuangan\Models\BillPayment;
 use App\Modules\Keuangan\Models\PaymentTransaction;
 use App\Modules\Keuangan\Models\FundDistribution;
+use App\Modules\Keuangan\Models\ManualTransferSubmission;
+use App\Modules\Keuangan\Models\PocketMoneyDeposit;
+use App\Modules\Core\Models\LandingPageContent;
 use App\Traits\HasGenderScope;
 use App\Livewire\Concerns\SendsToast;
 
@@ -28,16 +31,27 @@ class BillingManager extends Component
     use WithPagination, HasGenderScope, SendsToast;
 
     // Tabs
-    public string $activeTab = 'generate';
+    public string $activeTab = 'bendahara';
 
     // Tab: Rekonsiliasi & Settlement (Fase 4)
     public string $settlementDateFrom = '';
     public string $settlementDateTo = '';
-    public string $settlementSource = 'gateway'; // 'gateway' | 'kasir' | 'all'
+    public string $settlementPreset = 'this_month'; // 'today' | 'last_7_days' | 'this_month' | 'last_month' | 'custom'
+    public string $settlementSource = 'all'; // 'gateway' | 'kasir' | 'all'
     public string $settlementGender = ''; // '' | 'L' | 'P'
     public string $settlementNotes = '';
     public bool $showDormitoryModal = false;
     public ?string $modalDormitoryId = null;
+    public bool $showCategoryModal = false;
+    public ?string $modalCategoryKey = null;
+    public array $distributionChecklist = [];
+    public string $settlementBankFilter = '';
+    public array $dokuPayoutStatus = [
+        'is_disbursed'     => false,
+        'disbursed_at'     => null,
+        'destination_bank' => '',
+        'notes'            => '',
+    ];
 
     // Tab: Dynamic Billing Generator
     public ?string $genConfigId = null;
@@ -59,6 +73,71 @@ class BillingManager extends Component
     public ?string $selectedParentBillId = null;
     public bool $showInstallmentDetailsModal = false;
     public string $instFilterSearch = '';
+
+    // Tab: Verifikasi Transfer Manual (Portal Wali)
+    public string  $transferFilterStatus        = 'pending'; // 'all' | 'pending' | 'approved' | 'rejected'
+    public string  $transferSearch              = '';
+    public string  $transferGenderFilter        = ''; // '' (Semua) | 'L' (Putra) | 'P' (Putri)
+    public string  $transferDateFrom            = ''; // YYYY-MM-DD
+    public string  $transferDateTo              = ''; // YYYY-MM-DD
+    public string  $transferBankDestination     = ''; // '' (Semua) | 'BSI' | 'BRI' | etc.
+    public int     $transferPerPage             = 15;
+    public bool    $showTransferVerifyModal     = false;
+    public ?string $selectedTransferId          = null;
+    public ?ManualTransferSubmission $selectedTransferData = null;
+    public string  $transferRejectionReason     = '';
+
+    public function updatedTransferSearch(): void
+    {
+        $this->resetPage('transferPage');
+    }
+
+    public function updatedTransferFilterStatus(): void
+    {
+        $this->resetPage('transferPage');
+    }
+
+    public function updatedTransferGenderFilter(): void
+    {
+        $this->resetPage('transferPage');
+    }
+
+    public function updatedTransferDateFrom(): void
+    {
+        $this->resetPage('transferPage');
+    }
+
+    public function updatedTransferDateTo(): void
+    {
+        $this->resetPage('transferPage');
+    }
+
+    public function updatedTransferBankDestination(): void
+    {
+        $this->resetPage('transferPage');
+    }
+
+    public function updatedTransferPerPage(): void
+    {
+        $this->resetPage('transferPage');
+    }
+
+    public function resetTransferFilters(): void
+    {
+        $this->transferSearch = '';
+        $this->transferFilterStatus = 'all';
+        $this->transferGenderFilter = '';
+        $this->transferDateFrom = '';
+        $this->transferDateTo = '';
+        $this->transferBankDestination = '';
+        $this->transferPerPage = 15;
+        $this->resetPage('transferPage');
+    }
+
+    public function setQuickRejectionReason(string $reason): void
+    {
+        $this->transferRejectionReason = $reason;
+    }
 
     // Tab: Daftar Konfigurasi Tarif
     public string $rateSearchQuery = '';
@@ -99,7 +178,7 @@ class BillingManager extends Component
     public float   $payAmount        = 0.00;
     public string  $payMethod        = 'CASH';
     public string  $payNotes         = '';
-    public int     $cashierYear;
+    public int     $cashierYear = 2026;
     public array   $recentSantriIds  = [];
     public bool    $showPaymentConfirmModal = false;
     public array   $previousSelectedBillIds = [];
@@ -487,11 +566,11 @@ class BillingManager extends Component
                 $enriched[] = $item;
                 continue;
             }
-            // Fallback: lazy-load dari DB untuk record lama
             $bill = Bill::with('config')->find($item['bill_id']);
             $interval = $bill?->config?->interval ?? '';
-            if ($interval === 'semester') {
-                $periodLabel = 'Semester ' . ($bill->period_month) . '/' . ($bill->period_year);
+            if (in_array($interval, ['semester', '2x_yearly']) || ($bill && $bill->bill_type === 'syahriah_madrasah')) {
+                $sem = $bill->period_sub ?: ($bill->period_month && $bill->period_month <= 6 ? 1 : 2);
+                $periodLabel = 'Semester ' . $sem . '/' . ($bill->period_year ?? '');
             } elseif (in_array($interval, ['once', 'insidental', 'event', 'sekali'])) {
                 $periodLabel = 'Event ' . ($bill?->period_year ?? '');
             } else {
@@ -525,7 +604,7 @@ class BillingManager extends Component
     }
 
     /**
-     * Cek & sinkronkan status transaksi spesifik langsung ke API Duitku.
+     * Cek & sinkronkan status transaksi spesifik langsung ke API Gateway (DOKU / Duitku).
      */
     public function syncGatewayStatus(string $trxId): void
     {
@@ -536,6 +615,27 @@ class BillingManager extends Component
         }
 
         try {
+            if ($trx->gateway_provider === 'doku') {
+                $doku = app(\App\Modules\Keuangan\Services\DokuService::class);
+                $res = $doku->checkOrderStatus($trx->merchant_order_id);
+                $status = strtoupper($res['transaction']['status'] ?? ($res['order']['status'] ?? ($res['status'] ?? '')));
+
+                if ($status === 'SUCCESS' || $status === 'PAID') {
+                    $doku->handleSuccessfulPayment($trx, $res);
+                    $this->toastSuccess("Transaksi DOKU {$trx->merchant_order_id} berhasil disinkronkan: SUKSES (LUNAS)!");
+                } elseif (in_array($status, ['FAILED', 'EXPIRED', 'CANCELLED'])) {
+                    $trx->update([
+                        'status'         => $status === 'EXPIRED' ? 'expired' : 'failed',
+                        'failure_reason' => $res['transaction']['status_message'] ?? 'Pembayaran gagal/expired di DOKU.',
+                    ]);
+                    $this->toastInfo("Status transaksi DOKU: GAGAL / EXPIRED.");
+                } else {
+                    $this->toastWarning("Status transaksi DOKU masih PENDING (Menunggu Pembayaran).");
+                }
+                return;
+            }
+
+            // Default Duitku
             $duitku = app(\App\Modules\Keuangan\Services\DuitkuService::class);
             $res = $duitku->checkTransactionStatus($trx->merchant_order_id);
 
@@ -563,12 +663,12 @@ class BillingManager extends Component
                 $this->toastWarning("Respon dari Duitku: [{$statusCode}] {$statusMessage}");
             }
         } catch (\Throwable $e) {
-            $this->toastError("Gagal menghubungi API Duitku: " . $e->getMessage());
+            $this->toastError("Gagal menghubungi server Gateway: " . $e->getMessage());
         }
     }
 
     /**
-     * Sinkronkan semua transaksi yang masih berstatus pending ke API Duitku.
+     * Sinkronkan semua transaksi yang masih berstatus pending ke API Gateway (DOKU / Duitku).
      */
     public function syncAllPendingGateway(): void
     {
@@ -583,11 +683,28 @@ class BillingManager extends Component
         }
 
         $duitku       = app(\App\Modules\Keuangan\Services\DuitkuService::class);
+        $doku         = app(\App\Modules\Keuangan\Services\DokuService::class);
         $successCount = 0;
         $failedCount  = 0;
 
         foreach ($pendingTransactions as $trx) {
             try {
+                if ($trx->gateway_provider === 'doku') {
+                    $res = $doku->checkOrderStatus($trx->merchant_order_id);
+                    $status = strtoupper($res['transaction']['status'] ?? ($res['order']['status'] ?? ($res['status'] ?? '')));
+                    if ($status === 'SUCCESS' || $status === 'PAID') {
+                        $doku->handleSuccessfulPayment($trx, $res);
+                        $successCount++;
+                    } elseif (in_array($status, ['FAILED', 'EXPIRED', 'CANCELLED'])) {
+                        $trx->update([
+                            'status'         => $status === 'EXPIRED' ? 'expired' : 'failed',
+                            'failure_reason' => 'Expired/Failed di DOKU',
+                        ]);
+                        $failedCount++;
+                    }
+                    continue;
+                }
+
                 $res = $duitku->checkTransactionStatus($trx->merchant_order_id);
                 $statusCode = (string) ($res['statusCode'] ?? ($res['status_code'] ?? ''));
 
@@ -602,7 +719,7 @@ class BillingManager extends Component
                 } elseif ($statusCode === '02') {
                     $trx->update([
                         'status'         => 'failed',
-                        'failure_reason' => $res['statusMessage'] ?? 'Expired',
+                        'failure_reason' => 'Expired / Dibatalkan',
                     ]);
                     $failedCount++;
                 }
@@ -2379,7 +2496,7 @@ class BillingManager extends Component
 
         // ✅ SERVER-SIDE GUARD: Transaksi gateway tidak boleh di-void
         if (strtolower($payment->payment_method) === 'gateway_duitku') {
-            $this->toastError('Transaksi yang dibayar via Duitku (QRIS/VA) tidak dapat dibatalkan dari sistem ini. Hubungi Duitku jika diperlukan.');
+            $this->toastError('Transaksi yang dibayar via Payment Gateway tidak dapat dibatalkan dari sistem ini.');
             return;
         }
 
@@ -2397,8 +2514,9 @@ class BillingManager extends Component
 
         $periodLabel = '—';
         if ($bill) {
-            if ($config && $config->interval === 'semester') {
-                $periodLabel = 'Semester ' . $bill->period_month . ' / ' . $bill->period_year;
+            if (($config && in_array($config->interval, ['semester', '2x_yearly'])) || $bill->bill_type === 'syahriah_madrasah') {
+                $sem = $bill->period_sub ?: ($bill->period_month && $bill->period_month <= 6 ? 1 : 2);
+                $periodLabel = 'Semester ' . $sem . ' / ' . $bill->period_year;
             } elseif ($config && in_array($config->interval, ['once', 'insidental', 'event', 'sekali'])) {
                 $periodLabel = 'Event / ' . $bill->period_year;
             } else {
@@ -2451,7 +2569,7 @@ class BillingManager extends Component
 
         // ✅ SERVER-SIDE GUARD: Double-check — transaksi gateway tidak boleh di-void
         if (strtolower($payment->payment_method) === 'gateway_duitku') {
-            $this->toastError('Transaksi yang dibayar via Duitku tidak dapat dibatalkan dari sistem ini.');
+            $this->toastError('Transaksi yang dibayar via Payment Gateway tidak dapat dibatalkan dari sistem ini.');
             $this->closeVoidModal();
             return;
         }
@@ -2473,9 +2591,153 @@ class BillingManager extends Component
         $this->closeVoidModal();
     }
 
-    public function deletePayment(string $paymentId): void
+    // ─── METHODS: VERIFIKASI TRANSFER MANUAL (PORTAL WALI) ──────────────────
+    public function openTransferVerifyModal(string $id): void
     {
-        $this->confirmVoidPayment($paymentId);
+        $sub = ManualTransferSubmission::with(['person.roomAssignments.room.dormitory', 'verifier'])->find($id);
+
+        if (!$sub) {
+            $this->toastError('Pengajuan transfer tidak ditemukan.');
+            return;
+        }
+
+        // Security check for gender scope
+        if ($this->genderScope() && $sub->person?->gender !== $this->genderScope()) {
+            $this->toastError('Anda tidak memiliki wewenang untuk mengakses data santri gender lain.');
+            return;
+        }
+
+        $this->selectedTransferId = $id;
+        $this->selectedTransferData = $sub;
+        $this->transferRejectionReason = '';
+        $this->showTransferVerifyModal = true;
+    }
+
+    public function closeTransferVerifyModal(): void
+    {
+        $this->showTransferVerifyModal = false;
+        $this->selectedTransferId = null;
+        $this->selectedTransferData = null;
+        $this->transferRejectionReason = '';
+    }
+
+    public function approveTransferSubmission(string $id): void
+    {
+        $user = auth()->user();
+        $sub = ManualTransferSubmission::with('person')->find($id);
+
+        if (!$sub || $sub->status !== 'pending') {
+            $this->toastError('Pengajuan transfer tidak ditemukan atau sudah diproses.');
+            return;
+        }
+
+        // Security check for gender scope
+        if ($this->genderScope() && $sub->person?->gender !== $this->genderScope()) {
+            $this->toastError('Anda tidak memiliki wewenang untuk menyetujui transfer santri gender lain.');
+            return;
+        }
+
+        try {
+            DB::beginTransaction();
+
+            $receiptNo = BillPayment::generateReceiptNo();
+            $paymentGroupId = (string) Str::uuid();
+            $now = now();
+            foreach (($sub->bill_breakdown ?? []) as $item) {
+                if (empty($item['bill_id'])) continue;
+                $bill = Bill::find($item['bill_id']);
+                if (!$bill) continue;
+
+                $payPortion = (float) ($item['amount'] ?? 0);
+                if ($payPortion <= 0) continue;
+
+                // Create BillPayment record (Bill::recalculateStatus handles bill status/amount_paid automatically on saved hook)
+                BillPayment::create([
+                    'bill_id'          => $bill->id,
+                    'receipt_no'       => $receiptNo,
+                    'payment_group_id' => $paymentGroupId,
+                    'amount_paid'      => $payPortion,
+                    'payment_method'   => 'transfer',
+                    'payment_date'     => $now,
+                    'logged_by'        => $user?->id,
+                    'notes'            => 'Transfer manual via Portal Wali [' . $sub->submission_code . ']',
+                ]);
+            }
+
+            // Update Pocket Money Deposit if any
+            if ($sub->pocket_money_amount > 0) {
+                PocketMoneyDeposit::where('reference_id', $sub->id)->update([
+                    'status'      => 'received',
+                    'received_by' => $user?->id,
+                    'received_at' => $now,
+                ]);
+            }
+
+            // Update ManualTransferSubmission
+            $sub->update([
+                'status'      => 'approved',
+                'verified_by' => $user?->id,
+                'verified_at' => $now,
+                'receipt_no'  => $receiptNo,
+            ]);
+
+            DB::commit();
+
+            $this->closeTransferVerifyModal();
+            $this->toastSuccess("Pembayaran transfer [{$sub->submission_code}] berhasil disetujui. Nota kuitansi {$receiptNo} telah diterbitkan.");
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            \Illuminate\Support\Facades\Log::error('[BillingManager] approveTransferSubmission failed', ['error' => $e->getMessage()]);
+            $this->toastError('Gagal menyetujui transfer: ' . $e->getMessage());
+        }
+    }
+
+    public function rejectTransferSubmission(string $id): void
+    {
+        $user = auth()->user();
+        $sub = ManualTransferSubmission::with('person')->find($id);
+
+        if (!$sub || $sub->status !== 'pending') {
+            $this->toastError('Pengajuan transfer tidak ditemukan atau sudah diproses.');
+            return;
+        }
+
+        // Security check for gender scope
+        if ($this->genderScope() && $sub->person?->gender !== $this->genderScope()) {
+            $this->toastError('Anda tidak memiliki wewenang untuk menolak transfer santri gender lain.');
+            return;
+        }
+
+        if (empty(trim($this->transferRejectionReason))) {
+            $this->toastError('Harap cantumkan alasan penolakan agar wali santri dapat memperbaikinya.');
+            return;
+        }
+
+        try {
+            DB::beginTransaction();
+
+            $sub->update([
+                'status'           => 'rejected',
+                'rejection_reason' => trim($this->transferRejectionReason),
+                'verified_by'      => $user?->id,
+                'verified_at'      => now(),
+            ]);
+
+            if ($sub->pocket_money_amount > 0) {
+                PocketMoneyDeposit::where('reference_id', $sub->id)->delete();
+            }
+
+            DB::commit();
+
+            $this->closeTransferVerifyModal();
+            $this->toastWarning("Pengajuan transfer [{$sub->submission_code}] telah ditolak dengan catatan.");
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            \Illuminate\Support\Facades\Log::error('[BillingManager] rejectTransferSubmission failed', ['error' => $e->getMessage()]);
+            $this->toastError('Gagal menolak pengajuan: ' . $e->getMessage());
+        }
     }
 
 
@@ -2680,25 +2942,55 @@ class BillingManager extends Component
 
     public function setSettlementQuickDate(string $preset): void
     {
-        match ($preset) {
-            'today' => [
-                $this->settlementDateFrom = now()->toDateString(),
-                $this->settlementDateTo   = now()->toDateString(),
-            ],
-            'last_7_days' => [
-                $this->settlementDateFrom = now()->subDays(6)->toDateString(),
-                $this->settlementDateTo   = now()->toDateString(),
-            ],
-            'this_month' => [
-                $this->settlementDateFrom = now()->startOfMonth()->toDateString(),
-                $this->settlementDateTo   = now()->toDateString(),
-            ],
-            'last_month' => [
-                $this->settlementDateFrom = now()->subMonth()->startOfMonth()->toDateString(),
-                $this->settlementDateTo   = now()->subMonth()->endOfMonth()->toDateString(),
-            ],
-            default => null,
-        };
+        $this->settlementPreset = $preset;
+
+        switch ($preset) {
+            case 'today':
+                $this->settlementDateFrom = now()->toDateString();
+                $this->settlementDateTo   = now()->toDateString();
+                break;
+            case 'last_7_days':
+                $this->settlementDateFrom = now()->subDays(6)->toDateString();
+                $this->settlementDateTo   = now()->toDateString();
+                break;
+            case 'this_month':
+                $this->settlementDateFrom = now()->startOfMonth()->toDateString();
+                $this->settlementDateTo   = now()->toDateString();
+                break;
+            case 'last_month':
+                $this->settlementDateFrom = now()->subMonth()->startOfMonth()->toDateString();
+                $this->settlementDateTo   = now()->subMonth()->endOfMonth()->toDateString();
+                break;
+        }
+    }
+
+    public function updatedSettlementDateFrom(): void
+    {
+        $this->settlementPreset = 'custom';
+    }
+
+    public function updatedSettlementDateTo(): void
+    {
+        $this->settlementPreset = 'custom';
+    }
+
+    public function openCategoryDetailModal(string $categoryKey): void
+    {
+        $this->modalCategoryKey   = $categoryKey;
+        $this->showCategoryModal = true;
+    }
+
+    public function closeCategoryDetailModal(): void
+    {
+        $this->showCategoryModal = false;
+        $this->modalCategoryKey   = null;
+    }
+
+    public function getPendingTransferCountProperty(): int
+    {
+        return ManualTransferSubmission::where('status', 'pending')
+            ->when($this->genderScope(), fn($q, $g) => $q->whereHas('person', fn($pq) => $pq->where('gender', $g)))
+            ->count();
     }
 
     public function openDormitoryDetailModal(string $dormitoryId): void
@@ -2711,6 +3003,70 @@ class BillingManager extends Component
     {
         $this->showDormitoryModal = false;
         $this->modalDormitoryId   = null;
+    }
+
+    public function toggleHandoverStatus(string $key, ?string $recipientNote = null): void
+    {
+        $current = $this->distributionChecklist[$key]['handed_over'] ?? false;
+        $this->distributionChecklist[$key] = [
+            'handed_over'    => !$current,
+            'recipient_note' => $recipientNote ?? ($this->distributionChecklist[$key]['recipient_note'] ?? ''),
+            'handed_at'      => !$current ? now()->toDateTimeString() : null,
+        ];
+    }
+
+    public function updateHandoverNote(string $key, string $note): void
+    {
+        if (!isset($this->distributionChecklist[$key])) {
+            $this->distributionChecklist[$key] = [
+                'handed_over'    => false,
+                'recipient_note' => $note,
+                'handed_at'      => null,
+            ];
+        } else {
+            $this->distributionChecklist[$key]['recipient_note'] = $note;
+        }
+    }
+
+    public function toggleDokuPayoutStatus(?string $bank = null, ?string $notes = null): void
+    {
+        $current = $this->dokuPayoutStatus['is_disbursed'] ?? false;
+        $this->dokuPayoutStatus = [
+            'is_disbursed'     => !$current,
+            'disbursed_at'     => !$current ? now()->toDateTimeString() : null,
+            'destination_bank' => $bank ?? ($this->dokuPayoutStatus['destination_bank'] ?: 'BSI Operasional Pesantren'),
+            'notes'            => $notes ?? ($this->dokuPayoutStatus['notes'] ?? ''),
+        ];
+
+        if (!$current) {
+            $this->toastSuccess('Status DOKU Payout ditandai: Dana sudah dicairkan ke rekening bank.');
+        } else {
+            $this->toastInfo('Status DOKU Payout diubah kembali: Menunggu jadwal pencairan.');
+        }
+    }
+
+    public function getTransferBankOptionsProperty(): array
+    {
+        return ManualTransferSubmission::select('bank_destination')
+            ->whereNotNull('bank_destination')
+            ->where('bank_destination', '!=', '')
+            ->distinct()
+            ->pluck('bank_destination')
+            ->toArray();
+    }
+
+    public function deleteSettlementSnapshot(string $id): void
+    {
+        $user = auth()->user();
+        if (!$user || !$user->hasRole('super-admin')) {
+            $this->toastError('Hanya Super Admin yang dapat membuka/menghapus kunci buku rekonsiliasi.');
+            return;
+        }
+
+        $snapshot = FundDistribution::findOrFail($id);
+        $snapshot->delete();
+
+        $this->toastSuccess('Kunci buku rekonsiliasi berhasil dibuka & snapshot dihapus.');
     }
 
     public function saveSettlementSnapshot(): void
@@ -2731,18 +3087,36 @@ class BillingManager extends Component
             'id'             => Str::uuid()->toString(),
             'period_from'    => $this->settlementDateFrom ?: now()->startOfMonth()->toDateString(),
             'period_to'      => $this->settlementDateTo ?: now()->toDateString(),
-            'gender'         => $this->genderScope() ?: ($this->settlementGender ?: null),
+            'gender'         => $this->genderScope() ?: ($this->settlementGender ?: 'A'),
             'total_gross'    => $report['total_gross'],
             'total_mdr'      => $report['total_mdr'],
             'total_net'      => $report['total_net'],
             'breakdown'      => [
-                'categories'  => $report['category_breakdown'],
-                'dormitories' => $report['dormitory_breakdown'],
+                'sources'     => [
+                    'gateway_gross'   => $report['gateway_gross'],
+                    'gateway_mdr'     => $report['gateway_mdr'],
+                    'gateway_net'     => $report['gateway_net'],
+                    'gateway_trx'     => $report['gateway_trx'],
+                    'transfer_amount' => $report['transfer_amount'],
+                    'transfer_trx'    => $report['transfer_trx'],
+                    'cash_amount'     => $report['cash_amount'],
+                    'cash_trx'        => $report['cash_trx'],
+                ],
+                'categories'     => $report['category_breakdown'],
+                'dormitories'    => $report['dormitory_breakdown'],
+                'checklist'      => $this->distributionChecklist,
+                'doku_payout'    => $this->dokuPayoutStatus,
+                'bank_filter'    => $this->settlementBankFilter,
+                'period_label'   => $report['period_label'],
+                'target_metrics' => [
+                    'total_billed'        => $report['total_billed'] ?? 0,
+                    'realization_percent' => $report['realization_percent'] ?? 0,
+                ],
             ],
-            'online_amount'  => $report['total_net'],
-            'manual_amount'  => 0,
-            'online_count'   => $report['total_trx'],
-            'manual_count'   => 0,
+            'online_amount'  => $report['gateway_net'],
+            'manual_amount'  => $report['transfer_amount'] + $report['cash_amount'],
+            'online_count'   => $report['gateway_trx'],
+            'manual_count'   => $report['transfer_trx'] + $report['cash_trx'],
             'status'         => 'distributed',
             'distributed_at' => now(),
             'distributed_by' => auth()->id(),
@@ -2757,7 +3131,7 @@ class BillingManager extends Component
     {
         $dateFrom = $this->settlementDateFrom ?: now()->startOfMonth()->toDateString();
         $dateTo   = $this->settlementDateTo ?: now()->toDateString();
-        $source   = $this->settlementSource ?: 'gateway';
+        $source   = $this->settlementSource ?: 'all';
 
         $genderScope  = $this->genderScope();
         $targetGender = $genderScope ?: $this->settlementGender;
@@ -2770,15 +3144,27 @@ class BillingManager extends Component
         $totalNet   = 0.0;
         $totalTrx   = 0;
 
+        $gatewayGross = 0.0;
+        $gatewayMdr   = 0.0;
+        $gatewayNet   = 0.0;
+        $gatewayTrxCount = 0;
+
+        $transferAmount = 0.0;
+        $transferTrxCount = 0;
+
+        $cashAmount = 0.0;
+        $cashTrxCount = 0;
+
         $categories = [
-            'syahriah_putra' => ['key' => 'syahriah_putra', 'label' => 'Syahriah / SPP Pondok Putra', 'desc' => 'Operasional pesantren unit putra', 'amount' => 0.0, 'count' => 0, 'icon' => '🕌', 'color' => 'blue'],
-            'syahriah_putri' => ['key' => 'syahriah_putri', 'label' => 'Syahriah / SPP Pondok Putri', 'desc' => 'Operasional pesantren unit putri', 'amount' => 0.0, 'count' => 0, 'icon' => '🕌', 'color' => 'pink'],
-            'madrasah'       => ['key' => 'madrasah', 'label' => 'Syahriah Madrasah', 'desc' => 'Operasional pendidikan formal/diniyah', 'amount' => 0.0, 'count' => 0, 'icon' => '🏫', 'color' => 'emerald'],
-            'kitab'          => ['key' => 'kitab', 'label' => 'Biaya Kitab / Buku', 'desc' => 'Pengadaan sarana belajar santri', 'amount' => 0.0, 'count' => 0, 'icon' => '📚', 'color' => 'amber'],
-            'majek_pagi'     => ['key' => 'majek_pagi', 'label' => 'Katering Majek (Pagi)', 'desc' => 'Logistik konsumsi makan pagi santri', 'amount' => 0.0, 'count' => 0, 'icon' => '🍲', 'color' => 'orange'],
-            'majek_sore'     => ['key' => 'majek_sore', 'label' => 'Katering Majek (Sore)', 'desc' => 'Logistik konsumsi makan sore santri', 'amount' => 0.0, 'count' => 0, 'icon' => '🍲', 'color' => 'orange'],
-            'kas_komplek'    => ['key' => 'kas_komplek', 'label' => 'Kas Komplek / Asrama (Total)', 'desc' => 'Dana titipan kebersihan & kegiatan asrama', 'amount' => 0.0, 'count' => 0, 'icon' => '🏠', 'color' => 'indigo'],
-            'lainnya'        => ['key' => 'lainnya', 'label' => 'Iuran Lainnya / Insidental', 'desc' => 'Pendaftaran, kebersihan, & event', 'amount' => 0.0, 'count' => 0, 'icon' => '🏷️', 'color' => 'slate'],
+            'syahriah_putra' => ['key' => 'syahriah_putra', 'label' => 'Syahriah / SPP Pondok Putra', 'desc' => 'Operasional pesantren unit putra', 'amount' => 0.0, 'count' => 0, 'icon' => '🕌', 'color' => 'blue', 'santri_list' => []],
+            'syahriah_putri' => ['key' => 'syahriah_putri', 'label' => 'Syahriah / SPP Pondok Putri', 'desc' => 'Operasional pesantren unit putri', 'amount' => 0.0, 'count' => 0, 'icon' => '🕌', 'color' => 'pink', 'santri_list' => []],
+            'madrasah'       => ['key' => 'madrasah', 'label' => 'Syahriah Madrasah', 'desc' => 'Operasional pendidikan formal/diniyah', 'amount' => 0.0, 'count' => 0, 'icon' => '🏫', 'color' => 'emerald', 'santri_list' => []],
+            'kitab'          => ['key' => 'kitab', 'label' => 'Biaya Kitab / Buku', 'desc' => 'Pengadaan sarana belajar santri', 'amount' => 0.0, 'count' => 0, 'icon' => '📚', 'color' => 'amber', 'santri_list' => []],
+            'majek_pagi'     => ['key' => 'majek_pagi', 'label' => 'Katering Majek (Pagi)', 'desc' => 'Logistik konsumsi makan pagi santri', 'amount' => 0.0, 'count' => 0, 'icon' => '🍲', 'color' => 'orange', 'santri_list' => []],
+            'majek_sore'     => ['key' => 'majek_sore', 'label' => 'Katering Majek (Sore)', 'desc' => 'Logistik konsumsi makan sore santri', 'amount' => 0.0, 'count' => 0, 'icon' => '🍲', 'color' => 'orange', 'santri_list' => []],
+            'kas_komplek'    => ['key' => 'kas_komplek', 'label' => 'Kas Komplek / Asrama (Total)', 'desc' => 'Dana titipan kebersihan & kegiatan asrama', 'amount' => 0.0, 'count' => 0, 'icon' => '🏠', 'color' => 'indigo', 'santri_list' => []],
+            'pocket_money'   => ['key' => 'pocket_money', 'label' => 'Titipan Uang Saku Santri', 'desc' => 'Dana titipan uang jajan santri via portal', 'amount' => 0.0, 'count' => 0, 'icon' => '💰', 'color' => 'purple', 'santri_list' => []],
+            'lainnya'        => ['key' => 'lainnya', 'label' => 'Iuran Lainnya / Insidental', 'desc' => 'Pendaftaran, kebersihan, & event', 'amount' => 0.0, 'count' => 0, 'icon' => '🏷️', 'color' => 'slate', 'santri_list' => []],
         ];
 
         $dormitories = Dormitory::active()
@@ -2814,21 +3200,40 @@ class BillingManager extends Component
 
             $gatewayTrx = $gatewayQuery->get();
             $totalTrx += $gatewayTrx->count();
+            $gatewayTrxCount += $gatewayTrx->count();
 
             foreach ($gatewayTrx as $trx) {
+                $netTrx = (float) ($trx->net_amount > 0 ? $trx->net_amount : ((float)$trx->bill_amount + (float)($trx->pocket_money_amount ?? 0)));
                 $totalGross += (float) $trx->total_amount;
                 $totalMdr   += (float) $trx->mdr_amount;
-                $totalNet   += (float) $trx->bill_amount;
+                $totalNet   += $netTrx;
+
+                $gatewayGross += (float) $trx->total_amount;
+                $gatewayMdr   += (float) $trx->mdr_amount;
+                $gatewayNet   += $netTrx;
 
                 $person = $trx->person;
                 $activeAssignment = $person?->roomAssignments?->first();
                 $dormId = $activeAssignment?->room?->dormitory_id;
+                $roomName = $activeAssignment?->room?->name ?? '-';
 
                 foreach ($trx->bill_breakdown ?? [] as $item) {
                     $amt = (float) ($item['pay_portion'] ?? $item['net_amount'] ?? 0);
                     $type = $item['bill_type'] ?? '';
+                    $periodItemLabel = $item['period_label'] ?? $item['config_label'] ?? ucwords(str_replace('_', ' ', $type));
 
-                    $this->allocateCategory($categories, $type, $amt, $person?->gender, $item['config_label'] ?? null);
+                    $santriItem = [
+                        'nis'          => $person->nis ?? '-',
+                        'name'         => $person->name ?? '—',
+                        'gender'       => $person->gender ?? '-',
+                        'unit_info'    => $roomName,
+                        'period_label' => $periodItemLabel,
+                        'paid_date'    => $trx->created_at->locale('id')->translatedFormat('d M, H:i'),
+                        'method'       => ($trx->channel_label ?? $trx->payment_channel ?? 'Online') . ' (Online)',
+                        'amount'       => $amt,
+                    ];
+
+                    $this->allocateCategory($categories, $type, $amt, $person?->gender, $item['config_label'] ?? null, $santriItem);
 
                     if ($type === 'kas_komplek' && $dormId && isset($dormBreakdown[$dormId])) {
                         $dormBreakdown[$dormId]['total_amount'] += $amt;
@@ -2837,27 +3242,55 @@ class BillingManager extends Component
                             $dormBreakdown[$dormId]['santri_ids'][] = $person->id;
                         }
                         $dormBreakdown[$dormId]['santri_list'][] = [
-                            'nis'       => $person->nis ?? '-',
-                            'name'      => $person->name ?? '—',
-                            'room_name' => $activeAssignment?->room?->name ?? '-',
-                            'paid_date' => $trx->created_at->locale('id')->translatedFormat('d M, H:i'),
-                            'method'    => ($trx->channel_label ?? $trx->payment_channel ?? 'Online') . ' (Duitku)',
-                            'amount'    => $amt,
+                            'nis'          => $person->nis ?? '-',
+                            'name'         => $person->name ?? '—',
+                            'room_name'    => $roomName,
+                            'period_label' => $periodItemLabel,
+                            'paid_date'    => $trx->created_at->locale('id')->translatedFormat('d M, H:i'),
+                            'method'       => ($trx->channel_label ?? $trx->payment_channel ?? 'Online') . ' (Online)',
+                            'amount'       => $amt,
                         ];
                         $dormBreakdown[$dormId]['count_santri'] = count($dormBreakdown[$dormId]['santri_ids']);
                     }
+                }
+
+                if ((float)($trx->pocket_money_amount ?? 0) > 0) {
+                    $amtPm = (float) $trx->pocket_money_amount;
+                    $santriPmItem = [
+                        'nis'          => $person->nis ?? '-',
+                        'name'         => $person->name ?? '—',
+                        'gender'       => $person->gender ?? '-',
+                        'unit_info'    => $roomName,
+                        'period_label' => 'Titipan Uang Saku Santri',
+                        'paid_date'    => $trx->created_at->locale('id')->translatedFormat('d M, H:i'),
+                        'method'       => ($trx->channel_label ?? $trx->payment_channel ?? 'Online') . ' (Online)',
+                        'amount'       => $amtPm,
+                    ];
+                    $this->allocateCategory($categories, 'pocket_money', $amtPm, $person?->gender, 'Titipan Uang Saku Santri', $santriPmItem);
                 }
             }
         }
 
         // 2. Kasir
         if ($source === 'kasir' || $source === 'all') {
-            $kasirQuery = BillPayment::where('payment_method', '!=', 'gateway_duitku')
-                ->where(function ($q) use ($dateFrom, $dateTo, $fromCarbon, $toCarbon) {
-                    $q->whereBetween('payment_date', [$dateFrom, $dateTo])
+            $kasirQuery = BillPayment::where(function ($q) {
+                    $q->where('payment_method', 'not like', 'gateway%')
+                      ->orWhereNull('payment_method');
+                })
+                ->where(function ($q) use ($fromCarbon, $toCarbon) {
+                    $q->whereBetween('payment_date', [$fromCarbon, $toCarbon])
                       ->orWhereBetween('created_at', [$fromCarbon, $toCarbon]);
                 })
                 ->when($targetGender, fn($q, $g) => $q->whereHas('bill.person', fn($pq) => $pq->where('gender', $g)))
+                ->when($this->settlementBankFilter, function ($q, $bank) {
+                    $q->where(function ($subQ) use ($bank) {
+                        $subQ->where('payment_method', 'like', "%{$bank}%")
+                             ->orWhere('notes', 'like', "%{$bank}%")
+                             ->orWhereHas('bill.person.manualTransferSubmissions', function ($mq) use ($bank) {
+                                 $mq->where('status', 'approved')->where('bank_destination', $bank);
+                             });
+                    });
+                })
                 ->with(['bill.person.roomAssignments' => fn($q) => $q->active()->with('room.dormitory'), 'bill.config']);
 
             $kasirPayments = $kasirQuery->get();
@@ -2868,13 +3301,35 @@ class BillingManager extends Component
                 $totalGross += $amt;
                 $totalNet   += $amt;
 
+                $method = strtolower($pay->payment_method ?? 'cash');
+                if (str_contains($method, 'transfer') || str_contains($method, 'tf')) {
+                    $transferAmount += $amt;
+                    $transferTrxCount++;
+                } else {
+                    $cashAmount += $amt;
+                    $cashTrxCount++;
+                }
+
                 $bill = $pay->bill;
                 $person = $bill?->person;
                 $activeAssignment = $person?->roomAssignments?->first();
                 $dormId = $activeAssignment?->room?->dormitory_id;
+                $roomName = $activeAssignment?->room?->name ?? '-';
                 $type = $bill?->bill_type ?? '';
+                $periodItemLabel = $bill?->period_formatted ?: ($bill?->config?->label ?: ucwords(str_replace('_', ' ', $type)));
 
-                $this->allocateCategory($categories, $type, $amt, $person?->gender, $bill?->config?->label ?? null);
+                $santriItem = [
+                    'nis'          => $person->nis ?? '-',
+                    'name'         => $person->name ?? '—',
+                    'gender'       => $person->gender ?? '-',
+                    'unit_info'    => $roomName,
+                    'period_label' => $periodItemLabel,
+                    'paid_date'    => $pay->payment_date ? \Carbon\Carbon::parse($pay->payment_date)->locale('id')->translatedFormat('d M Y') : '-',
+                    'method'       => strtoupper($pay->payment_method ?? 'Kasir'),
+                    'amount'       => $amt,
+                ];
+
+                $this->allocateCategory($categories, $type, $amt, $person?->gender, $bill?->config?->label ?? null, $santriItem);
 
                 if ($type === 'kas_komplek' && $dormId && isset($dormBreakdown[$dormId])) {
                     $dormBreakdown[$dormId]['total_amount'] += $amt;
@@ -2883,19 +3338,64 @@ class BillingManager extends Component
                         $dormBreakdown[$dormId]['santri_ids'][] = $person->id;
                     }
                     $dormBreakdown[$dormId]['santri_list'][] = [
-                        'nis'       => $person->nis ?? '-',
-                        'name'      => $person->name ?? '—',
-                        'room_name' => $activeAssignment?->room?->name ?? '-',
-                        'paid_date' => $pay->payment_date ? \Carbon\Carbon::parse($pay->payment_date)->locale('id')->translatedFormat('d M Y') : '-',
-                        'method'    => strtoupper($pay->payment_method ?? 'Kasir'),
-                        'amount'    => $amt,
+                        'nis'          => $person->nis ?? '-',
+                        'name'         => $person->name ?? '—',
+                        'room_name'    => $roomName,
+                        'period_label' => $periodItemLabel,
+                        'paid_date'    => $pay->payment_date ? \Carbon\Carbon::parse($pay->payment_date)->locale('id')->translatedFormat('d M Y') : '-',
+                        'method'       => strtoupper($pay->payment_method ?? 'Kasir'),
+                        'amount'       => $amt,
                     ];
                     $dormBreakdown[$dormId]['count_santri'] = count($dormBreakdown[$dormId]['santri_ids']);
                 }
             }
+
+            // Hitung titipan uang saku dari transfer manual yang disetujui kasir
+            $manualSubsWithPocket = ManualTransferSubmission::where('status', 'approved')
+                ->where('pocket_money_amount', '>', 0)
+                ->where(function ($q) use ($dateFrom, $dateTo, $fromCarbon, $toCarbon) {
+                    $q->whereBetween('verified_at', [$fromCarbon, $toCarbon])
+                      ->orWhere(function ($oq) use ($fromCarbon, $toCarbon) {
+                          $oq->whereNull('verified_at')
+                             ->whereBetween('created_at', [$fromCarbon, $toCarbon]);
+                      });
+                })
+                ->when($targetGender, fn($q, $g) => $q->whereHas('person', fn($pq) => $pq->where('gender', $g)))
+                ->when($this->settlementBankFilter, fn($q, $bank) => $q->where('bank_destination', $bank))
+                ->with(['person.roomAssignments' => fn($q) => $q->active()->with('room')])
+                ->get();
+
+            foreach ($manualSubsWithPocket as $mSub) {
+                $amtPm = (float) $mSub->pocket_money_amount;
+                $totalGross += $amtPm;
+                $totalNet   += $amtPm;
+                $transferAmount += $amtPm;
+                $transferTrxCount++;
+
+                $person = $mSub->person;
+                $roomName = $person?->roomAssignments?->first()?->room?->name ?? '-';
+
+                $santriPmItem = [
+                    'nis'          => $person?->nis ?? '-',
+                    'name'         => $person?->name ?? '—',
+                    'gender'       => $person?->gender ?? '-',
+                    'unit_info'    => $roomName,
+                    'period_label' => 'Titipan Uang Saku Santri',
+                    'paid_date'    => $mSub->verified_at ? \Carbon\Carbon::parse($mSub->verified_at)->locale('id')->translatedFormat('d M Y, H:i') : '-',
+                    'method'       => 'Transfer Bank (Manual)',
+                    'amount'       => $amtPm,
+                ];
+
+                $this->allocateCategory($categories, 'pocket_money', $amtPm, $mSub->person?->gender, 'Titipan Uang Saku Santri', $santriPmItem);
+            }
         }
 
         $periodLabel = \Carbon\Carbon::parse($dateFrom)->locale('id')->translatedFormat('d M Y') . ' s/d ' . \Carbon\Carbon::parse($dateTo)->locale('id')->translatedFormat('d M Y');
+
+        $totalBilled = (float) Bill::whereBetween('created_at', [$fromCarbon, $toCarbon])
+            ->when($targetGender, fn($q, $g) => $q->whereHas('person', fn($pq) => $pq->where('gender', $g)))
+            ->sum('amount');
+        $realizationPercent = $totalBilled > 0 ? min(100.0, round(($totalNet / $totalBilled) * 100, 1)) : 0.0;
 
         return [
             'period_label'        => $periodLabel,
@@ -2903,60 +3403,53 @@ class BillingManager extends Component
             'total_mdr'           => $totalMdr,
             'total_net'           => $totalNet,
             'total_trx'           => $totalTrx,
+            'total_billed'        => $totalBilled,
+            'realization_percent' => $realizationPercent,
+            'gateway_gross'       => $gatewayGross,
+            'gateway_mdr'         => $gatewayMdr,
+            'gateway_net'         => $gatewayNet,
+            'gateway_trx'         => $gatewayTrxCount,
+            'transfer_amount'     => $transferAmount,
+            'transfer_trx'        => $transferTrxCount,
+            'cash_amount'         => $cashAmount,
+            'cash_trx'            => $cashTrxCount,
             'category_breakdown'  => array_values(array_filter($categories, fn($c) => $c['amount'] > 0)),
             'dormitory_breakdown' => array_values(array_filter($dormBreakdown, fn($d) => $d['total_amount'] > 0)),
         ];
     }
 
-    private function allocateCategory(array &$categories, string $type, float $amt, ?string $gender = null, ?string $customLabel = null): void
+    private function allocateCategory(array &$categories, string $type, float $amt, ?string $gender = null, ?string $customLabel = null, ?array $santriItem = null): void
     {
-        switch ($type) {
-            case 'syahriah_pondok':
-                if ($gender === 'P') {
-                    $categories['syahriah_putri']['amount'] += $amt;
-                    $categories['syahriah_putri']['count']++;
-                } else {
-                    $categories['syahriah_putra']['amount'] += $amt;
-                    $categories['syahriah_putra']['count']++;
-                }
-                break;
-            case 'syahriah_madrasah':
-                $categories['madrasah']['amount'] += $amt;
-                $categories['madrasah']['count']++;
-                break;
-            case 'kitab':
-                $categories['kitab']['amount'] += $amt;
-                $categories['kitab']['count']++;
-                break;
-            case 'majek_pagi':
-                $categories['majek_pagi']['amount'] += $amt;
-                $categories['majek_pagi']['count']++;
-                break;
-            case 'majek_sore':
-                $categories['majek_sore']['amount'] += $amt;
-                $categories['majek_sore']['count']++;
-                break;
-            case 'kas_komplek':
-                $categories['kas_komplek']['amount'] += $amt;
-                $categories['kas_komplek']['count']++;
-                break;
-            default:
-                $key = !empty($customLabel) ? Str::slug($customLabel, '_') : (!empty($type) ? $type : 'lainnya');
-                if (!isset($categories[$key])) {
-                    $label = $customLabel ?: ucwords(str_replace('_', ' ', $key));
-                    $categories[$key] = [
-                        'key'    => $key,
-                        'label'  => $label,
-                        'desc'   => 'Pos Tagihan ' . $label,
-                        'amount' => 0.0,
-                        'count'  => 0,
-                        'icon'   => '🏷️',
-                        'color'  => 'slate',
-                    ];
-                }
-                $categories[$key]['amount'] += $amt;
-                $categories[$key]['count']++;
-                break;
+        $targetKey = match ($type) {
+            'pocket_money'      => 'pocket_money',
+            'syahriah_pondok'   => ($gender === 'P' ? 'syahriah_putri' : 'syahriah_putra'),
+            'syahriah_madrasah' => 'madrasah',
+            'kitab'             => 'kitab',
+            'majek_pagi'        => 'majek_pagi',
+            'majek_sore'        => 'majek_sore',
+            'kas_komplek'       => 'kas_komplek',
+            default             => (!empty($customLabel) ? Str::slug($customLabel, '_') : (!empty($type) ? $type : 'lainnya')),
+        };
+
+        if (!isset($categories[$targetKey])) {
+            $label = $customLabel ?: ucwords(str_replace('_', ' ', $targetKey));
+            $categories[$targetKey] = [
+                'key'         => $targetKey,
+                'label'       => $label,
+                'desc'        => 'Pos Tagihan ' . $label,
+                'amount'      => 0.0,
+                'count'       => 0,
+                'icon'        => '🏷️',
+                'color'       => 'slate',
+                'santri_list' => [],
+            ];
+        }
+
+        $categories[$targetKey]['amount'] += $amt;
+        $categories[$targetKey]['count']++;
+
+        if ($santriItem) {
+            $categories[$targetKey]['santri_list'][] = $santriItem;
         }
     }
 
@@ -3588,10 +4081,230 @@ class BillingManager extends Component
             }
         }
 
+        // Modal category santri list
+        $modalCategoryData = null;
+        if ($this->showCategoryModal && $this->modalCategoryKey) {
+            foreach ($settlementReport['category_breakdown'] as $cb) {
+                if ($cb['key'] === $this->modalCategoryKey) {
+                    $modalCategoryData = $cb;
+                    break;
+                }
+            }
+        }
+
+        // ─── Query Verifikasi Transfer Manual (Portal Wali) ───────────────
+        $targetTransferGender = $this->genderScope() ?: ($this->transferGenderFilter ?: null);
+
+        $transferBaseQuery = ManualTransferSubmission::with(['person.roomAssignments.room.dormitory', 'verifier'])
+            ->when($targetTransferGender, fn($q, $g) => $q->whereHas('person', fn($pq) => $pq->where('gender', $g)))
+            ->when($this->transferSearch, function ($q) {
+                $s = $this->transferSearch;
+                $q->where(function ($sub) use ($s) {
+                    $sub->whereHas('person', fn($pq) => $pq->where('name', 'like', "%{$s}%")->orWhere('nis', 'like', "%{$s}%"))
+                        ->orWhere('submission_code', 'like', "%{$s}%")
+                        ->orWhere('sender_account_name', 'like', "%{$s}%")
+                        ->orWhere('sender_bank', 'like', "%{$s}%")
+                        ->orWhere('receipt_no', 'like', "%{$s}%");
+                });
+            })
+            ->when($this->transferDateFrom, fn($q, $d) => $q->whereDate('created_at', '>=', $d))
+            ->when($this->transferDateTo, fn($q, $d) => $q->whereDate('created_at', '<=', $d))
+            ->when($this->transferBankDestination, fn($q, $b) => $q->where('bank_destination', $b))
+            ->when($this->transferFilterStatus !== 'all', fn($q) => $q->where('status', $this->transferFilterStatus));
+
+        $manualTransferSubmissions = (clone $transferBaseQuery)
+            ->orderBy('created_at', 'desc')
+            ->paginate($this->transferPerPage ?: 15, pageName: 'transferPage');
+
+        $transferCountBase = ManualTransferSubmission::when($targetTransferGender, fn($q, $g) => $q->whereHas('person', fn($pq) => $pq->where('gender', $g)));
+        $manualTransferAllCount      = (clone $transferCountBase)->count();
+        $manualTransferPendingCount  = (clone $transferCountBase)->where('status', 'pending')->count();
+        $manualTransferApprovedCount = (clone $transferCountBase)->where('status', 'approved')->count();
+        $manualTransferRejectedCount = (clone $transferCountBase)->where('status', 'rejected')->count();
+
+        $transferDestinationBanks = ManualTransferSubmission::select('bank_destination')
+            ->distinct()
+            ->whereNotNull('bank_destination')
+            ->where('bank_destination', '!=', '')
+            ->pluck('bank_destination');
+
+        // ─── DATA TAB BENDAHARA (DASHBOARD UTAMA) ───────────────────────────
+        $todayDate = now()->toDateString();
+        $currMonth = (int) now()->format('m');
+        $currYear  = (int) now()->format('Y');
+
+        // 1. Kasir Hari Ini
+        $kasirTodayQuery = BillPayment::whereDate('payment_date', $todayDate)
+            ->where('payment_method', '!=', 'gateway_duitku')
+            ->when($this->genderScope(), fn($q, $g) => $q->whereHas('bill.person', fn($pq) => $pq->where('gender', $g)));
+
+        $todayCashInflow     = (float) (clone $kasirTodayQuery)->where('payment_method', 'cash')->sum('amount_paid');
+        $todayTransferInflow = (float) (clone $kasirTodayQuery)->where('payment_method', 'transfer')->sum('amount_paid');
+        $todayKasirTrxCount  = (clone $kasirTodayQuery)->count();
+
+        // 2. Gateway Hari Ini
+        $gatewayTodayQuery = PaymentTransaction::whereDate('created_at', $todayDate)
+            ->where('status', 'success')
+            ->when($this->genderScope(), fn($q, $g) => $q->whereHas('person', fn($pq) => $pq->where('gender', $g)));
+
+        $todayGatewayInflow   = (float) (clone $gatewayTodayQuery)->sum('total_amount');
+        $todayGatewayTrxCount = (clone $gatewayTodayQuery)->count();
+
+        $todayTotalInflow = $todayCashInflow + $todayTransferInflow + $todayGatewayInflow;
+        $todayTotalTrx    = $todayKasirTrxCount + $todayGatewayTrxCount;
+
+        // 3. Penerimaan Bulan Ini
+        $kasirMonthQuery = BillPayment::whereMonth('payment_date', $currMonth)
+            ->whereYear('payment_date', $currYear)
+            ->where('payment_method', '!=', 'gateway_duitku')
+            ->when($this->genderScope(), fn($q, $g) => $q->whereHas('bill.person', fn($pq) => $pq->where('gender', $g)));
+
+        $monthKasirInflow   = (float) (clone $kasirMonthQuery)->sum('amount_paid');
+        $monthKasirTrxCount = (clone $kasirMonthQuery)->count();
+
+        $gatewayMonthQuery = PaymentTransaction::whereMonth('created_at', $currMonth)
+            ->whereYear('created_at', $currYear)
+            ->where('status', 'success')
+            ->when($this->genderScope(), fn($q, $g) => $q->whereHas('person', fn($pq) => $pq->where('gender', $g)));
+
+        $monthGatewayInflow   = (float) (clone $gatewayMonthQuery)->sum('total_amount');
+        $monthGatewayTrxCount = (clone $gatewayMonthQuery)->count();
+
+        $monthTotalInflow = $monthKasirInflow + $monthGatewayInflow;
+        $monthTotalTrx    = $monthKasirTrxCount + $monthGatewayTrxCount;
+
+        // 4. Tunggakan Keseluruhan
+        $unpaidBillsQuery = Bill::whereIn('status', ['unpaid', 'partial'])
+            ->whereNotIn('status', ['refund_requested', 'refunded', 'cancelled', 'exempt'])
+            ->when($this->genderScope(), fn($q, $g) => $q->whereHas('person', fn($pq) => $pq->where('gender', $g)));
+
+        $totalTunggakanAmount = (float) ((clone $unpaidBillsQuery)->selectRaw('SUM(amount - amount_paid) as total_unpaid')->value('total_unpaid') ?? 0.0);
+        $totalSantriMenunggak = (clone $unpaidBillsQuery)->distinct('person_id')->count('person_id');
+
+        // 5. Antrean Verifikasi Transfer Wali Pending
+        $pendingTransferCount  = $manualTransferPendingCount;
+        $pendingTransferAmount = (float) ManualTransferSubmission::when($this->genderScope(), fn($q, $g) => $q->whereHas('person', fn($pq) => $pq->where('gender', $g)))
+            ->where('status', 'pending')
+            ->sum('total_transfer_amount');
+
+        $bendaharaStats = [
+            'today_total_inflow'     => $todayTotalInflow,
+            'today_cash_inflow'      => $todayCashInflow,
+            'today_transfer_inflow'  => $todayTransferInflow,
+            'today_gateway_inflow'   => $todayGatewayInflow,
+            'today_total_trx'        => $todayTotalTrx,
+            'month_total_inflow'     => $monthTotalInflow,
+            'month_total_trx'        => $monthTotalTrx,
+            'month_kasir_inflow'     => $monthKasirInflow,
+            'month_gateway_inflow'   => $monthGatewayInflow,
+            'total_tunggakan_amount' => $totalTunggakanAmount,
+            'total_santri_menunggak' => $totalSantriMenunggak,
+            'pending_transfer_count' => $pendingTransferCount,
+            'pending_transfer_amount'=> $pendingTransferAmount,
+            'pending_gateway_count'  => $gatewayPendingCount,
+        ];
+
+        // 6. Live Feed Transaksi Masuk Terkini (Gabungan Kasir + Gateway)
+        $recentKasirPayments = BillPayment::with(['bill.person.roomAssignments.room.dormitory', 'bill.config', 'logger'])
+            ->where('payment_method', '!=', 'gateway_duitku')
+            ->when($this->genderScope(), fn($q, $g) => $q->whereHas('bill.person', fn($pq) => $pq->where('gender', $g)))
+            ->orderBy('created_at', 'desc')
+            ->take(10)
+            ->get()
+            ->groupBy(fn($p) => $p->receipt_no ?: ($p->payment_group_id ?: $p->id))
+            ->map(function ($grp) {
+                $first = $grp->first();
+                $person = $first->bill?->person;
+                $dorm = $person?->roomAssignments?->first()?->room?->dormitory?->name;
+                $date = $first->payment_date ? \Carbon\Carbon::parse($first->payment_date) : $first->created_at;
+
+                return [
+                    'id'           => $first->id,
+                    'receipt_no'   => $first->receipt_no ?: 'KSR-' . strtoupper(substr($first->id, 0, 8)),
+                    'santri_name'  => $person?->name ?? 'Santri',
+                    'santri_nis'   => $person?->nis ?? '—',
+                    'dorm_name'    => $dorm ?: '—',
+                    'gender'       => $person?->gender ?? 'L',
+                    'source'       => 'kasir',
+                    'method_label' => match(strtolower($first->payment_method ?? '')) {
+                        'cash'     => '💵 Tunai (Kasir)',
+                        'transfer' => '🏦 Transfer Kasir',
+                        default    => strtoupper($first->payment_method ?? 'Kasir'),
+                    },
+                    'channel'      => $first->payment_method,
+                    'amount'       => (float) $grp->sum('amount_paid'),
+                    'date'         => $date,
+                    'date_fmt'     => $date ? $date->locale('id')->translatedFormat('d M, H:i') : '—',
+                    'logger_name'  => $first->logger?->name ?? 'Kasir',
+                    'preview_url'  => route('bukti-bayar.kuitansi', ['receiptNo' => ($first->receipt_no ?: $first->id), 'from' => 'bendahara']),
+                ];
+            });
+
+        $recentGatewayTrx = PaymentTransaction::with(['person.roomAssignments.room.dormitory'])
+            ->where('status', 'success')
+            ->when($this->genderScope(), fn($q, $g) => $q->whereHas('person', fn($pq) => $pq->where('gender', $g)))
+            ->orderBy('created_at', 'desc')
+            ->take(10)
+            ->get()
+            ->map(function ($trx) {
+                $person = $trx->person;
+                $dorm = $person?->roomAssignments?->first()?->room?->dormitory?->name;
+
+                return [
+                    'id'           => $trx->id,
+                    'receipt_no'   => $trx->merchant_order_id,
+                    'santri_name'  => $person?->name ?? 'Santri',
+                    'santri_nis'   => $person?->nis ?? '—',
+                    'dorm_name'    => $dorm ?: '—',
+                    'gender'       => $person?->gender ?? 'L',
+                    'source'       => 'gateway',
+                    'method_label' => '🌐 ' . ($trx->channel_label ?? $trx->payment_channel ?? 'Online QRIS/VA'),
+                    'channel'      => 'gateway_duitku',
+                    'amount'       => (float) $trx->total_amount,
+                    'date'         => $trx->created_at,
+                    'date_fmt'     => $trx->created_at ? $trx->created_at->locale('id')->translatedFormat('d M, H:i') : '—',
+                    'logger_name'  => 'Payment Gateway',
+                    'preview_url'  => route('bukti-bayar.gateway', $trx->id),
+                ];
+            });
+
+        $bendaharaRecentInflows = $recentKasirPayments->concat($recentGatewayTrx)
+            ->sortByDesc(fn($item) => $item['date'] ? $item['date']->timestamp : 0)
+            ->take(8)
+            ->values();
+
+        // 7. Data CMS Rekening Operasional & WhatsApp
+        $cmsContents = LandingPageContent::all()->pluck('value', 'key')->toArray();
+        $bendaharaAccounts = [
+            'putra_bsi_no'   => $cmsContents['wali_bsi_putra'] ?? '7123456789',
+            'putra_bsi_an'   => $cmsContents['wali_bsi_putra_an'] ?? 'Pesantren Al-Fithroh Putra',
+            'putra_bri_no'   => $cmsContents['wali_bri_putra'] ?? '001201009876504',
+            'putra_bri_an'   => $cmsContents['wali_bri_putra_an'] ?? 'Yayasan Al-Fithroh Putra',
+            'putra_wa'       => $cmsContents['wali_wa_putra'] ?? '6281234567890',
+            'putra_wa_name'  => $cmsContents['wali_wa_putra_name'] ?? 'Bendahara Putra',
+            'putri_bsi_no'   => $cmsContents['wali_bsi_putri'] ?? '7987654321',
+            'putri_bsi_an'   => $cmsContents['wali_bsi_putri_an'] ?? 'Pesantren Al-Fithroh Putri',
+            'putri_bri_no'   => $cmsContents['wali_bri_putri'] ?? '001201009876505',
+            'putri_bri_an'   => $cmsContents['wali_bri_putri_an'] ?? 'Yayasan Al-Fithroh Putri',
+            'putri_wa'       => $cmsContents['wali_wa_putri'] ?? '6281234567891',
+            'putri_wa_name'  => $cmsContents['wali_wa_putri_name'] ?? 'Bendahara Putri',
+        ];
+
         return view('livewire.keuangan.billing-manager', [
+            'bendaharaStats'              => $bendaharaStats,
+            'bendaharaRecentInflows'      => $bendaharaRecentInflows,
+            'bendaharaAccounts'           => $bendaharaAccounts,
+            'manualTransferSubmissions'   => $manualTransferSubmissions,
+            'manualTransferAllCount'      => $manualTransferAllCount,
+            'manualTransferPendingCount'  => $manualTransferPendingCount,
+            'manualTransferApprovedCount' => $manualTransferApprovedCount,
+            'manualTransferRejectedCount' => $manualTransferRejectedCount,
+            'transferDestinationBanks'    => $transferDestinationBanks,
+            'targetTransferGender'        => $targetTransferGender,
             'settlementReport'    => $settlementReport,
             'savedDistributions'  => $savedDistributions,
             'modalDormitoryData'  => $modalDormitoryData,
+            'modalCategoryData'   => $modalCategoryData,
             'registrationItems'   => $registrationItems,
             'santriSearchResults' => $santriSearch,
             'recentSantri'        => $recentSantri,

@@ -114,19 +114,25 @@
         /* ── BENTO INFO GRID (TABLE) ────────────────── */
         .info-grid-table {
             width: 100%;
-            border-collapse: separate;
-            border-spacing: 10px 0;
-            margin-left: -10px;
-            margin-right: -10px;
+            border-collapse: collapse;
             margin-bottom: 14px;
         }
         .info-grid-table > tbody > tr > td {
             width: 50%;
             vertical-align: top;
+            padding: 0;
+        }
+        .info-card-inner {
             background: #f8fafc;
             border: 1px solid #e2e8f0;
             border-radius: 8px;
-            padding: 10px 12px;
+            padding: 8px 10px;
+        }
+        .info-card-left {
+            margin-right: 4px;
+        }
+        .info-card-right {
+            margin-left: 4px;
         }
 
         .nested-info-table {
@@ -305,7 +311,7 @@
                     <div class="institution-sub">SIM Keuangan Santri &bull; <span class="elvith-brand">elvith.id</span></div>
                 </td>
                 <td class="doc-badge">
-                    <div class="title-tag">Kuitansi Pembayaran</div>
+                    <div class="title-tag">{{ ($type ?? '') === 'gateway' ? 'Bukti Bayar Online' : 'Kuitansi Pembayaran' }}</div>
                     <div class="receipt-num">{{ $receipt_no }}</div>
                 </td>
             </tr>
@@ -316,7 +322,7 @@
     <div class="status-strip">
         <table class="status-table">
             <tr>
-                <td class="status-label">&#10003; PEMBAYARAN RESMI &bull; LUNAS</td>
+                <td class="status-label">&#10003; {{ ($type ?? '') === 'gateway' ? 'PEMBAYARAN ONLINE SAH • LUNAS' : 'PEMBAYARAN RESMI • LUNAS' }}</td>
                 <td class="status-sub">Dicetak pada: {{ $generated_at }}</td>
             </tr>
         </table>
@@ -327,43 +333,47 @@
         <tr>
             <!-- Kolom Santri -->
             <td>
-                <table class="nested-info-table">
-                    <tr>
-                        <td class="n-key">Nama Santri</td>
-                        <td class="n-sep">:</td>
-                        <td class="n-val">{{ $santri_name }} ({{ $santri_gender }})</td>
-                    </tr>
-                    <tr>
-                        <td class="n-key">Kelas / Madrasah</td>
-                        <td class="n-sep">:</td>
-                        <td class="n-val">{{ $kelas_name }}</td>
-                    </tr>
-                    <tr>
-                        <td class="n-key">Komplek / Kamar</td>
-                        <td class="n-sep">:</td>
-                        <td class="n-val">{{ $dorm_name }}</td>
-                    </tr>
-                </table>
+                <div class="info-card-inner info-card-left">
+                    <table class="nested-info-table">
+                        <tr>
+                            <td class="n-key">Nama Santri</td>
+                            <td class="n-sep">:</td>
+                            <td class="n-val">{{ $santri_name }} ({{ $santri_gender }})</td>
+                        </tr>
+                        <tr>
+                            <td class="n-key">Kelas / Madrasah</td>
+                            <td class="n-sep">:</td>
+                            <td class="n-val">{{ $kelas_name }}</td>
+                        </tr>
+                        <tr>
+                            <td class="n-key">Komplek / Kamar</td>
+                            <td class="n-sep">:</td>
+                            <td class="n-val">{{ $dorm_name }}</td>
+                        </tr>
+                    </table>
+                </div>
             </td>
             <!-- Kolom Transaksi -->
             <td>
-                <table class="nested-info-table">
-                    <tr>
-                        <td class="n-key">Tanggal Bayar</td>
-                        <td class="n-sep">:</td>
-                        <td class="n-val">{{ $payment_date }} {{ $payment_time }}</td>
-                    </tr>
-                    <tr>
-                        <td class="n-key">Metode Bayar</td>
-                        <td class="n-sep">:</td>
-                        <td class="n-val">{{ $payment_method }}</td>
-                    </tr>
-                    <tr>
-                        <td class="n-key">Petugas Kasir</td>
-                        <td class="n-sep">:</td>
-                        <td class="n-val">{{ $cashier_name }}</td>
-                    </tr>
-                </table>
+                <div class="info-card-inner info-card-right">
+                    <table class="nested-info-table">
+                        <tr>
+                            <td class="n-key">Tanggal Bayar</td>
+                            <td class="n-sep">:</td>
+                            <td class="n-val">{{ $payment_date }} {{ $payment_time }}</td>
+                        </tr>
+                        <tr>
+                            <td class="n-key">Metode Bayar</td>
+                            <td class="n-sep">:</td>
+                            <td class="n-val">{{ $payment_method }}</td>
+                        </tr>
+                        <tr>
+                            <td class="n-key">{{ ($type ?? '') === 'gateway' ? 'Verifikasi' : 'Petugas Kasir' }}</td>
+                            <td class="n-sep">:</td>
+                            <td class="n-val">{{ $cashier_name }}</td>
+                        </tr>
+                    </table>
+                </div>
             </td>
         </tr>
     </table>
@@ -403,6 +413,20 @@
                 @endforeach
             </tbody>
             <tfoot>
+                @if(isset($mdr_amount) && $mdr_amount > 0)
+                    <tr class="total-item-row">
+                        <td colspan="3" class="text-right" style="color: #64748b;">Nominal Tagihan</td>
+                        <td class="text-right" style="font-family: 'Courier New', Courier, monospace;">
+                            Rp {{ number_format($bill_amount, 0, ',', '.') }}
+                        </td>
+                    </tr>
+                    <tr class="total-item-row">
+                        <td colspan="3" class="text-right" style="color: #64748b;">Biaya Layanan Gateway</td>
+                        <td class="text-right" style="font-family: 'Courier New', Courier, monospace; color: #dc2626;">
+                            + Rp {{ number_format($mdr_amount, 0, ',', '.') }}
+                        </td>
+                    </tr>
+                @endif
                 @if($payment_method === 'Tunai' && $tendered_amount > $total_amount)
                     <tr class="total-item-row">
                         <td colspan="3" class="text-right" style="color: #64748b;">Uang Tunai Diterima</td>
@@ -447,7 +471,7 @@
                 </div>
             </td>
             <td style="width: 35%;">
-                <div class="sig-title">Kasir / Bendahara Pondok,</div>
+                <div class="sig-title">{{ ($type ?? '') === 'gateway' ? 'Verifikasi Sistem,' : 'Kasir / Bendahara Pondok,' }}</div>
                 <div class="sig-name">{{ $cashier_name }}</div>
             </td>
         </tr>

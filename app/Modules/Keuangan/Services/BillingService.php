@@ -276,8 +276,10 @@ class BillingService
                 $months   = [1=>'Januari',2=>'Februari',3=>'Maret',4=>'April',5=>'Mei',6=>'Juni',
                              7=>'Juli',8=>'Agustus',9=>'September',10=>'Oktober',11=>'November',12=>'Desember'];
                 $interval = $bill?->config?->interval ?? '';
+                $isSemester = in_array($interval, ['semester', '2x_yearly']) || ($bill && $bill->bill_type === 'syahriah_madrasah');
+                $sem = $bill ? ($bill->period_sub ?: ($bill->period_month && $bill->period_month <= 6 ? 1 : 2)) : 1;
                 $period   = match(true) {
-                    $interval === 'semester'                                       => 'Semester '.$bill->period_month.'/'.$bill->period_year,
+                    $isSemester                                                    => 'Semester '.$sem.'/'.$bill->period_year,
                     in_array($interval, ['once','insidental','event','sekali'])   => 'Event '.($bill->period_year ?? ''),
                     default                                                        => ($months[$bill?->period_month ?? 0] ?? '').' '.($bill?->period_year ?? ''),
                 };

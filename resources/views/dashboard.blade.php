@@ -1,7 +1,7 @@
 <x-app-layout>
     <div class="space-y-8">
         <!-- 1. Executive Welcome Banner -->
-        <div class="bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800 text-white rounded-3xl p-6 sm:p-8 border border-slate-700/60 shadow-xl relative overflow-hidden">
+        <div class="bg-slate-950 bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800 text-white rounded-3xl p-6 sm:p-8 border border-slate-700/60 shadow-xl relative overflow-hidden" style="background-color: #020617;">
             <div class="absolute -right-20 -top-20 w-80 h-80 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none"></div>
             <div class="absolute -left-20 -bottom-20 w-80 h-80 bg-blue-500/10 rounded-full blur-3xl pointer-events-none"></div>
 
@@ -187,7 +187,7 @@
             }
         }">
             <!-- Compact Banner saat Dev Corner disembunyikan -->
-            <div x-show="!showDevCorner" class="bg-gradient-to-r from-slate-950 via-slate-900 to-slate-950 text-white border border-slate-800/80 p-4 sm:p-5 rounded-3xl shadow-lg flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div x-show="!showDevCorner" class="bg-slate-950 bg-gradient-to-r from-slate-950 via-slate-900 to-slate-950 text-white border border-slate-800/80 p-4 sm:p-5 rounded-3xl shadow-lg flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4" style="background-color: #020617;">
                 <div class="flex items-center gap-3">
                     <div class="w-10 h-10 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold text-xl shrink-0">
                         🎮
@@ -207,7 +207,7 @@
             </div>
 
             <!-- Full Dev Corner Box (tampil jika showDevCorner = true) -->
-            <div x-show="showDevCorner" x-cloak class="bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-white border border-slate-800 p-5 sm:p-7 rounded-3xl shadow-xl relative overflow-hidden space-y-5">
+            <div x-show="showDevCorner" x-cloak class="bg-slate-950 bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-white border border-slate-800 p-5 sm:p-7 rounded-3xl shadow-xl relative overflow-hidden space-y-5" style="background-color: #020617;">
                 <!-- Control Header Bar -->
                 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-4">
                     <div class="flex items-center gap-2">
@@ -480,7 +480,7 @@
                 <!-- Left: Highlight Today & Hari-Hari Penting (5 Cols) -->
                 <div class="lg:col-span-5 space-y-5">
                     <!-- Today Highlight Box -->
-                    <div class="bg-gradient-to-br from-slate-900 via-slate-950 to-slate-900 text-white border border-slate-800 p-6 rounded-3xl shadow-lg relative overflow-hidden space-y-4">
+                    <div class="bg-slate-950 bg-gradient-to-br from-slate-900 via-slate-950 to-slate-900 text-white border border-slate-800 p-6 rounded-3xl shadow-lg relative overflow-hidden space-y-4" style="background-color: #020617;">
                         <div class="absolute -right-10 -top-10 w-40 h-40 bg-emerald-500/15 rounded-full blur-2xl pointer-events-none"></div>
 
                         <div class="flex items-center justify-between border-b border-slate-800 pb-3">

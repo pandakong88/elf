@@ -20,16 +20,23 @@ Route::get('/portal-wali', \App\Livewire\WaliPortal\SantriSearch::class)->name('
 Route::get('/portal-wali/{personId}', \App\Livewire\WaliPortal\DashboardTagihan::class)->name('portal-wali.dashboard');
 Route::get('/portal-wali/payment/return', \App\Livewire\WaliPortal\StatusPembayaran::class)->name('portal-wali.payment.return');
 
-// ─── Duitku Payment Gateway ───────────────────────────────────────────────────
+// ─── Payment Gateway Webhooks ────────────────────────────────────────────────
+// Webhook callback dari DOKU — publik, tanpa auth, tanpa CSRF
+Route::post('/payment/doku/notification', [\App\Http\Controllers\DokuNotificationController::class, 'handle'])
+    ->name('doku.notification')
+    ->withoutMiddleware([\Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class]);
+
 // Webhook callback dari Duitku — publik, tanpa auth, tanpa CSRF
 Route::post('/duitku/callback', [\App\Http\Controllers\DuitkuCallbackController::class, 'handle'])
     ->name('duitku.callback')
     ->withoutMiddleware([\Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class]);
 
-// ─── Bukti Pembayaran PDF ─────────────────────────────────────────────────────
-// Wali portal — unduh PDF bukti bayar gateway (auth check di controller)
+// ─── Bukti Pembayaran Web Preview & PDF ──────────────────────────────────────────
+// Wali portal & Bendahara — Preview Kuitansi Gateway & Unduh PDF
 Route::get('/portal-wali/bukti-bayar/gateway/{trxId}', [\App\Http\Controllers\BuktiBayarController::class, 'gateway'])
     ->name('bukti-bayar.gateway');
+Route::get('/portal-wali/bukti-bayar/gateway/{trxId}/pdf', [\App\Http\Controllers\BuktiBayarController::class, 'gatewayPdf'])
+    ->name('bukti-bayar.gateway.pdf');
 
 // Admin/Bendahara & Portal Wali — Preview Kuitansi & Unduh PDF
 Route::get('/keuangan/kuitansi/{receiptNo}', [\App\Http\Controllers\BuktiBayarController::class, 'kuitansi'])
@@ -38,6 +45,32 @@ Route::get('/keuangan/kuitansi/{receiptNo}/pdf', [\App\Http\Controllers\BuktiBay
     ->name('bukti-bayar.kuitansi.pdf');
 Route::get('/keuangan/bukti-bayar/kasir/{paymentId}', [\App\Http\Controllers\BuktiBayarController::class, 'kasir'])
     ->name('bukti-bayar.kasir');
+
+// Stream bukti transfer manual langsung (Bypass web server symlink requirement)
+Route::get('/transfer-proof/{id}/view', [\App\Http\Controllers\BuktiBayarController::class, 'viewProofImage'])
+    ->name('transfer-proof.view');
+// ─── Storage Static Fallback (Jika symlink public/storage hosting belum aktif) ──
+Route::get('/storage/{path}', function (string $path) {
+    $fullPath = storage_path('app/public/' . $path);
+    if (!file_exists($fullPath)) {
+        $altJpg  = preg_replace('/\.(webp|png)$/i', '.jpg', $fullPath);
+        $altWebp = preg_replace('/\.(jpg|jpeg|png)$/i', '.webp', $fullPath);
+        $altPng  = preg_replace('/\.(jpg|jpeg|webp)$/i', '.png', $fullPath);
+
+        if (file_exists($altJpg)) {
+            $fullPath = $altJpg;
+        } elseif (file_exists($altWebp)) {
+            $fullPath = $altWebp;
+        } elseif (file_exists($altPng)) {
+            $fullPath = $altPng;
+        } else {
+            abort(404, 'File bukti/media tidak ditemukan.');
+        }
+    }
+    return response()->file($fullPath, [
+        'Cache-Control' => 'public, max-age=86400',
+    ]);
+})->where('path', '.*')->name('storage.fallback');
 // ─────────────────────────────────────────────────────────────────────────────
 
 
@@ -56,6 +89,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/system/santri/download-template', [\App\Http\Controllers\SystemController::class, 'downloadSantriImportTemplate'])->name('system.santri.download-template');
     Route::get('/system/asrama/download-template', [\App\Http\Controllers\SystemController::class, 'downloadAsramaImportTemplate'])->name('system.asrama.download-template');
     Route::get('/system/kelas/download-template', [\App\Http\Controllers\SystemController::class, 'downloadKelasImportTemplate'])->name('system.kelas.download-template');
+    Route::get('/system/tunggakan/download-template', [\App\Http\Controllers\SystemController::class, 'downloadTunggakanImportTemplate'])->name('system.tunggakan.download-template');
     
     // Livewire Kepengasuhan Pages
     Route::get('/kepengasuhan/asrama-kelas', \App\Livewire\Kepengasuhan\PusatKendaliAsramaKelas::class)->name('kepengasuhan.asrama-kelas');
@@ -88,9 +122,13 @@ Route::middleware('auth')->group(function () {
     Route::get('/keuangan/majek', \App\Livewire\Keuangan\MajekManager::class)->name('keuangan.majek');
     Route::get('/keuangan/tarif-pendaftaran', \App\Livewire\Keuangan\RegistrationTariffManager::class)->name('keuangan.tarif-pendaftaran');
 
-    // Rekonsiliasi & Settlement Reports (PDF)
+    // Rekonsiliasi & Settlement Reports (PDF & Excel)
     Route::get('/keuangan/settlement/pdf', [\App\Http\Controllers\SettlementReportController::class, 'downloadSettlementPdf'])->name('keuangan.settlement.pdf');
+    Route::get('/keuangan/settlement/export-excel', [\App\Http\Controllers\SettlementReportController::class, 'exportExcel'])->name('keuangan.settlement.export-excel');
+    Route::get('/keuangan/settlement/batch-slips', [\App\Http\Controllers\SettlementReportController::class, 'downloadBatchSlipsPdf'])->name('keuangan.settlement.batch-slips');
     Route::get('/keuangan/settlement/slip-komplek/{dormitoryId}', [\App\Http\Controllers\SettlementReportController::class, 'downloadSlipKomplekPdf'])->name('keuangan.settlement.slip-komplek');
+    Route::get('/keuangan/settlement/slip-kategori/{categoryKey}', [\App\Http\Controllers\SettlementReportController::class, 'downloadSlipKategoriPdf'])->name('keuangan.settlement.slip-kategori');
+    Route::get('/keuangan/settlement/snapshot/{id}/pdf', [\App\Http\Controllers\SettlementReportController::class, 'downloadSnapshotPdf'])->name('keuangan.settlement.snapshot-pdf');
 
 
 

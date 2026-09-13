@@ -19,6 +19,8 @@ use App\Modules\Keuangan\Services\BillingService;
 use App\Modules\Keuangan\Services\MajekService;
 use App\Modules\Keuangan\Services\EventBillService;
 use App\Models\User;
+use App\Livewire\Keuangan\BillingManager;
+use Livewire\Livewire;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
 
@@ -259,4 +261,86 @@ class KeuanganBillingTest extends TestCase
         $this->assertEquals(0.00, $nonSiblingItem->discount_amount);
         $this->assertEquals(50000.00, $nonSiblingItem->final_amount);
     }
+
+    public function test_bendahara_dashboard_tab_renders_and_computes_stats(): void
+    {
+        $admin = $this->admin;
+        $this->actingAs($admin);
+
+        // 1. Create a santri with a bill and a payment today
+        $santri = Person::create([
+            'id'     => Str::uuid()->toString(),
+            'name'   => 'Muhammad Rizky',
+            'gender' => 'L',
+        ]);
+
+        $bill = Bill::create([
+            'id'           => Str::uuid()->toString(),
+            'person_id'    => $santri->id,
+            'bill_type'    => 'syahriah_pondok',
+            'period_month' => now()->month,
+            'period_year'  => now()->year,
+            'amount'       => 150000.00,
+            'amount_paid'  => 150000.00,
+            'status'       => 'paid',
+            'created_by'   => $admin->id,
+        ]);
+
+        BillPayment::create([
+            'bill_id'        => $bill->id,
+            'amount_paid'    => 150000.00,
+            'payment_date'   => now()->toDateString(),
+            'payment_method' => 'cash',
+            'receipt_no'     => 'KSR-TEST-001',
+            'logged_by'      => $admin->id,
+        ]);
+
+        Livewire::test(BillingManager::class)
+            ->assertSet('activeTab', 'bendahara')
+            ->assertSee('Beranda Bendahara')
+            ->assertSee('Penerimaan Hari Ini')
+            ->assertSee('150.000')
+            ->assertSee('Muhammad Rizky')
+            ->assertSee('KSR-TEST-001')
+            ->call('$set', 'activeTab', 'cashier')
+            ->assertSet('activeTab', 'cashier');
+    }
+
+    public function test_semester_bill_period_formatting(): void
+    {
+        $santri = Person::create([
+            'id'     => Str::uuid()->toString(),
+            'name'   => 'Ahmad Semester Test',
+            'gender' => 'L',
+        ]);
+
+        // 1. Syahriah Madrasah Semester 1 (period_month = 1)
+        $billSem1 = Bill::create([
+            'id'           => Str::uuid()->toString(),
+            'person_id'    => $santri->id,
+            'bill_type'    => 'syahriah_madrasah',
+            'period_month' => 1,
+            'period_year'  => 2026,
+            'amount'       => 150000.00,
+            'amount_paid'  => 0.00,
+            'status'       => 'unpaid',
+            'created_by'   => $this->admin->id,
+        ]);
+        $this->assertEquals('Semester 1 2026', $billSem1->period_formatted);
+
+        // 2. Syahriah Madrasah Semester 2 (period_month = 7)
+        $billSem2 = Bill::create([
+            'id'           => Str::uuid()->toString(),
+            'person_id'    => $santri->id,
+            'bill_type'    => 'syahriah_madrasah',
+            'period_month' => 7,
+            'period_year'  => 2026,
+            'amount'       => 150000.00,
+            'amount_paid'  => 0.00,
+            'status'       => 'unpaid',
+            'created_by'   => $this->admin->id,
+        ]);
+        $this->assertEquals('Semester 2 2026', $billSem2->period_formatted);
+    }
 }
+

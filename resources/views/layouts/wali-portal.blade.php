@@ -25,6 +25,49 @@
             });
         }
 
+        // Kompresi Gambar Cerdas di Browser Sisi Klien (Hemat Kuota & Cepat)
+        window.compressImageFile = function(file, maxDimension = 1600, quality = 0.8) {
+            return new Promise((resolve) => {
+                if (!file || !file.type.startsWith('image/')) {
+                    resolve(file);
+                    return;
+                }
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const img = new Image();
+                    img.onload = function() {
+                        let width = img.width;
+                        let height = img.height;
+                        const ratio = Math.min(maxDimension / width, maxDimension / height, 1.0);
+                        width = Math.round(width * ratio);
+                        height = Math.round(height * ratio);
+
+                        const canvas = document.createElement('canvas');
+                        canvas.width = width;
+                        canvas.height = height;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, width, height);
+
+                        canvas.toBlob((blob) => {
+                            if (blob && blob.size < file.size) {
+                                const compressedFile = new File([blob], file.name.replace(/\.[^/.]+$/, "") + ".webp", {
+                                    type: "image/webp",
+                                    lastModified: Date.now()
+                                });
+                                resolve(compressedFile);
+                            } else {
+                                resolve(file);
+                            }
+                        }, 'image/webp', quality);
+                    };
+                    img.onerror = () => resolve(file);
+                    img.src = e.target.result;
+                };
+                reader.onerror = () => resolve(file);
+                reader.readAsDataURL(file);
+            });
+        };
+
         // Generator Gambar Struk Simulasi Native (100% Handal & Cepat)
         function generateAndDownloadSimulasiImage(santriName, nominal, itemsData) {
             try {
@@ -163,6 +206,9 @@
     @php
         $contents = \App\Modules\Core\Models\LandingPageContent::all()->pluck('value', 'key')->toArray();
 
+        $waPutraClean = \App\Livewire\WaliPortal\DashboardTagihan::normalizeWaNumber($contents['wali_wa_putra'] ?? '6281234567890');
+        $waPutriClean = \App\Livewire\WaliPortal\DashboardTagihan::normalizeWaNumber($contents['wali_wa_putri'] ?? '6285713285438');
+
         $drawerPutra = [
             'bank1_name' => $contents['wali_bank1_name_putra'] ?? 'Bank Syariah Indonesia (BSI)',
             'bsi'        => $contents['wali_bsi_putra'] ?? '7123456789',
@@ -172,7 +218,7 @@
             'bri_an'     => $contents['wali_bri_putra_an'] ?? 'Yayasan Al-Fithroh Putra',
             'wa'         => $contents['wali_wa_putra'] ?? '6281234567890',
             'wa_name'    => $contents['wali_wa_putra_name'] ?? 'Bendahara Putra Al-Fithroh',
-            'wa_url'     => 'https://wa.me/' . preg_replace('/[^0-9]/', '', $contents['wali_wa_putra'] ?? '6281234567890') . '?text=' . urlencode("Assalamu'alaikum Bendahara Putra Al-Fithroh, saya Wali Santri ingin konfirmasi pembayaran."),
+            'wa_url'     => 'https://wa.me/' . $waPutraClean . '?text=' . urlencode("Assalamu'alaikum Bendahara Putra Al-Fithroh, saya Wali Santri ingin konfirmasi pembayaran."),
         ];
 
         $drawerPutri = [
@@ -184,15 +230,45 @@
             'bri_an'     => $contents['wali_bri_putri_an'] ?? 'Yayasan Al-Fithroh Putri',
             'wa'         => $contents['wali_wa_putri'] ?? '6285713285438',
             'wa_name'    => $contents['wali_wa_putri_name'] ?? 'Bendahara Putri Al-Fithroh',
-            'wa_url'     => 'https://wa.me/' . preg_replace('/[^0-9]/', '', $contents['wali_wa_putri'] ?? '6285713285438') . '?text=' . urlencode("Assalamu'alaikum Bendahara Putri Al-Fithroh, saya Wali Santri ingin konfirmasi pembayaran."),
+            'wa_url'     => 'https://wa.me/' . $waPutriClean . '?text=' . urlencode("Assalamu'alaikum Bendahara Putri Al-Fithroh, saya Wali Santri ingin konfirmasi pembayaran."),
         ];
+
+        $rawFaq = $contents['wali_faq_items'] ?? null;
+        $faqItems = [];
+        if (!empty($rawFaq)) {
+            $faqItems = is_string($rawFaq) ? json_decode($rawFaq, true) : $rawFaq;
+        }
+        if (empty($faqItems) || !is_array($faqItems)) {
+            $faqItems = [
+                [
+                    'question' => 'Bagaimana cara konfirmasi bukti pembayaran?',
+                    'answer'   => 'Setelah melakukan transfer manual ke rekening pondok, Bapak/Ibu dapat mengunggah foto resi/struk transfer secara langsung melalui fitur "Unggah Bukti Transfer" pada portal ini, atau mengirimkannya via WhatsApp ke nomor Bendahara Pondok.',
+                ],
+                [
+                    'question' => 'Apakah bisa membayar via online (Virtual Account atau QRIS)?',
+                    'answer'   => 'Untuk saat ini pembayaran online otomatis (Virtual Account & QRIS) belum bisa digunakan, namun sistem ini akan terus kami usahakan dan kembangkan. Mohon menunggu informasi resmi lebih lanjut.',
+                ],
+                [
+                    'question' => 'Apakah bisa membayar secara offline / tunai langsung?',
+                    'answer'   => 'Bisa. Pembayaran tunai dapat dititipkan langsung ke santri yang bersangkutan atau datang langsung menemui pengurus pusat / bendahara pondok di kantor kasir pesantren.',
+                ],
+                [
+                    'question' => 'Apakah bisa menyicil tagihan yang nominalnya cukup besar?',
+                    'answer'   => 'Bisa. Pada daftar tagihan santri, pilih tagihan yang ingin dibayar lalu tekan tombol bayar sebagian / cicil dan masukkan nominal yang ingin dibayarkan terlebih dahulu.',
+                ],
+                [
+                    'question' => 'Apakah bisa menitipkan uang saku santri bersamaan dengan pembayaran?',
+                    'answer'   => 'Bisa. Wali santri dapat menitipkan uang saku santri bersamaan saat melakukan konfirmasi pembayaran ke bendahara atau melalui layanan kasir pondok.',
+                ],
+            ];
+        }
 
         $initialTab = isset($isPutri) && $isPutri ? 'putri' : 'putra';
     @endphp
 
     <!-- Header Ramah Wali -->
     <header class="bg-emerald-700 dark:bg-slate-900 text-white shadow-lg sticky top-0 z-30 px-4 py-3 border-b border-emerald-800 dark:border-slate-800 transition-colors">
-        <div class="max-w-md mx-auto flex items-center justify-between">
+        <div class="max-w-xl mx-auto flex items-center justify-between">
             <a href="{{ url('/portal-wali') }}" class="flex items-center gap-2.5">
                 <div class="w-9 h-9 rounded-xl bg-white dark:bg-slate-800 text-emerald-700 dark:text-emerald-400 flex items-center justify-center font-black text-lg shadow-md border border-emerald-600/30 dark:border-slate-700">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l9-5-9-5-9 5 9 5z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0112 20.055a11.952 11.952 0 01-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z"/></svg>
@@ -391,23 +467,45 @@
                         </div>
                     </div>
 
-                    <!-- 3. FAQ / Pertanyaan Umum -->
-                    <div class="space-y-2 pt-2 border-t border-slate-200 dark:border-slate-800">
-                        <h3 class="text-xs font-black uppercase text-slate-800 dark:text-slate-200 tracking-wider flex items-center gap-1.5">
-                            <svg class="w-4 h-4 text-amber-600 dark:text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                            <span>Tanya Jawab (FAQ)</span>
-                        </h3>
-                        <div class="space-y-2 text-[11px]">
-                            <div class="bg-slate-50 dark:bg-slate-950 p-2.5 rounded-xl border border-slate-200 dark:border-slate-800">
-                                <strong class="text-slate-800 dark:text-slate-200 block mb-0.5">Bagaimana cara kirim bukti bayar?</strong>
-                                <span class="text-slate-500 dark:text-slate-400">Setelah transfer, foto resi/bukti bayar lalu kirimkan via tombol WhatsApp Bendahara di atas.</span>
-                            </div>
-                            <div class="bg-slate-50 dark:bg-slate-950 p-2.5 rounded-xl border border-slate-200 dark:border-slate-800">
-                                <strong class="text-slate-800 dark:text-slate-200 block mb-0.5">Apakah bisa membayar tunai?</strong>
-                                <span class="text-slate-500 dark:text-slate-400">Bisa. Pembayaran tunai diterima langsung di kantor Kasir Bendahara Pesantren.</span>
+                    <!-- 3. FAQ / Pertanyaan Umum (Dinamis dari CMS) -->
+                    @if(!empty($faqItems))
+                        <div class="space-y-2 pt-2 border-t border-slate-200 dark:border-slate-800" x-data="{ activeFaq: null }">
+                            <h3 class="text-xs font-black uppercase text-slate-800 dark:text-slate-200 tracking-wider flex items-center gap-1.5">
+                                <svg class="w-4 h-4 text-amber-600 dark:text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                <span>Tanya Jawab (FAQ)</span>
+                            </h3>
+                            <div class="space-y-1.5">
+                                @foreach($faqItems as $index => $item)
+                                    @php
+                                        $q = is_array($item) ? ($item['question'] ?? '') : '';
+                                        $a = is_array($item) ? ($item['answer'] ?? '') : '';
+                                    @endphp
+                                    @if(!empty($q) && !empty($a))
+                                        <div class="bg-slate-50 dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden transition-all">
+                                            <button type="button" 
+                                                    @click="activeFaq = (activeFaq === {{ $index }} ? null : {{ $index }})" 
+                                                    class="w-full text-left p-2.5 flex items-start justify-between gap-2 transition-colors hover:bg-slate-100 dark:hover:bg-slate-900/80">
+                                                <span class="font-bold text-[11px] text-slate-800 dark:text-slate-200 leading-snug">
+                                                    {{ $q }}
+                                                </span>
+                                                <svg class="w-3.5 h-3.5 text-slate-400 shrink-0 mt-0.5 transition-transform duration-200" 
+                                                     :class="{ 'rotate-180 text-amber-500': activeFaq === {{ $index }} }" 
+                                                     fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/>
+                                                </svg>
+                                            </button>
+                                            <div x-show="activeFaq === {{ $index }}" 
+                                                 x-collapse 
+                                                 x-cloak
+                                                 class="px-2.5 pb-2.5 text-[11px] text-slate-600 dark:text-slate-400 border-t border-slate-200/60 dark:border-slate-800/80 pt-2 leading-relaxed bg-white/60 dark:bg-slate-900/40">
+                                                {!! nl2br(e($a)) !!}
+                                            </div>
+                                        </div>
+                                    @endif
+                                @endforeach
                             </div>
                         </div>
-                    </div>
+                    @endif
                 </div>
 
                 <!-- Drawer Footer -->
@@ -427,7 +525,7 @@
     </div>
 
     <!-- Content Area (Mobile Container) -->
-    <main class="flex-1 w-full max-w-md mx-auto p-4 pb-12">
+    <main class="flex-1 w-full max-w-xl mx-auto p-3.5 sm:p-4 pb-12">
         {{ $slot }}
     </main>
 

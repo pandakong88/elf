@@ -265,6 +265,13 @@
     @else
         <!-- Navigation Tabs -->
         <div class="flex border-b border-slate-200 dark:border-slate-800 gap-2 overflow-x-auto pb-1">
+            <button wire:click="$set('activeTab', 'bendahara')" class="px-5 py-3 text-xs font-black transition-all border-b-2 flex items-center gap-2 whitespace-nowrap {{ $activeTab === 'bendahara' ? 'border-emerald-600 text-emerald-700 dark:text-emerald-400 bg-emerald-50/50 dark:bg-emerald-950/20' : 'border-transparent text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-200' }}">
+                <svg class="w-4 h-4 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+                <span>🏛️ Beranda Bendahara</span>
+                @if(isset($manualTransferPendingCount) && $manualTransferPendingCount > 0)
+                    <span class="inline-flex items-center justify-center px-1.5 py-0.5 text-[9px] font-extrabold bg-rose-500 text-white rounded-full animate-pulse">{{ $manualTransferPendingCount }}</span>
+                @endif
+            </button>
             <button wire:click="$set('activeTab', 'generate')" class="px-5 py-3 text-xs font-bold transition-all border-b-2 flex items-center gap-2 whitespace-nowrap {{ $activeTab === 'generate' ? 'border-emerald-500 text-emerald-600 dark:text-emerald-400' : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300' }}">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
                 <span>Penerbitan Tagihan</span>
@@ -284,11 +291,17 @@
                     <span class="inline-flex items-center justify-center w-4 h-4 text-[9px] font-extrabold bg-amber-500 text-white rounded-full">{{ $gatewayPendingCount }}</span>
                 @endif
             </button>
+            <button wire:click="$set('activeTab', 'transfers')" class="px-5 py-3 text-xs font-bold transition-all border-b-2 flex items-center gap-2 whitespace-nowrap {{ $activeTab === 'transfers' ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400' : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300' }}">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                <span>Verifikasi Transfer Wali</span>
+                @if(isset($manualTransferPendingCount) && $manualTransferPendingCount > 0)
+                    <span class="inline-flex items-center justify-center px-1.5 py-0.5 text-[9px] font-extrabold bg-rose-500 text-white rounded-full animate-pulse">{{ $manualTransferPendingCount }}</span>
+                @endif
+            </button>
             @if($this->canViewSettlementTab())
                 <button wire:click="$set('activeTab', 'settlement')" class="px-5 py-3 text-xs font-bold transition-all border-b-2 flex items-center gap-2 whitespace-nowrap {{ $activeTab === 'settlement' ? 'border-sky-500 text-sky-600 dark:text-sky-400' : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300' }}">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3"/></svg>
-                    <span>Rekonsiliasi &amp; Settlement</span>
-                    <span class="inline-flex items-center justify-center px-1.5 py-0.5 text-[9px] font-black bg-sky-500/10 text-sky-600 dark:text-sky-400 border border-sky-500/30 rounded-full">Fase 4</span>
+                    <span>Rekonsiliasi &amp; Bagi Dana</span>
                 </button>
             @endif
             <button wire:click="$set('activeTab', 'payments_log')" class="px-5 py-3 text-xs font-bold transition-all border-b-2 flex items-center gap-2 whitespace-nowrap {{ $activeTab === 'payments_log' ? 'border-emerald-500 text-emerald-600 dark:text-emerald-400' : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300' }}">
@@ -311,6 +324,436 @@
 
         <!-- Tabs Contents -->
         <div>
+            <!-- ============================================================= -->
+            <!-- TAB 0: DASHBOARD / BERANDA BENDAHARA                           -->
+            <!-- ============================================================= -->
+            @if ($activeTab === 'bendahara')
+                <div class="space-y-6">
+
+                    <!-- ─── HEADER BANNER EKSEKUTIF BENDAHARA ─────────────────── -->
+                    <div class="relative overflow-hidden rounded-3xl bg-emerald-900 bg-gradient-to-br from-emerald-800 via-teal-900 to-slate-900 p-6 text-white shadow-lg border border-emerald-700/50" style="background-color: #064e3b;">
+                        <div class="relative z-10 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                            <div>
+                                <div class="inline-flex items-center gap-2 px-3 py-1 bg-white/10 backdrop-blur-md rounded-full text-[11px] font-bold text-emerald-200 mb-2 border border-white/15">
+                                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+                                    <span>Pusat Kendali Eksekutif Bendahara</span>
+                                </div>
+                                <h2 class="text-xl md:text-2xl font-black tracking-tight">
+                                    Assalamu'alaikum, {{ auth()->user()->name ?? 'Bendahara Pesantren' }} 👋
+                                </h2>
+                                <p class="text-xs text-emerald-100/80 mt-1 max-w-xl leading-relaxed">
+                                    Monitoring arus kas masuk harian, antrean verifikasi bukti transfer wali santri, dan status tagihan pesantren secara real-time.
+                                </p>
+                            </div>
+
+                            <div class="flex items-center gap-2.5 shrink-0">
+                                <div class="bg-black/25 backdrop-blur-md px-4 py-2.5 rounded-2xl border border-white/10 text-right">
+                                    <span class="block text-[10px] font-bold uppercase tracking-wider text-emerald-300/80">Hari Ini</span>
+                                    <strong class="text-xs font-black text-white">
+                                        {{ now()->locale('id')->translatedFormat('l, d F Y') }}
+                                    </strong>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Decorative background elements -->
+                        <div class="absolute -right-10 -bottom-10 w-64 h-64 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none"></div>
+                        <div class="absolute right-1/3 -top-12 w-48 h-48 bg-teal-400/10 rounded-full blur-2xl pointer-events-none"></div>
+                    </div>
+
+                    <!-- ─── 4 TOP KPI CARDS ───────────────────────────────────── -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                        
+                        <!-- 1. Penerimaan Hari Ini -->
+                        <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-3xl p-4 space-y-3 shadow-xs relative overflow-hidden group hover:border-emerald-500/50 transition-all">
+                            <div class="flex items-center justify-between">
+                                <span class="text-[10px] font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">Penerimaan Hari Ini</span>
+                                <div class="w-8 h-8 rounded-xl bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-sm font-bold">
+                                    💵
+                                </div>
+                            </div>
+                            <div>
+                                <strong class="text-xl font-black text-slate-900 dark:text-white block">
+                                    Rp {{ number_format($bendaharaStats['today_total_inflow'] ?? 0, 0, ',', '.') }}
+                                </strong>
+                                <span class="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 mt-0.5 block">
+                                    {{ $bendaharaStats['today_total_trx'] ?? 0 }} Transaksi Terdata
+                                </span>
+                            </div>
+                            <div class="pt-2 border-t border-slate-100 dark:border-slate-800 text-[10px] text-slate-500 dark:text-slate-400 space-y-0.5">
+                                <div class="flex justify-between">
+                                    <span>Tunai:</span>
+                                    <strong class="text-slate-700 dark:text-slate-300">Rp {{ number_format($bendaharaStats['today_cash_inflow'] ?? 0, 0, ',', '.') }}</strong>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span>Transfer / Online:</span>
+                                    <strong class="text-slate-700 dark:text-slate-300">Rp {{ number_format(($bendaharaStats['today_transfer_inflow'] ?? 0) + ($bendaharaStats['today_gateway_inflow'] ?? 0), 0, ',', '.') }}</strong>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 2. Antrean Verifikasi Transfer Wali -->
+                        <div class="bg-white dark:bg-slate-900 border rounded-3xl p-4 space-y-3 shadow-xs relative overflow-hidden transition-all {{ ($bendaharaStats['pending_transfer_count'] ?? 0) > 0 ? 'border-amber-300 dark:border-amber-700/60 bg-amber-50/20' : 'border-slate-200/80 dark:border-slate-800' }}">
+                            <div class="flex items-center justify-between">
+                                <span class="text-[10px] font-black uppercase tracking-wider text-amber-700 dark:text-amber-400">Verifikasi Transfer Wali</span>
+                                <div class="w-8 h-8 rounded-xl bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 flex items-center justify-center text-sm font-bold">
+                                    ⏳
+                                </div>
+                            </div>
+                            <div>
+                                <div class="flex items-baseline gap-2">
+                                    <strong class="text-xl font-black text-slate-900 dark:text-white">
+                                        {{ $bendaharaStats['pending_transfer_count'] ?? 0 }}
+                                    </strong>
+                                    <span class="text-xs font-bold text-slate-500 dark:text-slate-400">Pengajuan Pending</span>
+                                </div>
+                                <span class="text-[11px] font-bold text-amber-600 dark:text-amber-400 mt-0.5 block">
+                                    Rp {{ number_format($bendaharaStats['pending_transfer_amount'] ?? 0, 0, ',', '.') }}
+                                </span>
+                            </div>
+                            <div class="pt-2 border-t border-slate-100 dark:border-slate-800/80">
+                                <button type="button" wire:click="$set('activeTab', 'transfers')"
+                                        class="w-full py-1.5 px-3 bg-amber-600 hover:bg-amber-500 text-white font-bold rounded-xl text-[11px] text-center transition-all flex items-center justify-center gap-1 shadow-2xs">
+                                    <span>Buka Verifikasi</span>
+                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- 3. Penerimaan Bulan Ini -->
+                        <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-3xl p-4 space-y-3 shadow-xs relative overflow-hidden group hover:border-teal-500/50 transition-all">
+                            <div class="flex items-center justify-between">
+                                <span class="text-[10px] font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">Penerimaan Bulan Ini</span>
+                                <div class="w-8 h-8 rounded-xl bg-teal-50 dark:bg-teal-950/50 text-teal-600 dark:text-teal-400 flex items-center justify-center text-sm font-bold">
+                                    📊
+                                </div>
+                            </div>
+                            <div>
+                                <strong class="text-xl font-black text-slate-900 dark:text-white block">
+                                    Rp {{ number_format($bendaharaStats['month_total_inflow'] ?? 0, 0, ',', '.') }}
+                                </strong>
+                                <span class="text-[11px] font-bold text-teal-600 dark:text-teal-400 mt-0.5 block">
+                                    {{ now()->locale('id')->translatedFormat('F Y') }} • {{ $bendaharaStats['month_total_trx'] ?? 0 }} Transaksi
+                                </span>
+                            </div>
+                            <div class="pt-2 border-t border-slate-100 dark:border-slate-800 text-[10px] text-slate-500 dark:text-slate-400 space-y-0.5">
+                                <div class="flex justify-between">
+                                    <span>Kasir:</span>
+                                    <strong class="text-slate-700 dark:text-slate-300">Rp {{ number_format($bendaharaStats['month_kasir_inflow'] ?? 0, 0, ',', '.') }}</strong>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span>Online Gateway:</span>
+                                    <strong class="text-slate-700 dark:text-slate-300">Rp {{ number_format($bendaharaStats['month_gateway_inflow'] ?? 0, 0, ',', '.') }}</strong>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 4. Total Tunggakan Santri -->
+                        <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-3xl p-4 space-y-3 shadow-xs relative overflow-hidden group hover:border-rose-500/50 transition-all">
+                            <div class="flex items-center justify-between">
+                                <span class="text-[10px] font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">Total Tunggakan Santri</span>
+                                <div class="w-8 h-8 rounded-xl bg-rose-50 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400 flex items-center justify-center text-sm font-bold">
+                                    ⚠️
+                                </div>
+                            </div>
+                            <div>
+                                <strong class="text-xl font-black text-rose-600 dark:text-rose-400 block">
+                                    Rp {{ number_format($bendaharaStats['total_tunggakan_amount'] ?? 0, 0, ',', '.') }}
+                                </strong>
+                                <span class="text-[11px] font-bold text-slate-500 dark:text-slate-400 mt-0.5 block">
+                                    {{ number_format($bendaharaStats['total_santri_menunggak'] ?? 0) }} Santri Belum Lunas
+                                </span>
+                            </div>
+                            <div class="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-[10px] text-slate-400">
+                                <span>Status Posisi Tagihan Aktif</span>
+                                <span class="text-rose-500 font-bold">Unpaid / Sisa</span>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <!-- ─── PINTASAN AKSI CEPAT BENDAHARA (QUICK ACTION HUB) ───── -->
+                    <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-3xl p-4 space-y-3 shadow-xs">
+                        <div class="flex items-center justify-between">
+                            <h3 class="text-xs font-black uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                                <span>⚡</span>
+                                <span>Aksi & Pintasan Kerja Utama Bendahara</span>
+                            </h3>
+                            <span class="text-[10px] text-slate-400">Klik untuk langsung menuju modul terkait</span>
+                        </div>
+
+                        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5">
+                            
+                            <!-- 1. Buka Kasir Pembayaran -->
+                            <button type="button" wire:click="$set('activeTab', 'cashier')"
+                                    class="p-3 bg-slate-50 dark:bg-slate-800/60 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 border border-slate-200/80 dark:border-slate-700/80 hover:border-emerald-500/50 rounded-2xl text-left transition-all group flex flex-col justify-between">
+                                <div class="w-8 h-8 rounded-xl bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300 flex items-center justify-center text-base mb-2 group-hover:scale-110 transition-transform">
+                                    💳
+                                </div>
+                                <div>
+                                    <strong class="text-xs font-black text-slate-900 dark:text-white block group-hover:text-emerald-600 dark:group-hover:text-emerald-400">Kasir Pembayaran</strong>
+                                    <span class="text-[10px] text-slate-500 dark:text-slate-400 block mt-0.5">Input bayar 12 bulan santri</span>
+                                </div>
+                            </button>
+
+                            <!-- 2. Verifikasi Transfer Wali -->
+                            <button type="button" wire:click="$set('activeTab', 'transfers')"
+                                    class="p-3 bg-slate-50 dark:bg-slate-800/60 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 border border-slate-200/80 dark:border-slate-700/80 hover:border-indigo-500/50 rounded-2xl text-left transition-all group flex flex-col justify-between relative overflow-hidden">
+                                @if(($bendaharaStats['pending_transfer_count'] ?? 0) > 0)
+                                    <span class="absolute top-2 right-2 px-1.5 py-0.5 bg-rose-500 text-white text-[9px] font-black rounded-full animate-pulse">
+                                        {{ $bendaharaStats['pending_transfer_count'] }}
+                                    </span>
+                                @endif
+                                <div class="w-8 h-8 rounded-xl bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300 flex items-center justify-center text-base mb-2 group-hover:scale-110 transition-transform">
+                                    ⏳
+                                </div>
+                                <div>
+                                    <strong class="text-xs font-black text-slate-900 dark:text-white block group-hover:text-indigo-600 dark:group-hover:text-indigo-400">Verifikasi Transfer</strong>
+                                    <span class="text-[10px] text-slate-500 dark:text-slate-400 block mt-0.5">Cek mutasi & bukti transfer</span>
+                                </div>
+                            </button>
+
+                            <!-- 3. Terbitkan Tagihan Baru -->
+                            <button type="button" wire:click="$set('activeTab', 'generate')"
+                                    class="p-3 bg-slate-50 dark:bg-slate-800/60 hover:bg-teal-50 dark:hover:bg-teal-950/40 border border-slate-200/80 dark:border-slate-700/80 hover:border-teal-500/50 rounded-2xl text-left transition-all group flex flex-col justify-between">
+                                <div class="w-8 h-8 rounded-xl bg-teal-100 dark:bg-teal-900/50 text-teal-700 dark:text-teal-300 flex items-center justify-center text-base mb-2 group-hover:scale-110 transition-transform">
+                                    📄
+                                </div>
+                                <div>
+                                    <strong class="text-xs font-black text-slate-900 dark:text-white block group-hover:text-teal-600 dark:group-hover:text-teal-400">Terbitkan Tagihan</strong>
+                                    <span class="text-[10px] text-slate-500 dark:text-slate-400 block mt-0.5">Generate SPP / majek massal</span>
+                                </div>
+                            </button>
+
+                            <!-- 4. Rekonsiliasi & Bagi Dana -->
+                            <button type="button" wire:click="$set('activeTab', 'settlement')"
+                                    class="p-3 bg-slate-50 dark:bg-slate-800/60 hover:bg-sky-50 dark:hover:bg-sky-950/40 border border-slate-200/80 dark:border-slate-700/80 hover:border-sky-500/50 rounded-2xl text-left transition-all group flex flex-col justify-between">
+                                <div class="w-8 h-8 rounded-xl bg-sky-100 dark:bg-sky-900/50 text-sky-700 dark:text-sky-300 flex items-center justify-center text-base mb-2 group-hover:scale-110 transition-transform">
+                                    ⚖️
+                                </div>
+                                <div>
+                                    <strong class="text-xs font-black text-slate-900 dark:text-white block group-hover:text-sky-600 dark:group-hover:text-sky-400">Rekonsiliasi &amp; Bagi Dana</strong>
+                                    <span class="text-[10px] text-slate-500 dark:text-slate-400 block mt-0.5">Rekap pembagian kas per unit</span>
+                                </div>
+                            </button>
+
+                            <!-- 5. Konfigurasi Tarif & Pos Tagihan -->
+                            <button type="button" wire:click="$set('activeTab', 'rates')"
+                                    class="p-3 bg-slate-50 dark:bg-slate-800/60 hover:bg-purple-50 dark:hover:bg-purple-950/40 border border-slate-200/80 dark:border-slate-700/80 hover:border-purple-500/50 rounded-2xl text-left transition-all group flex flex-col justify-between col-span-2 sm:col-span-1">
+                                <div class="w-8 h-8 rounded-xl bg-purple-100 dark:bg-purple-900/50 text-purple-700 dark:text-purple-300 flex items-center justify-center text-base mb-2 group-hover:scale-110 transition-transform">
+                                    ⚙️
+                                </div>
+                                <div>
+                                    <strong class="text-xs font-black text-slate-900 dark:text-white block group-hover:text-purple-600 dark:group-hover:text-purple-400">Kelola Tarif</strong>
+                                    <span class="text-[10px] text-slate-500 dark:text-slate-400 block mt-0.5">Atur pos biaya & nominal</span>
+                                </div>
+                            </button>
+
+                        </div>
+                    </div>
+
+                    <!-- ─── 2-COLUMN SECTION: LIVE FEED & REKENING OPERASIONAL ── -->
+                    <div class="grid grid-cols-1 lg:grid-cols-12 gap-5">
+                        
+                        <!-- KOLOM KIRI: LIVE FEED TRANSAKSI MASUK TERKINI (8 Col) -->
+                        <div class="lg:col-span-8 space-y-3">
+                            <div class="flex items-center justify-between px-1">
+                                <h3 class="text-xs font-black uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                                    <span>📜</span>
+                                    <span>Penerimaan Masuk Terkini (Live Feed)</span>
+                                </h3>
+                                <button type="button" wire:click="$set('activeTab', 'payments_log')"
+                                        class="text-xs font-bold text-emerald-600 dark:text-emerald-400 hover:underline flex items-center gap-1">
+                                    <span>Lihat Semua Log Transaksi</span>
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg>
+                                </button>
+                            </div>
+
+                            @if(empty($bendaharaRecentInflows) || count($bendaharaRecentInflows) === 0)
+                                <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-3xl p-8 text-center space-y-2 shadow-xs">
+                                    <div class="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-400 flex items-center justify-center mx-auto text-lg">
+                                        🧾
+                                    </div>
+                                    <h4 class="text-xs font-bold text-slate-800 dark:text-slate-200">Belum Ada Transaksi Pembayaran</h4>
+                                    <p class="text-[11px] text-slate-500 dark:text-slate-400 max-w-xs mx-auto">
+                                        Transaksi yang masuk melalui Kasir ataupun Pembayaran Online Gateway akan tampil real-time di sini.
+                                    </p>
+                                </div>
+                            @else
+                                <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-3xl overflow-hidden shadow-xs">
+                                    <div class="overflow-x-auto">
+                                        <table class="w-full text-left text-xs">
+                                            <thead class="bg-slate-50 dark:bg-slate-800/60 text-[10px] font-black uppercase tracking-wider text-slate-500 dark:text-slate-400 border-b border-slate-100 dark:border-slate-800">
+                                                <tr>
+                                                    <th class="py-3 px-4">Santri / No. Kuitansi</th>
+                                                    <th class="py-3 px-3">Metode & Saluran</th>
+                                                    <th class="py-3 px-3 text-right">Nominal Masuk</th>
+                                                    <th class="py-3 px-3 text-right">Waktu</th>
+                                                    <th class="py-3 px-4 text-center">Aksi</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+                                                @foreach($bendaharaRecentInflows as $inflow)
+                                                    <tr class="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors">
+                                                        <td class="py-3 px-4">
+                                                            <div class="font-bold text-slate-900 dark:text-white">
+                                                                {{ $inflow['santri_name'] }}
+                                                            </div>
+                                                            <div class="text-[10px] text-slate-400 font-mono flex items-center gap-1.5 mt-0.5">
+                                                                <span>{{ $inflow['receipt_no'] }}</span>
+                                                                @if($inflow['dorm_name'] !== '—')
+                                                                    <span>• {{ $inflow['dorm_name'] }}</span>
+                                                                @endif
+                                                            </div>
+                                                        </td>
+                                                        <td class="py-3 px-3">
+                                                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[10px] font-bold {{ $inflow['source'] === 'gateway' ? 'bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800/60' : 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60' }}">
+                                                                {{ $inflow['method_label'] }}
+                                                            </span>
+                                                            <span class="block text-[9px] text-slate-400 mt-0.5">Petugas: {{ $inflow['logger_name'] }}</span>
+                                                        </td>
+                                                        <td class="py-3 px-3 text-right">
+                                                            <strong class="font-black text-slate-900 dark:text-white">
+                                                                Rp {{ number_format($inflow['amount'], 0, ',', '.') }}
+                                                            </strong>
+                                                        </td>
+                                                        <td class="py-3 px-3 text-right text-[11px] text-slate-500 dark:text-slate-400">
+                                                            {{ $inflow['date_fmt'] }}
+                                                        </td>
+                                                        <td class="py-3 px-4 text-center">
+                                                            @if(!empty($inflow['preview_url']))
+                                                                <a href="{{ $inflow['preview_url'] }}" target="_blank"
+                                                                   class="inline-flex items-center gap-1 px-2.5 py-1 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-lg text-[11px] font-bold transition-all shadow-2xs">
+                                                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                                                                    <span>Nota</span>
+                                                                </a>
+                                                            @else
+                                                                <span class="text-[10px] text-slate-400">—</span>
+                                                            @endif
+                                                        </td>
+                                                    </tr>
+                                                @endforeach
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            @endif
+                        </div>
+
+                        <!-- KOLOM KANAN: REKAP SALURAN & INFO REKENING OPERASIONAL (4 Col) -->
+                        <div class="lg:col-span-4 space-y-4">
+                            
+                            <!-- Widget Komposisi Saluran Hari Ini -->
+                            <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-3xl p-4 space-y-3 shadow-xs">
+                                <h4 class="text-xs font-black uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                                    <span>🥧</span>
+                                    <span>Saluran Masuk Hari Ini</span>
+                                </h4>
+
+                                @php
+                                    $tot = max(1, ($bendaharaStats['today_total_inflow'] ?? 0));
+                                    $pCash = round((($bendaharaStats['today_cash_inflow'] ?? 0) / $tot) * 100);
+                                    $pTrf  = round((($bendaharaStats['today_transfer_inflow'] ?? 0) / $tot) * 100);
+                                    $pGtw  = round((($bendaharaStats['today_gateway_inflow'] ?? 0) / $tot) * 100);
+                                @endphp
+
+                                <!-- Progress multi-bar -->
+                                <div class="w-full h-3 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden flex">
+                                    <div style="width: {{ $pCash }}%" class="bg-emerald-500" title="Tunai: {{ $pCash }}%"></div>
+                                    <div style="width: {{ $pTrf }}%" class="bg-indigo-500" title="Transfer Kasir: {{ $pTrf }}%"></div>
+                                    <div style="width: {{ $pGtw }}%" class="bg-amber-500" title="Pembayaran Online: {{ $pGtw }}%"></div>
+                                </div>
+
+                                <div class="space-y-2 text-xs pt-1">
+                                    <div class="flex items-center justify-between">
+                                        <span class="flex items-center gap-1.5 text-slate-600 dark:text-slate-400">
+                                            <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+                                            <span>Kasir Tunai</span>
+                                        </span>
+                                        <strong class="font-bold text-slate-900 dark:text-white">
+                                            Rp {{ number_format($bendaharaStats['today_cash_inflow'] ?? 0, 0, ',', '.') }}
+                                        </strong>
+                                    </div>
+                                    <div class="flex items-center justify-between">
+                                        <span class="flex items-center gap-1.5 text-slate-600 dark:text-slate-400">
+                                            <span class="w-2.5 h-2.5 rounded-full bg-indigo-500"></span>
+                                            <span>Kasir Transfer</span>
+                                        </span>
+                                        <strong class="font-bold text-slate-900 dark:text-white">
+                                            Rp {{ number_format($bendaharaStats['today_transfer_inflow'] ?? 0, 0, ',', '.') }}
+                                        </strong>
+                                    </div>
+                                    <div class="flex items-center justify-between">
+                                        <span class="flex items-center gap-1.5 text-slate-600 dark:text-slate-400">
+                                            <span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
+                                            <span>Pembayaran Online</span>
+                                        </span>
+                                        <strong class="font-bold text-slate-900 dark:text-white">
+                                            Rp {{ number_format($bendaharaStats['today_gateway_inflow'] ?? 0, 0, ',', '.') }}
+                                        </strong>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Widget Status Rekening Penerimaan Pesantren (CMS) -->
+                            <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-3xl p-4 space-y-3 shadow-xs">
+                                <div class="flex items-center justify-between">
+                                    <h4 class="text-xs font-black uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                                        <span>🏦</span>
+                                        <span>Rekening Penerimaan Pondok</span>
+                                    </h4>
+                                    @if(\Illuminate\Support\Facades\Route::has('system.wali-cms'))
+                                        <a href="{{ route('system.wali-cms') }}" target="_blank"
+                                           class="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 hover:underline">
+                                            Ubah di CMS ↗
+                                        </a>
+                                    @endif
+                                </div>
+
+                                <div class="space-y-2.5 text-xs">
+                                    <!-- Rekening Putra -->
+                                    <div class="p-2.5 bg-slate-50 dark:bg-slate-800/60 rounded-2xl border border-slate-200/60 dark:border-slate-700/60 space-y-1">
+                                        <div class="flex items-center justify-between">
+                                            <span class="text-[10px] font-black text-emerald-700 dark:text-emerald-400 uppercase">Santri Putra</span>
+                                            <span class="text-[10px] text-slate-400">WA: {{ $bendaharaAccounts['putra_wa'] ?? '—' }}</span>
+                                        </div>
+                                        <div class="font-bold text-slate-800 dark:text-slate-200">
+                                            BSI: <span class="font-mono text-emerald-600 dark:text-emerald-400">{{ $bendaharaAccounts['putra_bsi_no'] ?? '—' }}</span>
+                                        </div>
+                                        <div class="text-[10px] text-slate-500 dark:text-slate-400">
+                                            a.n. {{ $bendaharaAccounts['putra_bsi_an'] ?? '—' }}
+                                        </div>
+                                        <div class="font-bold text-slate-800 dark:text-slate-200 pt-0.5">
+                                            BRI: <span class="font-mono text-slate-600 dark:text-slate-300">{{ $bendaharaAccounts['putra_bri_no'] ?? '—' }}</span>
+                                        </div>
+                                    </div>
+
+                                    <!-- Rekening Putri -->
+                                    <div class="p-2.5 bg-slate-50 dark:bg-slate-800/60 rounded-2xl border border-slate-200/60 dark:border-slate-700/60 space-y-1">
+                                        <div class="flex items-center justify-between">
+                                            <span class="text-[10px] font-black text-purple-700 dark:text-purple-400 uppercase">Santri Putri</span>
+                                            <span class="text-[10px] text-slate-400">WA: {{ $bendaharaAccounts['putri_wa'] ?? '—' }}</span>
+                                        </div>
+                                        <div class="font-bold text-slate-800 dark:text-slate-200">
+                                            BSI: <span class="font-mono text-purple-600 dark:text-purple-400">{{ $bendaharaAccounts['putri_bsi_no'] ?? '—' }}</span>
+                                        </div>
+                                        <div class="text-[10px] text-slate-500 dark:text-slate-400">
+                                            a.n. {{ $bendaharaAccounts['putri_bsi_an'] ?? '—' }}
+                                        </div>
+                                        <div class="font-bold text-slate-800 dark:text-slate-200 pt-0.5">
+                                            BRI: <span class="font-mono text-slate-600 dark:text-slate-300">{{ $bendaharaAccounts['putri_bri_no'] ?? '—' }}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+            @endif
+
             <!-- TAB 1: GENERATE TAGIHAN -->
             @if ($activeTab === 'generate')
                 <div class="space-y-8">
@@ -915,6 +1358,12 @@
                                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
                                  Tambah Iuran Baru
                              </a>
+
+                             {{-- Import Tunggakan Excel --}}
+                             <a href="{{ route('setup.santri', ['tab' => 'tunggakan']) }}" class="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs font-bold transition-all shadow-md flex items-center gap-1.5" title="Import Saldo Awal / Tunggakan Tagihan Excel">
+                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                                 Impor Saldo Tunggakan
+                             </a>
                          </div>
                      </div>
                      <div class="overflow-x-auto">
@@ -1356,7 +1805,7 @@
                                                         <input type="checkbox" wire:model.live="selectedBillIds" value="{{ $tb->id }}" class="rounded text-rose-600 focus:ring-rose-500">
                                                     </td>
                                                     <td class="py-2 px-2 font-semibold text-slate-700 dark:text-slate-300">{{ $tb->config?->label ?? str_replace('_', ' ', $tb->bill_type) }}</td>
-                                                    <td class="py-2 px-2 text-center text-slate-500">{{ $monthNames[$tb->period_month] }} {{ $tb->period_year }}</td>
+                                                    <td class="py-2 px-2 text-center text-slate-500">{{ $tb->period_formatted }}</td>
                                                     <td class="py-2 px-2 text-right font-bold text-rose-600">Rp {{ number_format($tb->amount - $tb->amount_paid, 0, ',', '.') }}</td>
                                                 </tr>
                                             @endforeach
@@ -2337,7 +2786,7 @@
                             ⚡
                         </div>
                         <div>
-                            <span class="block text-[10px] font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Via Gateway Duitku</span>
+                            <span class="block text-[10px] font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Via Online Gateway</span>
                             <span class="text-base font-extrabold text-amber-600 dark:text-amber-400">Rp {{ number_format($payLogTotalGateway, 0, ',', '.') }}</span>
                             <span class="text-[9px] text-slate-400">{{ $payLogGatewayCount }} transaksi online</span>
                         </div>
@@ -2493,7 +2942,7 @@
                                     <option value="">-- Semua Metode --</option>
                                     <option value="cash">💵 Tunai (Cash)</option>
                                     <option value="transfer">🏦 Transfer Bank</option>
-                                    <option value="gateway_duitku">⚡ Gateway Duitku (QRIS/VA)</option>
+                                    <option value="gateway_duitku">⚡ Pembayaran Online (Gateway)</option>
                                 </select>
                             </div>
                         </div>
@@ -2570,20 +3019,20 @@
                                                 <div class="relative">
                                                     <div class="flex items-center gap-1.5 flex-wrap max-w-sm">
                                                         @foreach(collect($rcpt->grouped_summary ?? [])->take(2) as $summary)
-                                                            <div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-slate-100 dark:bg-slate-800/90 border border-slate-200/80 dark:border-slate-700/80 text-[10px] text-slate-700 dark:text-slate-200 shadow-2xs whitespace-nowrap">
-                                                                <span class="font-bold truncate max-w-[130px]" title="{{ $summary['label'] }}">{{ $summary['label'] }}</span>
+                                                            <div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-[10px] text-slate-800 dark:text-slate-200 shadow-2xs whitespace-nowrap">
+                                                                <span class="font-bold text-slate-800 dark:text-slate-200 truncate max-w-[130px]" title="{{ $summary['label'] }}">{{ $summary['label'] }}</span>
                                                                 @if($summary['count'] > 1)
-                                                                    <span class="px-1.5 py-0.2 bg-indigo-50 dark:bg-indigo-950/80 text-indigo-600 dark:text-indigo-400 font-extrabold rounded-md text-[9px] border border-indigo-200/40 dark:border-indigo-800/40">
+                                                                    <span class="px-1.5 py-0.5 bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 font-extrabold rounded-md text-[9px] border border-indigo-200 dark:border-indigo-800">
                                                                         {{ $summary['count'] }} Bln
                                                                     </span>
                                                                 @endif
-                                                                <span class="text-emerald-600 dark:text-emerald-400 font-bold font-mono text-[11px]">Rp {{ number_format($summary['total'], 0, ',', '.') }}</span>
+                                                                <span class="text-emerald-700 dark:text-emerald-400 font-bold font-mono text-[11px]">Rp {{ number_format($summary['total'], 0, ',', '.') }}</span>
                                                             </div>
                                                         @endforeach
 
                                                         @if($rcpt->items_count > 1)
                                                             <button type="button" @click="openDetail = !openDetail"
-                                                                class="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-950/60 dark:hover:bg-indigo-900/60 text-indigo-600 dark:text-indigo-400 border border-indigo-200/60 dark:border-indigo-800/60 text-[10px] font-extrabold transition-all cursor-pointer shadow-2xs whitespace-nowrap"
+                                                                class="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-950 dark:hover:bg-indigo-900 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 text-[10px] font-extrabold transition-all cursor-pointer shadow-2xs whitespace-nowrap"
                                                                 title="Lihat rincian lengkap seluruh {{ $rcpt->items_count }} item tagihan">
                                                                 <span>📋 {{ $rcpt->items_count }} Pos Tagihan</span>
                                                                 <svg class="w-3 h-3 transition-transform" :class="openDetail ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
@@ -2620,19 +3069,12 @@
                                                                             <span class="text-[10px] text-slate-400 block font-medium">Periode: {{ $det['period'] }}</span>
                                                                         @endif
                                                                     </div>
-                                                                    <span class="font-mono font-extrabold text-emerald-600 dark:text-emerald-400 shrink-0 text-[11px]">
+                                                                    <span class="font-mono font-semibold text-slate-700 dark:text-slate-300 shrink-0">
                                                                         Rp {{ number_format($det['amount'], 0, ',', '.') }}
                                                                     </span>
                                                                 </div>
                                                             @endforeach
                                                         </div>
-
-                                                        <div class="border-t border-slate-100 dark:border-slate-800 pt-2.5 flex items-center justify-between text-xs bg-slate-50/50 dark:bg-slate-950/40 -mx-4 -mb-4 px-4 py-3 rounded-b-2xl">
-                                                            <span class="font-bold text-slate-500">Total Kuitansi:</span>
-                                                            <span class="font-extrabold font-mono text-sm text-emerald-600 dark:text-emerald-400">Rp {{ number_format($rcpt->total_amount, 0, ',', '.') }}</span>
-                                                        </div>
-                                                    </div>
-                                                </div>
                                             </td>
 
                                             <!-- Total Dibayar -->
@@ -2649,7 +3091,7 @@
                                                     @else bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400 @endif">
                                                     @if($method === 'cash') 💵 Tunai
                                                     @elseif($method === 'transfer') 🏦 Transfer
-                                                    @elseif($method === 'gateway_duitku') ⚡ Duitku
+                                                    @elseif($method === 'gateway_duitku') ⚡ Online Gateway
                                                     @else 💳 {{ strtoupper($rcpt->payment_method) }} @endif
                                                 </span>
                                             </td>
@@ -2727,6 +3169,7 @@
                                             $bill = $pay->bill;
                                             $santri = $bill?->person;
                                             $config = $bill?->config;
+                                            $method = strtolower($pay->payment_method);
                                         @endphp
                                         <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/20 transition-colors">
                                             <td class="py-4 px-4 font-medium text-slate-500">
@@ -2775,7 +3218,6 @@
                                                 Rp {{ number_format($pay->amount_paid, 0, ',', '.') }}
                                             </td>
                                             <td class="py-4 px-4 text-center">
-                                                @php $method = strtolower($pay->payment_method); @endphp
                                                 <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[9px] font-extrabold uppercase tracking-wider
                                                     @if($method === 'cash') bg-teal-500/10 text-teal-600 dark:text-teal-400
                                                     @elseif($method === 'transfer') bg-blue-500/10 text-blue-600 dark:text-blue-400
@@ -2783,18 +3225,17 @@
                                                     @else bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400 @endif">
                                                     @if($method === 'cash') 💵 Tunai
                                                     @elseif($method === 'transfer') 🏦 Transfer
-                                                    @elseif($method === 'gateway_duitku') ⚡ Duitku Online
+                                                    @elseif($method === 'gateway_duitku') ⚡ Gateway Online
                                                     @else 💳 {{ $pay->payment_method }} @endif
                                                 </span>
                                             </td>
                                             <td class="py-4 px-4 max-w-[180px]">
                                                 @if($method === 'gateway_duitku')
                                                     @php
-                                                        // Ekstrak nomor referensi dari catatan
                                                         preg_match('/Ref transaksi:\s*(\S+)/', $pay->notes ?? '', $refMatch);
                                                         $refCode = $refMatch[1] ?? null;
                                                     @endphp
-                                                    <span class="text-[10px] text-slate-500 dark:text-slate-400 block">Bayar mandiri via Duitku</span>
+                                                    <span class="text-[10px] text-slate-500 dark:text-slate-400 block">Bayar mandiri via Payment Gateway</span>
                                                     @if($refCode)
                                                         <code class="text-[9px] font-mono bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 px-1.5 py-0.5 rounded mt-0.5 block truncate" title="{{ $refCode }}">{{ $refCode }}</code>
                                                     @endif
@@ -2809,9 +3250,7 @@
                                             </td>
                                             <td class="py-4 px-4 text-center">
                                                 <div class="flex items-center justify-center gap-1.5">
-                                                    {{-- ⬇ PDF Download / Kuitansi --}}
                                                     @if($method === 'gateway_duitku')
-                                                        {{-- Gateway: cari PaymentTransaction via reference di notes --}}
                                                     @else
                                                         <a href="{{ route('bukti-bayar.kuitansi', ['receiptNo' => ($pay->receipt_no ?: $pay->id), 'from' => 'payments_log']) }}" target="_blank"
                                                            class="inline-flex items-center gap-1 px-2.5 py-1.5 bg-indigo-500/10 hover:bg-indigo-500 text-indigo-600 hover:text-white rounded-xl text-[9px] font-bold transition-all whitespace-nowrap"
@@ -2821,9 +3260,8 @@
                                                         </a>
                                                     @endif
 
-                                                    {{-- 🗑 Void Button --}}
                                                     @if($method === 'gateway_duitku')
-                                                        <span class="inline-flex items-center gap-1 px-2.5 py-1.5 bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 rounded-xl text-[9px] font-bold whitespace-nowrap cursor-not-allowed" title="Transaksi online tidak dapat di-void. Hubungi Duitku jika diperlukan.">
+                                                        <span class="inline-flex items-center gap-1 px-2.5 py-1.5 bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 rounded-xl text-[9px] font-bold whitespace-nowrap cursor-not-allowed" title="Transaksi online tidak dapat di-void. Hubungi Admin jika diperlukan.">
                                                             🔒 Tidak Bisa Void
                                                         </span>
                                                     @else
@@ -2867,7 +3305,7 @@
             </div>
         @endif
 
-        {{-- TAB: TRANSAKSI GATEWAY DUITKU --}}
+        {{-- TAB: TRANSAKSI PAYMENT GATEWAY --}}
         @if ($activeTab === 'gateway_transactions')
             <div class="space-y-6 animate-fade-in">
 
@@ -2916,7 +3354,7 @@
                             {{-- Search --}}
                             <div class="relative flex-1 min-w-0">
                                 <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-                                <input wire:model.live.debounce.300ms="gatewaySearch" type="text" placeholder="Cari nama santri, no. order, atau ref Duitku…" class="w-full pl-8 pr-3 py-2 text-xs bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-700 dark:text-slate-300 placeholder-slate-400 focus:ring-1 focus:ring-amber-400 focus:border-amber-400 outline-none transition"/>
+                                <input wire:model.live.debounce.300ms="gatewaySearch" type="text" placeholder="Cari nama santri, no. invoice, atau referensi…" class="w-full pl-8 pr-3 py-2 text-xs bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-700 dark:text-slate-300 placeholder-slate-400 focus:ring-1 focus:ring-amber-400 focus:border-amber-400 outline-none transition"/>
                             </div>
                             {{-- Status --}}
                             <select wire:model.live="gatewayStatus" class="px-3 py-2 text-xs bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-600 dark:text-slate-300 focus:ring-1 focus:ring-amber-400 outline-none transition shrink-0">
@@ -2961,14 +3399,14 @@
 
                     <div class="px-6 py-3.5 border-b border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                         <div>
-                            <h3 class="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider font-serif-display">Log Transaksi Gateway Duitku</h3>
+                            <h3 class="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider font-serif-display">Log Transaksi Payment Gateway</h3>
                             <p class="text-[11px] text-slate-400 mt-0.5">Semua percobaan pembayaran wali santri via QRIS / Virtual Account — termasuk yang belum berhasil.</p>
                         </div>
                         <button type="button" wire:click="syncAllPendingGateway" wire:loading.attr="disabled"
                             class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-amber-500/10 hover:bg-amber-500/20 text-amber-700 dark:text-amber-300 rounded-xl text-xs font-extrabold border border-amber-500/30 transition shrink-0 active:scale-95">
                             <svg wire:loading.class="animate-spin" wire:target="syncAllPendingGateway" class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
                             <span wire:loading.remove wire:target="syncAllPendingGateway">🔄 Sinkronkan Status Pending</span>
-                            <span wire:loading wire:target="syncAllPendingGateway">Menghubungi Duitku...</span>
+                            <span wire:loading wire:target="syncAllPendingGateway">Menghubungi Gateway...</span>
                         </button>
                     </div>
                     <div class="overflow-x-auto">
@@ -2982,7 +3420,7 @@
                                     <th class="py-4 px-4 text-right">MDR</th>
                                     <th class="py-4 px-4 text-right">Total Bayar</th>
                                     <th class="py-4 px-4 text-center">Status</th>
-                                    <th class="py-4 px-4">Ref. Duitku</th>
+                                    <th class="py-4 px-4">Ref. Gateway</th>
                                     <th class="py-4 px-4 text-center">Aksi &amp; Rincian</th>
                                 </tr>
                             </thead>
@@ -3028,8 +3466,8 @@
                                             @endif
                                         </td>
                                         <td class="py-3 px-4">
-                                            @if($trx->duitku_reference)
-                                                <code class="text-[9px] font-mono bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 px-1.5 py-0.5 rounded">{{ $trx->duitku_reference }}</code>
+                                            @if($trx->duitku_reference || $trx->gateway_provider)
+                                                <code class="text-[9px] font-mono bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 px-1.5 py-0.5 rounded">{{ $trx->duitku_reference ?: strtoupper($trx->gateway_provider) }}</code>
                                             @else
                                                 <span class="text-slate-400 text-[10px]">—</span>
                                             @endif
@@ -3042,7 +3480,7 @@
                                                             wire:click="syncGatewayStatus('{{ $trx->id }}')" 
                                                             wire:loading.attr="disabled"
                                                             class="inline-flex items-center gap-1 px-2.5 py-1 text-[9px] font-black rounded-xl bg-amber-500 hover:bg-amber-600 text-white shadow-xs transition active:scale-95"
-                                                            title="Cek status pembayaran ke Duitku secara real-time">
+                                                            title="Cek status pembayaran ke Gateway secara real-time">
                                                         <svg wire:loading.class="animate-spin" wire:target="syncGatewayStatus('{{ $trx->id }}')" class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
                                                         <span>Cek Status</span>
                                                     </button>
@@ -3054,10 +3492,8 @@
                                                         class="inline-flex items-center gap-1 px-2.5 py-1 text-[9px] font-extrabold rounded-xl transition-all
                                                         bg-indigo-500/10 text-indigo-700 dark:text-indigo-400 hover:bg-indigo-500/20 border border-indigo-500/20 dark:border-indigo-500/30">
                                                         <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/></svg>
-                                                        {{ $breakdownCount }} Tagihan
+                                                        <span>Rincian ({{ $breakdownCount }})</span>
                                                     </button>
-                                                @else
-                                                    <span class="text-slate-400 text-[10px]">—</span>
                                                 @endif
                                             </div>
                                         </td>
@@ -3065,7 +3501,6 @@
                                 @empty
                                     <tr>
                                         <td colspan="9" class="py-16 text-center text-slate-400 font-semibold">
-                                            <div class="flex flex-col items-center gap-3">
                                                 <svg class="w-10 h-10 text-slate-200 dark:text-slate-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
                                                 <span class="text-sm">Tidak ada transaksi yang cocok dengan filter ini.</span>
                                                 @if($gatewaySearch || $gatewayStatus || $gatewayChannel || $gatewayStartDate || $gatewayEndDate)
@@ -3141,7 +3576,7 @@
                                 </div>
                                 @if($selectedGatewayTrxData['duitku_reference'] !== '—')
                                     <div class="ml-auto">
-                                        <span class="text-slate-400 text-[9px] uppercase font-bold block">Ref. Duitku</span>
+                                        <span class="text-slate-400 text-[9px] uppercase font-bold block">Ref. Gateway</span>
                                         <code class="text-[10px] font-mono text-slate-500 dark:text-slate-400">{{ $selectedGatewayTrxData['duitku_reference'] }}</code>
                                     </div>
                                 @endif
@@ -3218,23 +3653,102 @@
                     <div>
                         <div class="flex items-center gap-2 mb-1">
                             <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-sky-500/10 text-sky-600 dark:text-sky-400 border border-sky-500/20">
-                                🏦 Rekonsiliasi &amp; Distribusi Dana
+                                🏦 Rekonsiliasi &amp; Pembagian Dana
                             </span>
                             <span class="text-xs text-slate-400 font-semibold">• Periode: <strong class="text-slate-700 dark:text-slate-200">{{ $settlementReport['period_label'] }}</strong></span>
                         </div>
-                        <h2 class="font-black text-xl text-slate-900 dark:text-slate-100 tracking-tight">Settlement Report &amp; Alokasi Kas Komplek</h2>
+                        <h2 class="font-black text-xl text-slate-900 dark:text-slate-100 tracking-tight">Rekonsiliasi &amp; Pembagian Dana Kas</h2>
                         <p class="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-2xl">
-                            Pencocokan arus dana masuk dari Duitku ke rekening pondok serta pemisahan porsi anggaran per unit (Pondok, Madrasah, Dapur Majek, dan Kas per Komplek Asrama).
+                            Pusat kendali rekonsiliasi 3 sumber dana (Payment Gateway DOKU, Transfer Bank Manual, dan Setoran Tunai Kasir/Komplek) serta pembagian porsi peruntukan kas per unit.
                         </p>
                     </div>
 
                     <div class="flex flex-wrap items-center gap-2 shrink-0">
+                        {{-- Tombol Salin Format WhatsApp --}}
+                        <div x-data="{
+                            copied: false,
+                            copyText() {
+                                let unitLabel = '{{ $this->genderScope() === 'L' ? 'Putra (Banin)' : ($this->genderScope() === 'P' ? 'Putri (Banat)' : ($settlementGender === 'L' ? 'Putra (Banin)' : ($settlementGender === 'P' ? 'Putri (Banat)' : 'Semua Unit (Konsolidasi)'))) }}';
+                                let sourceLabel = '{{ $settlementSource === 'gateway' ? 'Khusus Online (DOKU)' : ($settlementSource === 'kasir' ? 'Khusus Kasir & Transfer' : 'Semua Sumber (Gabungan)') }}';
+                                let text = `*📊 LAPORAN REKONSILIASI & PEMBAGIAN DANA KAS*\n` +
+                                           `*Periode:* {{ addslashes($settlementReport['period_label'] ?? '') }}\n` +
+                                           `*Unit:* ` + unitLabel + `\n` +
+                                           `*Sumber Dana:* ` + sourceLabel + `\n` +
+                                           `*Pesantren:* {{ addslashes(config('app.name', 'Pondok Pesantren Al-Fithroh')) }}\n\n` +
+                                           `*💰 1. RINGKASAN SUMBER UANG MASUK (BERSIH):*\n` +
+                                           `• ⚡ Gateway Online (DOKU): Rp {{ number_format($settlementReport['gateway_net'], 0, ',', '.') }}\n` +
+                                           `• 🏦 Transfer Bank Manual: Rp {{ number_format($settlementReport['transfer_amount'], 0, ',', '.') }}\n` +
+                                           `• 💵 Setoran Tunai / Kasir: Rp {{ number_format($settlementReport['cash_amount'], 0, ',', '.') }}\n` +
+                                           `👉 *TOTAL UANG MASUK BERSIH: Rp {{ number_format($settlementReport['total_net'], 0, ',', '.') }}*\n` +
+                                           `_(Gross: Rp {{ number_format($settlementReport['total_gross'], 0, ',', '.') }} | MDR: -Rp {{ number_format($settlementReport['total_mdr'], 0, ',', '.') }})_\n\n` +
+                                           `*📌 2. DISTRIBUSI ALOKASI POS DANA:*\n` +
+                                           @foreach($settlementReport['category_breakdown'] as $cat)
+                                           `• {{ $cat['icon'] ?? '•' }} {{ addslashes($cat['label']) }}: Rp {{ number_format($cat['amount'], 0, ',', '.') }} ({{ $cat['count'] }} item)\n` +
+                                           @endforeach
+                                           `\n_Laporan dibuat otomatis melalui Sistem Keuangan Pesantren._`;
+
+                                if (navigator.clipboard && window.isSecureContext) {
+                                    navigator.clipboard.writeText(text).then(() => {
+                                        this.copied = true;
+                                        setTimeout(() => this.copied = false, 2500);
+                                    }).catch(() => {
+                                        this.fallbackCopy(text);
+                                    });
+                                } else {
+                                    this.fallbackCopy(text);
+                                }
+                            },
+                            fallbackCopy(text) {
+                                let textArea = document.createElement('textarea');
+                                textArea.value = text;
+                                textArea.style.position = 'fixed';
+                                textArea.style.left = '-999999px';
+                                textArea.style.top = '-999999px';
+                                document.body.appendChild(textArea);
+                                textArea.focus();
+                                textArea.select();
+                                try {
+                                    document.execCommand('copy');
+                                    this.copied = true;
+                                    setTimeout(() => this.copied = false, 2500);
+                                } catch (err) {
+                                    console.error('Gagal menyalin:', err);
+                                }
+                                document.body.removeChild(textArea);
+                            }
+                        }">
+                            <button type="button" 
+                                    @click="copyText()"
+                                    class="inline-flex items-center gap-2 px-4 py-2.5 bg-emerald-50 dark:bg-emerald-950/40 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 text-emerald-700 dark:text-emerald-300 font-extrabold text-xs rounded-2xl border border-emerald-300 dark:border-emerald-700 shadow-xs transition-all active:scale-95">
+                                <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                                <span x-text="copied ? 'Tersalin ke WA!' : 'Salin Format WA'"></span>
+                            </button>
+                        </div>
+
+                        {{-- Tombol Cetak Semua Slip (Batch PDF) --}}
+                        <a href="{{ route('keuangan.settlement.batch-slips', ['date_from' => $settlementDateFrom, 'date_to' => $settlementDateTo, 'source' => $settlementSource, 'gender' => $this->genderScope() ?: $settlementGender]) }}" 
+                           target="_blank"
+                           class="inline-flex items-center gap-2 px-4 py-2.5 bg-indigo-50 dark:bg-indigo-950/40 hover:bg-indigo-100 dark:hover:bg-indigo-900/60 text-indigo-700 dark:text-indigo-300 font-extrabold text-xs rounded-2xl border border-indigo-300 dark:border-indigo-700 shadow-xs transition-all active:scale-95"
+                           title="Cetak Seluruh Slip Serah Terima (1 File PDF)">
+                            <svg class="w-4 h-4 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+                            <span>Cetak Semua Slip (Batch PDF)</span>
+                        </a>
+
                         {{-- Tombol Cetak PDF Rekap --}}
-                        <a href="{{ route('keuangan.settlement.pdf', ['date_from' => $settlementDateFrom, 'date_to' => $settlementDateTo, 'source' => $settlementSource]) }}" 
+                        <a href="{{ route('keuangan.settlement.pdf', ['date_from' => $settlementDateFrom, 'date_to' => $settlementDateTo, 'source' => $settlementSource, 'gender' => $this->genderScope() ?: $settlementGender]) }}" 
                            target="_blank"
                            class="inline-flex items-center gap-2 px-4 py-2.5 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-extrabold text-xs rounded-2xl border border-slate-200 dark:border-slate-700 shadow-xs transition-all active:scale-95">
                             <svg class="w-4 h-4 text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
                             <span>Cetak Rekap PDF</span>
+                        </a>
+
+                        {{-- Tombol Export Excel Multi-Sheet --}}
+                        <a href="{{ route('keuangan.settlement.export-excel', ['date_from' => $settlementDateFrom, 'date_to' => $settlementDateTo, 'source' => $settlementSource, 'bank' => $settlementBankFilter, 'gender' => $this->genderScope() ?: $settlementGender]) }}" 
+                           target="_blank"
+                           class="inline-flex items-center gap-2 px-4 py-2.5 bg-emerald-50 dark:bg-emerald-950/40 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 text-emerald-700 dark:text-emerald-300 font-extrabold text-xs rounded-2xl border border-emerald-300 dark:border-emerald-700 shadow-xs transition-all active:scale-95"
+                           title="Download Laporan Rekonsiliasi Excel Multi-Sheet (Ringkasan & Rincian Santri)">
+                            <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                            <span>Export Excel (.xlsx)</span>
                         </a>
 
                         {{-- Tombol Kunci & Simpan Distribusi (Khusus Pusat / Admin) --}}
@@ -3250,6 +3764,46 @@
                     </div>
                 </div>
 
+                {{-- Checklist & Peringatan Pra-Tutup Buku --}}
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    @if($this->pendingTransferCount > 0)
+                        <div class="bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-800/60 p-4 rounded-2xl flex items-center justify-between gap-3">
+                            <div class="flex items-center gap-2.5">
+                                <span class="p-2 bg-amber-500/20 text-amber-600 dark:text-amber-400 rounded-xl">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                                </span>
+                                <div>
+                                    <h4 class="text-xs font-black text-amber-900 dark:text-amber-200">Ada {{ $this->pendingTransferCount }} Bukti Transfer Belum Diverifikasi</h4>
+                                    <p class="text-[11px] text-amber-700 dark:text-amber-400">Verifikasi pengajuan transfer manual sebelum tutup buku agar mutasi lengkap.</p>
+                                </div>
+                            </div>
+                            <button type="button" 
+                                    wire:click="$set('activeTab', 'transfer_manual')"
+                                    class="shrink-0 px-3 py-1.5 bg-amber-600 hover:bg-amber-500 text-white rounded-xl text-xs font-bold transition shadow-xs">
+                                Periksa Bukti
+                            </button>
+                        </div>
+                    @endif
+
+                    <div class="bg-slate-50 dark:bg-slate-950/50 border border-slate-200 dark:border-slate-800 p-4 rounded-2xl flex items-center justify-between gap-3 {{ $this->pendingTransferCount == 0 ? 'md:col-span-2' : '' }}">
+                        <div class="flex items-center gap-2.5">
+                            <span class="p-2 bg-sky-500/10 text-sky-600 dark:text-sky-400 rounded-xl">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/></svg>
+                            </span>
+                            <div>
+                                <h4 class="text-xs font-black text-slate-800 dark:text-slate-200">Terima Uang Tunai dari Pengurus Komplek / Kamar?</h4>
+                                <p class="text-[11px] text-slate-500 dark:text-slate-400">Input cepat setoran kolektif santri per asrama atau kelas melalui lembar setoran.</p>
+                            </div>
+                        </div>
+                        <a href="{{ route('keuangan.lembar-setoran') }}" 
+                           target="_blank"
+                           class="shrink-0 px-3 py-1.5 bg-sky-600 hover:bg-sky-500 text-white rounded-xl text-xs font-bold transition shadow-xs flex items-center gap-1">
+                            <span>Lembar Kolektif</span>
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+                        </a>
+                    </div>
+                </div>
+
                 {{-- 2. Filter & Rentang Tanggal --}}
                 <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 p-5 rounded-3xl shadow-xs space-y-4">
                     <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
@@ -3257,25 +3811,43 @@
                         <div class="flex items-center gap-1.5 flex-wrap">
                             <span class="text-[11px] font-bold text-slate-400 mr-1">Preset Cepat:</span>
                             <button type="button" wire:click="setSettlementQuickDate('today')" 
-                                    class="px-2.5 py-1 rounded-xl text-xs font-bold bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 transition">
+                                    class="px-3 py-1 rounded-xl text-xs font-bold transition {{ $settlementPreset === 'today' ? 'bg-sky-600 text-white shadow-xs' : 'bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700' }}">
                                 Hari Ini
                             </button>
                             <button type="button" wire:click="setSettlementQuickDate('last_7_days')" 
-                                    class="px-2.5 py-1 rounded-xl text-xs font-bold bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 transition">
+                                    class="px-3 py-1 rounded-xl text-xs font-bold transition {{ $settlementPreset === 'last_7_days' ? 'bg-sky-600 text-white shadow-xs' : 'bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700' }}">
                                 7 Hari Terakhir
                             </button>
                             <button type="button" wire:click="setSettlementQuickDate('this_month')" 
-                                    class="px-2.5 py-1 rounded-xl text-xs font-bold bg-sky-100 dark:bg-sky-500/20 text-sky-700 dark:text-sky-300 border border-sky-300 dark:border-sky-500/30 transition">
+                                    class="px-3 py-1 rounded-xl text-xs font-bold transition {{ $settlementPreset === 'this_month' ? 'bg-sky-600 text-white shadow-xs' : 'bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700' }}">
                                 Bulan Ini
                             </button>
                             <button type="button" wire:click="setSettlementQuickDate('last_month')" 
-                                    class="px-2.5 py-1 rounded-xl text-xs font-bold bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 transition">
+                                    class="px-3 py-1 rounded-xl text-xs font-bold transition {{ $settlementPreset === 'last_month' ? 'bg-sky-600 text-white shadow-xs' : 'bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700' }}">
                                 Bulan Lalu
                             </button>
                         </div>
 
                         {{-- Date Inputs & Source Selector --}}
                         <div class="flex items-center gap-3 flex-wrap">
+                            {{-- Unit / Gender Selector --}}
+                            @if($this->genderScope())
+                                <div class="flex items-center gap-1.5 px-3 py-1.5 bg-sky-50 dark:bg-sky-950/40 border border-sky-200 dark:border-sky-800 rounded-xl text-xs font-bold text-sky-800 dark:text-sky-300">
+                                    <svg class="w-3.5 h-3.5 text-sky-600 dark:text-sky-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+                                    <span>Unit: {{ $this->genderScope() === 'L' ? 'Putra (Banin)' : 'Putri (Banat)' }}</span>
+                                </div>
+                            @else
+                                <div class="flex items-center gap-1.5">
+                                    <span class="text-[11px] font-bold text-slate-400">Unit:</span>
+                                    <select wire:model.live="settlementGender" 
+                                            class="text-xs font-bold rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white px-2.5 py-1.5 focus:ring-2 focus:ring-sky-500">
+                                        <option value="">🌐 Semua Unit (Konsolidasi)</option>
+                                        <option value="L">🕌 Unit Putra (Banin)</option>
+                                        <option value="P">🧕 Unit Putri (Banat)</option>
+                                    </select>
+                                </div>
+                            @endif
+
                             {{-- Date From --}}
                             <div class="flex items-center gap-1.5">
                                 <span class="text-[11px] font-bold text-slate-400">Dari:</span>
@@ -3295,53 +3867,99 @@
                                 <span class="text-[11px] font-bold text-slate-400">Sumber:</span>
                                 <select wire:model.live="settlementSource" 
                                         class="text-xs font-bold rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white px-2.5 py-1.5 focus:ring-2 focus:ring-sky-500">
-                                    <option value="gateway">⚡ Khusus Online (Duitku)</option>
-                                    <option value="kasir">💵 Khusus Kasir Manual</option>
-                                    <option value="all">🌐 Semua Pembayaran</option>
+                                    <option value="all">🌐 Semua Pembayaran (Gabungan)</option>
+                                    <option value="gateway">⚡ Khusus Online Gateway (DOKU)</option>
+                                    <option value="kasir">💵 Khusus Kasir &amp; Transfer Manual</option>
                                 </select>
                             </div>
+
+                            {{-- Bank Destination Filter --}}
+                            @if(count($this->transferBankOptions) > 0)
+                                <div class="flex items-center gap-1.5">
+                                    <span class="text-[11px] font-bold text-slate-400">Rek Bank:</span>
+                                    <select wire:model.live="settlementBankFilter" 
+                                            class="text-xs font-bold rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white px-2.5 py-1.5 focus:ring-2 focus:ring-sky-500">
+                                        <option value="">Semua Rek Bank</option>
+                                        @foreach($this->transferBankOptions as $bankOpt)
+                                            <option value="{{ $bankOpt }}">{{ $bankOpt }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                            @endif
                         </div>
                     </div>
                 </div>
 
-                {{-- 3. KPI Cards: Arus Kas & Rekonsiliasi --}}
+                {{-- 3. KPI Cards: 3 Sumber Uang & Total Bersih --}}
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                    {{-- Card 1: Gross --}}
-                    <div class="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-xs space-y-1">
-                        <div class="flex items-center justify-between text-slate-400">
-                            <span class="text-[11px] font-extrabold uppercase tracking-wider">Total Uang Diterima (Gross)</span>
-                            <span class="p-1.5 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-xl">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    {{-- Card 1: Gateway Online --}}
+                    <div class="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-xs space-y-2">
+                        <div class="flex items-center justify-between text-sky-500">
+                            <span class="text-[11px] font-extrabold uppercase tracking-wider">⚡ 1. Gateway Online</span>
+                            <span class="p-1.5 bg-sky-50 dark:bg-sky-950/40 text-sky-600 dark:text-sky-400 rounded-xl font-mono text-[10px] font-bold">
+                                {{ $settlementReport['gateway_trx'] }} Trx
                             </span>
                         </div>
                         <div class="text-2xl font-black text-slate-900 dark:text-slate-100 font-mono">
-                            Rp {{ number_format($settlementReport['total_gross'], 0, ',', '.') }}
+                            Rp {{ number_format($settlementReport['gateway_net'], 0, ',', '.') }}
                         </div>
                         <div class="text-[11px] text-slate-400">
-                            Dibayar oleh wali via QRIS &amp; VA
+                            Kotor: Rp {{ number_format($settlementReport['gateway_gross'], 0, ',', '.') }} | MDR: -Rp {{ number_format($settlementReport['gateway_mdr'], 0, ',', '.') }}
+                        </div>
+                        {{-- DOKU Payout Status Tracking --}}
+                        <div class="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                            <span class="text-[10px] font-bold text-slate-400">Status Payout Bank:</span>
+                            <button type="button" 
+                                    wire:click="toggleDokuPayoutStatus" 
+                                    class="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-extrabold transition {{ !empty($dokuPayoutStatus['is_disbursed']) ? 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700' : 'bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border border-amber-300 dark:border-amber-700' }}"
+                                    title="Klik untuk mengubah status pencairan dari payment gateway ke rekening penampung pondok">
+                                @if(!empty($dokuPayoutStatus['is_disbursed']))
+                                    <svg class="w-3 h-3 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+                                    <span>Sudah Masuk Rekening</span>
+                                @else
+                                    <svg class="w-3 h-3 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                    <span>Menunggu Payout DOKU</span>
+                                @endif
+                            </button>
                         </div>
                     </div>
 
-                    {{-- Card 2: MDR Fee --}}
-                    <div class="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-rose-200/60 dark:border-rose-900/40 shadow-xs space-y-1">
-                        <div class="flex items-center justify-between text-rose-500">
-                            <span class="text-[11px] font-extrabold uppercase tracking-wider">Biaya Layanan (MDR)</span>
-                            <span class="p-1.5 bg-rose-100 dark:bg-rose-500/20 text-rose-600 dark:text-rose-400 rounded-xl">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6"/></svg>
+                    {{-- Card 2: Transfer Bank Manual --}}
+                    <div class="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-xs space-y-1">
+                        <div class="flex items-center justify-between text-indigo-500">
+                            <span class="text-[11px] font-extrabold uppercase tracking-wider">🏦 2. Transfer Bank</span>
+                            <span class="p-1.5 bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 rounded-xl font-mono text-[10px] font-bold">
+                                {{ $settlementReport['transfer_trx'] }} Trx
                             </span>
                         </div>
-                        <div class="text-2xl font-black text-rose-600 dark:text-rose-400 font-mono">
-                            - Rp {{ number_format($settlementReport['total_mdr'], 0, ',', '.') }}
+                        <div class="text-2xl font-black text-slate-900 dark:text-slate-100 font-mono">
+                            Rp {{ number_format($settlementReport['transfer_amount'], 0, ',', '.') }}
                         </div>
-                        <div class="text-[11px] text-rose-500/80">
-                            Fee Duitku (Ditanggung Wali)
+                        <div class="text-[11px] text-slate-400">
+                            Mutasi Bank Terverifikasi (Utuh 100%)
                         </div>
                     </div>
 
-                    {{-- Card 3: Net Settlement --}}
-                    <div class="bg-gradient-to-br from-emerald-500/10 to-transparent dark:from-emerald-950/40 dark:to-slate-900 p-5 rounded-3xl border-2 border-emerald-500/60 dark:border-emerald-500/40 shadow-sm space-y-1">
+                    {{-- Card 3: Kasir Tunai / Setoran Fisik --}}
+                    <div class="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-xs space-y-1">
+                        <div class="flex items-center justify-between text-amber-600">
+                            <span class="text-[11px] font-extrabold uppercase tracking-wider">💵 3. Kasir Tunai Fisik</span>
+                            <span class="p-1.5 bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 rounded-xl font-mono text-[10px] font-bold">
+                                {{ $settlementReport['cash_trx'] }} Trx
+                            </span>
+                        </div>
+                        <div class="text-2xl font-black text-slate-900 dark:text-slate-100 font-mono">
+                            Rp {{ number_format($settlementReport['cash_amount'], 0, ',', '.') }}
+                        </div>
+                        <div class="text-[11px] text-slate-400">
+                            Uang Tunai Fisik Meja Kasir / Brankas
+                        </div>
+                    </div>
+
+                    {{-- Card 4: Total Uang Masuk Bersih & Target Realisasi --}}
+                    <div class="bg-gradient-to-br from-emerald-500/10 to-transparent dark:from-emerald-950/40 dark:to-slate-900 p-5 rounded-3xl border-2 border-emerald-500/60 dark:border-emerald-500/40 shadow-sm space-y-2">
                         <div class="flex items-center justify-between text-emerald-600 dark:text-emerald-400">
-                            <span class="text-[11px] font-black uppercase tracking-wider">Dana Bersih Cair (Net)</span>
+                            <span class="text-[11px] font-black uppercase tracking-wider">🎯 TOTAL UANG MASUK (BERSIH)</span>
                             <span class="p-1.5 bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 rounded-xl">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                             </span>
@@ -3349,25 +3967,22 @@
                         <div class="text-2xl font-black text-emerald-700 dark:text-emerald-300 font-mono">
                             Rp {{ number_format($settlementReport['total_net'], 0, ',', '.') }}
                         </div>
-                        <div class="text-[11px] font-bold text-emerald-600 dark:text-emerald-400">
-                            Dana masuk ke rekening pondok
+                        <div class="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 flex items-center justify-between">
+                            <span>{{ $settlementReport['total_trx'] }} Transaksi Terhimpun</span>
+                            @if(($settlementReport['total_billed'] ?? 0) > 0)
+                                <span class="px-2 py-0.5 bg-emerald-200/60 dark:bg-emerald-800/40 rounded-full text-[10px] font-black">
+                                    {{ $settlementReport['realization_percent'] }}% Target
+                                </span>
+                            @endif
                         </div>
-                    </div>
-
-                    {{-- Card 4: Volume Trx --}}
-                    <div class="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-xs space-y-1">
-                        <div class="flex items-center justify-between text-sky-500">
-                            <span class="text-[11px] font-extrabold uppercase tracking-wider">Total Transaksi</span>
-                            <span class="p-1.5 bg-sky-100 dark:bg-sky-500/20 text-sky-600 dark:text-sky-400 rounded-xl">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
-                            </span>
-                        </div>
-                        <div class="text-2xl font-black text-slate-900 dark:text-slate-100">
-                            {{ $settlementReport['total_trx'] }} <span class="text-xs font-normal text-slate-400">Trx</span>
-                        </div>
-                        <div class="text-[11px] text-slate-400">
-                            Status Berhasil (Success)
-                        </div>
+                        @if(($settlementReport['total_billed'] ?? 0) > 0)
+                            <div class="w-full bg-emerald-200/50 dark:bg-emerald-950/80 rounded-full h-1.5 overflow-hidden">
+                                <div class="bg-emerald-500 h-1.5 rounded-full transition-all duration-500" style="width: {{ min(100, $settlementReport['realization_percent']) }}%"></div>
+                            </div>
+                            <div class="text-[10px] text-slate-400">
+                                Target Terbit: Rp {{ number_format($settlementReport['total_billed'], 0, ',', '.') }}
+                            </div>
+                        @endif
                     </div>
                 </div>
 
@@ -3380,7 +3995,7 @@
                             </span>
                             <div>
                                 <h3 class="font-extrabold text-sm text-slate-900 dark:text-slate-100">1. Alokasi Pembagian Pos Anggaran Utama</h3>
-                                <p class="text-[11px] text-slate-400">Distribusi dana bersih ke kas operasional masing-masing unit</p>
+                                <p class="text-[11px] text-slate-400">Distribusi dana bersih ke kas operasional masing-masing unit dengan checklist serah terima &amp; slip PDF</p>
                             </div>
                         </div>
                     </div>
@@ -3393,16 +4008,21 @@
                                     <th class="py-3 px-4 text-center">Jumlah Tagihan</th>
                                     <th class="py-3 px-4">Porsi (%)</th>
                                     <th class="py-3 px-6 text-right">Total Dana Bersih</th>
+                                    <th class="py-3 px-4 text-center">Status Penyerahan Dana</th>
+                                    <th class="py-3 px-6 text-center">Aksi Dokumen &amp; Rincian</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
                                 @forelse($settlementReport['category_breakdown'] as $cat)
                                     @php
+                                        $catKey = $cat['key'];
+                                        $chk = $distributionChecklist[$catKey] ?? null;
+                                        $isHanded = !empty($chk['handed_over']);
                                         $percent = $settlementReport['total_net'] > 0 
                                             ? round(($cat['amount'] / $settlementReport['total_net']) * 100, 1) 
                                             : 0;
                                     @endphp
-                                    <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/20 transition-colors">
+                                    <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/20 transition-colors {{ $isHanded ? 'bg-emerald-50/20 dark:bg-emerald-950/10' : '' }}">
                                         <td class="py-3.5 px-6">
                                             <div class="flex items-center gap-2.5">
                                                 <span class="text-base">{{ $cat['icon'] ?? '🏷️' }}</span>
@@ -3415,7 +4035,7 @@
                                         <td class="py-3.5 px-4 text-center font-bold text-slate-600 dark:text-slate-300">
                                             {{ $cat['count'] }} item
                                         </td>
-                                        <td class="py-3.5 px-4 w-48">
+                                        <td class="py-3.5 px-4 w-36">
                                             <div class="flex items-center gap-2">
                                                 <div class="flex-1 h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
                                                     <div class="h-full bg-indigo-500 rounded-full" style="width: {{ min(100, $percent) }}%"></div>
@@ -3426,10 +4046,46 @@
                                         <td class="py-3.5 px-6 text-right font-black text-sm text-slate-900 dark:text-white font-mono">
                                             Rp {{ number_format($cat['amount'], 0, ',', '.') }}
                                         </td>
+                                        {{-- Interactive Handover Checklist & Note --}}
+                                        <td class="py-3.5 px-4 text-center">
+                                            <div class="flex flex-col items-center gap-1">
+                                                <button type="button" 
+                                                        wire:click="toggleHandoverStatus('{{ $catKey }}')"
+                                                        class="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-[11px] font-extrabold border transition shadow-2xs {{ $isHanded ? 'bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 border-emerald-300 dark:border-emerald-700' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:bg-slate-200' }}">
+                                                    <span>{{ $isHanded ? '✔ Sudah Diserahkan' : '⏳ Belum Diserahkan' }}</span>
+                                                </button>
+                                                <input type="text" 
+                                                       value="{{ $chk['recipient_note'] ?? '' }}" 
+                                                       wire:change="updateHandoverNote('{{ $catKey }}', $event.target.value)"
+                                                       placeholder="Catatan penerima..." 
+                                                       class="w-36 text-[10px] py-0.5 px-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-slate-700 dark:text-slate-300 focus:ring-1 focus:ring-indigo-500">
+                                            </div>
+                                        </td>
+                                        <td class="py-3.5 px-6 text-center">
+                                            <div class="inline-flex items-center gap-1.5">
+                                                {{-- Tombol Lihat Santri --}}
+                                                <button type="button" 
+                                                        wire:click="openCategoryDetailModal('{{ $cat['key'] }}')"
+                                                        class="px-2.5 py-1.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-xl text-[11px] font-extrabold border border-slate-200 dark:border-slate-700 transition flex items-center gap-1"
+                                                        title="Lihat Rincian Santri">
+                                                    <svg class="w-3.5 h-3.5 text-sky-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                                                    <span>Lihat Santri</span>
+                                                </button>
+
+                                                {{-- Tombol Cetak Slip PDF --}}
+                                                <a href="{{ route('keuangan.settlement.slip-kategori', ['categoryKey' => $cat['key'], 'date_from' => $settlementDateFrom, 'date_to' => $settlementDateTo, 'source' => $settlementSource]) }}" 
+                                                   target="_blank"
+                                                   class="px-2.5 py-1.5 bg-indigo-50 dark:bg-indigo-950/40 hover:bg-indigo-100 dark:hover:bg-indigo-900/60 text-indigo-700 dark:text-indigo-300 rounded-xl text-[11px] font-extrabold border border-indigo-300 dark:border-indigo-700 transition flex items-center gap-1"
+                                                   title="Cetak Slip Serah Terima PDF">
+                                                    <svg class="w-3.5 h-3.5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                                                    <span>Slip PDF</span>
+                                                </a>
+                                            </div>
+                                        </td>
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="4" class="py-10 text-center text-slate-400 font-semibold">
+                                        <td colspan="6" class="py-10 text-center text-slate-400 font-semibold">
                                             Belum ada data pembayaran dalam rentang tanggal ini.
                                         </td>
                                     </tr>
@@ -3445,6 +4101,7 @@
                                     <td class="py-3.5 px-6 text-right text-base text-indigo-600 dark:text-indigo-400 font-mono">
                                         Rp {{ number_format($settlementReport['total_net'], 0, ',', '.') }}
                                     </td>
+                                    <td colspan="2"></td>
                                 </tr>
                             </tfoot>
                         </table>
@@ -3473,12 +4130,18 @@
                                     <th class="py-3 px-4">Unit</th>
                                     <th class="py-3 px-4 text-center">Jumlah Santri / Tagihan</th>
                                     <th class="py-3 px-6 text-right">Total Kas Terkumpul</th>
+                                    <th class="py-3 px-4 text-center">Status Serah Terima</th>
                                     <th class="py-3 px-6 text-center">Aksi Dokumen &amp; Rincian</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
                                 @forelse($settlementReport['dormitory_breakdown'] as $dorm)
-                                    <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/20 transition-colors">
+                                    @php
+                                        $dormKey = 'dorm_' . $dorm['dormitory_id'];
+                                        $chk = $distributionChecklist[$dormKey] ?? null;
+                                        $isHanded = !empty($chk['handed_over']);
+                                    @endphp
+                                    <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/20 transition-colors {{ $isHanded ? 'bg-emerald-50/20 dark:bg-emerald-950/10' : '' }}">
                                         <td class="py-3.5 px-6">
                                             <div class="flex items-center gap-2">
                                                 <span class="text-base">🏠</span>
@@ -3497,6 +4160,14 @@
                                         </td>
                                         <td class="py-3.5 px-6 text-right font-black text-sm text-emerald-600 dark:text-emerald-400 font-mono">
                                             Rp {{ number_format($dorm['total_amount'], 0, ',', '.') }}
+                                        </td>
+                                        {{-- Checklist status per Dormitory --}}
+                                        <td class="py-3.5 px-4 text-center">
+                                            <button type="button" 
+                                                    wire:click="toggleHandoverStatus('{{ $dormKey }}')"
+                                                    class="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-[10px] font-extrabold border transition shadow-2xs {{ $isHanded ? 'bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 border-emerald-300 dark:border-emerald-700' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:bg-slate-200' }}">
+                                                <span>{{ $isHanded ? '✔ Diserahkan' : '⏳ Belum' }}</span>
+                                            </button>
                                         </td>
                                         <td class="py-3.5 px-6 text-center">
                                             <div class="inline-flex items-center gap-1.5">
@@ -3521,7 +4192,7 @@
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="5" class="py-10 text-center text-slate-400 font-semibold">
+                                        <td colspan="6" class="py-10 text-center text-slate-400 font-semibold">
                                             Tidak ada pembayaran Kas Komplek dalam periode ini.
                                         </td>
                                     </tr>
@@ -3538,7 +4209,7 @@
                                     <td class="py-3.5 px-6 text-right text-base text-emerald-600 dark:text-emerald-400 font-mono">
                                         Rp {{ number_format(collect($settlementReport['dormitory_breakdown'])->sum('total_amount'), 0, ',', '.') }}
                                     </td>
-                                    <td></td>
+                                    <td colspan="2"></td>
                                 </tr>
                             </tfoot>
                             @endif
@@ -3554,7 +4225,7 @@
                         </span>
                         <div>
                             <h3 class="font-extrabold text-sm text-slate-900 dark:text-slate-100">Riwayat Audit Rekonsiliasi &amp; Distribusi Tersimpan</h3>
-                            <p class="text-[11px] text-slate-400">Snapshot data rekonsiliasi yang pernah dikunci dan dicatat sebelumnya</p>
+                            <p class="text-[11px] text-slate-400">Snapshot data rekonsiliasi yang pernah dikunci dan dicatat sebelumnya (Lengkap Berita Acara PDF)</p>
                         </div>
                     </div>
 
@@ -3568,6 +4239,7 @@
                                         <th class="py-3 px-4">Waktu Kunci</th>
                                         <th class="py-3 px-4 text-right">Dana Bersih (Net)</th>
                                         <th class="py-3 px-4">Catatan</th>
+                                        <th class="py-3 px-4 text-center">Aksi Berita Acara</th>
                                     </tr>
                                 </thead>
                                 <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
@@ -3588,6 +4260,29 @@
                                             <td class="py-3 px-4 text-slate-500 text-[11px]">
                                                 {{ $dist->notes ?? '—' }}
                                             </td>
+                                            <td class="py-3 px-4 text-center">
+                                                <div class="inline-flex items-center gap-1.5">
+                                                    {{-- Tombol Cetak Berita Acara PDF --}}
+                                                    <a href="{{ route('keuangan.settlement.snapshot-pdf', $dist->id) }}" 
+                                                       target="_blank"
+                                                       class="px-2.5 py-1.5 bg-sky-50 dark:bg-sky-950/40 hover:bg-sky-100 dark:hover:bg-sky-900/60 text-sky-700 dark:text-sky-300 rounded-xl text-[11px] font-extrabold border border-sky-300 dark:border-sky-700 transition flex items-center gap-1"
+                                                       title="Cetak Berita Acara Tutup Kas">
+                                                        <svg class="w-3.5 h-3.5 text-sky-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                                                        <span>Berita Acara</span>
+                                                    </a>
+
+                                                    {{-- Tombol Buka Kunci / Hapus Snapshot (Super Admin Only) --}}
+                                                    @if(auth()->user()?->hasRole('super-admin'))
+                                                        <button type="button" 
+                                                                wire:click="deleteSettlementSnapshot('{{ $dist->id }}')"
+                                                                wire:confirm="Apakah Anda yakin ingin membuka kunci rekonsiliasi dan menghapus arsip snapshot ini?"
+                                                                class="px-2 py-1.5 text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-xl text-[11px] font-bold transition"
+                                                                title="Buka Kunci & Hapus Snapshot">
+                                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                                        </button>
+                                                    @endif
+                                                </div>
+                                            </td>
                                         </tr>
                                     @endforeach
                                 </tbody>
@@ -3605,15 +4300,12 @@
                     @endif
                 </div>
 
-                {{-- 7. MODAL: Drill-down Santri per Komplek --}}
+                {{-- 7. MODAL 1: Detail Santri per Asrama (Kas Komplek) --}}
                 @if($showDormitoryModal && !empty($modalDormitoryData))
                     <div class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-                        {{-- Backdrop --}}
                         <div class="fixed inset-0" wire:click="closeDormitoryDetailModal"></div>
 
-                        {{-- Modal Content --}}
-                        <div class="relative z-10 bg-white dark:bg-slate-900 rounded-3xl shadow-2xl w-full max-w-2xl max-h-[85vh] flex flex-col border border-slate-200 dark:border-slate-800 overflow-hidden">
-                            {{-- Header --}}
+                        <div class="relative z-10 bg-white dark:bg-slate-900 rounded-3xl shadow-2xl w-full max-w-3xl max-h-[85vh] flex flex-col border border-slate-200 dark:border-slate-800 overflow-hidden">
                             <div class="px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-emerald-500/5">
                                 <div>
                                     <div class="flex items-center gap-2">
@@ -3631,7 +4323,6 @@
                                 </div>
                             </div>
 
-                            {{-- Table Santri --}}
                             <div class="overflow-y-auto flex-1 p-4">
                                 <table class="w-full text-xs text-left border-collapse">
                                     <thead>
@@ -3639,6 +4330,7 @@
                                             <th class="py-2.5 px-3">#</th>
                                             <th class="py-2.5 px-3">Nama Santri</th>
                                             <th class="py-2.5 px-3">Kamar</th>
+                                            <th class="py-2.5 px-3">Periode Kas</th>
                                             <th class="py-2.5 px-3">Waktu Bayar</th>
                                             <th class="py-2.5 px-3">Metode</th>
                                             <th class="py-2.5 px-3 text-right">Nominal</th>
@@ -3655,6 +4347,9 @@
                                                 <td class="py-2.5 px-3 text-slate-600 dark:text-slate-400 font-medium">
                                                     {{ $santri['room_name'] }}
                                                 </td>
+                                                <td class="py-2.5 px-3">
+                                                    <span class="text-sky-600 dark:text-sky-400 font-bold text-[11px]">{{ $santri['period_label'] ?? 'Kas Asrama' }}</span>
+                                                </td>
                                                 <td class="py-2.5 px-3 text-slate-500 text-[11px]">
                                                     {{ $santri['paid_date'] }}
                                                 </td>
@@ -3670,7 +4365,6 @@
                                 </table>
                             </div>
 
-                            {{-- Footer --}}
                             <div class="px-6 py-3.5 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-950/40">
                                 <a href="{{ route('keuangan.settlement.slip-komplek', ['dormitoryId' => $modalDormitoryData['dormitory_id'], 'date_from' => $settlementDateFrom, 'date_to' => $settlementDateTo, 'source' => $settlementSource]) }}" 
                                    target="_blank"
@@ -3680,6 +4374,88 @@
                                 </a>
 
                                 <button type="button" wire:click="closeDormitoryDetailModal" class="px-4 py-1.5 bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold rounded-xl text-xs transition">
+                                    Tutup
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                @endif
+
+                {{-- 8. MODAL 2: Detail Santri per Pos Kategori (Generic Modal) --}}
+                @if($showCategoryModal && !empty($modalCategoryData))
+                    <div class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+                        <div class="fixed inset-0" wire:click="closeCategoryDetailModal"></div>
+
+                        <div class="relative z-10 bg-white dark:bg-slate-900 rounded-3xl shadow-2xl w-full max-w-3xl max-h-[85vh] flex flex-col border border-slate-200 dark:border-slate-800 overflow-hidden">
+                            <div class="px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-indigo-500/5">
+                                <div>
+                                    <div class="flex items-center gap-2">
+                                        <span class="text-base">{{ $modalCategoryData['icon'] ?? '🏷️' }}</span>
+                                        <h3 class="font-extrabold text-base text-slate-900 dark:text-white">{{ $modalCategoryData['label'] }}</h3>
+                                    </div>
+                                    <p class="text-xs text-slate-400 mt-0.5">Daftar {{ count($modalCategoryData['santri_list'] ?? []) }} santri yang telah membayar pos ini</p>
+                                </div>
+                                <div class="text-right">
+                                    <span class="text-[10px] text-slate-400 uppercase font-bold block">Total Dana Terkumpul</span>
+                                    <span class="text-base font-black text-indigo-600 dark:text-indigo-400 font-mono">Rp {{ number_format($modalCategoryData['amount'], 0, ',', '.') }}</span>
+                                </div>
+                            </div>
+
+                            <div class="overflow-y-auto flex-1 p-4">
+                                <table class="w-full text-xs text-left border-collapse">
+                                    <thead>
+                                        <tr class="bg-slate-50 dark:bg-slate-950 text-slate-400 uppercase font-black text-[9px] tracking-wider border-b border-slate-100 dark:border-slate-800">
+                                            <th class="py-2.5 px-3">#</th>
+                                            <th class="py-2.5 px-3">Nama Santri</th>
+                                            <th class="py-2.5 px-3">Kamar/Unit</th>
+                                            <th class="py-2.5 px-3">Rincian / Periode</th>
+                                            <th class="py-2.5 px-3">Waktu Bayar</th>
+                                            <th class="py-2.5 px-3">Metode</th>
+                                            <th class="py-2.5 px-3 text-right">Nominal</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+                                        @forelse($modalCategoryData['santri_list'] ?? [] as $idx => $santri)
+                                            <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/30">
+                                                <td class="py-2.5 px-3 text-slate-400 font-bold">{{ $idx + 1 }}</td>
+                                                <td class="py-2.5 px-3">
+                                                    <strong class="text-slate-800 dark:text-slate-200 block">{{ $santri['name'] }}</strong>
+                                                    <span class="text-[10px] font-mono text-slate-400">NIS: {{ $santri['nis'] }}</span>
+                                                </td>
+                                                <td class="py-2.5 px-3 text-slate-600 dark:text-slate-400 font-medium">
+                                                    {{ $santri['unit_info'] ?? '-' }}
+                                                </td>
+                                                <td class="py-2.5 px-3">
+                                                    <span class="text-indigo-600 dark:text-indigo-400 font-bold text-[11px]">{{ $santri['period_label'] ?? $modalCategoryData['label'] }}</span>
+                                                </td>
+                                                <td class="py-2.5 px-3 text-slate-500 text-[11px]">
+                                                    {{ $santri['paid_date'] }}
+                                                </td>
+                                                <td class="py-2.5 px-3 text-[10px] text-slate-500 font-bold">
+                                                    {{ $santri['method'] }}
+                                                </td>
+                                                <td class="py-2.5 px-3 text-right font-black font-mono text-slate-900 dark:text-white">
+                                                    Rp {{ number_format($santri['amount'], 0, ',', '.') }}
+                                                </td>
+                                            </tr>
+                                        @empty
+                                            <tr>
+                                                <td colspan="7" class="py-8 text-center text-slate-400">Tidak ada rincian santri untuk periode ini.</td>
+                                            </tr>
+                                        @endforelse
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <div class="px-6 py-3.5 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-950/40">
+                                <a href="{{ route('keuangan.settlement.slip-kategori', ['categoryKey' => $modalCategoryData['key'], 'date_from' => $settlementDateFrom, 'date_to' => $settlementDateTo, 'source' => $settlementSource]) }}" 
+                                   target="_blank"
+                                   class="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-bold transition shadow-xs">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                                    <span>Cetak Slip Serah Terima (PDF)</span>
+                                </a>
+
+                                <button type="button" wire:click="closeCategoryDetailModal" class="px-4 py-1.5 bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold rounded-xl text-xs transition">
                                     Tutup
                                 </button>
                             </div>
@@ -3990,6 +4766,291 @@
                     </div>
                 </div>
             @endif
+        @endif
+
+        {{-- TAB: VERIFIKASI TRANSFER MANUAL (PORTAL WALI) --}}
+        @if ($activeTab === 'transfers')
+            <div class="space-y-6 animate-fade-in">
+
+                {{-- Header & KPI Stats --}}
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    {{-- Total Submissions --}}
+                    <div wire:click="$set('transferFilterStatus', 'all')" class="cursor-pointer bg-white dark:bg-slate-900 border {{ $transferFilterStatus === 'all' ? 'border-indigo-500 ring-2 ring-indigo-500/20' : 'border-slate-200/80 dark:border-slate-800' }} p-4 rounded-2xl flex items-center justify-between shadow-xs hover:border-indigo-400 transition-all">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-xl bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 flex items-center justify-center text-lg shrink-0">📑</div>
+                            <div>
+                                <span class="block text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">Total Pengajuan</span>
+                                <span class="text-xl font-black text-slate-900 dark:text-white">{{ $manualTransferAllCount }}</span>
+                                <span class="text-[10px] text-slate-400 block">semua riwayat</span>
+                            </div>
+                        </div>
+                        <span class="px-2 py-0.5 text-[10px] font-bold rounded-md {{ $transferFilterStatus === 'all' ? 'bg-indigo-600 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-500' }}">Semua</span>
+                    </div>
+
+                    {{-- Pending Submissions --}}
+                    <div wire:click="$set('transferFilterStatus', 'pending')" class="cursor-pointer bg-white dark:bg-slate-900 border {{ $transferFilterStatus === 'pending' ? 'border-amber-500 ring-2 ring-amber-500/20' : 'border-slate-200/80 dark:border-slate-800' }} p-4 rounded-2xl flex items-center justify-between shadow-xs hover:border-amber-400 transition-all">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-xl bg-amber-50 dark:bg-amber-950/50 text-amber-600 dark:text-amber-400 flex items-center justify-center text-lg shrink-0">⏳</div>
+                            <div>
+                                <span class="block text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">Menunggu Verifikasi</span>
+                                <span class="text-xl font-black text-amber-600 dark:text-amber-400">{{ $manualTransferPendingCount }}</span>
+                                <span class="text-[10px] text-slate-400 block">perlu dicek bendahara</span>
+                            </div>
+                        </div>
+                        <span class="px-2 py-0.5 text-[10px] font-bold rounded-md {{ $transferFilterStatus === 'pending' ? 'bg-amber-500 text-white' : 'bg-amber-50 dark:bg-amber-950/50 text-amber-600 dark:text-amber-400' }}">Pending</span>
+                    </div>
+
+                    {{-- Approved Submissions --}}
+                    <div wire:click="$set('transferFilterStatus', 'approved')" class="cursor-pointer bg-white dark:bg-slate-900 border {{ $transferFilterStatus === 'approved' ? 'border-emerald-500 ring-2 ring-emerald-500/20' : 'border-slate-200/80 dark:border-slate-800' }} p-4 rounded-2xl flex items-center justify-between shadow-xs hover:border-emerald-400 transition-all">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-lg shrink-0">✅</div>
+                            <div>
+                                <span class="block text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">Disetujui &amp; Lunas</span>
+                                <span class="text-xl font-black text-emerald-600 dark:text-emerald-400">{{ $manualTransferApprovedCount }}</span>
+                                <span class="text-[10px] text-slate-400 block">kuitansi terbit</span>
+                            </div>
+                        </div>
+                        <span class="px-2 py-0.5 text-[10px] font-bold rounded-md {{ $transferFilterStatus === 'approved' ? 'bg-emerald-600 text-white' : 'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400' }}">Lunas</span>
+                    </div>
+
+                    {{-- Rejected Submissions --}}
+                    <div wire:click="$set('transferFilterStatus', 'rejected')" class="cursor-pointer bg-white dark:bg-slate-900 border {{ $transferFilterStatus === 'rejected' ? 'border-rose-500 ring-2 ring-rose-500/20' : 'border-slate-200/80 dark:border-slate-800' }} p-4 rounded-2xl flex items-center justify-between shadow-xs hover:border-rose-400 transition-all">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-xl bg-rose-50 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400 flex items-center justify-center text-lg shrink-0">❌</div>
+                            <div>
+                                <span class="block text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">Ditolak</span>
+                                <span class="text-xl font-black text-rose-600 dark:text-rose-400">{{ $manualTransferRejectedCount }}</span>
+                                <span class="text-[10px] text-slate-400 block">bukti tidak valid</span>
+                            </div>
+                        </div>
+                        <span class="px-2 py-0.5 text-[10px] font-bold rounded-md {{ $transferFilterStatus === 'rejected' ? 'bg-rose-600 text-white' : 'bg-rose-50 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400' }}">Ditolak</span>
+                    </div>
+                </div>
+
+                {{-- Table Section & Multi-Filters Toolbar --}}
+                <div class="bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800 rounded-3xl shadow-xs overflow-hidden">
+                    
+                    {{-- Top Filter Bar --}}
+                    <div class="p-5 border-b border-slate-100 dark:border-slate-800 space-y-3.5">
+                        <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+                            
+                            {{-- Search Input --}}
+                            <div class="relative flex-1 min-w-[280px]">
+                                <svg class="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                                <input wire:model.live.debounce.300ms="transferSearch" type="text" placeholder="Cari santri, NIS, kode submit, pengirim, kuitansi..." class="w-full pl-9 pr-3 py-2 text-xs bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-700 dark:text-slate-300 placeholder-slate-400 focus:ring-1 focus:ring-indigo-400 focus:border-indigo-400 outline-none transition"/>
+                            </div>
+
+                            {{-- Gender Scope & Status Badges --}}
+                            <div class="flex items-center gap-2 flex-wrap">
+                                {{-- Gender Filter (Admin bypass) vs Gender Scope Badge (Treasurer) --}}
+                                @if(!$this->genderScope())
+                                    <div class="flex items-center bg-slate-100 dark:bg-slate-800 p-1 rounded-xl">
+                                        <button type="button" wire:click="$set('transferGenderFilter', '')" class="px-2.5 py-1 text-[11px] font-bold rounded-lg transition-all {{ $transferGenderFilter === '' ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 shadow-xs' : 'text-slate-500 hover:text-slate-700' }}">Semua Gender</button>
+                                        <button type="button" wire:click="$set('transferGenderFilter', 'L')" class="px-2.5 py-1 text-[11px] font-bold rounded-lg transition-all {{ $transferGenderFilter === 'L' ? 'bg-sky-500 text-white shadow-xs' : 'text-slate-500 hover:text-slate-700' }}">Putra (L)</button>
+                                        <button type="button" wire:click="$set('transferGenderFilter', 'P')" class="px-2.5 py-1 text-[11px] font-bold rounded-lg transition-all {{ $transferGenderFilter === 'P' ? 'bg-pink-500 text-white shadow-xs' : 'text-slate-500 hover:text-slate-700' }}">Putri (P)</button>
+                                    </div>
+                                @else
+                                    <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold {{ $this->genderScope() === 'L' ? 'bg-sky-50 text-sky-700 dark:bg-sky-950/60 dark:text-sky-300 border border-sky-200 dark:border-sky-800' : 'bg-pink-50 text-pink-700 dark:bg-pink-950/60 dark:text-pink-300 border border-pink-200 dark:border-pink-800' }}">
+                                        <span>🔒 Scope:</span>
+                                        <span>{{ $this->genderScope() === 'L' ? 'Santri Putra' : 'Santri Putri' }}</span>
+                                    </span>
+                                @endif
+
+                                {{-- Status Filter Buttons --}}
+                                <div class="flex items-center bg-slate-100 dark:bg-slate-800 p-1 rounded-xl">
+                                    <button type="button" wire:click="$set('transferFilterStatus', 'pending')" class="px-2.5 py-1 text-[11px] font-bold rounded-lg transition-all {{ $transferFilterStatus === 'pending' ? 'bg-amber-500 text-white shadow-xs' : 'text-slate-500 hover:text-slate-700' }}">
+                                        Menunggu ({{ $manualTransferPendingCount }})
+                                    </button>
+                                    <button type="button" wire:click="$set('transferFilterStatus', 'approved')" class="px-2.5 py-1 text-[11px] font-bold rounded-lg transition-all {{ $transferFilterStatus === 'approved' ? 'bg-emerald-600 text-white shadow-xs' : 'text-slate-500 hover:text-slate-700' }}">
+                                        Disetujui ({{ $manualTransferApprovedCount }})
+                                    </button>
+                                    <button type="button" wire:click="$set('transferFilterStatus', 'rejected')" class="px-2.5 py-1 text-[11px] font-bold rounded-lg transition-all {{ $transferFilterStatus === 'rejected' ? 'bg-rose-600 text-white shadow-xs' : 'text-slate-500 hover:text-slate-700' }}">
+                                        Ditolak ({{ $manualTransferRejectedCount }})
+                                    </button>
+                                    <button type="button" wire:click="$set('transferFilterStatus', 'all')" class="px-2.5 py-1 text-[11px] font-bold rounded-lg transition-all {{ $transferFilterStatus === 'all' ? 'bg-indigo-600 text-white shadow-xs' : 'text-slate-500 hover:text-slate-700' }}">
+                                        Semua
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        {{-- Secondary Filter Row: Dates, Bank, PerPage, Reset --}}
+                        <div class="flex flex-wrap items-center gap-3 pt-2 border-t border-slate-100 dark:border-slate-800 text-xs">
+                            {{-- Date From --}}
+                            <div class="flex items-center gap-1.5">
+                                <span class="text-slate-400 text-[11px] font-medium">Dari:</span>
+                                <input wire:model.live="transferDateFrom" type="date" class="px-2.5 py-1 text-xs bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-700 dark:text-slate-300 focus:ring-1 focus:ring-indigo-400 outline-none"/>
+                            </div>
+
+                            {{-- Date To --}}
+                            <div class="flex items-center gap-1.5">
+                                <span class="text-slate-400 text-[11px] font-medium">Sampai:</span>
+                                <input wire:model.live="transferDateTo" type="date" class="px-2.5 py-1 text-xs bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-700 dark:text-slate-300 focus:ring-1 focus:ring-indigo-400 outline-none"/>
+                            </div>
+
+                            {{-- Bank Destination Filter --}}
+                            @if(count($transferDestinationBanks) > 0)
+                                <div class="flex items-center gap-1.5">
+                                    <span class="text-slate-400 text-[11px] font-medium">Bank Tujuan:</span>
+                                    <select wire:model.live="transferBankDestination" class="px-2.5 py-1 text-xs bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-700 dark:text-slate-300 focus:ring-1 focus:ring-indigo-400 outline-none">
+                                        <option value="">Semua Bank Tujuan</option>
+                                        @foreach($transferDestinationBanks as $bankName)
+                                            <option value="{{ $bankName }}">{{ $bankName }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                            @endif
+
+                            {{-- Per Page --}}
+                            <div class="flex items-center gap-1.5 ml-auto">
+                                <span class="text-slate-400 text-[11px] font-medium">Tampilkan:</span>
+                                <select wire:model.live="transferPerPage" class="px-2.5 py-1 text-xs bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-700 dark:text-slate-300 focus:ring-1 focus:ring-indigo-400 outline-none">
+                                    <option value="10">10</option>
+                                    <option value="15">15</option>
+                                    <option value="25">25</option>
+                                    <option value="50">50</option>
+                                </select>
+                            </div>
+
+                            {{-- Reset Button --}}
+                            @if($transferSearch || $transferFilterStatus !== 'pending' || $transferGenderFilter || $transferDateFrom || $transferDateTo || $transferBankDestination || $transferPerPage != 15)
+                                <button type="button" wire:click="resetTransferFilters" class="px-2.5 py-1 bg-slate-200 hover:bg-slate-300 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl text-xs font-bold transition-all flex items-center gap-1">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                                    Reset
+                                </button>
+                            @endif
+                        </div>
+                    </div>
+
+                    {{-- Table Content --}}
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-xs">
+                            <thead class="bg-slate-50/80 dark:bg-slate-950/40 text-[10px] font-extrabold uppercase tracking-wider text-slate-400 border-b border-slate-100 dark:border-slate-800">
+                                <tr>
+                                    <th class="px-5 py-3.5">Kode &amp; Waktu</th>
+                                    <th class="px-5 py-3.5">Santri &amp; Kamar</th>
+                                    <th class="px-5 py-3.5">Rincian Nominal</th>
+                                    <th class="px-5 py-3.5">Pengirim &amp; Rekening</th>
+                                    <th class="px-5 py-3.5 text-center">Bukti Struk</th>
+                                    <th class="px-5 py-3.5 text-center">Status</th>
+                                    <th class="px-5 py-3.5 text-right">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100 dark:divide-slate-800 font-medium">
+                                @forelse ($manualTransferSubmissions as $sub)
+                                    <tr class="hover:bg-slate-50/60 dark:hover:bg-slate-800/30 transition-colors {{ $sub->status === 'pending' ? 'bg-amber-50/30 dark:bg-amber-950/10' : '' }}">
+                                        {{-- Kode & Waktu --}}
+                                        <td class="px-5 py-4 whitespace-nowrap">
+                                            <span class="font-mono font-black text-slate-900 dark:text-white block">{{ $sub->submission_code }}</span>
+                                            <span class="text-[10px] text-slate-400 block mt-0.5">{{ $sub->created_at->translatedFormat('d M Y · H:i') }} WIB</span>
+                                            @if($sub->receipt_no)
+                                                <span class="inline-block mt-1 font-mono text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-1.5 py-0.5 rounded border border-emerald-200 dark:border-emerald-800">
+                                                    🧾 {{ $sub->receipt_no }}
+                                                </span>
+                                            @endif
+                                        </td>
+
+                                        {{-- Santri & Kamar --}}
+                                        <td class="px-5 py-4 whitespace-nowrap">
+                                            <div class="flex items-center gap-2">
+                                                <span class="font-bold text-slate-900 dark:text-white">{{ $sub->person?->name ?? '-' }}</span>
+                                                <span class="px-1.5 py-0.5 rounded text-[9px] font-black {{ $sub->person?->gender === 'L' ? 'bg-sky-100 text-sky-800 dark:bg-sky-950 dark:text-sky-300 border border-sky-300 dark:border-sky-800' : 'bg-pink-100 text-pink-800 dark:bg-pink-950 dark:text-pink-300 border border-pink-300 dark:border-pink-800' }}">
+                                                    {{ $sub->person?->gender === 'L' ? 'PA' : 'PI' }}
+                                                </span>
+                                            </div>
+                                            <div class="text-[10px] text-slate-400 flex items-center gap-1.5 mt-0.5">
+                                                <span>NIS: {{ $sub->person?->nis ?? '-' }}</span>
+                                                @php
+                                                    $dormName = $sub->person?->roomAssignments?->first()?->room?->dormitory?->name;
+                                                    $roomNum = $sub->person?->roomAssignments?->first()?->room?->room_number;
+                                                @endphp
+                                                @if($dormName)
+                                                    <span>• Asrama: {{ $dormName }} ({{ $roomNum }})</span>
+                                                @endif
+                                            </div>
+                                        </td>
+
+                                        {{-- Rincian Nominal --}}
+                                        <td class="px-5 py-4 whitespace-nowrap">
+                                            <span class="font-black text-slate-900 dark:text-white text-sm block">Rp {{ number_format($sub->total_paid, 0, ',', '.') }}</span>
+                                            <div class="text-[10px] text-slate-400 flex items-center gap-1.5 mt-0.5">
+                                                <span>Tagihan: Rp {{ number_format($sub->bill_amount, 0, ',', '.') }}</span>
+                                                @if($sub->pocket_money_amount > 0)
+                                                    <span class="text-amber-600 dark:text-amber-400 font-bold">• Saku: +Rp {{ number_format($sub->pocket_money_amount, 0, ',', '.') }}</span>
+                                                @endif
+                                            </div>
+                                        </td>
+
+                                        {{-- Pengirim & Rekening --}}
+                                        <td class="px-5 py-4">
+                                            <span class="font-bold text-slate-800 dark:text-slate-200 block">{{ $sub->sender_account_name }}</span>
+                                            <span class="text-[10px] text-slate-400 block">{{ $sub->sender_bank }} ➔ <strong class="text-indigo-600 dark:text-indigo-400">{{ $sub->destination_bank }}</strong></span>
+                                        </td>
+
+                                        {{-- Bukti Struk --}}
+                                        <td class="px-5 py-4 text-center whitespace-nowrap">
+                                            @if($sub->proof_image_path)
+                                                <button type="button" wire:click="openTransferVerifyModal('{{ $sub->id }}')" class="relative group inline-block rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 w-12 h-12 shadow-2xs hover:scale-105 transition-all">
+                                                    <img src="{{ $sub->proof_url ?: Storage::url($sub->proof_image_path) }}" alt="Bukti" class="w-full h-full object-cover"/>
+                                                    <div class="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-xs">🔍</div>
+                                                </button>
+                                            @else
+                                                <span class="text-slate-300 dark:text-slate-600 text-xs italic">Tidak ada</span>
+                                            @endif
+                                        </td>
+
+                                        {{-- Status --}}
+                                        <td class="px-5 py-4 text-center whitespace-nowrap">
+                                            @if($sub->status === 'pending')
+                                                <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300 border border-amber-200 dark:border-amber-800 animate-pulse">
+                                                    ⏳ Menunggu
+                                                </span>
+                                            @elseif($sub->status === 'approved')
+                                                <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
+                                                    ✅ Disetujui
+                                                </span>
+                                            @elseif($sub->status === 'rejected')
+                                                <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-rose-100 text-rose-800 dark:bg-rose-950/60 dark:text-rose-300 border border-rose-200 dark:border-rose-800">
+                                                    ❌ Ditolak
+                                                </span>
+                                            @endif
+                                        </td>
+
+                                        {{-- Aksi --}}
+                                        <td class="px-5 py-4 text-right whitespace-nowrap">
+                                            @if($sub->status === 'pending')
+                                                <button type="button" wire:click="openTransferVerifyModal('{{ $sub->id }}')" class="px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold shadow-sm transition-all flex items-center gap-1.5 ml-auto">
+                                                    <span>🔍 Verifikasi</span>
+                                                </button>
+                                            @else
+                                                <button type="button" wire:click="openTransferVerifyModal('{{ $sub->id }}')" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl text-xs font-semibold transition-all">
+                                                    Detail
+                                                </button>
+                                            @endif
+                                        </td>
+                                    </tr>
+                                @empty
+                                    <tr>
+                                        <td colspan="7" class="px-5 py-12 text-center text-slate-400">
+                                            <svg class="w-12 h-12 mx-auto text-slate-300 dark:text-slate-700 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                                            <p class="font-bold text-sm">Tidak ada pengajuan transfer manual</p>
+                                            <p class="text-xs text-slate-400 mt-1">Pengajuan transfer dari wali santri yang sesuai kriteria filter akan muncul di sini</p>
+                                        </td>
+                                    </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
+
+                    {{-- Pagination --}}
+                    @if($manualTransferSubmissions->hasPages())
+                        <div class="p-4 border-t border-slate-100 dark:border-slate-800">
+                            {{ $manualTransferSubmissions->links() }}
+                        </div>
+                    @endif
+                </div>
+
+            </div>
         @endif
 
         <!-- Live Preview Generator Modal -->
@@ -4830,6 +5891,361 @@
                         </span>
                     </button>
                 </div>
+            </div>
+        </div>
+    @endif
+
+    {{-- MODAL VERIFIKASI TRANSFER MANUAL (PORTAL WALI) --}}
+    @if($showTransferVerifyModal && $selectedTransferData)
+        <div class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/70 backdrop-blur-xs"
+             x-data="{ showConfirmApprove: false, showConfirmReject: false }">
+            <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-2xl w-full max-w-4xl overflow-hidden max-h-[92vh] flex flex-col animate-in fade-in zoom-in-95 duration-150 relative">
+
+                {{-- DIALOG KONFIRMASI PERSETUJUAN (ELEGANT CUSTOM POPUP) --}}
+                <div x-show="showConfirmApprove"
+                     x-cloak
+                     x-transition:enter="transition ease-out duration-200"
+                     x-transition:enter-start="opacity-0 scale-95"
+                     x-transition:enter-end="opacity-100 scale-100"
+                     x-transition:leave="transition ease-in duration-150"
+                     x-transition:leave-start="opacity-100 scale-100"
+                     x-transition:leave-end="opacity-0 scale-95"
+                     class="absolute inset-0 z-50 bg-slate-950/80 backdrop-blur-xs flex items-center justify-center p-4">
+                    <div class="bg-white dark:bg-slate-900 border border-emerald-500/30 rounded-3xl p-6 max-w-md w-full shadow-2xl space-y-4 text-center relative overflow-hidden">
+                        {{-- Top Glow Accent --}}
+                        <div class="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-emerald-400 via-teal-500 to-emerald-600"></div>
+
+                        {{-- Floating Icon --}}
+                        <div class="w-14 h-14 mx-auto rounded-2xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-3xl shadow-lg shadow-emerald-500/10">
+                            🧾
+                        </div>
+
+                        <div>
+                            <h3 class="text-base font-black text-slate-900 dark:text-white">
+                                Setujui & Terbitkan Kuitansi?
+                            </h3>
+                            <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                                Pastikan dana telah masuk di mutasi rekening pesantren sebelum menyetujui transaksi ini.
+                            </p>
+                        </div>
+
+                        {{-- Nominal Highlight Box --}}
+                        <div class="p-4 bg-gradient-to-br from-emerald-500/10 via-emerald-500/5 to-teal-500/10 border border-emerald-500/20 rounded-2xl space-y-1.5">
+                            <span class="text-[10px] font-black uppercase tracking-wider text-emerald-700 dark:text-emerald-400">Total Pembayaran Disetujui</span>
+                            <div class="text-2xl font-black text-emerald-600 dark:text-emerald-300">
+                                Rp {{ number_format($selectedTransferData->total_paid, 0, ',', '.') }}
+                            </div>
+                            <div class="pt-2 border-t border-emerald-500/15 text-[11px] text-slate-600 dark:text-slate-300 flex items-center justify-center gap-2">
+                                <span class="font-bold">{{ $selectedTransferData->person?->name }}</span>
+                                <span>•</span>
+                                <span class="font-mono text-slate-400">{{ $selectedTransferData->submission_code }}</span>
+                            </div>
+                        </div>
+
+                        {{-- Action Points Checklist --}}
+                        <div class="text-left space-y-2 bg-slate-50 dark:bg-slate-950/60 border border-slate-200/70 dark:border-slate-800 rounded-2xl p-3.5 text-xs text-slate-600 dark:text-slate-400">
+                            <div class="flex items-start gap-2">
+                                <span class="text-emerald-500 font-bold shrink-0">✓</span>
+                                <span>Kuitansi resmi digital akan diterbitkan otomatis.</span>
+                            </div>
+                            <div class="flex items-start gap-2">
+                                <span class="text-emerald-500 font-bold shrink-0">✓</span>
+                                <span>Tagihan santri akan otomatis berstatus <strong>Lunas / Terbayar</strong>.</span>
+                            </div>
+                            @if($selectedTransferData->pocket_money_amount > 0)
+                                <div class="flex items-start gap-2 text-amber-700 dark:text-amber-400 font-medium">
+                                    <span class="text-amber-500 font-bold shrink-0">💰</span>
+                                    <span>Uang saku <strong>Rp {{ number_format($selectedTransferData->pocket_money_amount, 0, ',', '.') }}</strong> dicatat ke kas titipan santri.</span>
+                                </div>
+                            @endif
+                        </div>
+
+                        {{-- Buttons --}}
+                        <div class="grid grid-cols-2 gap-3 pt-1">
+                            <button type="button"
+                                    @click="showConfirmApprove = false"
+                                    class="w-full py-2.5 px-4 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-bold transition-all">
+                                Periksa Lagi
+                            </button>
+                            <button type="button"
+                                    wire:click="approveTransferSubmission('{{ $selectedTransferData->id }}')"
+                                    wire:loading.attr="disabled"
+                                    class="w-full py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:scale-[0.98] text-white text-xs font-extrabold shadow-lg shadow-emerald-600/25 transition-all flex items-center justify-center gap-1.5">
+                                <span wire:loading.remove wire:target="approveTransferSubmission">✓ Ya, Setujui</span>
+                                <span wire:loading wire:target="approveTransferSubmission" class="inline-flex items-center gap-1.5">
+                                    <svg class="animate-spin h-3.5 w-3.5 text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                                    Memproses...
+                                </span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- DIALOG KONFIRMASI PENOLAKAN (ELEGANT CUSTOM POPUP) --}}
+                <div x-show="showConfirmReject"
+                     x-cloak
+                     x-transition:enter="transition ease-out duration-200"
+                     x-transition:enter-start="opacity-0 scale-95"
+                     x-transition:enter-end="opacity-100 scale-100"
+                     x-transition:leave="transition ease-in duration-150"
+                     x-transition:leave-start="opacity-100 scale-100"
+                     x-transition:leave-end="opacity-0 scale-95"
+                     class="absolute inset-0 z-50 bg-slate-950/80 backdrop-blur-xs flex items-center justify-center p-4">
+                    <div class="bg-white dark:bg-slate-900 border border-rose-500/30 rounded-3xl p-6 max-w-md w-full shadow-2xl space-y-4 text-center relative overflow-hidden">
+                        {{-- Top Glow Accent --}}
+                        <div class="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-rose-400 via-rose-500 to-red-600"></div>
+
+                        {{-- Floating Icon --}}
+                        <div class="w-14 h-14 mx-auto rounded-2xl bg-rose-50 dark:bg-rose-950/60 border border-rose-200 dark:border-rose-800 text-rose-600 dark:text-rose-400 flex items-center justify-center text-3xl shadow-lg shadow-rose-500/10">
+                            ⚠️
+                        </div>
+
+                        <div>
+                            <h3 class="text-base font-black text-slate-900 dark:text-white">
+                                Tolak Pengajuan Transfer?
+                            </h3>
+                            <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                                Status transfer akan ditandai <span class="text-rose-600 dark:text-rose-400 font-bold">Ditolak</span> dan wali santri dapat melihat alasan ini.
+                            </p>
+                        </div>
+
+                        {{-- Rejection Note Preview --}}
+                        <div class="p-3.5 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 rounded-2xl text-left space-y-1">
+                            <span class="text-[10px] font-black uppercase tracking-wider text-rose-700 dark:text-rose-400 block">Alasan Penolakan:</span>
+                            <div class="text-xs text-slate-800 dark:text-slate-200 italic font-medium">
+                                "{{ $transferRejectionReason ?: 'Belum mengisi alasan spesifik' }}"
+                            </div>
+                        </div>
+
+                        {{-- Buttons --}}
+                        <div class="grid grid-cols-2 gap-3 pt-1">
+                            <button type="button"
+                                    @click="showConfirmReject = false"
+                                    class="w-full py-2.5 px-4 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-bold transition-all">
+                                Batal
+                            </button>
+                            <button type="button"
+                                    wire:click="rejectTransferSubmission('{{ $selectedTransferData->id }}')"
+                                    wire:loading.attr="disabled"
+                                    class="w-full py-2.5 px-4 rounded-xl bg-rose-600 hover:bg-rose-700 active:scale-[0.98] text-white text-xs font-extrabold shadow-lg shadow-rose-600/25 transition-all flex items-center justify-center gap-1.5">
+                                <span wire:loading.remove wire:target="rejectTransferSubmission">❌ Ya, Tolak</span>
+                                <span wire:loading wire:target="rejectTransferSubmission" class="inline-flex items-center gap-1.5">
+                                    <svg class="animate-spin h-3.5 w-3.5 text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                                    Memproses...
+                                </span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Modal Header --}}
+                <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100 dark:border-slate-800 shrink-0 bg-slate-50/50 dark:bg-slate-950/40">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-2xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center text-lg shrink-0">
+                            🔍
+                        </div>
+                        <div>
+                            <div class="flex items-center gap-2">
+                                <h3 class="text-sm font-extrabold text-slate-900 dark:text-white">Verifikasi Bukti Transfer Manual</h3>
+                                <span class="font-mono text-xs font-black px-2 py-0.5 rounded-lg bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+                                    {{ $selectedTransferData->submission_code }}
+                                </span>
+                            </div>
+                            <p class="text-[11px] text-slate-400 mt-0.5">
+                                Diajukan oleh wali santri pada {{ $selectedTransferData->created_at->translatedFormat('d F Y · H:i') }} WIB
+                            </p>
+                        </div>
+                    </div>
+                    <button type="button" wire:click="closeTransferVerifyModal" class="p-2 rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                    </button>
+                </div>
+
+                {{-- Modal Body: 2 Columns Grid --}}
+                <div class="p-6 overflow-y-auto flex-1 grid grid-cols-1 md:grid-cols-12 gap-6">
+
+                    {{-- Left Column: Image Viewer (5 cols) --}}
+                    <div class="md:col-span-5 flex flex-col space-y-3">
+                        <span class="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                            📸 Bukti Struk / Transfer Bank
+                        </span>
+
+                        @if($selectedTransferData->proof_image_path)
+                            <div class="flex-1 min-h-[260px] bg-slate-950 rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-800 relative group flex items-center justify-center p-2">
+                                <img src="{{ $selectedTransferData->proof_url ?: Storage::url($selectedTransferData->proof_image_path) }}"
+                                     alt="Struk Transfer"
+                                     class="max-h-[380px] w-auto object-contain rounded-xl shadow-lg"/>
+                                <a href="{{ $selectedTransferData->proof_url ?: Storage::url($selectedTransferData->proof_image_path) }}"
+                                   target="_blank"
+                                   class="absolute bottom-3 right-3 px-3 py-1.5 bg-black/70 hover:bg-black text-white text-[11px] font-bold rounded-xl backdrop-blur-xs flex items-center gap-1.5 opacity-90 hover:opacity-100 transition-all">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+                                    Buka Ukuran Penuh
+                                </a>
+                            </div>
+                        @else
+                            <div class="flex-1 min-h-[200px] bg-slate-100 dark:bg-slate-800 rounded-2xl flex flex-col items-center justify-center text-slate-400 p-4 text-center">
+                                <span class="text-3xl mb-2">🖼️</span>
+                                <p class="text-xs font-semibold">Tidak ada lampiran gambar struk</p>
+                            </div>
+                        @endif
+
+                        {{-- Info Pengirim & Rekening --}}
+                        <div class="p-3.5 bg-slate-50 dark:bg-slate-950/60 border border-slate-200/80 dark:border-slate-800 rounded-2xl space-y-2 text-xs">
+                            <div class="flex justify-between">
+                                <span class="text-slate-400">Rekening Pengirim:</span>
+                                <span class="font-bold text-slate-800 dark:text-slate-200">{{ $selectedTransferData->sender_account_name }} ({{ $selectedTransferData->sender_bank }})</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-slate-400">Transfer Menuju:</span>
+                                <span class="font-bold text-indigo-600 dark:text-indigo-400">{{ $selectedTransferData->destination_bank }}</span>
+                            </div>
+                            @if($selectedTransferData->notes)
+                                <div class="pt-2 border-t border-slate-200/60 dark:border-slate-800/60 text-[11px] text-slate-500">
+                                    <span class="font-bold text-slate-700 dark:text-slate-300">Catatan Wali:</span> {{ $selectedTransferData->notes }}
+                                </div>
+                            @endif
+                        </div>
+                    </div>
+
+                    {{-- Right Column: Santri & Breakdown Alokasi (7 cols) --}}
+                    <div class="md:col-span-7 space-y-4">
+
+                        {{-- Santri Card --}}
+                        <div class="p-4 bg-slate-50 dark:bg-slate-950/60 border border-slate-200/80 dark:border-slate-800 rounded-2xl flex items-center justify-between">
+                            <div>
+                                <span class="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">Santri Penerima</span>
+                                <h4 class="text-sm font-black text-slate-900 dark:text-white mt-0.5">{{ $selectedTransferData->person?->name ?? '-' }}</h4>
+                                <span class="text-[11px] text-slate-500">NIS: {{ $selectedTransferData->person?->nis ?? '-' }}</span>
+                            </div>
+                            @if($selectedTransferData->person?->gender === 'L')
+                                <span class="px-2.5 py-1 rounded-xl text-xs font-semibold bg-sky-50 dark:bg-sky-950/40 text-sky-700 dark:text-sky-300 border border-sky-200/80 dark:border-sky-800/60 flex items-center gap-1.5">
+                                    <span class="w-2 h-2 rounded-full bg-sky-500"></span>
+                                    <span>Santri Putra (PA)</span>
+                                </span>
+                            @else
+                                <span class="px-2.5 py-1 rounded-xl text-xs font-semibold bg-pink-50 dark:bg-pink-950/40 text-pink-700 dark:text-pink-300 border border-pink-200/80 dark:border-pink-800/60 flex items-center gap-1.5">
+                                    <span class="w-2 h-2 rounded-full bg-pink-500"></span>
+                                    <span>Santri Putri (PI)</span>
+                                </span>
+                            @endif
+                        </div>
+
+                        {{-- Breakdown Alokasi Tagihan --}}
+                        <div>
+                            <span class="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-2">
+                                📋 Rincian Alokasi Tagihan Pondok
+                            </span>
+                            <div class="space-y-2 max-h-48 overflow-y-auto pr-1">
+                                @forelse($selectedTransferData->bill_breakdown as $item)
+                                    <div class="p-3 bg-white dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700/80 rounded-xl flex items-center justify-between text-xs shadow-2xs">
+                                        <div>
+                                            <span class="font-bold text-slate-900 dark:text-white block">{{ $item['config_label'] ?? 'Tagihan' }}</span>
+                                            <span class="text-[10px] text-slate-400">Periode: {{ $item['period_label'] ?? '-' }}</span>
+                                        </div>
+                                        <span class="font-bold text-emerald-600 dark:text-emerald-400">
+                                            Rp {{ number_format($item['amount'], 0, ',', '.') }}
+                                        </span>
+                                    </div>
+                                @empty
+                                    <div class="p-3 text-center text-slate-400 text-xs">Tidak ada rincian tagihan</div>
+                                @endforelse
+                            </div>
+                        </div>
+
+                        {{-- Titipan Uang Saku (if any) --}}
+                        @if($selectedTransferData->pocket_money_amount > 0)
+                            <div class="p-3.5 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/50 rounded-2xl flex items-center justify-between">
+                                <div class="flex items-center gap-2.5">
+                                    <span class="text-xl">💰</span>
+                                    <div>
+                                        <span class="text-[10px] font-extrabold text-amber-700 dark:text-amber-300 uppercase tracking-wider">Titipan Uang Saku Anak</span>
+                                        <p class="text-[11px] text-slate-600 dark:text-slate-400">Akan dicatat otomatis ke kas titipan santri</p>
+                                    </div>
+                                </div>
+                                <span class="text-sm font-black text-amber-700 dark:text-amber-300">
+                                    + Rp {{ number_format($selectedTransferData->pocket_money_amount, 0, ',', '.') }}
+                                </span>
+                            </div>
+                        @endif
+
+                        {{-- Total Pembayaran --}}
+                        <div class="p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl flex items-center justify-between">
+                            <span class="text-xs font-bold text-emerald-800 dark:text-emerald-300">TOTAL TRANSFER DITERIMA</span>
+                            <span class="text-xl font-black text-emerald-700 dark:text-emerald-300">
+                                Rp {{ number_format($selectedTransferData->total_paid, 0, ',', '.') }}
+                            </span>
+                        </div>
+
+                        {{-- Status Detail if already processed --}}
+                        @if($selectedTransferData->status === 'approved')
+                            <div class="p-3.5 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 rounded-2xl text-xs space-y-1">
+                                <div class="font-bold text-emerald-700 dark:text-emerald-300 flex items-center gap-1.5">
+                                    <span>✅ Disetujui oleh:</span> {{ $selectedTransferData->verifier?->name ?? 'Petugas' }}
+                                </div>
+                                <div class="text-[11px] text-slate-500">
+                                    Waktu: {{ $selectedTransferData->verified_at?->translatedFormat('d F Y · H:i') }} WIB • No. Kuitansi: <strong class="font-mono text-emerald-700 dark:text-emerald-300">{{ $selectedTransferData->receipt_no }}</strong>
+                                </div>
+                            </div>
+                        @elseif($selectedTransferData->status === 'rejected')
+                            <div class="p-3.5 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 rounded-2xl text-xs space-y-1">
+                                <div class="font-bold text-rose-700 dark:text-rose-300">❌ Ditolak oleh {{ $selectedTransferData->verifier?->name ?? 'Petugas' }}</div>
+                                <div class="text-xs text-rose-600 dark:text-rose-400"><strong>Alasan:</strong> {{ $selectedTransferData->rejection_reason }}</div>
+                            </div>
+                        @endif
+
+                        {{-- Rejection Form when status is pending --}}
+                        @if($selectedTransferData->status === 'pending')
+                            <div class="space-y-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+                                <label class="block text-xs font-bold text-slate-600 dark:text-slate-400">
+                                    Alasan Penolakan <span class="text-slate-400 font-normal">(wajib diisi jika ingin menolak transfer)</span>:
+                                </label>
+                                <div class="flex flex-wrap gap-1.5">
+                                    <button type="button" wire:click="setQuickRejectionReason('Bukti transfer buram atau tidak terbaca')" class="px-2 py-1 rounded-lg bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/40 dark:hover:bg-rose-900/40 text-[10px] text-rose-700 dark:text-rose-300 font-semibold border border-rose-200/60 dark:border-rose-800/60 transition">
+                                        ⚡ Bukti Buram
+                                    </button>
+                                    <button type="button" wire:click="setQuickRejectionReason('Nominal transfer tidak sesuai dengan mutasi bank')" class="px-2 py-1 rounded-lg bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/40 dark:hover:bg-rose-900/40 text-[10px] text-rose-700 dark:text-rose-300 font-semibold border border-rose-200/60 dark:border-rose-800/60 transition">
+                                        ⚡ Nominal Beda
+                                    </button>
+                                    <button type="button" wire:click="setQuickRejectionReason('Nama pengirim atau rekening tidak cocok')" class="px-2 py-1 rounded-lg bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/40 dark:hover:bg-rose-900/40 text-[10px] text-rose-700 dark:text-rose-300 font-semibold border border-rose-200/60 dark:border-rose-800/60 transition">
+                                        ⚡ Rekening Tidak Cocok
+                                    </button>
+                                    <button type="button" wire:click="setQuickRejectionReason('Dana belum masuk mutasi rekening pesantren')" class="px-2 py-1 rounded-lg bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/40 dark:hover:bg-rose-900/40 text-[10px] text-rose-700 dark:text-rose-300 font-semibold border border-rose-200/60 dark:border-rose-800/60 transition">
+                                        ⚡ Belum Ada di Mutasi
+                                    </button>
+                                </div>
+                                <textarea wire:model.live="transferRejectionReason"
+                                          rows="2"
+                                          placeholder="Tulis alasan spesifik atau klik tombol cepat di atas..."
+                                          class="w-full text-xs p-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-800 dark:text-slate-200 focus:ring-1 focus:ring-rose-400 focus:border-rose-400 outline-none"></textarea>
+                            </div>
+                        @endif
+
+                    </div>
+                </div>
+
+                {{-- Modal Footer --}}
+                <div class="px-6 py-4 bg-slate-50/80 dark:bg-slate-950/60 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-3 shrink-0">
+                    <button type="button" wire:click="closeTransferVerifyModal" class="px-5 py-2.5 bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 rounded-xl text-xs font-bold transition-all">
+                        Tutup
+                    </button>
+
+                    @if($selectedTransferData->status === 'pending')
+                        <div class="flex items-center gap-2">
+                            <button type="button"
+                                    @click="showConfirmReject = true"
+                                    class="px-4 py-2.5 bg-rose-100 hover:bg-rose-200 dark:bg-rose-950/50 dark:hover:bg-rose-900/50 text-rose-700 dark:text-rose-300 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer">
+                                <span>❌ Tolak Pengajuan</span>
+                            </button>
+
+                            <button type="button"
+                                    @click="showConfirmApprove = true"
+                                    class="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-extrabold shadow-lg shadow-emerald-500/20 transition-all flex items-center gap-2 cursor-pointer">
+                                <span>✓ Setujui &amp; Terbitkan Kuitansi</span>
+                            </button>
+                        </div>
+                    @endif
+                </div>
+
             </div>
         </div>
     @endif

@@ -53,4 +53,16 @@ class BillPayment extends Model
     {
         return $this->belongsTo(User::class, 'logged_by');
     }
+
+    public static function generateReceiptNo(): string
+    {
+        $prefix = 'KSR-' . now()->format('Ymd') . '-';
+        $todayCount = self::where('receipt_no', 'like', $prefix . '%')
+            ->select('receipt_no')
+            ->distinct()
+            ->count();
+
+        $seq = str_pad((string)($todayCount + 1), 4, '0', STR_PAD_LEFT);
+        return $prefix . $seq;
+    }
 }

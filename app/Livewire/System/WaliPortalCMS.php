@@ -40,6 +40,9 @@ class WaliPortalCMS extends Component
     // Info Jadwal Rekap Bendahara (Banner Biru)
     public string $wali_rekap_info   = '';
 
+    // FAQ Items
+    public array $faqItems = [];
+
     public function mount()
     {
         // Enforce Authorization: Hanya Super Admin & Manajemen
@@ -70,7 +73,7 @@ class WaliPortalCMS extends Component
         $this->rekening_bri_putri      = $contents['wali_bri_putri'] ?? '';
         $this->rekening_bri_putri_an   = $contents['wali_bri_putri_an'] ?? '';
 
-        $this->wa_bendahara_putri      = $contents['wali_wa_putri'] ?? '6281234567891';
+        $this->wa_bendahara_putri      = $contents['wali_wa_putri'] ?? '6285713285438';
         $this->wa_bendahara_putri_name = $contents['wali_wa_putri_name'] ?? 'Bendahara Putri Al-Fithroh';
 
         // Pengumuman
@@ -78,6 +81,78 @@ class WaliPortalCMS extends Component
 
         // Info Jadwal Rekap
         $this->wali_rekap_info         = $contents['wali_rekap_info'] ?? 'Data tagihan diperbarui oleh bendahara setiap Tanggal 1 dan 15 setiap bulannya. Jika Bapak/Ibu sudah melakukan transfer namun status tagihan belum berubah, mohon bersabar hingga tanggal pembaruan berikutnya.';
+
+        // FAQ Items
+        $rawFaq = $contents['wali_faq_items'] ?? null;
+        if (!empty($rawFaq)) {
+            $decoded = is_string($rawFaq) ? json_decode($rawFaq, true) : $rawFaq;
+            $this->faqItems = is_array($decoded) ? array_values($decoded) : [];
+        }
+
+        if (empty($this->faqItems)) {
+            $this->faqItems = [
+                [
+                    'id' => 'faq_' . uniqid(),
+                    'question' => 'Bagaimana cara konfirmasi bukti pembayaran?',
+                    'answer' => 'Setelah melakukan transfer manual ke rekening pondok, Bapak/Ibu dapat mengunggah foto resi/struk transfer secara langsung melalui fitur "Unggah Bukti Transfer" pada portal ini, atau mengirimkannya via WhatsApp ke nomor Bendahara Pondok.',
+                ],
+                [
+                    'id' => 'faq_' . uniqid(),
+                    'question' => 'Apakah bisa membayar via online (Virtual Account atau QRIS)?',
+                    'answer' => 'Untuk saat ini pembayaran online otomatis (Virtual Account & QRIS) belum bisa digunakan, namun sistem ini akan terus kami usahakan dan kembangkan. Mohon menunggu informasi resmi lebih lanjut.',
+                ],
+                [
+                    'id' => 'faq_' . uniqid(),
+                    'question' => 'Apakah bisa membayar secara offline / tunai langsung?',
+                    'answer' => 'Bisa. Pembayaran tunai dapat dititipkan langsung ke santri yang bersangkutan atau datang langsung menemui pengurus pusat / bendahara pondok di kantor kasir pesantren.',
+                ],
+                [
+                    'id' => 'faq_' . uniqid(),
+                    'question' => 'Apakah bisa menyicil tagihan yang nominalnya cukup besar?',
+                    'answer' => 'Bisa. Pada daftar tagihan santri, pilih tagihan yang ingin dibayar lalu tekan tombol bayar sebagian / cicil dan masukkan nominal yang ingin dibayarkan terlebih dahulu.',
+                ],
+                [
+                    'id' => 'faq_' . uniqid(),
+                    'question' => 'Apakah bisa menitipkan uang saku santri bersamaan dengan pembayaran?',
+                    'answer' => 'Bisa. Wali santri dapat menitipkan uang saku santri bersamaan saat melakukan konfirmasi pembayaran ke bendahara atau melalui layanan kasir pondok.',
+                ],
+            ];
+        }
+    }
+
+    public function addFaqItem(): void
+    {
+        $this->faqItems[] = [
+            'id' => 'faq_' . uniqid(),
+            'question' => '',
+            'answer' => '',
+        ];
+    }
+
+    public function removeFaqItem(int $index): void
+    {
+        if (isset($this->faqItems[$index])) {
+            unset($this->faqItems[$index]);
+            $this->faqItems = array_values($this->faqItems);
+        }
+    }
+
+    public function moveFaqUp(int $index): void
+    {
+        if ($index > 0 && isset($this->faqItems[$index])) {
+            $temp = $this->faqItems[$index - 1];
+            $this->faqItems[$index - 1] = $this->faqItems[$index];
+            $this->faqItems[$index] = $temp;
+        }
+    }
+
+    public function moveFaqDown(int $index): void
+    {
+        if ($index < count($this->faqItems) - 1 && isset($this->faqItems[$index])) {
+            $temp = $this->faqItems[$index + 1];
+            $this->faqItems[$index + 1] = $this->faqItems[$index];
+            $this->faqItems[$index] = $temp;
+        }
     }
 
     public function save()
@@ -112,12 +187,22 @@ class WaliPortalCMS extends Component
 
             'wali_announcement'       => 'nullable|string|max:500',
             'wali_rekap_info'         => 'nullable|string|max:800',
+
+            'faqItems'                => 'nullable|array',
+            'faqItems.*.question'     => 'required|string|max:300',
+            'faqItems.*.answer'       => 'required|string|max:1500',
         ], [
-            'bank1_name_putra.required'   => 'Nama Bank 1 Putra wajib diisi.',
-            'rekening_bsi_putra.required' => 'Nomor Rekening Bank 1 Putra wajib diisi.',
-            'bank1_name_putri.required'   => 'Nama Bank 1 Putri wajib diisi.',
-            'rekening_bsi_putri.required' => 'Nomor Rekening Bank 1 Putri wajib diisi.',
+            'bank1_name_putra.required'    => 'Nama Bank 1 Putra wajib diisi.',
+            'rekening_bsi_putra.required'  => 'Nomor Rekening Bank 1 Putra wajib diisi.',
+            'bank1_name_putri.required'    => 'Nama Bank 1 Putri wajib diisi.',
+            'rekening_bsi_putri.required'  => 'Nomor Rekening Bank 1 Putri wajib diisi.',
+            'faqItems.*.question.required' => 'Pertanyaan FAQ wajib diisi.',
+            'faqItems.*.answer.required'   => 'Jawaban FAQ wajib diisi.',
         ]);
+
+        // Normalisasi nomor WhatsApp agar valid untuk wa.me
+        $this->wa_bendahara_putra = static::normalizeWaNumber($this->wa_bendahara_putra);
+        $this->wa_bendahara_putri = static::normalizeWaNumber($this->wa_bendahara_putri);
 
         $fields = [
             'wali_bank1_name_putra'  => ['section' => 'wali_portal', 'title' => 'Nama Bank 1 Putra', 'type' => 'text', 'value' => $this->bank1_name_putra],
@@ -158,11 +243,55 @@ class WaliPortalCMS extends Component
             );
         }
 
+        // Clean & Save FAQ items
+        $cleanFaq = [];
+        foreach ($this->faqItems as $item) {
+            $q = trim($item['question'] ?? '');
+            $a = trim($item['answer'] ?? '');
+            if ($q !== '' && $a !== '') {
+                $cleanFaq[] = [
+                    'id' => $item['id'] ?? ('faq_' . uniqid()),
+                    'question' => $q,
+                    'answer' => $a,
+                ];
+            }
+        }
+
+        LandingPageContent::updateOrCreate(
+            ['key' => 'wali_faq_items'],
+            [
+                'value'   => json_encode($cleanFaq, JSON_UNESCAPED_UNICODE),
+                'type'    => 'json',
+                'section' => 'wali_portal',
+                'title'   => 'Daftar Tanya Jawab (FAQ) Portal Wali',
+            ]
+        );
+
         activity('security')
             ->causedBy(auth()->user())
-            ->log("Telah memperbarui konfigurasi Nama Bank, Rekening & WA Bendahara CMS Portal Wali.");
+            ->log("Telah memperbarui konfigurasi Nama Bank, Rekening, WA Bendahara & FAQ CMS Portal Wali.");
 
-        $this->toastSuccess('Pengaturan Nama Bank, Rekening & WhatsApp Bendahara berhasil disimpan.');
+        $this->toastSuccess('Pengaturan CMS Portal Wali (Bank, Rekening, WhatsApp & FAQ) berhasil disimpan.');
+    }
+
+    public static function normalizeWaNumber(?string $phone): string
+    {
+        if (empty($phone)) {
+            return '';
+        }
+        $clean = preg_replace('/[^0-9]/', '', $phone);
+        if (empty($clean)) {
+            return '';
+        }
+        if (str_starts_with($clean, '0')) {
+            $clean = '62' . substr($clean, 1);
+        } elseif (str_starts_with($clean, '8')) {
+            $clean = '62' . $clean;
+        } elseif (str_starts_with($clean, '620')) {
+            $clean = '62' . substr($clean, 3);
+        }
+
+        return $clean;
     }
 
     public function render()

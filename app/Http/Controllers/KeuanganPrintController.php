@@ -381,7 +381,8 @@ class KeuanganPrintController extends Controller
 
                     $lunasDiMukaLabel = null;
                     if ($furthestPaidBill) {
-                        $lunasDiMukaLabel = "Sem {$furthestPaidBill->period_month} / {$furthestPaidBill->period_year}";
+                        $furthestSem = $furthestPaidBill->period_sub ?: ($furthestPaidBill->period_month > 6 ? 2 : ($furthestPaidBill->period_month ?: 1));
+                        $lunasDiMukaLabel = "Sem {$furthestSem} / {$furthestPaidBill->period_year}";
                     }
 
                     $jenjangLabel = match ($santri->kelas_jenjang) {
@@ -771,7 +772,8 @@ class KeuanganPrintController extends Controller
 
                     $lunasDiMukaLabel = null;
                     if ($furthestPaidBill) {
-                        $lunasDiMukaLabel = "Sem {$furthestPaidBill->period_month} / {$furthestPaidBill->period_year}";
+                        $furthestSem = $furthestPaidBill->period_sub ?: ($furthestPaidBill->period_month > 6 ? 2 : ($furthestPaidBill->period_month ?: 1));
+                        $lunasDiMukaLabel = "Sem {$furthestSem} / {$furthestPaidBill->period_year}";
                     }
 
                     $tariffInfo = $getExpectedTariff($santri->id);

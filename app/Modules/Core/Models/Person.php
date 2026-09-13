@@ -124,6 +124,11 @@ class Person extends Model implements HasMedia
         return $this->hasMany(\App\Modules\Keuangan\Models\SantriLeave::class, 'person_id');
     }
 
+    public function manualTransferSubmissions(): HasMany
+    {
+        return $this->hasMany(\App\Modules\Keuangan\Models\ManualTransferSubmission::class, 'person_id');
+    }
+
     /**
      * Ambil nilai dari profil santri (kolom langsung atau additional_info JSON).
      */

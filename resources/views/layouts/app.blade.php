@@ -131,7 +131,7 @@
     @stack('styles')
 
 </head>
-<body class="bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-200 antialiased min-h-screen flex flex-col transition-colors duration-300" x-data="{ sidebarOpen: false }">
+<body class="bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-200 antialiased min-h-screen flex flex-col transition-colors duration-300" x-data="{ sidebarOpen: false, isDesktop: window.innerWidth >= 1024 }" @resize.window="isDesktop = window.innerWidth >= 1024">
 
     <div class="flex flex-1 relative overflow-hidden">
         <!-- Mobile Sidebar Overlay -->
@@ -148,7 +148,8 @@
         </div>
 
         <!-- Sidebar -->
-        <aside :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full'" 
+        <aside x-show="isDesktop || sidebarOpen"
+               :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'" 
                class="fixed inset-y-0 left-0 z-40 w-64 bg-slate-900 text-slate-300 flex flex-col border-r border-slate-800 transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:flex lg:z-auto"
                x-cloak>
             <!-- Logo Header -->
