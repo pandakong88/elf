@@ -239,19 +239,23 @@
             $faqItems = [
                 [
                     'question' => 'Bagaimana cara konfirmasi bukti pembayaran?',
-                    'answer'   => 'Setelah melakukan transfer, foto resi/bukti bayar lalu kirimkan via WhatsApp ke nomor Bendahara yang tertera di menu atau unggah pada portal.',
+                    'answer'   => 'Setelah melakukan transfer manual ke rekening pondok, Bapak/Ibu dapat mengunggah foto resi/struk transfer secara langsung melalui fitur "Unggah Bukti Transfer" pada portal ini, atau mengirimkannya via WhatsApp ke nomor Bendahara Pondok.',
                 ],
                 [
-                    'question' => 'Apakah bisa membayar tunai secara langsung?',
-                    'answer'   => 'Bisa. Pembayaran tunai diterima langsung di kantor Kasir Bendahara Pesantren.',
+                    'question' => 'Apakah bisa membayar via online (Virtual Account atau QRIS)?',
+                    'answer'   => 'Untuk saat ini pembayaran online otomatis (Virtual Account & QRIS) belum bisa digunakan, namun sistem ini akan terus kami usahakan dan kembangkan. Mohon menunggu informasi resmi lebih lanjut.',
                 ],
                 [
-                    'question' => 'Kapan batas waktu pembayaran tagihan bulanan santri?',
-                    'answer'   => 'Pembayaran tagihan santri diharapkan dilakukan sebelum tanggal 10 setiap bulannya.',
+                    'question' => 'Apakah bisa membayar secara offline / tunai langsung?',
+                    'answer'   => 'Bisa. Pembayaran tunai dapat dititipkan langsung ke santri yang bersangkutan atau datang langsung menemui pengurus pusat / bendahara pondok di kantor kasir pesantren.',
                 ],
                 [
-                    'question' => 'Bagaimana jika santri ingin mengajukan dispensasi?',
-                    'answer'   => 'Wali santri dapat langsung menghubungi pihak pengasuhan atau bendahara pondok untuk pengajuan dispensasi.',
+                    'question' => 'Apakah bisa menyicil tagihan yang nominalnya cukup besar?',
+                    'answer'   => 'Bisa. Pada daftar tagihan santri, pilih tagihan yang ingin dibayar lalu tekan tombol bayar sebagian / cicil dan masukkan nominal yang ingin dibayarkan terlebih dahulu.',
+                ],
+                [
+                    'question' => 'Apakah bisa menitipkan uang saku santri bersamaan dengan pembayaran?',
+                    'answer'   => 'Bisa. Wali santri dapat menitipkan uang saku santri bersamaan saat melakukan konfirmasi pembayaran ke bendahara atau melalui layanan kasir pondok.',
                 ],
             ];
         }
