@@ -952,7 +952,153 @@
 
                 <!-- ─── FORM TRANSFER MANUAL ────────────────────────────────── -->
                 @if($checkoutMethod === 'manual')
-                    <div class="space-y-3 pt-1">
+                    <div x-data="{ showConfirmSendModal: false }" class="space-y-3 pt-1">
+                        
+                        {{-- DIALOG / MODAL KONFIRMASI PENGIRIMAN BUKTI TRANSFER --}}
+                        <div x-show="showConfirmSendModal"
+                             x-cloak
+                             x-transition:enter="transition ease-out duration-200"
+                             x-transition:enter-start="opacity-0 scale-95"
+                             x-transition:enter-end="opacity-100 scale-100"
+                             x-transition:leave="transition ease-in duration-150"
+                             x-transition:leave-start="opacity-100 scale-100"
+                             x-transition:leave-end="opacity-0 scale-95"
+                             class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/80 backdrop-blur-xs">
+                            
+                            <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden max-h-[90vh] flex flex-col relative animate-in fade-in zoom-in-95 duration-150">
+                                
+                                {{-- Top Glow Accent --}}
+                                <div class="h-1.5 bg-gradient-to-r from-emerald-400 via-teal-500 to-emerald-600 shrink-0"></div>
+
+                                {{-- Modal Header --}}
+                                <div class="p-5 pb-3 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between shrink-0 bg-slate-50/50 dark:bg-slate-950/30">
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-10 h-10 rounded-2xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-xl shrink-0">
+                                            📤
+                                        </div>
+                                        <div>
+                                            <h3 class="text-sm font-extrabold text-slate-900 dark:text-white">Konfirmasi Bukti Transfer</h3>
+                                            <p class="text-[11px] text-slate-400">Periksa rincian sebelum dikirim ke Bendahara</p>
+                                        </div>
+                                    </div>
+                                    <button type="button" 
+                                            @click="showConfirmSendModal = false"
+                                            class="p-2 rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                                    </button>
+                                </div>
+
+                                {{-- Modal Body (Scrollable) --}}
+                                <div class="p-5 overflow-y-auto space-y-4 flex-1">
+                                    
+                                    {{-- Preview Struk Thumbnail --}}
+                                    @if($proofImage)
+                                        <div class="bg-slate-950 rounded-2xl p-2.5 border border-slate-800 text-center relative group">
+                                            <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5 flex items-center justify-center gap-1.5">
+                                                <span>📸 Lampiran Bukti Struk Transfer</span>
+                                            </div>
+                                            <img src="{{ $proofImage->temporaryUrl() }}" 
+                                                 alt="Bukti Transfer" 
+                                                 class="max-h-48 mx-auto rounded-xl object-contain shadow-md"/>
+                                        </div>
+                                    @endif
+
+                                    {{-- Nominal Highlight Box --}}
+                                    <div class="p-4 bg-gradient-to-br from-emerald-500/10 via-emerald-500/5 to-teal-500/10 border border-emerald-500/20 rounded-2xl text-center space-y-1">
+                                        <span class="text-[10px] font-black uppercase tracking-wider text-emerald-700 dark:text-emerald-400">Total Transfer Diterima Pesantren</span>
+                                        <div class="text-2xl font-black text-emerald-600 dark:text-emerald-300">
+                                            Rp {{ number_format($this->getGrandTotalTransfer(), 0, ',', '.') }}
+                                        </div>
+                                        <div class="text-[11px] text-slate-500 dark:text-slate-400">
+                                            Ke Rekening: <strong class="text-slate-800 dark:text-slate-200">{{ $selectedBankDestination === 'BRI' ? ($bank2Name ?? 'Bank BRI') : ($bank1Name ?? 'Bank Syariah Indonesia (BSI)') }}</strong>
+                                        </div>
+                                    </div>
+
+                                    {{-- Breakdown Rincian Alokasi --}}
+                                    <div class="space-y-2">
+                                        <span class="text-xs font-bold text-slate-700 dark:text-slate-300 block">
+                                            📋 Rincian Alokasi Tagihan Pondok:
+                                        </span>
+                                        <div class="space-y-1.5 max-h-40 overflow-y-auto pr-1">
+                                            @forelse($simulasiHasil as $item)
+                                                <div class="p-2.5 bg-slate-50 dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700/80 rounded-xl flex items-center justify-between text-xs">
+                                                    <div>
+                                                        <span class="font-bold text-slate-900 dark:text-white block leading-tight">{{ $item['label'] }}</span>
+                                                        @if($item['is_partial'] ?? false)
+                                                            <span class="text-[9px] font-bold text-amber-600 dark:text-amber-400 bg-amber-100 dark:bg-amber-950/80 px-1.5 py-0.2 rounded mt-0.5 inline-block">Cicilan</span>
+                                                        @endif
+                                                    </div>
+                                                    <span class="font-bold text-emerald-600 dark:text-emerald-400 shrink-0">
+                                                        Rp {{ number_format($item['terbayar'], 0, ',', '.') }}
+                                                    </span>
+                                                </div>
+                                            @empty
+                                                <div class="p-2 text-center text-slate-400 text-xs">Tidak ada tagihan dipilih</div>
+                                            @endforelse
+
+                                            @if($includePocketMoney && $pocketMoneyAmount > 0)
+                                                <div class="p-2.5 bg-purple-50 dark:bg-purple-950/40 border border-purple-200 dark:border-purple-900/60 rounded-xl flex items-center justify-between text-xs">
+                                                    <div class="flex items-center gap-1.5">
+                                                        <span class="text-base">💰</span>
+                                                        <div>
+                                                            <span class="font-bold text-purple-900 dark:text-purple-200 block leading-tight">Titipan Uang Saku</span>
+                                                            <span class="text-[10px] text-purple-600 dark:text-purple-400">Masuk ke kas titipan santri</span>
+                                                        </div>
+                                                    </div>
+                                                    <span class="font-bold text-purple-700 dark:text-purple-300 shrink-0">
+                                                        + Rp {{ number_format($pocketMoneyAmount, 0, ',', '.') }}
+                                                    </span>
+                                                </div>
+                                            @endif
+                                        </div>
+                                    </div>
+
+                                    {{-- Info Pengirim jika ada --}}
+                                    @if($senderBank || $senderAccountName)
+                                        <div class="p-3 bg-slate-50 dark:bg-slate-950/60 border border-slate-200/80 dark:border-slate-800 rounded-xl text-xs space-y-1">
+                                            <div class="text-[10px] font-bold text-slate-400 uppercase">Rekening Pengirim:</div>
+                                            <div class="font-semibold text-slate-800 dark:text-slate-200">
+                                                {{ $senderBank ?: 'Bank Pengirim' }} {{ $senderAccountName ? 'a.n. ' . $senderAccountName : '' }}
+                                            </div>
+                                        </div>
+                                    @endif
+
+                                    {{-- Notice Box --}}
+                                    <div class="p-3 bg-sky-50 dark:bg-sky-950/30 border border-sky-200 dark:border-sky-800/60 rounded-xl text-[11px] text-sky-800 dark:text-sky-300 flex items-start gap-2">
+                                        <span class="text-sm shrink-0">ℹ️</span>
+                                        <p class="leading-relaxed">
+                                            Bukti transfer akan langsung masuk ke antrean verifikasi bendahara. Setelah diverifikasi, Anda dapat langsung mengunduh kuitansi resmi digital di tab Riwayat.
+                                        </p>
+                                    </div>
+
+                                </div>
+
+                                {{-- Modal Footer --}}
+                                <div class="p-4 bg-slate-50 dark:bg-slate-950/80 border-t border-slate-100 dark:border-slate-800 flex items-center justify-end gap-2.5 shrink-0">
+                                    <button type="button" 
+                                            @click="showConfirmSendModal = false"
+                                            class="px-4 py-2.5 rounded-xl bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-bold transition-all">
+                                        Periksa Kembali
+                                    </button>
+                                    <button type="button" 
+                                            wire:click="submitManualTransfer"
+                                            wire:loading.attr="disabled"
+                                            @click="showConfirmSendModal = false"
+                                            class="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white text-xs font-extrabold shadow-md shadow-emerald-600/25 transition-all flex items-center justify-center gap-1.5 active:scale-98">
+                                        <span wire:loading.remove wire:target="submitManualTransfer" class="flex items-center gap-1.5">
+                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
+                                            <span>✓ Ya, Kirim Sekarang</span>
+                                        </span>
+                                        <span wire:loading wire:target="submitManualTransfer" class="flex items-center gap-1.5">
+                                            <svg class="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                                            <span>Mengunggah...</span>
+                                        </span>
+                                    </button>
+                                </div>
+
+                            </div>
+                        </div>
+
                         <!-- Rekening Tujuan Ramping -->
                         <div class="space-y-1.5">
                             @if(!empty($bsiRekening))
@@ -1039,19 +1185,28 @@
                             </div>
 
                             <!-- Tombol Kirim Bukti -->
-                            <button type="button" 
-                                    wire:click="submitManualTransfer"
-                                    wire:loading.attr="disabled"
-                                    class="w-full py-3 px-4 bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white font-bold rounded-xl transition-all shadow-xs flex items-center justify-center gap-2 text-xs disabled:opacity-50">
-                                <span wire:loading.remove wire:target="submitManualTransfer" class="flex items-center gap-1.5">
-                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
-                                    <span>Kirim Bukti Pembayaran</span>
-                                </span>
-                                <span wire:loading wire:target="submitManualTransfer" class="flex items-center gap-1.5">
-                                    <svg class="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-                                    <span>Mengunggah Bukti...</span>
-                                </span>
-                            </button>
+                            @if($proofImage && count($selectedBillIds) > 0)
+                                <button type="button" 
+                                        @click="showConfirmSendModal = true"
+                                        class="w-full py-3.5 px-4 bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white font-extrabold rounded-xl transition-all shadow-md shadow-emerald-600/20 flex items-center justify-center gap-2 text-xs active:scale-[0.99] cursor-pointer">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                    <span>Kirim &amp; Konfirmasi Bukti Pembayaran</span>
+                                </button>
+                            @else
+                                <button type="button" 
+                                        wire:click="submitManualTransfer"
+                                        wire:loading.attr="disabled"
+                                        class="w-full py-3 px-4 bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white font-bold rounded-xl transition-all shadow-xs flex items-center justify-center gap-2 text-xs disabled:opacity-50">
+                                    <span wire:loading.remove wire:target="submitManualTransfer" class="flex items-center gap-1.5">
+                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
+                                        <span>Kirim Bukti Pembayaran</span>
+                                    </span>
+                                    <span wire:loading wire:target="submitManualTransfer" class="flex items-center gap-1.5">
+                                        <svg class="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                                        <span>Mengunggah Bukti...</span>
+                                    </span>
+                                </button>
+                            @endif
                         </div>
                     </div>
                 @endif
