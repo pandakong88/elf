@@ -1032,8 +1032,8 @@
                                         <thead>
                                             <tr class="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-b border-slate-200 dark:border-slate-700 font-bold font-mono text-[10px]">
                                                 <th class="px-3 py-2 border-r border-slate-200 dark:border-slate-700 text-center w-8">#</th>
-                                                <th class="px-3 py-2 border-r border-slate-200 dark:border-slate-700">A: NIS</th>
-                                                <th class="px-3 py-2 border-r border-slate-200 dark:border-slate-700">B: NAMA SANTRI</th>
+                                                <th class="px-3 py-2 border-r border-slate-200 dark:border-slate-700">🔒 A: NIS</th>
+                                                <th class="px-3 py-2 border-r border-slate-200 dark:border-slate-700">🔒 B: NAMA SANTRI</th>
                                                 <th class="px-3 py-2 border-r border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400">INFO ASRAMA / STATUS</th>
                                                 <th class="px-3 py-2 border-r border-slate-200 dark:border-slate-700">C: JENIS TAGIHAN</th>
                                                 <th class="px-3 py-2 border-r border-slate-200 dark:border-slate-700 text-center">D: TAHUN</th>
@@ -1052,8 +1052,8 @@
                                                     @endphp
                                                     <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50">
                                                         <td class="px-3 py-2 text-center text-slate-400 bg-slate-50/50 dark:bg-slate-800/30 border-r border-slate-200 dark:border-slate-700">{{ $idx + 2 }}</td>
-                                                        <td class="px-3 py-2 border-r border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 font-semibold">{{ $santri->nis ?: '-' }}</td>
-                                                        <td class="px-3 py-2 border-r border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 font-sans font-medium">{{ $santri->name }}</td>
+                                                        <td class="px-3 py-2 border-r border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 font-semibold bg-slate-50/40 dark:bg-slate-800/20">{{ $santri->nis ?: '-' }}</td>
+                                                        <td class="px-3 py-2 border-r border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 font-sans font-medium bg-slate-50/40 dark:bg-slate-800/20">{{ $santri->name }}</td>
                                                         <td class="px-3 py-2 border-r border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 font-sans text-[10px]">
                                                             @if($isLaju)
                                                                 <span class="text-sky-600 dark:text-sky-400 font-bold">🚶‍♂️ Laju</span>
@@ -1109,10 +1109,13 @@
                             <!-- Tips Box -->
                             <div class="p-3.5 rounded-xl bg-blue-50 dark:bg-blue-950/30 border border-blue-200/80 dark:border-blue-900/50 text-xs text-blue-700 dark:text-blue-300 flex items-start gap-2.5">
                                 <span class="text-base leading-none">💡</span>
-                                <div class="space-y-0.5">
-                                    <span class="font-bold block">Tips Praktis Pengurus:</span>
+                                <div class="space-y-1">
+                                    <span class="font-bold block">Tips &amp; Proteksi Dokumen:</span>
                                     <p class="text-[11px] text-blue-600/90 dark:text-blue-400">
-                                        Santri yang <strong>tidak memiliki tunggakan / sudah lunas</strong> cukup <strong>dikosongkan nominalnya</strong> di Excel. Sistem akan otomatis melewatinya saat file diunggah.
+                                        🔒 <strong>Kolom NIS &amp; Nama Santri otomatis dikunci (Protected)</strong> pada Excel untuk mencegah salah ketik atau data tertukar secara tidak sengaja.
+                                    </p>
+                                    <p class="text-[11px] text-blue-600/90 dark:text-blue-400">
+                                        Santri yang <strong>tidak memiliki tunggakan / sudah lunas</strong> cukup <strong>dikosongkan nominalnya</strong>. Sistem otomatis melewatinya saat file diunggah.
                                     </p>
                                 </div>
                             </div>

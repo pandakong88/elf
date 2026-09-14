@@ -182,16 +182,41 @@ class TunggakanDataSheet implements FromArray, WithTitle, WithHeadings, ShouldAu
 
     public function styles(Worksheet $sheet)
     {
+        $highestRow = max($sheet->getHighestRow(), 500);
+
         // Header styling
         $sheet->getStyle('A1:G1')->getFont()->setBold(true);
         $sheet->getStyle('A1:G1')->getFill()
             ->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)
             ->getStartColor()->setARGB('FFE2E8F0');
 
+        // Enable worksheet protection so locked cells cannot be modified
+        $sheet->getProtection()->setPassword('');
+        $sheet->getProtection()->setSheet(true);
+        $sheet->getProtection()->setSort(true);
+        $sheet->getProtection()->setAutoFilter(true);
+        $sheet->getProtection()->setFormatCells(true);
+        $sheet->getProtection()->setSelectLockedCells(true);
+        $sheet->getProtection()->setSelectUnlockedCells(true);
+
+        if ($this->prefill) {
+            // Beri warna latar belakang abu-abu sangat muda pada NIS & Nama Santri untuk menandakan kolom referensi terkunci
+            $sheet->getStyle('A2:B' . $highestRow)->getFill()
+                ->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)
+                ->getStartColor()->setARGB('FFF8FAFC');
+
+            // Kunci kolom A (NIS) dan B (Nama), dan buka kolom C s/d G agar dapat diisi oleh pengurus
+            $sheet->getStyle('A2:B' . $highestRow)->getProtection()->setLocked(\PhpOffice\PhpSpreadsheet\Style\Protection::PROTECTION_PROTECTED);
+            $sheet->getStyle('C2:G' . $highestRow)->getProtection()->setLocked(\PhpOffice\PhpSpreadsheet\Style\Protection::PROTECTION_UNPROTECTED);
+        } else {
+            // Jika template kosong tanpa prefill, buka seluruh kolom A s/d G agar pengurus bisa mengetik NIS sendiri
+            $sheet->getStyle('A2:G' . $highestRow)->getProtection()->setLocked(\PhpOffice\PhpSpreadsheet\Style\Protection::PROTECTION_UNPROTECTED);
+        }
+
         // Dropdown for Jenis Tagihan (Column C)
         $billTypes = 'kebersihan,syahriah_pondok,syahriah_madrasah,kas_komplek,lainnya';
 
-        for ($i = 2; $i <= 500; $i++) {
+        for ($i = 2; $i <= min($highestRow, 500); $i++) {
             $valType = $sheet->getCell('C' . $i)->getDataValidation();
             $valType->setType(DataValidation::TYPE_LIST);
             $valType->setFormula1('"' . $billTypes . '"');
@@ -317,6 +342,13 @@ class TunggakanSantriReferenceSheet implements FromArray, WithTitle, WithHeading
         $sheet->getStyle('A1:G1')->getFill()
             ->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)
             ->getStartColor()->setARGB('FFE2E8F0');
+
+        $sheet->getProtection()->setPassword('');
+        $sheet->getProtection()->setSheet(true);
+        $sheet->getProtection()->setSort(true);
+        $sheet->getProtection()->setAutoFilter(true);
+        $sheet->getProtection()->setSelectLockedCells(true);
+        $sheet->getProtection()->setSelectUnlockedCells(true);
     }
 }
 
@@ -351,5 +383,12 @@ class TunggakanInstructionSheet implements FromArray, WithTitle, WithHeadings, S
         $sheet->getStyle('A1:C1')->getFill()
             ->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)
             ->getStartColor()->setARGB('FFE2E8F0');
+
+        $sheet->getProtection()->setPassword('');
+        $sheet->getProtection()->setSheet(true);
+        $sheet->getProtection()->setSort(true);
+        $sheet->getProtection()->setAutoFilter(true);
+        $sheet->getProtection()->setSelectLockedCells(true);
+        $sheet->getProtection()->setSelectUnlockedCells(true);
     }
 }

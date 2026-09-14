@@ -94,4 +94,36 @@ class TunggakanTemplateExportTest extends TestCase
             ->assertSee('0 Santri Ditemukan')
             ->assertSee('Tidak ada santri yang sesuai kriteria filter saat ini.');
     }
+
+    public function test_tunggakan_template_sheet_protection_and_cell_locks(): void
+    {
+        $export = new TunggakanImportTemplateExport(prefill: true);
+        \Maatwebsite\Excel\Facades\Excel::store($export, 'temp_test_protection.xlsx', 'local');
+
+        $path = storage_path('app/private/temp_test_protection.xlsx');
+        if (!file_exists($path)) {
+            $path = storage_path('app/temp_test_protection.xlsx');
+        }
+
+        $spreadsheet = \PhpOffice\PhpSpreadsheet\IOFactory::load($path);
+        
+        // Sheet 0: Isian Data Tunggakan
+        $sheet0 = $spreadsheet->getSheet(0);
+        $this->assertTrue($sheet0->getProtection()->isProtectionEnabled());
+        $this->assertEquals('protected', $sheet0->getStyle('A2')->getProtection()->getLocked());
+        $this->assertEquals('protected', $sheet0->getStyle('B2')->getProtection()->getLocked());
+        $this->assertEquals('unprotected', $sheet0->getStyle('F2')->getProtection()->getLocked());
+
+        // Sheet 1: Referensi Santri & NIS
+        $sheet1 = $spreadsheet->getSheet(1);
+        $this->assertTrue($sheet1->getProtection()->isProtectionEnabled());
+
+        // Sheet 2: Petunjuk Pengisian
+        $sheet2 = $spreadsheet->getSheet(2);
+        $this->assertTrue($sheet2->getProtection()->isProtectionEnabled());
+
+        if (file_exists($path)) {
+            unlink($path);
+        }
+    }
 }
