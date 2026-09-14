@@ -51,16 +51,21 @@ class SystemController extends Controller
             abort(403, 'Anda harus login untuk mengunduh template.');
         }
 
-        $dormitoryId = $request->query('dormitory_id') ?: null;
-        $kelasId     = $request->query('kelas_id') ?: null;
-        $gender      = $request->query('gender') ?: null;
-        $prefill     = $request->boolean('prefill', true);
-        $billType    = $request->query('bill_type', 'kebersihan');
-        $year        = (int)$request->query('year', 2025);
+        $dormitoryId    = $request->query('dormitory_id') ?: null;
+        $kelasId        = $request->query('kelas_id') ?: null;
+        $gender         = $request->query('gender') ?: null;
+        $presenceStatus = $request->query('presence_status') ?: null;
+        $orderBy        = $request->query('order_by', 'komplek');
+        $prefill        = $request->boolean('prefill', true);
+        $billType       = $request->query('bill_type', 'kebersihan');
+        $year           = (int)$request->query('year', 2025);
 
         $parts = ['Template_Tunggakan'];
         if ($gender) {
             $parts[] = $gender === 'L' ? 'Putra' : 'Putri';
+        }
+        if ($presenceStatus) {
+            $parts[] = ucfirst($presenceStatus);
         }
         if ($dormitoryId) {
             $dorm = \App\Modules\Kepengasuhan\Models\Dormitory::find($dormitoryId);
@@ -70,6 +75,10 @@ class SystemController extends Controller
             $k = \App\Modules\Madrasah\Models\MadrasahKelas::find($kelasId);
             if ($k) $parts[] = \Illuminate\Support\Str::slug($k->name, '_');
         }
+        if ($orderBy && $orderBy !== 'name') {
+            $parts[] = 'Urut_' . ucfirst($orderBy);
+        }
+        $parts[] = \Illuminate\Support\Str::slug($billType, '_');
         $parts[] = (string)$year;
         $filename = implode('_', $parts) . '.xlsx';
 
@@ -77,6 +86,8 @@ class SystemController extends Controller
             $dormitoryId,
             $kelasId,
             $gender,
+            $presenceStatus,
+            $orderBy,
             $prefill,
             $billType,
             $year

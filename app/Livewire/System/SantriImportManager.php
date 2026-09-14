@@ -59,6 +59,8 @@ class SantriImportManager extends Component
     public string $templateDormitoryId = '';
     public string $templateKelasId = '';
     public string $templateGender = '';
+    public string $templatePresenceStatus = ''; // '' (Semua), 'mukim', 'laju'
+    public string $templateOrderBy = 'komplek'; // 'komplek', 'kamar', 'kelas', 'name', 'nis'
     public bool $templatePrefill = true;
     public string $templateBillType = 'kebersihan';
     public int $templateYear = 2025;
@@ -211,6 +213,8 @@ class SantriImportManager extends Component
         $this->templateDormitoryId = '';
         $this->templateKelasId = '';
         $this->templateGender = '';
+        $this->templatePresenceStatus = '';
+        $this->templateOrderBy = 'komplek';
         $this->templatePrefill = true;
         $this->templateBillType = 'kebersihan';
         $this->templateYear = 2025;
@@ -221,9 +225,20 @@ class SantriImportManager extends Component
         $query = Person::whereHas('activeRoles', function ($q) {
             $q->where('role_type', 'santri')
               ->where('enrollment_status', 'aktif');
+
+            if (!empty($this->templatePresenceStatus)) {
+                if ($this->templatePresenceStatus === 'mukim') {
+                    $q->where(function ($sq) {
+                        $sq->where('presence_status', 'mukim')->orWhereNull('presence_status');
+                    });
+                } else {
+                    $q->where('presence_status', $this->templatePresenceStatus);
+                }
+            }
         })->with([
             'activeRoomAssignment.room.dormitory',
             'activeMadrasahEnrollment.kelas',
+            'activeRoles',
         ]);
 
         if ($this->templateGender) {
@@ -242,8 +257,29 @@ class SantriImportManager extends Component
             });
         }
 
-        $totalCount = (clone $query)->count();
-        $sampleList = $query->orderBy('name')->limit(6)->get();
+        $allSantri = $query->get();
+        $totalCount = $allSantri->count();
+
+        // Terapkan pengurutan sesuai pilihan
+        $sorted = match ($this->templateOrderBy) {
+            'komplek' => $allSantri->sortBy([
+                fn ($a, $b) => strcmp($a->activeRoomAssignment?->room?->dormitory?->name ?? 'ZZZ', $b->activeRoomAssignment?->room?->dormitory?->name ?? 'ZZZ'),
+                fn ($a, $b) => strcmp($a->activeRoomAssignment?->room?->name ?? 'ZZZ', $b->activeRoomAssignment?->room?->name ?? 'ZZZ'),
+                fn ($a, $b) => strcmp($a->name, $b->name),
+            ]),
+            'kamar' => $allSantri->sortBy([
+                fn ($a, $b) => strcmp($a->activeRoomAssignment?->room?->name ?? 'ZZZ', $b->activeRoomAssignment?->room?->name ?? 'ZZZ'),
+                fn ($a, $b) => strcmp($a->name, $b->name),
+            ]),
+            'kelas' => $allSantri->sortBy([
+                fn ($a, $b) => strcmp($a->activeMadrasahEnrollment?->kelas?->name ?? 'ZZZ', $b->activeMadrasahEnrollment?->kelas?->name ?? 'ZZZ'),
+                fn ($a, $b) => strcmp($a->name, $b->name),
+            ]),
+            'nis' => $allSantri->sortBy(fn ($s) => $s->nis ?? $s->nik ?? $s->name),
+            default => $allSantri->sortBy('name', SORT_NATURAL | SORT_FLAG_CASE),
+        };
+
+        $sampleList = $sorted->take(8);
 
         return [
             'total'   => $totalCount,
@@ -254,12 +290,14 @@ class SantriImportManager extends Component
     public function getTunggakanDownloadUrlProperty(): string
     {
         return route('system.tunggakan.download-template', [
-            'dormitory_id' => $this->templateDormitoryId ?: null,
-            'kelas_id'     => $this->templateKelasId ?: null,
-            'gender'       => $this->templateGender ?: null,
-            'prefill'      => $this->templatePrefill ? 1 : 0,
-            'bill_type'    => $this->templateBillType,
-            'year'         => $this->templateYear,
+            'dormitory_id'    => $this->templateDormitoryId ?: null,
+            'kelas_id'        => $this->templateKelasId ?: null,
+            'gender'          => $this->templateGender ?: null,
+            'presence_status' => $this->templatePresenceStatus ?: null,
+            'order_by'        => $this->templateOrderBy ?: 'komplek',
+            'prefill'         => $this->templatePrefill ? 1 : 0,
+            'bill_type'       => $this->templateBillType,
+            'year'            => $this->templateYear,
         ]);
     }
 

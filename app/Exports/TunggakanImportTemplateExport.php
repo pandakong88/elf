@@ -20,6 +20,8 @@ class TunggakanImportTemplateExport implements WithMultipleSheets
         protected ?string $dormitoryId = null,
         protected ?string $kelasId = null,
         protected ?string $gender = null,
+        protected ?string $presenceStatus = null,
+        protected string $orderBy = 'komplek',
         protected bool $prefill = true,
         protected string $defaultBillType = 'kebersihan',
         protected int $defaultYear = 2025
@@ -32,6 +34,8 @@ class TunggakanImportTemplateExport implements WithMultipleSheets
                 $this->dormitoryId,
                 $this->kelasId,
                 $this->gender,
+                $this->presenceStatus,
+                $this->orderBy,
                 $this->prefill,
                 $this->defaultBillType,
                 $this->defaultYear
@@ -39,7 +43,9 @@ class TunggakanImportTemplateExport implements WithMultipleSheets
             new TunggakanSantriReferenceSheet(
                 $this->dormitoryId,
                 $this->kelasId,
-                $this->gender
+                $this->gender,
+                $this->presenceStatus,
+                $this->orderBy
             ),
             new TunggakanInstructionSheet(),
         ];
@@ -52,6 +58,8 @@ class TunggakanDataSheet implements FromArray, WithTitle, WithHeadings, ShouldAu
         protected ?string $dormitoryId = null,
         protected ?string $kelasId = null,
         protected ?string $gender = null,
+        protected ?string $presenceStatus = null,
+        protected string $orderBy = 'komplek',
         protected bool $prefill = true,
         protected string $defaultBillType = 'kebersihan',
         protected int $defaultYear = 2025
@@ -94,6 +102,16 @@ class TunggakanDataSheet implements FromArray, WithTitle, WithHeadings, ShouldAu
         $query = Person::whereHas('activeRoles', function ($q) {
             $q->where('role_type', 'santri')
               ->where('enrollment_status', 'aktif');
+
+            if (!empty($this->presenceStatus)) {
+                if ($this->presenceStatus === 'mukim') {
+                    $q->where(function ($sq) {
+                        $sq->where('presence_status', 'mukim')->orWhereNull('presence_status');
+                    });
+                } else {
+                    $q->where('presence_status', $this->presenceStatus);
+                }
+            }
         })
         ->with([
             'activeRoomAssignment.room.dormitory',
@@ -117,7 +135,26 @@ class TunggakanDataSheet implements FromArray, WithTitle, WithHeadings, ShouldAu
             });
         }
 
-        $santriList = $query->orderBy('name')->get();
+        $santriList = $query->get();
+
+        // Terapkan Pengurutan Berdasarkan Pilihan Pengurus (Komplek/Kamar/Kelas/Nama/NIS)
+        $santriList = match ($this->orderBy) {
+            'komplek' => $santriList->sortBy([
+                fn ($a, $b) => strcmp($a->activeRoomAssignment?->room?->dormitory?->name ?? 'ZZZ', $b->activeRoomAssignment?->room?->dormitory?->name ?? 'ZZZ'),
+                fn ($a, $b) => strcmp($a->activeRoomAssignment?->room?->name ?? 'ZZZ', $b->activeRoomAssignment?->room?->name ?? 'ZZZ'),
+                fn ($a, $b) => strcmp($a->name, $b->name),
+            ]),
+            'kamar' => $santriList->sortBy([
+                fn ($a, $b) => strcmp($a->activeRoomAssignment?->room?->name ?? 'ZZZ', $b->activeRoomAssignment?->room?->name ?? 'ZZZ'),
+                fn ($a, $b) => strcmp($a->name, $b->name),
+            ]),
+            'kelas' => $santriList->sortBy([
+                fn ($a, $b) => strcmp($a->activeMadrasahEnrollment?->kelas?->name ?? 'ZZZ', $b->activeMadrasahEnrollment?->kelas?->name ?? 'ZZZ'),
+                fn ($a, $b) => strcmp($a->name, $b->name),
+            ]),
+            'nis' => $santriList->sortBy(fn ($s) => $s->nis ?? $s->nik ?? $s->name),
+            default => $santriList->sortBy('name', SORT_NATURAL | SORT_FLAG_CASE),
+        };
 
         $rows = [];
         $noteLabel = match($this->defaultBillType) {
@@ -171,7 +208,9 @@ class TunggakanSantriReferenceSheet implements FromArray, WithTitle, WithHeading
     public function __construct(
         protected ?string $dormitoryId = null,
         protected ?string $kelasId = null,
-        protected ?string $gender = null
+        protected ?string $gender = null,
+        protected ?string $presenceStatus = null,
+        protected string $orderBy = 'komplek'
     ) {}
 
     public function title(): string
@@ -187,6 +226,7 @@ class TunggakanSantriReferenceSheet implements FromArray, WithTitle, WithHeading
             'Gender (L/P)',
             'Status Keberadaan',
             'Komplek Asrama',
+            'Kamar Asrama',
             'Kelas Madrasah',
         ];
     }
@@ -196,6 +236,16 @@ class TunggakanSantriReferenceSheet implements FromArray, WithTitle, WithHeading
         $query = Person::whereHas('activeRoles', function ($q) {
             $q->where('role_type', 'santri')
               ->where('enrollment_status', 'aktif');
+
+            if (!empty($this->presenceStatus)) {
+                if ($this->presenceStatus === 'mukim') {
+                    $q->where(function ($sq) {
+                        $sq->where('presence_status', 'mukim')->orWhereNull('presence_status');
+                    });
+                } else {
+                    $q->where('presence_status', $this->presenceStatus);
+                }
+            }
         })
         ->with([
             'activeRoomAssignment.room.dormitory',
@@ -219,12 +269,32 @@ class TunggakanSantriReferenceSheet implements FromArray, WithTitle, WithHeading
             });
         }
 
-        $santriList = $query->orderBy('name')->get();
+        $santriList = $query->get();
+
+        // Terapkan Pengurutan yang Sama
+        $santriList = match ($this->orderBy) {
+            'komplek' => $santriList->sortBy([
+                fn ($a, $b) => strcmp($a->activeRoomAssignment?->room?->dormitory?->name ?? 'ZZZ', $b->activeRoomAssignment?->room?->dormitory?->name ?? 'ZZZ'),
+                fn ($a, $b) => strcmp($a->activeRoomAssignment?->room?->name ?? 'ZZZ', $b->activeRoomAssignment?->room?->name ?? 'ZZZ'),
+                fn ($a, $b) => strcmp($a->name, $b->name),
+            ]),
+            'kamar' => $santriList->sortBy([
+                fn ($a, $b) => strcmp($a->activeRoomAssignment?->room?->name ?? 'ZZZ', $b->activeRoomAssignment?->room?->name ?? 'ZZZ'),
+                fn ($a, $b) => strcmp($a->name, $b->name),
+            ]),
+            'kelas' => $santriList->sortBy([
+                fn ($a, $b) => strcmp($a->activeMadrasahEnrollment?->kelas?->name ?? 'ZZZ', $b->activeMadrasahEnrollment?->kelas?->name ?? 'ZZZ'),
+                fn ($a, $b) => strcmp($a->name, $b->name),
+            ]),
+            'nis' => $santriList->sortBy(fn ($s) => $s->nis ?? $s->nik ?? $s->name),
+            default => $santriList->sortBy('name', SORT_NATURAL | SORT_FLAG_CASE),
+        };
 
         $rows = [];
         foreach ($santriList as $santri) {
             $role = $santri->activeRoles->firstWhere('role_type', 'santri');
             $dorm = $santri->activeRoomAssignment?->room?->dormitory?->name ?? '-';
+            $room = $santri->activeRoomAssignment?->room?->name ?? '-';
             $kelas = $santri->activeMadrasahEnrollment?->kelas?->name ?? '-';
 
             $rows[] = [
@@ -233,6 +303,7 @@ class TunggakanSantriReferenceSheet implements FromArray, WithTitle, WithHeading
                 $santri->gender ?? '-',
                 ucfirst($role?->presence_status ?? 'mukim'),
                 $dorm,
+                $room,
                 $kelas,
             ];
         }
@@ -242,8 +313,8 @@ class TunggakanSantriReferenceSheet implements FromArray, WithTitle, WithHeading
 
     public function styles(Worksheet $sheet)
     {
-        $sheet->getStyle('A1:F1')->getFont()->setBold(true);
-        $sheet->getStyle('A1:F1')->getFill()
+        $sheet->getStyle('A1:G1')->getFont()->setBold(true);
+        $sheet->getStyle('A1:G1')->getFill()
             ->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)
             ->getStartColor()->setARGB('FFE2E8F0');
     }
