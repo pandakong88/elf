@@ -193,27 +193,25 @@ class TunggakanDataSheet implements FromArray, WithTitle, WithHeadings, ShouldAu
             ->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)
             ->getStartColor()->setARGB('FFE2E8F0');
 
-        // Enable worksheet protection so locked cells cannot be modified
-        $sheet->getProtection()->setPassword('');
-        $sheet->getProtection()->setSheet(true);
-        $sheet->getProtection()->setSort(true);
-        $sheet->getProtection()->setAutoFilter(true);
-        $sheet->getProtection()->setFormatCells(true);
-        $sheet->getProtection()->setSelectLockedCells(true);
-        $sheet->getProtection()->setSelectUnlockedCells(true);
-
         if ($this->prefill) {
-            // Beri warna latar belakang abu-abu sangat muda pada NIS & Nama Santri untuk menandakan kolom referensi terkunci
-            $sheet->getStyle('A2:B' . $highestRow)->getFill()
+            // Beri warna latar belakang abu-abu soft pada kolom NIS & Nama Santri (Kolom A & B)
+            // sebagai penanda visual yang jelas bahwa data ini adalah referensi otomatis dari sistem
+            $sheet->getStyle('A2:B' . $sheet->getHighestRow())->getFill()
                 ->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)
-                ->getStartColor()->setARGB('FFF8FAFC');
+                ->getStartColor()->setARGB('FFF1F5F9');
 
-            // Kunci kolom A (NIS) dan B (Nama), dan buka kolom C s/d G agar dapat diisi oleh pengurus
-            $sheet->getStyle('A2:B' . $highestRow)->getProtection()->setLocked(\PhpOffice\PhpSpreadsheet\Style\Protection::PROTECTION_PROTECTED);
-            $sheet->getStyle('C2:G' . $highestRow)->getProtection()->setLocked(\PhpOffice\PhpSpreadsheet\Style\Protection::PROTECTION_UNPROTECTED);
-        } else {
-            // Jika template kosong tanpa prefill, buka seluruh kolom A s/d G agar pengurus bisa mengetik NIS sendiri
-            $sheet->getStyle('A2:G' . $highestRow)->getProtection()->setLocked(\PhpOffice\PhpSpreadsheet\Style\Protection::PROTECTION_UNPROTECTED);
+            // Beri tooltip panduan pada Kolom NIS & Nama agar pengurus tahu tidak perlu mengubahnya
+            for ($i = 2; $i <= min($sheet->getHighestRow(), 300); $i++) {
+                $promptNis = $sheet->getCell('A' . $i)->getDataValidation();
+                $promptNis->setShowInputMessage(true);
+                $promptNis->setPromptTitle('Info NIS Santri');
+                $promptNis->setPrompt('NIS santri ini diambil otomatis dari database. Cukup isi nominal pada kolom F jika santri memiliki tunggakan.');
+
+                $promptName = $sheet->getCell('B' . $i)->getDataValidation();
+                $promptName->setShowInputMessage(true);
+                $promptName->setPromptTitle('Info Nama Santri');
+                $promptName->setPrompt('Nama santri sebagai pembantu referensi.');
+            }
         }
 
         // Dropdown for Jenis Tagihan (Column C)
@@ -348,13 +346,6 @@ class TunggakanSantriReferenceSheet implements FromArray, WithTitle, WithHeading
         $sheet->getStyle('A1:G1')->getFill()
             ->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)
             ->getStartColor()->setARGB('FFE2E8F0');
-
-        $sheet->getProtection()->setPassword('');
-        $sheet->getProtection()->setSheet(true);
-        $sheet->getProtection()->setSort(true);
-        $sheet->getProtection()->setAutoFilter(true);
-        $sheet->getProtection()->setSelectLockedCells(true);
-        $sheet->getProtection()->setSelectUnlockedCells(true);
     }
 }
 
@@ -389,12 +380,5 @@ class TunggakanInstructionSheet implements FromArray, WithTitle, WithHeadings, S
         $sheet->getStyle('A1:C1')->getFill()
             ->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)
             ->getStartColor()->setARGB('FFE2E8F0');
-
-        $sheet->getProtection()->setPassword('');
-        $sheet->getProtection()->setSheet(true);
-        $sheet->getProtection()->setSort(true);
-        $sheet->getProtection()->setAutoFilter(true);
-        $sheet->getProtection()->setSelectLockedCells(true);
-        $sheet->getProtection()->setSelectUnlockedCells(true);
     }
 }
