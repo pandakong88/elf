@@ -126,4 +126,46 @@ class TunggakanTemplateExportTest extends TestCase
             unlink($path);
         }
     }
+
+    public function test_santri_import_manager_multi_dormitory_filter(): void
+    {
+        $org = \App\Modules\Core\Models\Organization::create(['name' => 'Pesantren Pusat 2', 'slug' => 'pesantren-pusat-2', 'type' => 'pondok']);
+        $dormA = Dormitory::create(['name' => 'Komplek A', 'gender' => 'L', 'capacity' => 50]);
+        $dormB = Dormitory::create(['name' => 'Komplek B', 'gender' => 'L', 'capacity' => 50]);
+        $dormC = Dormitory::create(['name' => 'Komplek C', 'gender' => 'L', 'capacity' => 50]);
+
+        $roomA = Room::create(['dormitory_id' => $dormA->id, 'name' => 'Kamar A1', 'capacity' => 10]);
+        $roomB = Room::create(['dormitory_id' => $dormB->id, 'name' => 'Kamar B1', 'capacity' => 10]);
+        $roomC = Room::create(['dormitory_id' => $dormC->id, 'name' => 'Kamar C1', 'capacity' => 10]);
+
+        $santriA = Person::create(['name' => 'Santri Dari A', 'gender' => 'L']);
+        $santriB = Person::create(['name' => 'Santri Dari B', 'gender' => 'L']);
+        $santriC = Person::create(['name' => 'Santri Dari C', 'gender' => 'L']);
+
+        foreach ([[$santriA, $roomA], [$santriB, $roomB], [$santriC, $roomC]] as [$s, $r]) {
+            PersonRole::create([
+                'person_id'         => $s->id,
+                'organization_id'   => $org->id,
+                'role_type'         => 'santri',
+                'enrollment_status' => 'aktif',
+                'presence_status'   => 'mukim',
+                'is_active'         => true,
+            ]);
+            RoomAssignment::create([
+                'person_id'  => $s->id,
+                'room_id'    => $r->id,
+                'valid_from' => now()->toDateString(),
+                'is_active'  => true,
+            ]);
+        }
+
+        Livewire::actingAs($this->admin)
+            ->test(SantriImportManager::class)
+            ->set('showTunggakanTemplateModal', true)
+            ->set('templateDormitoryIds', [(string)$dormA->id, (string)$dormB->id])
+            ->assertSee('Santri Dari A')
+            ->assertSee('Santri Dari B')
+            ->assertSee('2 Komplek')
+            ->assertSee('2 Santri Ditemukan');
+    }
 }

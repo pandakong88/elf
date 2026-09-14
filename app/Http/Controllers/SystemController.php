@@ -51,7 +51,14 @@ class SystemController extends Controller
             abort(403, 'Anda harus login untuk mengunduh template.');
         }
 
-        $dormitoryId    = $request->query('dormitory_id') ?: null;
+        $dormitoryIdsParam = $request->query('dormitory_ids', $request->query('dormitory_id'));
+        $dormitoryIds = [];
+        if (is_array($dormitoryIdsParam)) {
+            $dormitoryIds = array_values(array_filter($dormitoryIdsParam));
+        } elseif (is_string($dormitoryIdsParam) && trim($dormitoryIdsParam) !== '') {
+            $dormitoryIds = array_values(array_filter(explode(',', $dormitoryIdsParam)));
+        }
+
         $kelasId        = $request->query('kelas_id') ?: null;
         $gender         = $request->query('gender') ?: null;
         $presenceStatus = $request->query('presence_status') ?: null;
@@ -67,9 +74,16 @@ class SystemController extends Controller
         if ($presenceStatus) {
             $parts[] = ucfirst($presenceStatus);
         }
-        if ($dormitoryId) {
-            $dorm = \App\Modules\Kepengasuhan\Models\Dormitory::find($dormitoryId);
-            if ($dorm) $parts[] = \Illuminate\Support\Str::slug($dorm->name, '_');
+        if (!empty($dormitoryIds)) {
+            $dorms = \App\Modules\Kepengasuhan\Models\Dormitory::whereIn('id', $dormitoryIds)->pluck('name')->toArray();
+            if (count($dorms) === 1) {
+                $parts[] = \Illuminate\Support\Str::slug($dorms[0], '_');
+            } elseif (count($dorms) <= 3) {
+                $cleanNames = array_map(fn($n) => preg_replace('/^(Komplek|Asrama)\s+/i', '', $n), $dorms);
+                $parts[] = 'Komplek_' . \Illuminate\Support\Str::slug(implode('_', $cleanNames), '_');
+            } else {
+                $parts[] = count($dorms) . '_Komplek';
+            }
         }
         if ($kelasId) {
             $k = \App\Modules\Madrasah\Models\MadrasahKelas::find($kelasId);
@@ -83,7 +97,7 @@ class SystemController extends Controller
         $filename = implode('_', $parts) . '.xlsx';
 
         return Excel::download(new \App\Exports\TunggakanImportTemplateExport(
-            $dormitoryId,
+            $dormitoryIds,
             $kelasId,
             $gender,
             $presenceStatus,

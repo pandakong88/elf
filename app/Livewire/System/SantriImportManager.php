@@ -56,6 +56,7 @@ class SantriImportManager extends Component
     public array $tempInvalidTunggakan = [];
 
     // Tunggakan Template Filter State
+    public array $templateDormitoryIds = [];
     public string $templateDormitoryId = '';
     public string $templateKelasId = '';
     public string $templateGender = '';
@@ -210,6 +211,7 @@ class SantriImportManager extends Component
 
     public function resetTemplateFilters(): void
     {
+        $this->templateDormitoryIds = [];
         $this->templateDormitoryId = '';
         $this->templateKelasId = '';
         $this->templateGender = '';
@@ -218,6 +220,16 @@ class SantriImportManager extends Component
         $this->templatePrefill = true;
         $this->templateBillType = 'kebersihan';
         $this->templateYear = 2025;
+    }
+
+    public function selectAllDormitories(): void
+    {
+        $this->templateDormitoryIds = Dormitory::where('is_active', true)->pluck('id')->map(fn($id) => (string)$id)->toArray();
+    }
+
+    public function clearAllDormitories(): void
+    {
+        $this->templateDormitoryIds = [];
     }
 
     public function getFilteredSantriPreviewProperty(): array
@@ -245,7 +257,11 @@ class SantriImportManager extends Component
             $query->where('gender', $this->templateGender);
         }
 
-        if ($this->templateDormitoryId) {
+        if (!empty($this->templateDormitoryIds)) {
+            $query->whereHas('activeRoomAssignment.room', function ($q) {
+                $q->whereIn('dormitory_id', $this->templateDormitoryIds);
+            });
+        } elseif ($this->templateDormitoryId) {
             $query->whereHas('activeRoomAssignment.room', function ($q) {
                 $q->where('dormitory_id', $this->templateDormitoryId);
             });
@@ -289,8 +305,7 @@ class SantriImportManager extends Component
 
     public function getTunggakanDownloadUrlProperty(): string
     {
-        return route('system.tunggakan.download-template', [
-            'dormitory_id'    => $this->templateDormitoryId ?: null,
+        $params = [
             'kelas_id'        => $this->templateKelasId ?: null,
             'gender'          => $this->templateGender ?: null,
             'presence_status' => $this->templatePresenceStatus ?: null,
@@ -298,7 +313,15 @@ class SantriImportManager extends Component
             'prefill'         => $this->templatePrefill ? 1 : 0,
             'bill_type'       => $this->templateBillType,
             'year'            => $this->templateYear,
-        ]);
+        ];
+
+        if (!empty($this->templateDormitoryIds)) {
+            $params['dormitory_ids'] = implode(',', $this->templateDormitoryIds);
+        } elseif ($this->templateDormitoryId) {
+            $params['dormitory_id'] = $this->templateDormitoryId;
+        }
+
+        return route('system.tunggakan.download-template', $params);
     }
 
     public function mount(): void

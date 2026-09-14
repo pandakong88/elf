@@ -897,15 +897,58 @@
                                 </button>
                             </div>
 
-                            <!-- Filter Asrama -->
+                            <!-- Filter Asrama / Multi Komplek -->
                             <div>
-                                <label class="block text-[11px] font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider mb-1">Komplek Asrama</label>
-                                <select wire:model.live="templateDormitoryId" class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 rounded-xl px-3 py-2 text-xs font-semibold focus:ring-amber-500 focus:border-amber-500 shadow-sm">
-                                    <option value="">Semua Komplek Asrama</option>
-                                    @foreach($recentDormitories as $dorm)
-                                        <option value="{{ $dorm->id }}">{{ $dorm->name }} ({{ $dorm->gender === 'L' ? 'Putra' : 'Putri' }})</option>
-                                    @endforeach
-                                </select>
+                                <div class="flex items-center justify-between mb-1.5">
+                                    <label class="text-[11px] font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider">
+                                        Komplek Asrama (Bisa Multi)
+                                    </label>
+                                    <div class="flex items-center gap-2 text-[10px]">
+                                        @if(!empty($templateDormitoryIds))
+                                            <button type="button" wire:click="clearAllDormitories" class="text-rose-600 dark:text-rose-400 hover:underline font-bold">
+                                                Reset (Semua)
+                                            </button>
+                                        @else
+                                            <button type="button" wire:click="selectAllDormitories" class="text-amber-600 dark:text-amber-400 hover:underline font-bold">
+                                                Pilih Semua
+                                            </button>
+                                        @endif
+                                    </div>
+                                </div>
+
+                                <!-- Checkbox list container -->
+                                <div class="max-h-36 overflow-y-auto space-y-1 p-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl shadow-inner text-xs">
+                                    @forelse($recentDormitories as $dorm)
+                                        @php
+                                            $isChecked = in_array((string)$dorm->id, array_map('strval', $templateDormitoryIds));
+                                        @endphp
+                                        <label class="flex items-center justify-between p-1.5 rounded-lg cursor-pointer transition-colors {{ $isChecked ? 'bg-amber-500/10 border border-amber-300/80 dark:border-amber-700/80 font-bold text-slate-900 dark:text-slate-100' : 'hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300' }}">
+                                            <div class="flex items-center gap-2">
+                                                <input type="checkbox" value="{{ $dorm->id }}" wire:model.live="templateDormitoryIds" class="rounded border-slate-300 text-amber-600 focus:ring-amber-500">
+                                                <span class="text-xs">{{ $dorm->name }}</span>
+                                            </div>
+                                            <div class="flex items-center gap-1 text-[10px]">
+                                                <span class="px-1.5 py-0.5 rounded font-mono font-bold {{ $dorm->gender === 'L' ? 'bg-blue-100 dark:bg-blue-950 text-blue-600' : 'bg-pink-100 dark:bg-pink-950 text-pink-600' }}">
+                                                    {{ $dorm->gender === 'L' ? 'Putra' : 'Putri' }}
+                                                </span>
+                                                <span class="text-slate-400 font-normal">({{ $dorm->rooms_count ?? 0 }} Kamar)</span>
+                                            </div>
+                                        </label>
+                                    @empty
+                                        <div class="text-center py-2 text-slate-400 text-xs italic">
+                                            Tidak ada data komplek asrama.
+                                        </div>
+                                    @endforelse
+                                </div>
+                                <div class="mt-1 flex items-center justify-between text-[10px] text-slate-400">
+                                    <span>
+                                        @if(empty($templateDormitoryIds))
+                                            🌐 Menampilkan santri dari <strong>Semua Komplek</strong>
+                                        @else
+                                            ✓ <strong>{{ count($templateDormitoryIds) }} Komplek</strong> terpilih
+                                        @endif
+                                    </span>
+                                </div>
                             </div>
 
                             <!-- Filter Kelas -->
@@ -1004,6 +1047,11 @@
                                     <span class="px-2.5 py-1 text-[10px] font-extrabold uppercase rounded-lg bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
                                         Tahun {{ $templateYear }}
                                     </span>
+                                    @if(!empty($templateDormitoryIds))
+                                        <span class="px-2.5 py-1 text-[10px] font-extrabold uppercase rounded-lg bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
+                                            🏢 {{ count($templateDormitoryIds) }} Komplek
+                                        </span>
+                                    @endif
                                     @if($templatePresenceStatus)
                                         <span class="px-2.5 py-1 text-[10px] font-extrabold uppercase rounded-lg bg-sky-100 dark:bg-sky-950/60 text-sky-700 dark:text-sky-300 border border-sky-200 dark:border-sky-800">
                                             {{ ucfirst($templatePresenceStatus) }}

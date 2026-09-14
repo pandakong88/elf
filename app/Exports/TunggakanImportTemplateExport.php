@@ -17,7 +17,7 @@ use PhpOffice\PhpSpreadsheet\Cell\DataValidation;
 class TunggakanImportTemplateExport implements WithMultipleSheets
 {
     public function __construct(
-        protected ?string $dormitoryId = null,
+        protected array|string|null $dormitoryIds = null,
         protected ?string $kelasId = null,
         protected ?string $gender = null,
         protected ?string $presenceStatus = null,
@@ -31,7 +31,7 @@ class TunggakanImportTemplateExport implements WithMultipleSheets
     {
         return [
             new TunggakanDataSheet(
-                $this->dormitoryId,
+                $this->dormitoryIds,
                 $this->kelasId,
                 $this->gender,
                 $this->presenceStatus,
@@ -41,7 +41,7 @@ class TunggakanImportTemplateExport implements WithMultipleSheets
                 $this->defaultYear
             ),
             new TunggakanSantriReferenceSheet(
-                $this->dormitoryId,
+                $this->dormitoryIds,
                 $this->kelasId,
                 $this->gender,
                 $this->presenceStatus,
@@ -55,7 +55,7 @@ class TunggakanImportTemplateExport implements WithMultipleSheets
 class TunggakanDataSheet implements FromArray, WithTitle, WithHeadings, ShouldAutoSize, WithStyles
 {
     public function __construct(
-        protected ?string $dormitoryId = null,
+        protected array|string|null $dormitoryIds = null,
         protected ?string $kelasId = null,
         protected ?string $gender = null,
         protected ?string $presenceStatus = null,
@@ -123,10 +123,13 @@ class TunggakanDataSheet implements FromArray, WithTitle, WithHeadings, ShouldAu
             $query->where('gender', $this->gender);
         }
 
-        if (!empty($this->dormitoryId)) {
-            $query->whereHas('activeRoomAssignment.room', function ($q) {
-                $q->where('dormitory_id', $this->dormitoryId);
-            });
+        if (!empty($this->dormitoryIds)) {
+            $dormIds = is_array($this->dormitoryIds) ? array_filter($this->dormitoryIds) : [$this->dormitoryIds];
+            if (!empty($dormIds)) {
+                $query->whereHas('activeRoomAssignment.room', function ($q) use ($dormIds) {
+                    $q->whereIn('dormitory_id', $dormIds);
+                });
+            }
         }
 
         if (!empty($this->kelasId)) {
@@ -231,7 +234,7 @@ class TunggakanDataSheet implements FromArray, WithTitle, WithHeadings, ShouldAu
 class TunggakanSantriReferenceSheet implements FromArray, WithTitle, WithHeadings, ShouldAutoSize, WithStyles
 {
     public function __construct(
-        protected ?string $dormitoryId = null,
+        protected array|string|null $dormitoryIds = null,
         protected ?string $kelasId = null,
         protected ?string $gender = null,
         protected ?string $presenceStatus = null,
@@ -282,10 +285,13 @@ class TunggakanSantriReferenceSheet implements FromArray, WithTitle, WithHeading
             $query->where('gender', $this->gender);
         }
 
-        if (!empty($this->dormitoryId)) {
-            $query->whereHas('activeRoomAssignment.room', function ($q) {
-                $q->where('dormitory_id', $this->dormitoryId);
-            });
+        if (!empty($this->dormitoryIds)) {
+            $dormIds = is_array($this->dormitoryIds) ? array_filter($this->dormitoryIds) : [$this->dormitoryIds];
+            if (!empty($dormIds)) {
+                $query->whereHas('activeRoomAssignment.room', function ($q) use ($dormIds) {
+                    $q->whereIn('dormitory_id', $dormIds);
+                });
+            }
         }
 
         if (!empty($this->kelasId)) {
