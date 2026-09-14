@@ -168,4 +168,73 @@ class TunggakanTemplateExportTest extends TestCase
             ->assertSee('2 Komplek')
             ->assertSee('2 Santri Ditemukan');
     }
+
+    public function test_process_and_commit_tunggakan_import_flow(): void
+    {
+        $org = \App\Modules\Core\Models\Organization::create(['name' => 'Pesantren Pusat 3', 'slug' => 'pesantren-pusat-3', 'type' => 'pondok']);
+        $santri = Person::create(['name' => 'Santri Import Test', 'gender' => 'L', 'nik' => '1234567890123456']);
+
+        PersonRole::create([
+            'person_id'         => $santri->id,
+            'organization_id'   => $org->id,
+            'role_type'         => 'santri',
+            'enrollment_status' => 'aktif',
+            'presence_status'   => 'mukim',
+            'is_active'         => true,
+        ]);
+
+        \App\Modules\Kepengasuhan\Models\SantriProfile::create([
+            'person_id'       => $santri->id,
+            'additional_info' => ['nis' => '2026999'],
+        ]);
+
+        // Buat file excel sementara yang merepresentasikan file hasil unduhan yang diisi pengurus
+        $tempExport = new TunggakanImportTemplateExport(prefill: true);
+        \Maatwebsite\Excel\Facades\Excel::store($tempExport, 'test_filled_tunggakan.xlsx', 'local');
+
+        $path = storage_path('app/private/test_filled_tunggakan.xlsx');
+        if (!file_exists($path)) {
+            $path = storage_path('app/test_filled_tunggakan.xlsx');
+        }
+
+        $spreadsheet = \PhpOffice\PhpSpreadsheet\IOFactory::load($path);
+        $sheet = $spreadsheet->getActiveSheet();
+        
+        // Simulasikan pengurus mengisi nominal 150000 pada baris ke-2 (santri 2026999)
+        $sheet->setCellValue('A2', '2026999');
+        $sheet->setCellValue('B2', 'Santri Import Test');
+        $sheet->setCellValue('C2', 'kebersihan');
+        $sheet->setCellValue('D2', '2025');
+        $sheet->setCellValue('F2', '150000');
+        $sheet->setCellValue('G2', 'Tunggakan kas sampah tahun 2025');
+
+        $writer = \PhpOffice\PhpSpreadsheet\IOFactory::createWriter($spreadsheet, 'Xlsx');
+        $writer->save($path);
+
+        $fileContent = file_get_contents($path);
+        $uploadedFile = \Illuminate\Http\UploadedFile::fake()->createWithContent(
+            'test_filled_tunggakan.xlsx',
+            $fileContent
+        );
+
+        Livewire::actingAs($this->admin)
+            ->test(SantriImportManager::class)
+            ->set('excelFile', $uploadedFile)
+            ->call('processTunggakanImport')
+            ->assertCount('tempValidTunggakan', 1)
+            ->call('commitTunggakanImport');
+
+        $this->assertDatabaseHas('bills', [
+            'person_id'   => $santri->id,
+            'bill_type'   => 'kebersihan',
+            'period_year' => 2025,
+            'amount'      => 150000,
+            'status'      => 'unpaid',
+            'notes'       => 'Tunggakan kas sampah tahun 2025',
+        ]);
+
+        if (file_exists($path)) {
+            unlink($path);
+        }
+    }
 }
