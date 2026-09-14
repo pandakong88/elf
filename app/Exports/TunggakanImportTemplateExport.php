@@ -17,9 +17,11 @@ use PhpOffice\PhpSpreadsheet\Cell\DataValidation;
 class TunggakanImportTemplateExport implements WithMultipleSheets
 {
     public function __construct(
-        protected ?string $dormitoryId = null,
+        protected array|string|null $dormitoryIds = null,
         protected ?string $kelasId = null,
         protected ?string $gender = null,
+        protected ?string $presenceStatus = null,
+        protected string $orderBy = 'komplek',
         protected bool $prefill = true,
         protected string $defaultBillType = 'kebersihan',
         protected int $defaultYear = 2025
@@ -29,17 +31,21 @@ class TunggakanImportTemplateExport implements WithMultipleSheets
     {
         return [
             new TunggakanDataSheet(
-                $this->dormitoryId,
+                $this->dormitoryIds,
                 $this->kelasId,
                 $this->gender,
+                $this->presenceStatus,
+                $this->orderBy,
                 $this->prefill,
                 $this->defaultBillType,
                 $this->defaultYear
             ),
             new TunggakanSantriReferenceSheet(
-                $this->dormitoryId,
+                $this->dormitoryIds,
                 $this->kelasId,
-                $this->gender
+                $this->gender,
+                $this->presenceStatus,
+                $this->orderBy
             ),
             new TunggakanInstructionSheet(),
         ];
@@ -49,9 +55,11 @@ class TunggakanImportTemplateExport implements WithMultipleSheets
 class TunggakanDataSheet implements FromArray, WithTitle, WithHeadings, ShouldAutoSize, WithStyles
 {
     public function __construct(
-        protected ?string $dormitoryId = null,
+        protected array|string|null $dormitoryIds = null,
         protected ?string $kelasId = null,
         protected ?string $gender = null,
+        protected ?string $presenceStatus = null,
+        protected string $orderBy = 'komplek',
         protected bool $prefill = true,
         protected string $defaultBillType = 'kebersihan',
         protected int $defaultYear = 2025
@@ -94,6 +102,16 @@ class TunggakanDataSheet implements FromArray, WithTitle, WithHeadings, ShouldAu
         $query = Person::whereHas('activeRoles', function ($q) {
             $q->where('role_type', 'santri')
               ->where('enrollment_status', 'aktif');
+
+            if (!empty($this->presenceStatus)) {
+                if ($this->presenceStatus === 'mukim') {
+                    $q->where(function ($sq) {
+                        $sq->where('presence_status', 'mukim')->orWhereNull('presence_status');
+                    });
+                } else {
+                    $q->where('presence_status', $this->presenceStatus);
+                }
+            }
         })
         ->with([
             'activeRoomAssignment.room.dormitory',
@@ -105,10 +123,13 @@ class TunggakanDataSheet implements FromArray, WithTitle, WithHeadings, ShouldAu
             $query->where('gender', $this->gender);
         }
 
-        if (!empty($this->dormitoryId)) {
-            $query->whereHas('activeRoomAssignment.room', function ($q) {
-                $q->where('dormitory_id', $this->dormitoryId);
-            });
+        if (!empty($this->dormitoryIds)) {
+            $dormIds = is_array($this->dormitoryIds) ? array_filter($this->dormitoryIds) : [$this->dormitoryIds];
+            if (!empty($dormIds)) {
+                $query->whereHas('activeRoomAssignment.room', function ($q) use ($dormIds) {
+                    $q->whereIn('dormitory_id', $dormIds);
+                });
+            }
         }
 
         if (!empty($this->kelasId)) {
@@ -117,7 +138,26 @@ class TunggakanDataSheet implements FromArray, WithTitle, WithHeadings, ShouldAu
             });
         }
 
-        $santriList = $query->orderBy('name')->get();
+        $santriList = $query->get();
+
+        // Terapkan Pengurutan Berdasarkan Pilihan Pengurus (Komplek/Kamar/Kelas/Nama/NIS)
+        $santriList = match ($this->orderBy) {
+            'komplek' => $santriList->sortBy([
+                fn ($a, $b) => strcmp($a->activeRoomAssignment?->room?->dormitory?->name ?? 'ZZZ', $b->activeRoomAssignment?->room?->dormitory?->name ?? 'ZZZ'),
+                fn ($a, $b) => strcmp($a->activeRoomAssignment?->room?->name ?? 'ZZZ', $b->activeRoomAssignment?->room?->name ?? 'ZZZ'),
+                fn ($a, $b) => strcmp($a->name, $b->name),
+            ]),
+            'kamar' => $santriList->sortBy([
+                fn ($a, $b) => strcmp($a->activeRoomAssignment?->room?->name ?? 'ZZZ', $b->activeRoomAssignment?->room?->name ?? 'ZZZ'),
+                fn ($a, $b) => strcmp($a->name, $b->name),
+            ]),
+            'kelas' => $santriList->sortBy([
+                fn ($a, $b) => strcmp($a->activeMadrasahEnrollment?->kelas?->name ?? 'ZZZ', $b->activeMadrasahEnrollment?->kelas?->name ?? 'ZZZ'),
+                fn ($a, $b) => strcmp($a->name, $b->name),
+            ]),
+            'nis' => $santriList->sortBy(fn ($s) => $s->nis ?? $s->nik ?? $s->name),
+            default => $santriList->sortBy('name', SORT_NATURAL | SORT_FLAG_CASE),
+        };
 
         $rows = [];
         $noteLabel = match($this->defaultBillType) {
@@ -145,16 +185,41 @@ class TunggakanDataSheet implements FromArray, WithTitle, WithHeadings, ShouldAu
 
     public function styles(Worksheet $sheet)
     {
+        $highestRow = max($sheet->getHighestRow(), 500);
+
         // Header styling
         $sheet->getStyle('A1:G1')->getFont()->setBold(true);
         $sheet->getStyle('A1:G1')->getFill()
             ->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)
             ->getStartColor()->setARGB('FFE2E8F0');
 
+        // Enable worksheet protection so locked cells cannot be modified
+        $sheet->getProtection()->setPassword('');
+        $sheet->getProtection()->setSheet(true);
+        $sheet->getProtection()->setSort(true);
+        $sheet->getProtection()->setAutoFilter(true);
+        $sheet->getProtection()->setFormatCells(true);
+        $sheet->getProtection()->setSelectLockedCells(true);
+        $sheet->getProtection()->setSelectUnlockedCells(true);
+
+        if ($this->prefill) {
+            // Beri warna latar belakang abu-abu sangat muda pada NIS & Nama Santri untuk menandakan kolom referensi terkunci
+            $sheet->getStyle('A2:B' . $highestRow)->getFill()
+                ->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)
+                ->getStartColor()->setARGB('FFF8FAFC');
+
+            // Kunci kolom A (NIS) dan B (Nama), dan buka kolom C s/d G agar dapat diisi oleh pengurus
+            $sheet->getStyle('A2:B' . $highestRow)->getProtection()->setLocked(\PhpOffice\PhpSpreadsheet\Style\Protection::PROTECTION_PROTECTED);
+            $sheet->getStyle('C2:G' . $highestRow)->getProtection()->setLocked(\PhpOffice\PhpSpreadsheet\Style\Protection::PROTECTION_UNPROTECTED);
+        } else {
+            // Jika template kosong tanpa prefill, buka seluruh kolom A s/d G agar pengurus bisa mengetik NIS sendiri
+            $sheet->getStyle('A2:G' . $highestRow)->getProtection()->setLocked(\PhpOffice\PhpSpreadsheet\Style\Protection::PROTECTION_UNPROTECTED);
+        }
+
         // Dropdown for Jenis Tagihan (Column C)
         $billTypes = 'kebersihan,syahriah_pondok,syahriah_madrasah,kas_komplek,lainnya';
 
-        for ($i = 2; $i <= 500; $i++) {
+        for ($i = 2; $i <= min($highestRow, 500); $i++) {
             $valType = $sheet->getCell('C' . $i)->getDataValidation();
             $valType->setType(DataValidation::TYPE_LIST);
             $valType->setFormula1('"' . $billTypes . '"');
@@ -169,9 +234,11 @@ class TunggakanDataSheet implements FromArray, WithTitle, WithHeadings, ShouldAu
 class TunggakanSantriReferenceSheet implements FromArray, WithTitle, WithHeadings, ShouldAutoSize, WithStyles
 {
     public function __construct(
-        protected ?string $dormitoryId = null,
+        protected array|string|null $dormitoryIds = null,
         protected ?string $kelasId = null,
-        protected ?string $gender = null
+        protected ?string $gender = null,
+        protected ?string $presenceStatus = null,
+        protected string $orderBy = 'komplek'
     ) {}
 
     public function title(): string
@@ -187,6 +254,7 @@ class TunggakanSantriReferenceSheet implements FromArray, WithTitle, WithHeading
             'Gender (L/P)',
             'Status Keberadaan',
             'Komplek Asrama',
+            'Kamar Asrama',
             'Kelas Madrasah',
         ];
     }
@@ -196,6 +264,16 @@ class TunggakanSantriReferenceSheet implements FromArray, WithTitle, WithHeading
         $query = Person::whereHas('activeRoles', function ($q) {
             $q->where('role_type', 'santri')
               ->where('enrollment_status', 'aktif');
+
+            if (!empty($this->presenceStatus)) {
+                if ($this->presenceStatus === 'mukim') {
+                    $q->where(function ($sq) {
+                        $sq->where('presence_status', 'mukim')->orWhereNull('presence_status');
+                    });
+                } else {
+                    $q->where('presence_status', $this->presenceStatus);
+                }
+            }
         })
         ->with([
             'activeRoomAssignment.room.dormitory',
@@ -207,10 +285,13 @@ class TunggakanSantriReferenceSheet implements FromArray, WithTitle, WithHeading
             $query->where('gender', $this->gender);
         }
 
-        if (!empty($this->dormitoryId)) {
-            $query->whereHas('activeRoomAssignment.room', function ($q) {
-                $q->where('dormitory_id', $this->dormitoryId);
-            });
+        if (!empty($this->dormitoryIds)) {
+            $dormIds = is_array($this->dormitoryIds) ? array_filter($this->dormitoryIds) : [$this->dormitoryIds];
+            if (!empty($dormIds)) {
+                $query->whereHas('activeRoomAssignment.room', function ($q) use ($dormIds) {
+                    $q->whereIn('dormitory_id', $dormIds);
+                });
+            }
         }
 
         if (!empty($this->kelasId)) {
@@ -219,12 +300,32 @@ class TunggakanSantriReferenceSheet implements FromArray, WithTitle, WithHeading
             });
         }
 
-        $santriList = $query->orderBy('name')->get();
+        $santriList = $query->get();
+
+        // Terapkan Pengurutan yang Sama
+        $santriList = match ($this->orderBy) {
+            'komplek' => $santriList->sortBy([
+                fn ($a, $b) => strcmp($a->activeRoomAssignment?->room?->dormitory?->name ?? 'ZZZ', $b->activeRoomAssignment?->room?->dormitory?->name ?? 'ZZZ'),
+                fn ($a, $b) => strcmp($a->activeRoomAssignment?->room?->name ?? 'ZZZ', $b->activeRoomAssignment?->room?->name ?? 'ZZZ'),
+                fn ($a, $b) => strcmp($a->name, $b->name),
+            ]),
+            'kamar' => $santriList->sortBy([
+                fn ($a, $b) => strcmp($a->activeRoomAssignment?->room?->name ?? 'ZZZ', $b->activeRoomAssignment?->room?->name ?? 'ZZZ'),
+                fn ($a, $b) => strcmp($a->name, $b->name),
+            ]),
+            'kelas' => $santriList->sortBy([
+                fn ($a, $b) => strcmp($a->activeMadrasahEnrollment?->kelas?->name ?? 'ZZZ', $b->activeMadrasahEnrollment?->kelas?->name ?? 'ZZZ'),
+                fn ($a, $b) => strcmp($a->name, $b->name),
+            ]),
+            'nis' => $santriList->sortBy(fn ($s) => $s->nis ?? $s->nik ?? $s->name),
+            default => $santriList->sortBy('name', SORT_NATURAL | SORT_FLAG_CASE),
+        };
 
         $rows = [];
         foreach ($santriList as $santri) {
             $role = $santri->activeRoles->firstWhere('role_type', 'santri');
             $dorm = $santri->activeRoomAssignment?->room?->dormitory?->name ?? '-';
+            $room = $santri->activeRoomAssignment?->room?->name ?? '-';
             $kelas = $santri->activeMadrasahEnrollment?->kelas?->name ?? '-';
 
             $rows[] = [
@@ -233,6 +334,7 @@ class TunggakanSantriReferenceSheet implements FromArray, WithTitle, WithHeading
                 $santri->gender ?? '-',
                 ucfirst($role?->presence_status ?? 'mukim'),
                 $dorm,
+                $room,
                 $kelas,
             ];
         }
@@ -242,10 +344,17 @@ class TunggakanSantriReferenceSheet implements FromArray, WithTitle, WithHeading
 
     public function styles(Worksheet $sheet)
     {
-        $sheet->getStyle('A1:F1')->getFont()->setBold(true);
-        $sheet->getStyle('A1:F1')->getFill()
+        $sheet->getStyle('A1:G1')->getFont()->setBold(true);
+        $sheet->getStyle('A1:G1')->getFill()
             ->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)
             ->getStartColor()->setARGB('FFE2E8F0');
+
+        $sheet->getProtection()->setPassword('');
+        $sheet->getProtection()->setSheet(true);
+        $sheet->getProtection()->setSort(true);
+        $sheet->getProtection()->setAutoFilter(true);
+        $sheet->getProtection()->setSelectLockedCells(true);
+        $sheet->getProtection()->setSelectUnlockedCells(true);
     }
 }
 
@@ -280,5 +389,12 @@ class TunggakanInstructionSheet implements FromArray, WithTitle, WithHeadings, S
         $sheet->getStyle('A1:C1')->getFill()
             ->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)
             ->getStartColor()->setARGB('FFE2E8F0');
+
+        $sheet->getProtection()->setPassword('');
+        $sheet->getProtection()->setSheet(true);
+        $sheet->getProtection()->setSort(true);
+        $sheet->getProtection()->setAutoFilter(true);
+        $sheet->getProtection()->setSelectLockedCells(true);
+        $sheet->getProtection()->setSelectUnlockedCells(true);
     }
 }

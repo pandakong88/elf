@@ -890,22 +890,65 @@
                         <div class="lg:col-span-5 space-y-4 bg-slate-50/60 dark:bg-slate-800/40 p-4 rounded-2xl border border-slate-200/70 dark:border-slate-800">
                             <div class="flex items-center justify-between pb-2 border-b border-slate-200/60 dark:border-slate-700/60">
                                 <h4 class="font-extrabold text-xs text-slate-700 dark:text-slate-200 uppercase tracking-wider flex items-center gap-2">
-                                    <span>⚙️ Kriteria Filter Santri</span>
+                                    <span>⚙️ Kriteria Filter &amp; Urutan</span>
                                 </h4>
                                 <button type="button" wire:click="resetTemplateFilters" class="text-[11px] text-amber-600 dark:text-amber-400 hover:underline font-semibold">
                                     Reset Filter
                                 </button>
                             </div>
 
-                            <!-- Filter Asrama -->
+                            <!-- Filter Asrama / Multi Komplek -->
                             <div>
-                                <label class="block text-[11px] font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider mb-1">Komplek Asrama</label>
-                                <select wire:model.live="templateDormitoryId" class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 rounded-xl px-3 py-2 text-xs font-semibold focus:ring-amber-500 focus:border-amber-500 shadow-sm">
-                                    <option value="">Semua Komplek Asrama</option>
-                                    @foreach($recentDormitories as $dorm)
-                                        <option value="{{ $dorm->id }}">{{ $dorm->name }} ({{ $dorm->gender === 'L' ? 'Putra' : 'Putri' }})</option>
-                                    @endforeach
-                                </select>
+                                <div class="flex items-center justify-between mb-1.5">
+                                    <label class="text-[11px] font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider">
+                                        Komplek Asrama (Bisa Multi)
+                                    </label>
+                                    <div class="flex items-center gap-2 text-[10px]">
+                                        @if(!empty($templateDormitoryIds))
+                                            <button type="button" wire:click="clearAllDormitories" class="text-rose-600 dark:text-rose-400 hover:underline font-bold">
+                                                Reset (Semua)
+                                            </button>
+                                        @else
+                                            <button type="button" wire:click="selectAllDormitories" class="text-amber-600 dark:text-amber-400 hover:underline font-bold">
+                                                Pilih Semua
+                                            </button>
+                                        @endif
+                                    </div>
+                                </div>
+
+                                <!-- Checkbox list container -->
+                                <div class="max-h-36 overflow-y-auto space-y-1 p-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl shadow-inner text-xs">
+                                    @forelse($recentDormitories as $dorm)
+                                        @php
+                                            $isChecked = in_array((string)$dorm->id, array_map('strval', $templateDormitoryIds));
+                                        @endphp
+                                        <label class="flex items-center justify-between p-1.5 rounded-lg cursor-pointer transition-colors {{ $isChecked ? 'bg-amber-500/10 border border-amber-300/80 dark:border-amber-700/80 font-bold text-slate-900 dark:text-slate-100' : 'hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300' }}">
+                                            <div class="flex items-center gap-2">
+                                                <input type="checkbox" value="{{ $dorm->id }}" wire:model.live="templateDormitoryIds" class="rounded border-slate-300 text-amber-600 focus:ring-amber-500">
+                                                <span class="text-xs">{{ $dorm->name }}</span>
+                                            </div>
+                                            <div class="flex items-center gap-1 text-[10px]">
+                                                <span class="px-1.5 py-0.5 rounded font-mono font-bold {{ $dorm->gender === 'L' ? 'bg-blue-100 dark:bg-blue-950 text-blue-600' : 'bg-pink-100 dark:bg-pink-950 text-pink-600' }}">
+                                                    {{ $dorm->gender === 'L' ? 'Putra' : 'Putri' }}
+                                                </span>
+                                                <span class="text-slate-400 font-normal">({{ $dorm->rooms_count ?? 0 }} Kamar)</span>
+                                            </div>
+                                        </label>
+                                    @empty
+                                        <div class="text-center py-2 text-slate-400 text-xs italic">
+                                            Tidak ada data komplek asrama.
+                                        </div>
+                                    @endforelse
+                                </div>
+                                <div class="mt-1 flex items-center justify-between text-[10px] text-slate-400">
+                                    <span>
+                                        @if(empty($templateDormitoryIds))
+                                            🌐 Menampilkan santri dari <strong>Semua Komplek</strong>
+                                        @else
+                                            ✓ <strong>{{ count($templateDormitoryIds) }} Komplek</strong> terpilih
+                                        @endif
+                                    </span>
+                                </div>
                             </div>
 
                             <!-- Filter Kelas -->
@@ -926,6 +969,28 @@
                                     <option value="">Semua Gender (Putra &amp; Putri)</option>
                                     <option value="L">Putra Saja (L)</option>
                                     <option value="P">Putri Saja (P)</option>
+                                </select>
+                            </div>
+
+                            <!-- Filter Status Keberadaan (Mukim / Laju) -->
+                            <div>
+                                <label class="block text-[11px] font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider mb-1">Status Keberadaan Santri</label>
+                                <select wire:model.live="templatePresenceStatus" class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 rounded-xl px-3 py-2 text-xs font-semibold focus:ring-amber-500 focus:border-amber-500 shadow-sm">
+                                    <option value="">🌐 Semua Status (Mukim &amp; Laju)</option>
+                                    <option value="mukim">🏠 Santri Mukim (Menetap di Asrama)</option>
+                                    <option value="laju">🚶‍♂️ Santri Laju (Pulang Pergi / Non-Mukim)</option>
+                                </select>
+                            </div>
+
+                            <!-- Pilihan Urutan Data (Order By) -->
+                            <div>
+                                <label class="block text-[11px] font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider mb-1">Urutkan Data Berdasarkan</label>
+                                <select wire:model.live="templateOrderBy" class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 rounded-xl px-3 py-2 text-xs font-semibold focus:ring-amber-500 focus:border-amber-500 shadow-sm">
+                                    <option value="komplek">🏢 Komplek Asrama &amp; Kamar (Urut per Komplek ➔ Kamar ➔ Nama)</option>
+                                    <option value="kamar">🛏️ Kamar Asrama (Urut per Kamar ➔ Nama)</option>
+                                    <option value="kelas">📚 Kelas Madrasah (Urut per Kelas ➔ Nama)</option>
+                                    <option value="name">🔤 Nama Santri (A-Z)</option>
+                                    <option value="nis">🔢 Nomor Induk Santri (NIS)</option>
                                 </select>
                             </div>
 
@@ -982,6 +1047,19 @@
                                     <span class="px-2.5 py-1 text-[10px] font-extrabold uppercase rounded-lg bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
                                         Tahun {{ $templateYear }}
                                     </span>
+                                    @if(!empty($templateDormitoryIds))
+                                        <span class="px-2.5 py-1 text-[10px] font-extrabold uppercase rounded-lg bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
+                                            🏢 {{ count($templateDormitoryIds) }} Komplek
+                                        </span>
+                                    @endif
+                                    @if($templatePresenceStatus)
+                                        <span class="px-2.5 py-1 text-[10px] font-extrabold uppercase rounded-lg bg-sky-100 dark:bg-sky-950/60 text-sky-700 dark:text-sky-300 border border-sky-200 dark:border-sky-800">
+                                            {{ ucfirst($templatePresenceStatus) }}
+                                        </span>
+                                    @endif
+                                    <span class="px-2.5 py-1 text-[10px] font-extrabold uppercase rounded-lg bg-indigo-100 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800">
+                                        Urut: {{ ucfirst($templateOrderBy) }}
+                                    </span>
                                 </div>
                             </div>
 
@@ -991,7 +1069,7 @@
                                 <div class="bg-emerald-700 text-white px-4 py-2.5 text-xs font-bold flex items-center justify-between">
                                     <div class="flex items-center gap-2">
                                         <svg class="w-4 h-4 text-emerald-200" fill="currentColor" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6zM6 20V4h7v5h5v11H6z"/></svg>
-                                        <span>Pratinjau Berkas: template_tunggakan_{{ $templateBillType }}_{{ $templateYear }}.xlsx</span>
+                                        <span>Pratinjau Urutan Berkas: template_tunggakan_{{ $templateBillType }}_{{ $templateYear }}.xlsx</span>
                                     </div>
                                     <span class="text-[10px] px-2 py-0.5 rounded bg-emerald-800/80 font-mono text-emerald-200">Sheet 1: Input_Tunggakan</span>
                                 </div>
@@ -1002,8 +1080,9 @@
                                         <thead>
                                             <tr class="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-b border-slate-200 dark:border-slate-700 font-bold font-mono text-[10px]">
                                                 <th class="px-3 py-2 border-r border-slate-200 dark:border-slate-700 text-center w-8">#</th>
-                                                <th class="px-3 py-2 border-r border-slate-200 dark:border-slate-700">A: NIS</th>
-                                                <th class="px-3 py-2 border-r border-slate-200 dark:border-slate-700">B: NAMA SANTRI</th>
+                                                <th class="px-3 py-2 border-r border-slate-200 dark:border-slate-700">🔒 A: NIS</th>
+                                                <th class="px-3 py-2 border-r border-slate-200 dark:border-slate-700">🔒 B: NAMA SANTRI</th>
+                                                <th class="px-3 py-2 border-r border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400">INFO ASRAMA / STATUS</th>
                                                 <th class="px-3 py-2 border-r border-slate-200 dark:border-slate-700">C: JENIS TAGIHAN</th>
                                                 <th class="px-3 py-2 border-r border-slate-200 dark:border-slate-700 text-center">D: TAHUN</th>
                                                 <th class="px-3 py-2 border-r border-slate-200 dark:border-slate-700 text-right bg-amber-50/60 dark:bg-amber-950/20 text-amber-800 dark:text-amber-300">F: NOMINAL (RP)</th>
@@ -1013,10 +1092,26 @@
                                         <tbody class="divide-y divide-slate-100 dark:divide-slate-800 font-mono">
                                             @if($templatePrefill && $this->filteredSantriPreview['total'] > 0)
                                                 @foreach($this->filteredSantriPreview['samples'] as $idx => $santri)
+                                                    @php
+                                                        $dormName = $santri->activeRoomAssignment?->room?->dormitory?->name;
+                                                        $roomName = $santri->activeRoomAssignment?->room?->name;
+                                                        $role = $santri->activeRoles->firstWhere('role_type', 'santri');
+                                                        $isLaju = ($role?->presence_status === 'laju');
+                                                    @endphp
                                                     <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50">
                                                         <td class="px-3 py-2 text-center text-slate-400 bg-slate-50/50 dark:bg-slate-800/30 border-r border-slate-200 dark:border-slate-700">{{ $idx + 2 }}</td>
-                                                        <td class="px-3 py-2 border-r border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 font-semibold">{{ $santri->nis ?: '-' }}</td>
-                                                        <td class="px-3 py-2 border-r border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 font-sans font-medium">{{ $santri->name }}</td>
+                                                        <td class="px-3 py-2 border-r border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 font-semibold bg-slate-50/40 dark:bg-slate-800/20">{{ $santri->nis ?: '-' }}</td>
+                                                        <td class="px-3 py-2 border-r border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 font-sans font-medium bg-slate-50/40 dark:bg-slate-800/20">{{ $santri->name }}</td>
+                                                        <td class="px-3 py-2 border-r border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 font-sans text-[10px]">
+                                                            @if($isLaju)
+                                                                <span class="text-sky-600 dark:text-sky-400 font-bold">🚶‍♂️ Laju</span>
+                                                            @elseif($dormName)
+                                                                <span class="text-slate-700 dark:text-slate-300">🏢 {{ $dormName }}</span>
+                                                                @if($roomName)<span class="text-slate-400"> ({{ $roomName }})</span>@endif
+                                                            @else
+                                                                <span class="text-slate-400">-</span>
+                                                            @endif
+                                                        </td>
                                                         <td class="px-3 py-2 border-r border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400">{{ $templateBillType }}</td>
                                                         <td class="px-3 py-2 border-r border-slate-200 dark:border-slate-700 text-center text-slate-600 dark:text-slate-400">{{ $templateYear }}</td>
                                                         <td class="px-3 py-2 border-r border-slate-200 dark:border-slate-700 text-right text-amber-600 dark:text-amber-400 bg-amber-50/30 dark:bg-amber-950/10 italic">
@@ -1026,16 +1121,16 @@
                                                     </tr>
                                                 @endforeach
 
-                                                @if($this->filteredSantriPreview['total'] > 6)
+                                                @if($this->filteredSantriPreview['total'] > 8)
                                                     <tr class="bg-amber-500/5 text-amber-700 dark:text-amber-400 font-sans italic text-center">
-                                                        <td colspan="7" class="py-2.5 px-4 text-xs font-semibold">
-                                                            ⬇ ... dan +{{ $this->filteredSantriPreview['total'] - 6 }} santri lainnya otomatis disertakan di baris berikutnya pada file Excel.
+                                                        <td colspan="8" class="py-2.5 px-4 text-xs font-semibold">
+                                                            ⬇ ... dan +{{ $this->filteredSantriPreview['total'] - 8 }} santri lainnya otomatis disertakan berurutan pada baris berikutnya di file Excel.
                                                         </td>
                                                     </tr>
                                                 @endif
                                             @elseif($templatePrefill && $this->filteredSantriPreview['total'] === 0)
                                                 <tr>
-                                                    <td colspan="7" class="py-8 text-center text-slate-400 font-sans">
+                                                    <td colspan="8" class="py-8 text-center text-slate-400 font-sans">
                                                         Tidak ada santri yang sesuai kriteria filter saat ini.
                                                     </td>
                                                 </tr>
@@ -1046,6 +1141,7 @@
                                                         <td class="px-3 py-2 text-center text-slate-400 bg-slate-50/50 dark:bg-slate-800/30 border-r border-slate-200 dark:border-slate-700">{{ $i }}</td>
                                                         <td class="px-3 py-2 border-r border-slate-200 dark:border-slate-700 text-slate-400 italic font-sans">[Isi NIS Santri]</td>
                                                         <td class="px-3 py-2 border-r border-slate-200 dark:border-slate-700 text-slate-400 italic font-sans">[Nama Santri]</td>
+                                                        <td class="px-3 py-2 border-r border-slate-200 dark:border-slate-700 text-slate-400 text-[10px]">-</td>
                                                         <td class="px-3 py-2 border-r border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400">{{ $templateBillType }}</td>
                                                         <td class="px-3 py-2 border-r border-slate-200 dark:border-slate-700 text-center text-slate-600 dark:text-slate-400">{{ $templateYear }}</td>
                                                         <td class="px-3 py-2 border-r border-slate-200 dark:border-slate-700 text-right text-slate-400 italic">[Nominal]</td>
@@ -1061,10 +1157,13 @@
                             <!-- Tips Box -->
                             <div class="p-3.5 rounded-xl bg-blue-50 dark:bg-blue-950/30 border border-blue-200/80 dark:border-blue-900/50 text-xs text-blue-700 dark:text-blue-300 flex items-start gap-2.5">
                                 <span class="text-base leading-none">💡</span>
-                                <div class="space-y-0.5">
-                                    <span class="font-bold block">Tips Praktis Pengurus:</span>
+                                <div class="space-y-1">
+                                    <span class="font-bold block">Tips &amp; Proteksi Dokumen:</span>
                                     <p class="text-[11px] text-blue-600/90 dark:text-blue-400">
-                                        Santri yang <strong>tidak memiliki tunggakan / sudah lunas</strong> cukup <strong>dikosongkan nominalnya</strong> di Excel. Sistem akan otomatis melewatinya saat file diunggah.
+                                        🔒 <strong>Kolom NIS &amp; Nama Santri otomatis dikunci (Protected)</strong> pada Excel untuk mencegah salah ketik atau data tertukar secara tidak sengaja.
+                                    </p>
+                                    <p class="text-[11px] text-blue-600/90 dark:text-blue-400">
+                                        Santri yang <strong>tidak memiliki tunggakan / sudah lunas</strong> cukup <strong>dikosongkan nominalnya</strong>. Sistem otomatis melewatinya saat file diunggah.
                                     </p>
                                 </div>
                             </div>
