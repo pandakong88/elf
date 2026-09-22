@@ -26,7 +26,7 @@ class SettlementReportController extends Controller
         $user = auth()->user();
         if (!$user) abort(401);
 
-        if ($user->hasRole(['super-admin', 'manajemen', 'pengasuh', 'bendahara-pondok', 'bendahara-pusat'])) {
+        if ($user->hasRole(['super-admin', 'admin', 'admin-data', 'manajemen', 'pengasuh', 'bendahara', 'bendahara-pondok', 'bendahara-pusat', 'bendahara-unit'])) {
             return null; // All access
         }
 
@@ -36,6 +36,16 @@ class SettlementReportController extends Controller
 
         if ($user->hasRole(['bendahara-putri', 'lurah-putri'])) {
             return 'P';
+        }
+
+        // Check associated person gender profile if applicable
+        if ($user->person?->gender) {
+            return $user->person->gender;
+        }
+
+        // Fallback for users with financial permissions
+        if ($user->can('view-laporan-keuangan') || $user->can('view-tagihan') || $user->can('record-pembayaran') || $user->can('manage-billing-config')) {
+            return null;
         }
 
         abort(403, 'Akses ditolak: Anda tidak memiliki wewenang untuk melihat rekonsiliasi keuangan.');
@@ -51,7 +61,7 @@ class SettlementReportController extends Controller
         $dateFrom = $request->query('date_from', now()->startOfMonth()->toDateString());
         $dateTo   = $request->query('date_to', now()->toDateString());
         $source   = $request->query('source', 'all'); // 'gateway' | 'kasir' | 'all'
-        $targetGender = $genderScope ?: $request->query('gender', null);
+        $targetGender = $genderScope ?: ($request->filled('gender') ? $request->query('gender') : null);
 
         $fromCarbon = Carbon::parse($dateFrom)->startOfDay();
         $toCarbon   = Carbon::parse($dateTo)->endOfDay();
@@ -251,7 +261,7 @@ class SettlementReportController extends Controller
     public function exportExcel(Request $request)
     {
         $genderScope = $this->resolveGenderScope();
-        $targetGender = $genderScope ?: $request->query('gender', null);
+        $targetGender = $genderScope ?: ($request->filled('gender') ? $request->query('gender') : null);
 
         $dateFrom = $request->query('date_from', now()->startOfMonth()->toDateString());
         $dateTo   = $request->query('date_to', now()->toDateString());
@@ -496,7 +506,7 @@ class SettlementReportController extends Controller
     public function downloadSlipKategoriPdf(Request $request, string $categoryKey): Response
     {
         $genderScope = $this->resolveGenderScope();
-        $targetGender = $genderScope ?: $request->query('gender', null);
+        $targetGender = $genderScope ?: ($request->filled('gender') ? $request->query('gender') : null);
 
         $catData = $this->getCategorySlipData($request, $categoryKey);
         $meta    = $catData['meta'];
@@ -532,7 +542,7 @@ class SettlementReportController extends Controller
     public function getCategorySlipData(Request $request, string $categoryKey): array
     {
         $genderScope = $this->resolveGenderScope();
-        $targetGender = $genderScope ?: $request->query('gender', null);
+        $targetGender = $genderScope ?: ($request->filled('gender') ? $request->query('gender') : null);
 
         $dateFrom   = $request->query('date_from', now()->startOfMonth()->toDateString());
         $dateTo     = $request->query('date_to', now()->toDateString());
@@ -776,14 +786,18 @@ class SettlementReportController extends Controller
     public function downloadBatchSlipsPdf(Request $request): Response
     {
         $genderScope = $this->resolveGenderScope();
-        $targetGender = $genderScope ?: $request->query('gender', null);
+        $targetGender = $genderScope ?: ($request->filled('gender') ? $request->query('gender') : null);
 
         $dateFrom   = $request->query('date_from', now()->startOfMonth()->toDateString());
         $dateTo     = $request->query('date_to', now()->toDateString());
         $appName    = config('app.name', 'Pondok Pesantren Al-Fithroh');
         $periodLabel = Carbon::parse($dateFrom)->locale('id')->translatedFormat('d M Y') . ' s/d ' . Carbon::parse($dateTo)->locale('id')->translatedFormat('d M Y');
 
-        $categoryKeys = ['syahriah_putra', 'syahriah_putri', 'madrasah', 'kitab', 'majek_pagi', 'majek_sore', 'pocket_money'];
+        $categoryKeys = match ($targetGender) {
+            'L' => ['syahriah_putra', 'madrasah', 'kitab', 'majek_pagi', 'majek_sore', 'pocket_money'],
+            'P' => ['syahriah_putri', 'madrasah', 'kitab', 'majek_pagi', 'majek_sore', 'pocket_money'],
+            default => ['syahriah_putra', 'syahriah_putri', 'madrasah', 'kitab', 'majek_pagi', 'majek_sore', 'pocket_money'],
+        };
         $slips = [];
 
         foreach ($categoryKeys as $catKey) {
