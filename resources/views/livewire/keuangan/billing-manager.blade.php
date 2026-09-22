@@ -2081,9 +2081,13 @@
                                                     </span>
                                                 @endif
                                                 <div class="min-w-0">
-                                                    <span class="font-semibold text-slate-700 dark:text-slate-300 text-xs block truncate">{{ $ib->config?->label ?? ($ib->title ?: str_replace('_', ' ', $ib->bill_type)) }}</span>
+                                                    <span class="font-semibold text-slate-700 dark:text-slate-300 text-xs block truncate">{{ $ib->config?->label ?? ($ib->title ?: ucwords(str_replace('_', ' ', $ib->bill_type))) }}</span>
                                                     <span class="text-[9px] text-slate-400 block">
-                                                        {{ $monthNames[$ib->period_month] ?? '' }} {{ $ib->period_year }}
+                                                        @if($ib->period_month)
+                                                            {{ $monthNames[$ib->period_month] ?? '' }} {{ $ib->period_year }}
+                                                        @else
+                                                            {{ $ib->period_year ? 'Tahun ' . $ib->period_year : 'Saldo Awal' }}
+                                                        @endif
                                                         @if(!empty($ib->notes))
                                                             <span class="text-amber-600 dark:text-amber-400 font-medium block truncate">📌 {{ $ib->notes }}</span>
                                                         @endif

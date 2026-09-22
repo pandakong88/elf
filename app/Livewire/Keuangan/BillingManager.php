@@ -2280,7 +2280,14 @@ class BillingManager extends Component
 
         $query = Bill::where('person_id', $this->selectedSantriId)
             ->where('period_year', $year)
-            ->whereHas('config', fn($q) => $q->whereIn('interval', ['semester', '2x_yearly', 'caturwulan', '3x_yearly', 'triwulan', '4x_yearly', 'bimulanan', '6x_yearly']))
+            ->whereNotNull('period_month')
+            ->where(function($q) {
+                $q->whereHas('config', fn($sq) => $sq->whereIn('interval', ['semester', '2x_yearly', 'caturwulan', '3x_yearly', 'triwulan', '4x_yearly', 'bimulanan', '6x_yearly']))
+                  ->orWhere(function($sub) {
+                      $sub->whereNull('billing_config_id')
+                          ->whereIn('bill_type', ['kebersihan', 'syahriah_madrasah']);
+                  });
+            })
             ->with('config');
 
         $query = $this->applyManagerRoleScope($query);
@@ -2308,7 +2315,7 @@ class BillingManager extends Component
 
             if (!isset($configs[$cid])) {
                 $configs[$cid] = [
-                    'label'      => $bill->config?->label ?? str_replace('_', ' ', $bill->bill_type),
+                    'label'      => $bill->config?->label ?? ucwords(str_replace('_', ' ', $bill->bill_type)),
                     'interval'   => $interval,
                     'max_period' => $maxPeriod,
                     'type_title' => $typeTitle,
@@ -2319,12 +2326,12 @@ class BillingManager extends Component
             // Determine 1-based cycle index (1..max_period) for grid column placement
             $cycleIndex = $bill->period_sub;
             if (!$cycleIndex) {
-                $m = $bill->period_month ?? 1;
+                $m = (int)$bill->period_month;
                 $cycleIndex = match($interval) {
                     'bimulanan', '6x_yearly'  => (int)ceil($m / 2),
                     'caturwulan', '3x_yearly' => $m <= 4 ? 1 : ($m <= 8 ? 2 : 3),
                     'triwulan', '4x_yearly'   => (int)ceil($m / 3),
-                    default                   => $m <= 6 ? 1 : 2,
+                    default                   => ($m === 2 || $m >= 7) ? 2 : 1,
                 };
             }
 
@@ -2340,8 +2347,13 @@ class BillingManager extends Component
 
         $query = Bill::where('person_id', $this->selectedSantriId)
             ->where(function($q) {
-                $q->whereNull('billing_config_id')
-                  ->orWhereHas('config', fn($sq) => $sq->whereNotIn('interval', ['monthly', 'semester', '2x_yearly', 'caturwulan', '3x_yearly', 'triwulan', '4x_yearly', 'bimulanan', '6x_yearly']));
+                $q->where(function($sub1) {
+                    $sub1->whereNull('billing_config_id')
+                         ->where(function($sq) {
+                             $sq->whereNull('period_month')
+                                ->orWhereNotIn('bill_type', ['kebersihan', 'syahriah_madrasah', 'syahriah_pondok', 'kas_komplek']);
+                         });
+                })->orWhereHas('config', fn($sub2) => $sub2->whereNotIn('interval', ['monthly', 'semester', '2x_yearly', 'caturwulan', '3x_yearly', 'triwulan', '4x_yearly', 'bimulanan', '6x_yearly']));
             })
             ->with('config');
 
