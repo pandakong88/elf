@@ -84,6 +84,10 @@ class KeuanganPrintController extends Controller
                       ->orWhere(function($sub) use ($firstM, $firstY) {
                           $sub->where('period_year', (int)$firstY)
                               ->where('period_month', '<', (int)$firstM);
+                      })
+                      ->orWhere(function($sub) use ($firstY) {
+                          $sub->where('period_year', (int)$firstY)
+                              ->whereNull('period_month');
                       });
                 })
                 ->get();
@@ -448,9 +452,20 @@ class KeuanganPrintController extends Controller
                     }
 
                     $tunggakanLama = Bill::where('person_id', $santri->id)
-                        ->where('billing_config_id', $config->id)
+                        ->where(function($q) use ($config) {
+                            if ($config->id) {
+                                $q->where('billing_config_id', $config->id);
+                            }
+                            $q->orWhere('bill_type', $config->type);
+                        })
                         ->whereIn('status', ['unpaid', 'partial'])
-                        ->where('period_year', '<', $year)
+                        ->where(function($q) use ($year) {
+                            $q->where('period_year', '<', $year)
+                              ->orWhere(function($sub) use ($year) {
+                                  $sub->where('period_year', $year)
+                                      ->whereNull('period_month');
+                              });
+                        })
                         ->get();
 
                     $tunggakanLamaCount = $tunggakanLama->count();
@@ -833,9 +848,20 @@ class KeuanganPrintController extends Controller
 
                     // Accumulated unpaid bills of this config type before January of the selected year
                     $tunggakanLama = Bill::where('person_id', $santri->id)
-                        ->where('billing_config_id', $config->id)
+                        ->where(function($q) use ($config) {
+                            if ($config->id) {
+                                $q->where('billing_config_id', $config->id);
+                            }
+                            $q->orWhere('bill_type', $config->type);
+                        })
                         ->whereIn('status', ['unpaid', 'partial'])
-                        ->where('period_year', '<', $year)
+                        ->where(function($q) use ($year) {
+                            $q->where('period_year', '<', $year)
+                              ->orWhere(function($sub) use ($year) {
+                                  $sub->where('period_year', $year)
+                                      ->whereNull('period_month');
+                              });
+                        })
                         ->get();
 
                     $tunggakanLamaCount = $tunggakanLama->count();
