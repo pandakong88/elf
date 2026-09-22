@@ -230,6 +230,9 @@
                                         </div>
                                         <div class="text-[11px] text-slate-500 dark:text-slate-400">
                                             Periode: {{ $this->getBillPeriodLabel($bill) }}
+                                            @if(!empty($bill->notes))
+                                                <span class="block text-[10px] text-amber-600 dark:text-amber-400 font-medium mt-0.5">📌 {{ $bill->notes }}</span>
+                                            @endif
                                         </div>
                                     </div>
                                     <div class="text-right">
@@ -269,6 +272,9 @@
                                         </div>
                                         <div class="text-[11px] text-slate-500 dark:text-slate-400">
                                             Nominal: Rp {{ number_format($bill->amount, 0, ',', '.') }}
+                                            @if(!empty($bill->notes))
+                                                <span class="block text-[10px] text-amber-600 dark:text-amber-400 font-medium mt-0.5">📌 {{ $bill->notes }}</span>
+                                            @endif
                                         </div>
                                     </div>
 
@@ -313,6 +319,9 @@
                                         </div>
                                         <div class="text-[11px] text-slate-500 dark:text-slate-400">
                                             {{ $this->getBillPeriodLabel($bill) }}
+                                            @if(!empty($bill->notes))
+                                                <span class="block text-[10px] text-amber-600 dark:text-amber-400 font-medium mt-0.5">📌 {{ $bill->notes }}</span>
+                                            @endif
                                         </div>
                                     </div>
                                     <div class="text-right">
@@ -441,6 +450,9 @@
                                                     </div>
                                                     <div class="text-[10px] text-slate-500 dark:text-slate-400">
                                                         {{ $this->getBillPeriodLabel($bill) }}
+                                                        @if(!empty($bill->notes))
+                                                            <span class="block text-[10px] text-amber-600 dark:text-amber-400 font-medium mt-0.5">📌 {{ $bill->notes }}</span>
+                                                        @endif
                                                     </div>
                                                 </div>
                                             </div>
@@ -541,6 +553,9 @@
                                                     </div>
                                                     <div class="text-[10px] text-slate-500 dark:text-slate-400">
                                                         {{ $this->getBillPeriodLabel($bill) }}
+                                                        @if(!empty($bill->notes))
+                                                            <span class="block text-[10px] text-amber-600 dark:text-amber-400 font-medium mt-0.5">📌 {{ $bill->notes }}</span>
+                                                        @endif
                                                     </div>
                                                 </div>
                                             </div>
@@ -646,6 +661,9 @@
                                                         </div>
                                                         <div class="text-[10px] text-slate-500 dark:text-slate-400">
                                                             {{ $this->getBillPeriodLabel($bill) }}
+                                                            @if(!empty($bill->notes))
+                                                                <span class="block text-[10px] text-amber-600 dark:text-amber-400 font-medium mt-0.5">📌 {{ $bill->notes }}</span>
+                                                            @endif
                                                         </div>
                                                     </div>
                                                 </div>

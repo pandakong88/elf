@@ -2082,7 +2082,12 @@
                                                 @endif
                                                 <div class="min-w-0">
                                                     <span class="font-semibold text-slate-700 dark:text-slate-300 text-xs block truncate">{{ $ib->config?->label ?? ($ib->title ?: str_replace('_', ' ', $ib->bill_type)) }}</span>
-                                                    <span class="text-[9px] text-slate-400">{{ $monthNames[$ib->period_month] ?? '' }} {{ $ib->period_year }}</span>
+                                                    <span class="text-[9px] text-slate-400 block">
+                                                        {{ $monthNames[$ib->period_month] ?? '' }} {{ $ib->period_year }}
+                                                        @if(!empty($ib->notes))
+                                                            <span class="text-amber-600 dark:text-amber-400 font-medium block truncate">📌 {{ $ib->notes }}</span>
+                                                        @endif
+                                                    </span>
                                                 </div>
                                             </div>
                                             <div class="text-right shrink-0">
@@ -2199,7 +2204,10 @@
                                             @foreach($this->confirmBills as $cb)
                                                 <tr>
                                                     <td class="py-2 px-3 font-semibold text-slate-700 dark:text-slate-300">
-                                                        {{ $cb->config?->label ?? str_replace('_', ' ', $cb->bill_type) }}
+                                                        <div>{{ $cb->config?->label ?? str_replace('_', ' ', $cb->bill_type) }}</div>
+                                                        @if(!empty($cb->notes))
+                                                            <div class="text-[9px] text-amber-600 dark:text-amber-400 font-normal">📌 {{ $cb->notes }}</div>
+                                                        @endif
                                                     </td>
                                                     <td class="py-2 px-3 text-center text-slate-500">
                                                         {{ $monthNames[$cb->period_month] ?? '' }} {{ $cb->period_year }}

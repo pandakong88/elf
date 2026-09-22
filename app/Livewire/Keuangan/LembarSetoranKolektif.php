@@ -226,6 +226,10 @@ class LembarSetoranKolektif extends Component
                           ->orWhere(function($sub) use ($firstM, $firstY) {
                               $sub->where('period_year', (int)$firstY)
                                   ->where('period_month', '<', (int)$firstM);
+                          })
+                          ->orWhere(function($sub) use ($firstY) {
+                              $sub->where('period_year', (int)$firstY)
+                                  ->whereNull('period_month');
                           });
                     });
                 }
@@ -289,6 +293,10 @@ class LembarSetoranKolektif extends Component
                   ->orWhere(function($sub) use ($firstM, $firstY) {
                       $sub->where('period_year', (int)$firstY)
                           ->where('period_month', '<', (int)$firstM);
+                  })
+                  ->orWhere(function($sub) use ($firstY) {
+                      $sub->where('period_year', (int)$firstY)
+                          ->whereNull('period_month');
                   });
             });
         }
@@ -885,6 +893,10 @@ class LembarSetoranKolektif extends Component
                       ->orWhere(function($sub) use ($firstM, $firstY) {
                           $sub->where('period_year', (int)$firstY)
                               ->where('period_month', '<', (int)$firstM);
+                      })
+                      ->orWhere(function($sub) use ($firstY) {
+                          $sub->where('period_year', (int)$firstY)
+                              ->whereNull('period_month');
                       });
                 });
             }
@@ -1015,6 +1027,10 @@ class LembarSetoranKolektif extends Component
                           ->orWhere(function($sub) use ($firstM, $firstY) {
                               $sub->where('period_year', (int)$firstY)
                                   ->where('period_month', '<', (int)$firstM);
+                          })
+                          ->orWhere(function($sub) use ($firstY) {
+                              $sub->where('period_year', (int)$firstY)
+                                  ->whereNull('period_month');
                           });
                     });
                 }
