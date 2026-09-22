@@ -142,6 +142,32 @@
             height: 11px;
         }
 
+        /* Checkbox Design */
+        .checkbox-box {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 14px;
+            height: 14px;
+            border: 1.5px solid #334155;
+            border-radius: 3px;
+            background-color: #fff;
+            vertical-align: middle;
+            box-sizing: border-box;
+        }
+        .checkbox-box.checked {
+            border-color: #16a34a;
+            background-color: #dcfce7;
+        }
+        .checkbox-box.checked::after {
+            content: "✓";
+            font-size: 11px;
+            color: #15803d;
+            font-weight: 900;
+            line-height: 1;
+            margin-top: -0.5px;
+        }
+
         /* Repeat headers */
         thead {
             display: table-header-group;
@@ -281,20 +307,19 @@
                                 @foreach($row['bills'] as $periodKey => $bill)
                                     <td class="center font-bold" style="padding: 6px 8px;">
                                         @if($mode === 'history')
-                                            @if($bill && $bill->status === 'exempt')
+                                            @if($bill && $bill->status === 'paid')
+                                                <span class="checkbox-box checked"></span>
+                                            @elseif($bill && $bill->status === 'exempt')
                                                 <span style="color: #7c3aed; font-size: 8.5px; font-weight: 800; background: #f3e8ff; padding: 1px 4px; border-radius: 3px;">CUTI</span>
                                             @elseif($bill && $bill->amount_paid > 0)
-                                                <span style="color: #16a34a; font-size: 9px; font-weight: 800;">
+                                                <span style="color: #16a34a; font-size: 9px; font-weight: 800; white-space: nowrap; display: inline-block;">
                                                     Rp {{ number_format($bill->amount_paid, 0, ',', '.') }}
-                                                    @if($bill->status === 'paid')
-                                                        ✓
-                                                    @endif
                                                 </span>
                                             @else
-                                                <span style="color: #cbd5e1;">—</span>
+                                                <span class="checkbox-box"></span>
                                             @endif
                                         @else
-                                            &nbsp;
+                                            <span class="checkbox-box"></span>
                                         @endif
                                     </td>
                                 @endforeach
@@ -442,20 +467,19 @@
                             @foreach($row['bills'] as $periodKey => $bill)
                                 <td class="center font-bold" style="padding: 6px 8px;">
                                     @if($mode === 'history')
-                                        @if($bill && $bill->status === 'exempt')
+                                        @if($bill && $bill->status === 'paid')
+                                            <span class="checkbox-box checked"></span>
+                                        @elseif($bill && $bill->status === 'exempt')
                                             <span style="color: #7e22ce; font-size: 8px; font-weight: 800; background: #f3e8ff; padding: 1px 4px; border-radius: 3px; border: 1px solid #d8b4fe;">CUTI</span>
                                         @elseif($bill && $bill->amount_paid > 0)
-                                            <span style="color: #16a34a; font-size: 9px; font-weight: 800;">
+                                            <span style="color: #16a34a; font-size: 9px; font-weight: 800; white-space: nowrap; display: inline-block;">
                                                 Rp {{ number_format($bill->amount_paid, 0, ',', '.') }}
-                                                @if($bill->status === 'paid')
-                                                    ✓
-                                                @endif
                                             </span>
                                         @else
-                                            <span style="color: #cbd5e1;">—</span>
+                                            <span class="checkbox-box"></span>
                                         @endif
                                     @else
-                                        &nbsp;
+                                        <span class="checkbox-box"></span>
                                     @endif
                                 </td>
                             @endforeach

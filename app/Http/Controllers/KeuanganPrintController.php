@@ -348,8 +348,30 @@ class KeuanganPrintController extends Controller
                                 }
                                 $q->orWhere('bill_type', $config->type);
                             })
-                            ->where('period_month', (int)$sem)
                             ->where('period_year', (int)$yr)
+                            ->where(function($q) use ($sem) {
+                                if ((int)$sem === 1) {
+                                    $q->where('period_sub', 1)
+                                      ->orWhere(function($sub) {
+                                          $sub->whereNull('period_sub')
+                                              ->where(function($m) {
+                                                  $m->where('period_month', 1)
+                                                    ->orWhere(function($sm) {
+                                                        $sm->where('period_month', '<=', 6)
+                                                           ->where('period_month', '!=', 2);
+                                                    });
+                                              });
+                                      });
+                                } else {
+                                    $q->where('period_sub', 2)
+                                      ->orWhere(function($sub) {
+                                          $sub->whereNull('period_sub')
+                                              ->where(function($m) {
+                                                  $m->whereIn('period_month', [2, 7, 8, 9, 10, 11, 12]);
+                                              });
+                                      });
+                                }
+                            })
                             ->first();
                         $bills[$periodKey] = $bill;
                     }
@@ -369,8 +391,13 @@ class KeuanganPrintController extends Controller
                               ->orWhere(function($sub) use ($firstSem, $firstYr) {
                                   $sub->where('period_year', (int)$firstYr)
                                       ->where(function($pNull) use ($firstSem) {
-                                          $pNull->whereNull('period_month')
-                                                ->orWhere('period_month', '<', (int)$firstSem);
+                                          $pNull->where(function($sq) use ($firstSem) {
+                                              if ((int)$firstSem === 2) {
+                                                  $sq->where('period_sub', 1)->orWhere('period_month', 1);
+                                              } else {
+                                                  $sq->whereNull('period_month')->whereNull('period_sub');
+                                              }
+                                          });
                                       });
                               });
                         })
@@ -756,8 +783,30 @@ class KeuanganPrintController extends Controller
                                 }
                                 $q->orWhere('bill_type', $config->type);
                             })
-                            ->where('period_month', (int)$sem)
                             ->where('period_year', (int)$yr)
+                            ->where(function($q) use ($sem) {
+                                if ((int)$sem === 1) {
+                                    $q->where('period_sub', 1)
+                                      ->orWhere(function($sub) {
+                                          $sub->whereNull('period_sub')
+                                              ->where(function($m) {
+                                                  $m->where('period_month', 1)
+                                                    ->orWhere(function($sm) {
+                                                        $sm->where('period_month', '<=', 6)
+                                                           ->where('period_month', '!=', 2);
+                                                    });
+                                              });
+                                      });
+                                } else {
+                                    $q->where('period_sub', 2)
+                                      ->orWhere(function($sub) {
+                                          $sub->whereNull('period_sub')
+                                              ->where(function($m) {
+                                                  $m->whereIn('period_month', [2, 7, 8, 9, 10, 11, 12]);
+                                              });
+                                      });
+                                }
+                            })
                             ->first();
                         $bills[$periodKey] = $bill;
                     }
@@ -778,8 +827,13 @@ class KeuanganPrintController extends Controller
                               ->orWhere(function($sub) use ($firstSem, $firstYr) {
                                   $sub->where('period_year', (int)$firstYr)
                                       ->where(function($pNull) use ($firstSem) {
-                                          $pNull->whereNull('period_month')
-                                                ->orWhere('period_month', '<', (int)$firstSem);
+                                          $pNull->where(function($sq) use ($firstSem) {
+                                              if ((int)$firstSem === 2) {
+                                                  $sq->where('period_sub', 1)->orWhere('period_month', 1);
+                                              } else {
+                                                  $sq->whereNull('period_month')->whereNull('period_sub');
+                                              }
+                                          });
                                       });
                               });
                         })
