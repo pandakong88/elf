@@ -70,6 +70,7 @@ class SantriImportManager extends Component
     public string $tunggakanSearch = '';
     public string $tunggakanFilterType = '';
     public string $tunggakanFilterYear = '';
+    public string $tunggakanFilterGender = ''; // '', 'L', 'P'
     public string $tunggakanSortBy = 'latest'; // 'latest', 'oldest', 'highest', 'lowest', 'name'
     public array $selectedTunggakanIds = [];
     public bool $selectAllTunggakan = false;
@@ -106,6 +107,9 @@ class SantriImportManager extends Component
             if (!empty($this->tunggakanFilterYear)) {
                 $query->where('period_year', $this->tunggakanFilterYear);
             }
+            if (!empty($this->tunggakanFilterGender)) {
+                $query->whereHas('person', fn($pq) => $pq->where('gender', $this->tunggakanFilterGender));
+            }
 
             $this->selectedTunggakanIds = $query->pluck('id')->map(fn($id) => (string)$id)->toArray();
         } else {
@@ -124,6 +128,11 @@ class SantriImportManager extends Component
     }
 
     public function updatedTunggakanFilterYear(): void
+    {
+        $this->resetPage('tunggakanPage');
+    }
+
+    public function updatedTunggakanFilterGender(): void
     {
         $this->resetPage('tunggakanPage');
     }
@@ -1298,6 +1307,10 @@ class SantriImportManager extends Component
 
         if (!empty($this->tunggakanFilterYear)) {
             $tunggakanQuery->where('period_year', $this->tunggakanFilterYear);
+        }
+
+        if (!empty($this->tunggakanFilterGender)) {
+            $tunggakanQuery->whereHas('person', fn($pq) => $pq->where('gender', $this->tunggakanFilterGender));
         }
 
         match($this->tunggakanSortBy) {

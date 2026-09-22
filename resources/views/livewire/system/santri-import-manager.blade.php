@@ -422,6 +422,13 @@
                             <option value="2023">2023</option>
                         </select>
 
+                        <!-- Filter Gender -->
+                        <select wire:model.live="tunggakanFilterGender" class="bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 rounded-xl px-2.5 py-1.5 text-xs font-semibold focus:ring-amber-500 focus:border-amber-500">
+                            <option value="">Semua Gender</option>
+                            <option value="L">👦 Putra (L)</option>
+                            <option value="P">🧕 Putri (P)</option>
+                        </select>
+
                         <!-- Filter Sort By -->
                         <select wire:model.live="tunggakanSortBy" class="bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 rounded-xl px-2.5 py-1.5 text-xs font-semibold focus:ring-amber-500 focus:border-amber-500">
                             <option value="latest">✨ Terbaru Diimport</option>
@@ -456,7 +463,14 @@
                                         <input type="checkbox" wire:model.live="selectedTunggakanIds" value="{{ (string)$tb->id }}" class="rounded border-slate-300 text-amber-600 focus:ring-amber-500">
                                     </td>
                                     <td class="px-6 py-4">
-                                        <span class="font-bold text-slate-800 dark:text-slate-100 block">{{ $tb->person?->name ?? '-' }}</span>
+                                        <div class="flex items-center gap-1.5">
+                                            <span class="font-bold text-slate-800 dark:text-slate-100 block">{{ $tb->person?->name ?? '-' }}</span>
+                                            @if($tb->person?->gender === 'L')
+                                                <span class="px-1.5 py-0.5 text-[9px] font-bold rounded bg-blue-50 text-blue-600 dark:bg-blue-950/50 dark:text-blue-400 border border-blue-200 dark:border-blue-800" title="Putra">L</span>
+                                            @elseif($tb->person?->gender === 'P')
+                                                <span class="px-1.5 py-0.5 text-[9px] font-bold rounded bg-pink-50 text-pink-600 dark:bg-pink-950/50 dark:text-pink-400 border border-pink-200 dark:border-pink-800" title="Putri">P</span>
+                                            @endif
+                                        </div>
                                         <span class="text-[11px] text-slate-400 font-mono">{{ $tb->person?->nis ?? '-' }}</span>
                                     </td>
                                     <td class="px-6 py-4">
