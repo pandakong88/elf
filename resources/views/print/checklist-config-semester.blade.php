@@ -275,8 +275,16 @@
                         <span class="meta-value">: {{ strtoupper(str_replace('_', ' ', $config->type)) }}</span>
                     </div>
                     <div class="meta-item">
+                        <span class="meta-label">Tarif Tagihan</span>
+                        <span class="meta-value" style="color: #047857; font-weight: 800;">: Rp {{ number_format($config->amount, 0, ',', '.') }} / Semester (Setara Rp {{ number_format($config->amount/6, 0, ',', '.') }}/bln)</span>
+                    </div>
+                    <div class="meta-item">
                         <span class="meta-label">Tahun Buku</span>
                         <span class="meta-value">: {{ $year }}</span>
+                    </div>
+                    <div class="meta-item">
+                        <span class="meta-label">Tgl Cetak</span>
+                        <span class="meta-value">: {{ now()->translatedFormat('d F Y') }}</span>
                     </div>
                 </div>
 
@@ -284,10 +292,13 @@
                     <thead>
                         <tr>
                             <th style="width: 6%;" class="center">No</th>
-                            <th style="width: 35%; text-align: left;" class="border-dark">Nama Lengkap Santri</th>
+                            <th style="width: 33%; text-align: left;" class="border-dark">Nama Lengkap Santri</th>
                             <th class="center border-dark" style="width: 15%;">Tunggakan</th>
                             @foreach($periods as $periodKey => $periodLabel)
-                                <th class="center" style="width: 17%;">{{ $periodLabel }}</th>
+                                <th class="center" style="width: 18%;">
+                                    <div>{{ $periodLabel }}</div>
+                                    <div style="font-size: 7.5px; font-weight: 700; color: #047857; margin-top: 1px;">(Rp {{ number_format($config->amount, 0, ',', '.') }})</div>
+                                </th>
                             @endforeach
                             <th class="center border-left-dark" style="width: 10%;">Keterangan</th>
                         </tr>
@@ -401,8 +412,16 @@
                     <span class="meta-value">: {{ strtoupper(str_replace('_', ' ', $config->type)) }}</span>
                 </div>
                 <div class="meta-item">
+                    <span class="meta-label">Tarif Tagihan</span>
+                    <span class="meta-value" style="color: #047857; font-weight: 800;">: Rp {{ number_format($config->amount, 0, ',', '.') }} / Semester (Setara Rp {{ number_format($config->amount/6, 0, ',', '.') }}/bln)</span>
+                </div>
+                <div class="meta-item">
                     <span class="meta-label">Tahun Buku</span>
                     <span class="meta-value">: {{ $year }}</span>
+                </div>
+                <div class="meta-item">
+                    <span class="meta-label">Tgl Cetak</span>
+                    <span class="meta-value">: {{ now()->translatedFormat('d F Y') }}</span>
                 </div>
             </div>
 
@@ -410,12 +429,15 @@
                 <thead>
                     <tr>
                         <th style="width: 5%;" class="center">No</th>
-                        <th style="width: 30%; text-align: left;" class="border-dark">Nama Lengkap Santri</th>
+                        <th style="width: 28%; text-align: left;" class="border-dark">Nama Lengkap Santri</th>
                         <th class="center border-dark" style="width: 15%;">Tunggakan</th>
                         @foreach($periods as $periodKey => $periodLabel)
-                            <th class="center" style="width: 18%;">{{ $periodLabel }}</th>
+                            <th class="center" style="width: 18%;">
+                                <div>{{ $periodLabel }}</div>
+                                <div style="font-size: 7.5px; font-weight: 700; color: #047857; margin-top: 1px;">(Rp {{ number_format($config->amount, 0, ',', '.') }})</div>
+                            </th>
                         @endforeach
-                        <th class="center border-left-dark" style="width: 10%;">Keterangan</th>
+                        <th class="center border-left-dark" style="width: 13%;">Keterangan</th>
                     </tr>
                 </thead>
                 <tbody>

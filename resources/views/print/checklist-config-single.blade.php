@@ -237,8 +237,16 @@
                         <span class="meta-value">: {{ strtoupper(str_replace('_', ' ', $config->type)) }}</span>
                     </div>
                     <div class="meta-item">
+                        <span class="meta-label">Tarif Standar</span>
+                        <span class="meta-value" style="color: #047857; font-weight: 800;">: Rp {{ number_format($config->amount, 0, ',', '.') }}</span>
+                    </div>
+                    <div class="meta-item">
                         <span class="meta-label">Tahun Buku</span>
                         <span class="meta-value">: {{ $year }}</span>
+                    </div>
+                    <div class="meta-item">
+                        <span class="meta-label">Tgl Cetak</span>
+                        <span class="meta-value">: {{ now()->translatedFormat('d F Y') }}</span>
                     </div>
                 </div>
 
@@ -357,8 +365,16 @@
                     <span class="meta-value">: {{ strtoupper(str_replace('_', ' ', $config->type)) }}</span>
                 </div>
                 <div class="meta-item">
+                    <span class="meta-label">Tarif Standar</span>
+                    <span class="meta-value" style="color: #047857; font-weight: 800;">: Rp {{ number_format($config->amount, 0, ',', '.') }}</span>
+                </div>
+                <div class="meta-item">
                     <span class="meta-label">Tahun Buku</span>
                     <span class="meta-value">: {{ $year }}</span>
+                </div>
+                <div class="meta-item">
+                    <span class="meta-label">Tgl Cetak</span>
+                    <span class="meta-value">: {{ now()->translatedFormat('d F Y') }}</span>
                 </div>
             </div>
 

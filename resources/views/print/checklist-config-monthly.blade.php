@@ -265,8 +265,16 @@
                         <span class="meta-value">: {{ strtoupper(str_replace('_', ' ', $config->type)) }}</span>
                     </div>
                     <div class="meta-item">
+                        <span class="meta-label">Tarif Tagihan</span>
+                        <span class="meta-value" style="color: #047857; font-weight: 800;">: Rp {{ number_format($config->amount, 0, ',', '.') }} / Bulan</span>
+                    </div>
+                    <div class="meta-item">
                         <span class="meta-label">Tahun Buku</span>
                         <span class="meta-value">: {{ $year }}{{ $is24Months ? ' – ' . ($year + 1) : '' }}</span>
+                    </div>
+                    <div class="meta-item">
+                        <span class="meta-label">Tgl Cetak</span>
+                        <span class="meta-value">: {{ now()->translatedFormat('d F Y') }}</span>
                     </div>
                 </div>
 
@@ -435,8 +443,16 @@
                     <span class="meta-value">: {{ strtoupper(str_replace('_', ' ', $config->type)) }}</span>
                 </div>
                 <div class="meta-item">
+                    <span class="meta-label">Tarif Tagihan</span>
+                    <span class="meta-value" style="color: #047857; font-weight: 800;">: Rp {{ number_format($config->amount, 0, ',', '.') }} / Bulan</span>
+                </div>
+                <div class="meta-item">
                     <span class="meta-label">Tahun Buku</span>
                     <span class="meta-value">: {{ $year }}{{ $is24Months ? ' – ' . ($year + 1) : '' }}</span>
+                </div>
+                <div class="meta-item">
+                    <span class="meta-label">Tgl Cetak</span>
+                    <span class="meta-value">: {{ now()->translatedFormat('d F Y') }}</span>
                 </div>
             </div>
 

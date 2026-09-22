@@ -865,7 +865,34 @@ class LembarSetoranKolektif extends Component
                     ->where('period_year', (int)$y);
                 $billQuery = $this->applyConfigOrTypeScope($billQuery, $configId);
                 
-                if (!in_array($interval, ['once', 'insidental', 'event', 'sekali'])) {
+                if (in_array($interval, ['semester', '2x_yearly'])) {
+                    $semTarget = (int)$m === 1 ? 1 : 2;
+                    if ($semTarget === 1) {
+                        $billQuery->where(function($q) {
+                            $q->where('period_sub', 1)
+                              ->orWhere(function($sub) {
+                                  $sub->whereNull('period_sub')
+                                      ->where(function($sm) {
+                                          $sm->where('period_month', 1)
+                                            ->orWhere(function($ssm) {
+                                                $ssm->where('period_month', '<=', 6)
+                                                   ->where('period_month', '!=', 2);
+                                            });
+                                      });
+                              });
+                        });
+                    } else {
+                        $billQuery->where(function($q) {
+                            $q->where('period_sub', 2)
+                              ->orWhere(function($sub) {
+                                  $sub->whereNull('period_sub')
+                                      ->where(function($sm) {
+                                          $sm->whereIn('period_month', [2, 7, 8, 9, 10, 11, 12]);
+                                      });
+                              });
+                        });
+                    }
+                } elseif (!in_array($interval, ['once', 'insidental', 'event', 'sekali'])) {
                     $billQuery->where('period_month', (int)$m);
                 }
                 
