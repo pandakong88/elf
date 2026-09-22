@@ -641,7 +641,8 @@ class DashboardTagihan extends Component
         $dueStr = $bill->due_date ? ' • Tenggat: ' . $bill->due_date->translatedFormat('d M Y') : '';
 
         if (in_array($interval, ['semester', '2x_yearly']) || in_array($bill->bill_type, ['kebersihan', 'syahriah_madrasah'])) {
-            $s = $bill->period_sub ?? ($bill->period_month && $bill->period_month <= 6 ? 1 : ($bill->period_month ? 2 : 1));
+            $pm = (int)$bill->period_month;
+            $s = $bill->period_sub ?? (($pm === 2 || $pm >= 7) ? 2 : 1);
             return "Semester {$s} ({$bill->period_year}){$dueStr}";
         }
 

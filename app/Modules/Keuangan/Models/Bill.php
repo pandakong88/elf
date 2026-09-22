@@ -49,7 +49,8 @@ class Bill extends Model
         $interval = $this->config?->interval ?? '';
 
         if (in_array($interval, ['semester', '2x_yearly']) || in_array($this->bill_type, ['syahriah_madrasah', 'kebersihan'])) {
-            $s = $this->period_sub ?: ($this->period_month && $this->period_month <= 6 ? 1 : ($this->period_month ? 2 : 1));
+            $pm = (int)$this->period_month;
+            $s = $this->period_sub ?: (($pm === 2 || $pm >= 7) ? 2 : 1);
             return $this->period_year ? "Semester {$s} {$this->period_year}" : "Semester {$s}";
         }
 
