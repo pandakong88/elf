@@ -316,18 +316,29 @@
                                     @endif
                                 </td>
                                 @foreach($row['bills'] as $periodKey => $bill)
-                                    <td class="center font-bold" style="padding: 6px 8px;">
+                                    <td class="center font-bold" style="padding: 5px 6px;">
                                         @if($mode === 'history')
-                                            @if($bill && $bill->status === 'paid')
-                                                <span class="checkbox-box checked"></span>
-                                            @elseif($bill && $bill->status === 'exempt')
-                                                <span style="color: #7c3aed; font-size: 8.5px; font-weight: 800; background: #f3e8ff; padding: 1px 4px; border-radius: 3px;">CUTI</span>
-                                            @elseif($bill && $bill->amount_paid > 0)
-                                                <span style="color: #16a34a; font-size: 9px; font-weight: 800; white-space: nowrap; display: inline-block;">
-                                                    Rp {{ number_format($bill->amount_paid, 0, ',', '.') }}
-                                                </span>
+                                            @if($bill)
+                                                @if($bill->status === 'paid')
+                                                    <div style="display: inline-flex; align-items: center; justify-content: center; gap: 3px;">
+                                                        <span class="checkbox-box checked"></span>
+                                                        <span style="color: #15803d; font-size: 8px; font-weight: 800;">LUNAS</span>
+                                                    </div>
+                                                @elseif($bill->status === 'exempt')
+                                                    <span style="color: #7c3aed; font-size: 8.5px; font-weight: 800; background: #f3e8ff; padding: 1px 4px; border-radius: 3px; border: 1px solid #d8b4fe;">CUTI</span>
+                                                @else
+                                                    @php
+                                                        $remaining = (float)$bill->amount - (float)$bill->amount_paid;
+                                                    @endphp
+                                                    <div style="display: inline-flex; align-items: center; justify-content: center; gap: 4px;">
+                                                        <span class="checkbox-box"></span>
+                                                        <span style="font-size: 9px; font-weight: 800; color: #0f172a; white-space: nowrap;">
+                                                            Rp {{ number_format($remaining, 0, ',', '.') }}
+                                                        </span>
+                                                    </div>
+                                                @endif
                                             @else
-                                                <span class="checkbox-box"></span>
+                                                <span style="color: #cbd5e1; font-weight: normal;">—</span>
                                             @endif
                                         @else
                                             <span class="checkbox-box"></span>
@@ -487,18 +498,29 @@
                                 @endif
                             </td>
                             @foreach($row['bills'] as $periodKey => $bill)
-                                <td class="center font-bold" style="padding: 6px 8px;">
+                                <td class="center font-bold" style="padding: 5px 6px;">
                                     @if($mode === 'history')
-                                        @if($bill && $bill->status === 'paid')
-                                            <span class="checkbox-box checked"></span>
-                                        @elseif($bill && $bill->status === 'exempt')
-                                            <span style="color: #7e22ce; font-size: 8px; font-weight: 800; background: #f3e8ff; padding: 1px 4px; border-radius: 3px; border: 1px solid #d8b4fe;">CUTI</span>
-                                        @elseif($bill && $bill->amount_paid > 0)
-                                            <span style="color: #16a34a; font-size: 9px; font-weight: 800; white-space: nowrap; display: inline-block;">
-                                                Rp {{ number_format($bill->amount_paid, 0, ',', '.') }}
-                                            </span>
+                                        @if($bill)
+                                            @if($bill->status === 'paid')
+                                                <div style="display: inline-flex; align-items: center; justify-content: center; gap: 3px;">
+                                                    <span class="checkbox-box checked"></span>
+                                                    <span style="color: #15803d; font-size: 8px; font-weight: 800;">LUNAS</span>
+                                                </div>
+                                            @elseif($bill->status === 'exempt')
+                                                <span style="color: #7e22ce; font-size: 8px; font-weight: 800; background: #f3e8ff; padding: 1px 4px; border-radius: 3px; border: 1px solid #d8b4fe;">CUTI</span>
+                                            @else
+                                                @php
+                                                    $remaining = (float)$bill->amount - (float)$bill->amount_paid;
+                                                @endphp
+                                                <div style="display: inline-flex; align-items: center; justify-content: center; gap: 4px;">
+                                                    <span class="checkbox-box"></span>
+                                                    <span style="font-size: 9px; font-weight: 800; color: #0f172a; white-space: nowrap;">
+                                                        Rp {{ number_format($remaining, 0, ',', '.') }}
+                                                    </span>
+                                                </div>
+                                            @endif
                                         @else
-                                            <span class="checkbox-box"></span>
+                                            <span style="color: #cbd5e1; font-weight: normal;">—</span>
                                         @endif
                                     @else
                                         <span class="checkbox-box"></span>
