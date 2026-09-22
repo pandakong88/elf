@@ -65,6 +65,27 @@ class SettlementReportController extends Controller
     }
 
     /**
+     * Render PDF view safely with vendor check.
+     */
+    private function renderPdfView(string $view, array $data, string $orientation = 'portrait', string $paper = 'a4')
+    {
+        if (class_exists(\Barryvdh\DomPDF\Facade\Pdf::class)) {
+            return \Barryvdh\DomPDF\Facade\Pdf::loadView($view, $data)->setPaper($paper, $orientation);
+        }
+
+        if (class_exists(\Barryvdh\DomPDF\Facade::class)) {
+            return \Barryvdh\DomPDF\Facade::loadView($view, $data)->setPaper($paper, $orientation);
+        }
+
+        if (app()->bound('dompdf.wrapper')) {
+            $pdf = app('dompdf.wrapper');
+            return $pdf->loadView($view, $data)->setPaper($paper, $orientation);
+        }
+
+        throw new \RuntimeException('Package "barryvdh/laravel-dompdf" belum terpasang di vendor server. Mohon jalankan `composer install` pada terminal SSH server Anda.');
+    }
+
+    /**
      * Download PDF Rekap Settlement & Distribusi Dana per Pos Anggaran.
      */
     public function downloadSettlementPdf(Request $request): Response
@@ -265,7 +286,7 @@ class SettlementReportController extends Controller
                 'generated_by'        => auth()->user()?->name ?? 'Bendahara Pusat',
             ];
 
-            $pdf = Pdf::loadView('pdf.rekap-settlement', $data)->setPaper('a4', 'portrait');
+            $pdf = $this->renderPdfView('pdf.rekap-settlement', $data, 'portrait');
 
             return $pdf->stream('Rekap-Settlement' . $genderSuffix . '-' . Carbon::parse($dateFrom)->format('Ymd') . '-' . Carbon::parse($dateTo)->format('Ymd') . '.pdf');
         } catch (\Throwable $e) {
@@ -430,7 +451,7 @@ class SettlementReportController extends Controller
                 'generated_by' => auth()->user()?->name ?? 'Bendahara Pusat',
             ];
 
-            $pdf = Pdf::loadView('pdf.slip-kas-komplek', $data)->setPaper('a4', 'portrait');
+            $pdf = $this->renderPdfView('pdf.slip-kas-komplek', $data, 'portrait');
 
             return $pdf->stream('Slip-Kas-' . \Illuminate\Support\Str::slug($dormitory->name) . '.pdf');
         } catch (\Throwable $e) {
@@ -579,7 +600,7 @@ class SettlementReportController extends Controller
                 'generated_by'   => auth()->user()?->name ?? 'Bendahara Pusat',
             ];
 
-            $pdf = Pdf::loadView('pdf.slip-serah-terima-kategori', $data)->setPaper('a4', 'portrait');
+            $pdf = $this->renderPdfView('pdf.slip-serah-terima-kategori', $data, 'portrait');
 
             return $pdf->stream('Slip-Serah-Terima-' . \Illuminate\Support\Str::slug($meta['title']) . '.pdf');
         } catch (\Throwable $e) {
@@ -905,7 +926,7 @@ class SettlementReportController extends Controller
                 'generated_by' => auth()->user()?->name ?? 'Bendahara Pusat',
             ];
 
-            $pdf = Pdf::loadView('pdf.slip-batch-all', $data)->setPaper('a4', 'portrait');
+            $pdf = $this->renderPdfView('pdf.slip-batch-all', $data, 'portrait');
 
             return $pdf->stream('Batch-Slip-Serah-Terima-' . Carbon::parse($dateFrom)->format('Ymd') . '.pdf');
         } catch (\Throwable $e) {
@@ -949,7 +970,7 @@ class SettlementReportController extends Controller
             'generated_by' => auth()->user()?->name ?? 'Bendahara Pusat',
         ];
 
-        $pdf = Pdf::loadView('pdf.berita-acara-settlement', $data)->setPaper('a4', 'portrait');
+        $pdf = $this->renderPdfView('pdf.berita-acara-settlement', $data, 'portrait');
 
         return $pdf->stream('Berita-Acara-Rekonsiliasi-Kas-' . $snapshot->period_from->format('Ymd') . '.pdf');
     }
