@@ -406,19 +406,29 @@
                         <!-- Filter Type -->
                         <select wire:model.live="tunggakanFilterType" class="bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 rounded-xl px-2.5 py-1.5 text-xs font-semibold focus:ring-amber-500 focus:border-amber-500">
                             <option value="">Semua Iuran</option>
-                            <option value="kebersihan">Kebersihan</option>
+                            <option value="kebersihan">Kebersihan (Kas Sampah)</option>
+                            <option value="kas_komplek">Kas Komplek</option>
                             <option value="syahriah_pondok">Syahriah Pondok</option>
                             <option value="syahriah_madrasah">Syahriah Madrasah</option>
-                            <option value="kas_komplek">Kas Komplek</option>
                             <option value="lainnya">Lainnya</option>
                         </select>
 
                         <!-- Filter Year -->
                         <select wire:model.live="tunggakanFilterYear" class="bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 rounded-xl px-2.5 py-1.5 text-xs font-semibold focus:ring-amber-500 focus:border-amber-500">
                             <option value="">Semua Tahun</option>
+                            <option value="2026">2026</option>
                             <option value="2025">2025</option>
                             <option value="2024">2024</option>
                             <option value="2023">2023</option>
+                        </select>
+
+                        <!-- Filter Sort By -->
+                        <select wire:model.live="tunggakanSortBy" class="bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 rounded-xl px-2.5 py-1.5 text-xs font-semibold focus:ring-amber-500 focus:border-amber-500">
+                            <option value="latest">✨ Terbaru Diimport</option>
+                            <option value="oldest">Terlama Diimport</option>
+                            <option value="highest">Nominal Terbesar</option>
+                            <option value="lowest">Nominal Terkecil</option>
+                            <option value="name">Nama Santri (A-Z)</option>
                         </select>
                     </div>
                 </div>

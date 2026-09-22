@@ -66,10 +66,11 @@ class SantriImportManager extends Component
     public string $templateBillType = 'kebersihan';
     public int $templateYear = 2025;
 
-    // Tunggakan Table Search & Deletion State
+    // Tunggakan Table Search, Filter & Deletion State
     public string $tunggakanSearch = '';
     public string $tunggakanFilterType = '';
     public string $tunggakanFilterYear = '';
+    public string $tunggakanSortBy = 'latest'; // 'latest', 'oldest', 'highest', 'lowest', 'name'
     public array $selectedTunggakanIds = [];
     public bool $selectAllTunggakan = false;
     public bool $showDeleteTunggakanModal = false;
@@ -78,14 +79,22 @@ class SantriImportManager extends Component
     public ?string $deletingTunggakanNominal = null;
     public bool $isBulkDeleteTunggakan = false;
 
+    private function getTunggakanBaseQuery()
+    {
+        return Bill::where('status', 'unpaid')
+            ->where(function($q) {
+                $q->where('period_year', '<=', 2026)
+                  ->orWhere('notes', 'like', '%tunggakan%')
+                  ->orWhere('notes', 'like', '%Kas Sampah%')
+                  ->orWhere('notes', 'like', '%Kas Komplek%')
+                  ->orWhereNull('billing_config_id');
+            });
+    }
+
     public function updatedSelectAllTunggakan(bool $value): void
     {
         if ($value) {
-            $query = Bill::where('status', 'unpaid')
-                ->where(function($q) {
-                    $q->where('period_year', '<', 2026)->orWhere('notes', 'like', '%tunggakan%');
-                })
-                ->where('amount_paid', 0);
+            $query = $this->getTunggakanBaseQuery()->where('amount_paid', 0);
 
             if (!empty($this->tunggakanSearch)) {
                 $s = trim($this->tunggakanSearch);
@@ -115,6 +124,11 @@ class SantriImportManager extends Component
     }
 
     public function updatedTunggakanFilterYear(): void
+    {
+        $this->resetPage('tunggakanPage');
+    }
+
+    public function updatedTunggakanSortBy(): void
     {
         $this->resetPage('tunggakanPage');
     }
@@ -1253,12 +1267,8 @@ class SantriImportManager extends Component
         $kelasCount  = MadrasahKelas::where('is_active', true)->count();
 
         // Tunggakan Stats
-        $tunggakanCount       = Bill::where('status', 'unpaid')->where(function($q) {
-            $q->where('period_year', '<', 2026)->orWhere('notes', 'like', '%tunggakan%');
-        })->count();
-        $tunggakanTotalAmount = Bill::where('status', 'unpaid')->where(function($q) {
-            $q->where('period_year', '<', 2026)->orWhere('notes', 'like', '%tunggakan%');
-        })->sum('amount');
+        $tunggakanCount       = $this->getTunggakanBaseQuery()->count();
+        $tunggakanTotalAmount = $this->getTunggakanBaseQuery()->sum('amount');
 
         // Lists
         $recentSantri = Person::whereHas('activeRoles', fn($q) => $q->where('role_type', 'santri'))
@@ -1275,11 +1285,7 @@ class SantriImportManager extends Component
             ->orderBy('name')
             ->get();
 
-        $tunggakanQuery = Bill::with(['person'])
-            ->where('status', 'unpaid')
-            ->where(function($q) {
-                $q->where('period_year', '<', 2026)->orWhere('notes', 'like', '%tunggakan%');
-            });
+        $tunggakanQuery = $this->getTunggakanBaseQuery()->with(['person']);
 
         if (!empty($this->tunggakanSearch)) {
             $s = trim($this->tunggakanSearch);
@@ -1294,8 +1300,15 @@ class SantriImportManager extends Component
             $tunggakanQuery->where('period_year', $this->tunggakanFilterYear);
         }
 
-        $recentTunggakan = $tunggakanQuery->orderBy('created_at', 'desc')
-            ->paginate(15, ['*'], 'tunggakanPage');
+        match($this->tunggakanSortBy) {
+            'oldest'  => $tunggakanQuery->orderBy('created_at', 'asc'),
+            'highest' => $tunggakanQuery->orderBy('amount', 'desc'),
+            'lowest'  => $tunggakanQuery->orderBy('amount', 'asc'),
+            'name'    => $tunggakanQuery->join('persons', 'bills.person_id', '=', 'persons.id')->orderBy('persons.name', 'asc')->select('bills.*'),
+            default   => $tunggakanQuery->orderBy('created_at', 'desc'),
+        };
+
+        $recentTunggakan = $tunggakanQuery->paginate(15, ['*'], 'tunggakanPage');
 
         return view('livewire.system.santri-import-manager', [
             'santriCount'          => $santriCount,
