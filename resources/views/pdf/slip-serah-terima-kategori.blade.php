@@ -7,7 +7,7 @@
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
-            font-family: "DejaVu Sans", Arial, sans-serif;
+            font-family: Helvetica, Arial, sans-serif;
             font-size: 10px;
             color: #1e293b;
             background: #ffffff;
@@ -38,7 +38,7 @@
         .cat-name { font-size: 14px; font-weight: bold; color: #0f172a; }
         .cat-unit { font-size: 10px; color: #64748b; margin-top: 2px; }
         .cat-total-label { font-size: 9px; text-transform: uppercase; color: #64748b; text-align: right; font-weight: bold; }
-        .cat-total-val { font-size: 16px; font-weight: bold; color: #047857; text-align: right; font-family: "DejaVu Sans Mono", monospace; margin-top: 2px; }
+        .cat-total-val { font-size: 16px; font-weight: bold; color: #047857; text-align: right; font-family: Courier, monospace; margin-top: 2px; }
 
         /* ── TABLE SANTRI ── */
         .data-table {

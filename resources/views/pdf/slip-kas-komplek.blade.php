@@ -7,7 +7,7 @@
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
-            font-family: "DejaVu Sans", Arial, sans-serif;
+            font-family: Helvetica, Arial, sans-serif;
             font-size: 10px;
             color: #1e293b;
             background: #ffffff;
@@ -26,7 +26,7 @@
         .doc-title { font-size: 13px; font-weight: bold; color: #0f172a; text-align: right; }
         .doc-sub { font-size: 9px; color: #64748b; text-align: right; margin-top: 2px; }
 
-        /* ── BANNER KOMPLEK ── */
+        /* ── BANNER ASRAMA ── */
         .dorm-banner {
             background: #f8fafc;
             border: 1.5px solid #cbd5e1;
@@ -38,7 +38,7 @@
         .dorm-name { font-size: 14px; font-weight: bold; color: #0f172a; }
         .dorm-unit { font-size: 10px; color: #64748b; margin-top: 2px; }
         .dorm-total-label { font-size: 9px; text-transform: uppercase; color: #64748b; text-align: right; font-weight: bold; }
-        .dorm-total-val { font-size: 16px; font-weight: bold; color: #047857; text-align: right; font-family: "DejaVu Sans Mono", monospace; margin-top: 2px; }
+        .dorm-total-val { font-size: 16px; font-weight: bold; color: #047857; text-align: right; font-family: Courier, monospace; margin-top: 2px; }
 
         /* ── TABLE SANTRI ── */
         .data-table {

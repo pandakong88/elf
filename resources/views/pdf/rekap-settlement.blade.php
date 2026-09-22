@@ -7,36 +7,40 @@
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
-            font-family: "DejaVu Sans", Arial, sans-serif;
+            font-family: Helvetica, Arial, sans-serif;
             font-size: 10px;
             color: #1e293b;
             background: #ffffff;
-            padding: 25px 30px;
+            padding: 20px 25px;
         }
 
-        /* ── HEADER ── */
+        /* ── HEADER & KOP ── */
         .header {
-            border-bottom: 2.5px solid #0f172a;
-            padding-bottom: 12px;
-            margin-bottom: 16px;
+            border-bottom: 2px solid #0f172a;
+            padding-bottom: 10px;
+            margin-bottom: 14px;
         }
         .header-table { width: 100%; border-collapse: collapse; }
-        .inst-title { font-size: 16px; font-weight: bold; color: #0f172a; letter-spacing: 0.5px; }
+        .inst-title { font-size: 16px; font-weight: bold; color: #0f172a; }
         .inst-sub { font-size: 9px; color: #64748b; margin-top: 2px; }
-        .doc-title { font-size: 13px; font-weight: bold; color: #0f172a; text-align: right; }
+        .doc-title { font-size: 14px; font-weight: bold; color: #0f172a; text-align: right; }
         .doc-sub { font-size: 9px; color: #64748b; text-align: right; margin-top: 2px; }
 
-        /* ── SUMMARY BOXES ── */
-        .kpi-table { width: 100%; border-collapse: separate; border-spacing: 6px; margin-bottom: 14px; }
+        /* ── KPI GRID ── */
+        .kpi-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 14px;
+        }
         .kpi-box {
             background: #f8fafc;
             border: 1px solid #e2e8f0;
             border-radius: 6px;
             padding: 8px 10px;
-            vertical-align: top;
+            text-align: center;
         }
-        .kpi-label { font-size: 8px; font-weight: bold; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; }
-        .kpi-val { font-size: 13px; font-weight: bold; color: #0f172a; margin-top: 3px; font-family: "DejaVu Sans Mono", monospace; }
+        .kpi-label { font-size: 8px; text-transform: uppercase; color: #64748b; font-weight: bold; }
+        .kpi-val { font-size: 13px; font-weight: bold; color: #0f172a; margin-top: 3px; font-family: Courier, monospace; }
         .kpi-sub { font-size: 8px; color: #94a3b8; margin-top: 2px; }
 
         /* ── SECTION TITLE ── */

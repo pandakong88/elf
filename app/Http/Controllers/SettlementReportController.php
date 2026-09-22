@@ -52,10 +52,24 @@ class SettlementReportController extends Controller
     }
 
     /**
+     * Prepare environment settings for PDF and high-volume report generation.
+     */
+    private function preparePdfEnvironment(): void
+    {
+        @ini_set('memory_limit', '512M');
+        @ini_set('max_execution_time', '180');
+        $fontDir = storage_path('fonts');
+        if (!is_dir($fontDir)) {
+            @mkdir($fontDir, 0775, true);
+        }
+    }
+
+    /**
      * Download PDF Rekap Settlement & Distribusi Dana per Pos Anggaran.
      */
     public function downloadSettlementPdf(Request $request): Response
     {
+        $this->preparePdfEnvironment();
         $genderScope = $this->resolveGenderScope();
 
         $dateFrom = $request->query('date_from', now()->startOfMonth()->toDateString());
@@ -260,6 +274,7 @@ class SettlementReportController extends Controller
      */
     public function exportExcel(Request $request)
     {
+        $this->preparePdfEnvironment();
         $genderScope = $this->resolveGenderScope();
         $targetGender = $genderScope ?: ($request->filled('gender') ? $request->query('gender') : null);
 
@@ -374,6 +389,7 @@ class SettlementReportController extends Controller
      */
     public function downloadSlipKomplekPdf(Request $request, string $dormitoryId): Response
     {
+        $this->preparePdfEnvironment();
         $genderScope = $this->resolveGenderScope();
         $dormitory = Dormitory::findOrFail($dormitoryId);
 
@@ -505,6 +521,7 @@ class SettlementReportController extends Controller
      */
     public function downloadSlipKategoriPdf(Request $request, string $categoryKey): Response
     {
+        $this->preparePdfEnvironment();
         $genderScope = $this->resolveGenderScope();
         $targetGender = $genderScope ?: ($request->filled('gender') ? $request->query('gender') : null);
 
@@ -785,6 +802,7 @@ class SettlementReportController extends Controller
      */
     public function downloadBatchSlipsPdf(Request $request): Response
     {
+        $this->preparePdfEnvironment();
         $genderScope = $this->resolveGenderScope();
         $targetGender = $genderScope ?: ($request->filled('gender') ? $request->query('gender') : null);
 
@@ -851,6 +869,7 @@ class SettlementReportController extends Controller
      */
     public function downloadSnapshotPdf(Request $request, string $id): Response
     {
+        $this->preparePdfEnvironment();
         $genderScope = $this->resolveGenderScope();
         $snapshot = FundDistribution::with('distributor')->findOrFail($id);
 
