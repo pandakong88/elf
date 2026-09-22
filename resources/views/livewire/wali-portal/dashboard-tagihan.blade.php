@@ -1099,27 +1099,57 @@
                             </div>
                         </div>
 
-                        <!-- Rekening Tujuan Ramping -->
+                        <!-- Rekening Tujuan Transfer (Bisa Dipilih) -->
                         <div class="space-y-1.5">
+                            <span class="text-[11px] font-bold text-slate-700 dark:text-slate-300 block">
+                                Rekening Tujuan Transfer Pesantren:
+                            </span>
+
                             @if(!empty($bsiRekening))
-                                <div class="bg-slate-50 dark:bg-slate-950 p-2.5 rounded-xl border border-slate-200 dark:border-slate-800 flex items-center justify-between text-xs">
-                                    <div>
-                                        <span class="font-extrabold text-emerald-700 dark:text-emerald-400 block text-[11px]">{{ $bank1Name }}</span>
-                                        <span class="font-mono font-black text-slate-900 dark:text-white">{{ $bsiRekening }}</span>
-                                        <span class="text-[10px] text-slate-400 block">a.n. {{ $bsiAn }}</span>
+                                @php $isBsiSelected = ($selectedBankDestination === 'BSI' || (empty($briRekening) && $selectedBankDestination !== 'BRI')); @endphp
+                                <div wire:click="$set('selectedBankDestination', 'BSI')"
+                                     class="p-2.5 rounded-xl border cursor-pointer transition-all flex items-center justify-between text-xs {{ $isBsiSelected ? 'bg-emerald-500/10 border-emerald-500/80 dark:border-emerald-500 shadow-xs' : 'bg-slate-50 dark:bg-slate-950/60 border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 opacity-80 hover:opacity-100' }}">
+                                    <div class="flex items-center gap-2.5">
+                                        <div class="w-4 h-4 rounded-full border flex items-center justify-center shrink-0 {{ $isBsiSelected ? 'border-emerald-600 bg-emerald-600 text-white' : 'border-slate-300 dark:border-slate-600' }}">
+                                            @if($isBsiSelected)
+                                                <div class="w-1.5 h-1.5 rounded-full bg-white"></div>
+                                            @endif
+                                        </div>
+                                        <div>
+                                            <span class="font-extrabold text-emerald-700 dark:text-emerald-400 block text-[11px]">{{ $bank1Name }}</span>
+                                            <span class="font-mono font-black text-slate-900 dark:text-white text-xs tracking-wide">{{ $bsiRekening }}</span>
+                                            <span class="text-[10px] text-slate-400 block">a.n. {{ $bsiAn }}</span>
+                                        </div>
                                     </div>
-                                    <button type="button" onclick="copyToClipboard('{{ $bsiRekening }}')" class="px-2.5 py-1 bg-emerald-600 text-white font-sans text-[11px] font-bold rounded-lg hover:bg-emerald-700 transition-all active:scale-95">Salin</button>
+                                    <button type="button" 
+                                            onclick="event.stopPropagation(); copyToClipboard('{{ $bsiRekening }}')" 
+                                            class="px-2.5 py-1 bg-emerald-600 text-white font-sans text-[11px] font-bold rounded-lg hover:bg-emerald-700 transition-all active:scale-95 shrink-0">
+                                        Salin
+                                    </button>
                                 </div>
                             @endif
 
                             @if(!empty($briRekening))
-                                <div class="bg-slate-50 dark:bg-slate-950 p-2.5 rounded-xl border border-slate-200 dark:border-slate-800 flex items-center justify-between text-xs">
-                                    <div>
-                                        <span class="font-extrabold text-blue-700 dark:text-blue-400 block text-[11px]">{{ $bank2Name }}</span>
-                                        <span class="font-mono font-black text-slate-900 dark:text-white">{{ $briRekening }}</span>
-                                        <span class="text-[10px] text-slate-400 block">a.n. {{ $briAn }}</span>
+                                @php $isBriSelected = ($selectedBankDestination === 'BRI' || empty($bsiRekening)); @endphp
+                                <div wire:click="$set('selectedBankDestination', 'BRI')"
+                                     class="p-2.5 rounded-xl border cursor-pointer transition-all flex items-center justify-between text-xs {{ $isBriSelected ? 'bg-blue-500/10 border-blue-500/80 dark:border-blue-500 shadow-xs' : 'bg-slate-50 dark:bg-slate-950/60 border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 opacity-80 hover:opacity-100' }}">
+                                    <div class="flex items-center gap-2.5">
+                                        <div class="w-4 h-4 rounded-full border flex items-center justify-center shrink-0 {{ $isBriSelected ? 'border-blue-600 bg-blue-600 text-white' : 'border-slate-300 dark:border-slate-600' }}">
+                                            @if($isBriSelected)
+                                                <div class="w-1.5 h-1.5 rounded-full bg-white"></div>
+                                            @endif
+                                        </div>
+                                        <div>
+                                            <span class="font-extrabold text-blue-700 dark:text-blue-400 block text-[11px]">{{ $bank2Name }}</span>
+                                            <span class="font-mono font-black text-slate-900 dark:text-white text-xs tracking-wide">{{ $briRekening }}</span>
+                                            <span class="text-[10px] text-slate-400 block">a.n. {{ $briAn }}</span>
+                                        </div>
                                     </div>
-                                    <button type="button" onclick="copyToClipboard('{{ $briRekening }}')" class="px-2.5 py-1 bg-emerald-600 text-white font-sans text-[11px] font-bold rounded-lg hover:bg-emerald-700 transition-all active:scale-95">Salin</button>
+                                    <button type="button" 
+                                            onclick="event.stopPropagation(); copyToClipboard('{{ $briRekening }}')" 
+                                            class="px-2.5 py-1 bg-blue-600 text-white font-sans text-[11px] font-bold rounded-lg hover:bg-blue-700 transition-all active:scale-95 shrink-0">
+                                        Salin
+                                    </button>
                                 </div>
                             @endif
                         </div>

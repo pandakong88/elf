@@ -880,26 +880,38 @@ class DashboardTagihan extends Component
 
         if ($isPutri) {
             $bank1Name   = $contents['wali_bank1_name_putri'] ?? 'Bank Syariah Indonesia (BSI)';
-            $bsiRekening = $contents['wali_bsi_putri'] ?? '7987654321';
+            $bsiRekening = $contents['wali_bsi_putri'] ?? '';
             $bsiAn       = $contents['wali_bsi_putri_an'] ?? 'Pesantren Al-Fithroh Putri';
 
             $bank2Name   = $contents['wali_bank2_name_putri'] ?? 'Bank BRI';
-            $briRekening = $contents['wali_bri_putri'] ?? '001201009876505';
+            $briRekening = $contents['wali_bri_putri'] ?? '';
             $briAn       = $contents['wali_bri_putri_an'] ?? 'Yayasan Al-Fithroh Putri';
 
             $waBendahara = $contents['wali_wa_putri'] ?? '6285713285438';
             $waName      = $contents['wali_wa_putri_name'] ?? 'Bendahara Putri Al-Fithroh';
         } else {
             $bank1Name   = $contents['wali_bank1_name_putra'] ?? 'Bank Syariah Indonesia (BSI)';
-            $bsiRekening = $contents['wali_bsi_putra'] ?? '7123456789';
+            $bsiRekening = $contents['wali_bsi_putra'] ?? '';
             $bsiAn       = $contents['wali_bsi_putra_an'] ?? 'Pesantren Al-Fithroh Putra';
 
             $bank2Name   = $contents['wali_bank2_name_putra'] ?? 'Bank BRI';
-            $briRekening = $contents['wali_bri_putra'] ?? '001201009876504';
+            $briRekening = $contents['wali_bri_putra'] ?? '';
             $briAn       = $contents['wali_bri_putra_an'] ?? 'Yayasan Al-Fithroh Putra';
 
             $waBendahara = $contents['wali_wa_putra'] ?? '6281234567890';
             $waName      = $contents['wali_wa_putra_name'] ?? 'Bendahara Putra Al-Fithroh';
+        }
+
+        // Fallback default hanya jika sama sekali belum ada rekening yang diset di CMS
+        if (empty($bsiRekening) && empty($briRekening)) {
+            $bsiRekening = $isPutri ? '7987654321' : '7123456789';
+        }
+
+        // Auto-select bank destination aktif
+        if (empty($bsiRekening) && !empty($briRekening)) {
+            $this->selectedBankDestination = 'BRI';
+        } elseif (!empty($bsiRekening) && empty($briRekening)) {
+            $this->selectedBankDestination = 'BSI';
         }
 
         $cleanWa     = static::normalizeWaNumber($waBendahara);
