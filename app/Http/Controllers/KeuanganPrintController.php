@@ -357,13 +357,21 @@ class KeuanganPrintController extends Controller
                     $firstPeriodKey = array_key_first($periods);
                     [$firstSem, $firstYr] = explode('-', $firstPeriodKey);
                     $tunggakanLama = Bill::where('person_id', $santri->id)
-                        ->where('billing_config_id', $config->id)
+                        ->where(function($q) use ($config) {
+                            if ($config->id) {
+                                $q->where('billing_config_id', $config->id);
+                            }
+                            $q->orWhere('bill_type', $config->type);
+                        })
                         ->whereIn('status', ['unpaid', 'partial'])
                         ->where(function($q) use ($firstSem, $firstYr) {
                             $q->where('period_year', '<', (int)$firstYr)
                               ->orWhere(function($sub) use ($firstSem, $firstYr) {
                                   $sub->where('period_year', (int)$firstYr)
-                                      ->where('period_month', '<', (int)$firstSem);
+                                      ->where(function($pNull) use ($firstSem) {
+                                          $pNull->whereNull('period_month')
+                                                ->orWhere('period_month', '<', (int)$firstSem);
+                                      });
                               });
                         })
                         ->get();
@@ -758,13 +766,21 @@ class KeuanganPrintController extends Controller
                     $firstPeriodKey = array_key_first($periods);
                     [$firstSem, $firstYr] = explode('-', $firstPeriodKey);
                     $tunggakanLama = Bill::where('person_id', $santri->id)
-                        ->where('billing_config_id', $config->id)
+                        ->where(function($q) use ($config) {
+                            if ($config->id) {
+                                $q->where('billing_config_id', $config->id);
+                            }
+                            $q->orWhere('bill_type', $config->type);
+                        })
                         ->whereIn('status', ['unpaid', 'partial'])
                         ->where(function($q) use ($firstSem, $firstYr) {
                             $q->where('period_year', '<', (int)$firstYr)
                               ->orWhere(function($sub) use ($firstSem, $firstYr) {
                                   $sub->where('period_year', (int)$firstYr)
-                                      ->where('period_month', '<', (int)$firstSem);
+                                      ->where(function($pNull) use ($firstSem) {
+                                          $pNull->whereNull('period_month')
+                                                ->orWhere('period_month', '<', (int)$firstSem);
+                                      });
                               });
                         })
                         ->get();
