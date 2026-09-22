@@ -69,86 +69,132 @@ class SettlementReportController extends Controller
      */
     public function downloadSettlementPdf(Request $request): Response
     {
-        $this->preparePdfEnvironment();
-        $genderScope = $this->resolveGenderScope();
+        try {
+            $this->preparePdfEnvironment();
+            $genderScope = $this->resolveGenderScope();
 
-        $dateFrom = $request->query('date_from', now()->startOfMonth()->toDateString());
-        $dateTo   = $request->query('date_to', now()->toDateString());
-        $source   = $request->query('source', 'all'); // 'gateway' | 'kasir' | 'all'
-        $targetGender = $genderScope ?: ($request->filled('gender') ? $request->query('gender') : null);
+            $dateFrom = $request->query('date_from', now()->startOfMonth()->toDateString());
+            $dateTo   = $request->query('date_to', now()->toDateString());
+            $source   = $request->query('source', 'all'); // 'gateway' | 'kasir' | 'all'
+            $targetGender = $genderScope ?: ($request->filled('gender') ? $request->query('gender') : null);
 
-        $fromCarbon = Carbon::parse($dateFrom)->startOfDay();
-        $toCarbon   = Carbon::parse($dateTo)->endOfDay();
+            $fromCarbon = Carbon::parse($dateFrom)->startOfDay();
+            $toCarbon   = Carbon::parse($dateTo)->endOfDay();
 
-        $appName = config('app.name', 'Pondok Pesantren Al-Fithroh');
+            $appName = config('app.name', 'Pondok Pesantren Al-Fithroh');
 
-        // Query Transactions / Payments
-        $totalGross = 0.0;
-        $totalMdr   = 0.0;
-        $totalNet   = 0.0;
-        $totalTrx   = 0;
+            // Query Transactions / Payments
+            $totalGross = 0.0;
+            $totalMdr   = 0.0;
+            $totalNet   = 0.0;
+            $totalTrx   = 0;
 
-        // Breakdown categories: Syahriah Putra, Syahriah Putri, Madrasah, Kitab, Majek Pagi, Majek Sore, Kas Komplek, Pocket Money, Lainnya
-        $categories = [
-            'syahriah_putra' => ['label' => 'Syahriah / SPP Pondok Putra', 'desc' => 'Operasional pesantren unit putra', 'amount' => 0.0, 'count' => 0],
-            'syahriah_putri' => ['label' => 'Syahriah / SPP Pondok Putri', 'desc' => 'Operasional pesantren unit putri', 'amount' => 0.0, 'count' => 0],
-            'madrasah'       => ['label' => 'Syahriah Madrasah', 'desc' => 'Operasional unit pendidikan formal/diniyah', 'amount' => 0.0, 'count' => 0],
-            'kitab'          => ['label' => 'Biaya Kitab / Buku', 'desc' => 'Pengadaan sarana belajar santri', 'amount' => 0.0, 'count' => 0],
-            'majek_pagi'     => ['label' => 'Katering Majek (Pagi)', 'desc' => 'Logistik konsumsi makan pagi', 'amount' => 0.0, 'count' => 0],
-            'majek_sore'     => ['label' => 'Katering Majek (Sore)', 'desc' => 'Logistik konsumsi makan sore', 'amount' => 0.0, 'count' => 0],
-            'kas_komplek'    => ['label' => 'Kas Komplek / Asrama', 'desc' => 'Dana titipan kebersihan & kegiatan asrama', 'amount' => 0.0, 'count' => 0],
-            'pocket_money'   => ['label' => 'Titipan Uang Saku Santri', 'desc' => 'Dana titipan uang saku / jajan santri', 'amount' => 0.0, 'count' => 0],
-            'lainnya'        => ['label' => 'Iuran Lainnya / Insidental', 'desc' => 'Pendaftaran, kebersihan, & event', 'amount' => 0.0, 'count' => 0],
-        ];
-
-        // Dormitories breakdown
-        $dormitories = Dormitory::active()
-            ->when($targetGender, fn($q, $g) => $q->where('gender', $g))
-            ->orderByRaw("gender ASC, name ASC")->get();
-        $dormBreakdown = [];
-        foreach ($dormitories as $d) {
-            $dormBreakdown[$d->id] = [
-                'dormitory_id'   => $d->id,
-                'dormitory_name' => $d->name,
-                'gender'         => $d->gender,
-                'count_santri'   => 0,
-                'count_bills'    => 0,
-                'total_amount'   => 0.0,
-                'santri_ids'     => [],
+            // Breakdown categories: Syahriah Putra, Syahriah Putri, Madrasah, Kitab, Majek Pagi, Majek Sore, Kas Komplek, Pocket Money, Lainnya
+            $categories = [
+                'syahriah_putra' => ['label' => 'Syahriah / SPP Pondok Putra', 'desc' => 'Operasional pesantren unit putra', 'amount' => 0.0, 'count' => 0],
+                'syahriah_putri' => ['label' => 'Syahriah / SPP Pondok Putri', 'desc' => 'Operasional pesantren unit putri', 'amount' => 0.0, 'count' => 0],
+                'madrasah'       => ['label' => 'Syahriah Madrasah', 'desc' => 'Operasional unit pendidikan formal/diniyah', 'amount' => 0.0, 'count' => 0],
+                'kitab'          => ['label' => 'Biaya Kitab / Buku', 'desc' => 'Pengadaan sarana belajar santri', 'amount' => 0.0, 'count' => 0],
+                'majek_pagi'     => ['label' => 'Katering Majek (Pagi)', 'desc' => 'Logistik konsumsi makan pagi', 'amount' => 0.0, 'count' => 0],
+                'majek_sore'     => ['label' => 'Katering Majek (Sore)', 'desc' => 'Logistik konsumsi makan sore', 'amount' => 0.0, 'count' => 0],
+                'kas_komplek'    => ['label' => 'Kas Komplek / Asrama', 'desc' => 'Dana titipan kebersihan & kegiatan asrama', 'amount' => 0.0, 'count' => 0],
+                'pocket_money'   => ['label' => 'Titipan Uang Saku Santri', 'desc' => 'Dana titipan uang saku / jajan santri', 'amount' => 0.0, 'count' => 0],
+                'lainnya'        => ['label' => 'Iuran Lainnya / Insidental', 'desc' => 'Pendaftaran, kebersihan, & event', 'amount' => 0.0, 'count' => 0],
             ];
-        }
 
-        // 1. Process Gateway Transactions
-        if ($source === 'gateway' || $source === 'all') {
-            $gatewayQuery = PaymentTransaction::where('status', 'success')
-                ->where(function ($q) use ($fromCarbon, $toCarbon) {
-                    $q->whereBetween('callback_received_at', [$fromCarbon, $toCarbon])
-                      ->orWhere(function ($oq) use ($fromCarbon, $toCarbon) {
-                          $oq->whereNull('callback_received_at')
-                             ->whereBetween('created_at', [$fromCarbon, $toCarbon]);
-                      });
-                })
-                ->when($targetGender, fn($q, $g) => $q->whereHas('person', fn($pq) => $pq->where('gender', $g)))
-                ->with(['person.roomAssignments' => fn($q) => $q->active()->with('room.dormitory')]);
+            // Dormitories breakdown
+            $dormitories = Dormitory::active()
+                ->when($targetGender, fn($q, $g) => $q->where('gender', $g))
+                ->orderByRaw("gender ASC, name ASC")->get();
+            $dormBreakdown = [];
+            foreach ($dormitories as $d) {
+                $dormBreakdown[$d->id] = [
+                    'dormitory_id'   => $d->id,
+                    'dormitory_name' => $d->name,
+                    'gender'         => $d->gender,
+                    'count_santri'   => 0,
+                    'count_bills'    => 0,
+                    'total_amount'   => 0.0,
+                    'santri_ids'     => [],
+                ];
+            }
 
-            $gatewayTrx = $gatewayQuery->get();
-            $totalTrx += $gatewayTrx->count();
+            // 1. Process Gateway Transactions
+            if ($source === 'gateway' || $source === 'all') {
+                $gatewayQuery = PaymentTransaction::where('status', 'success')
+                    ->where(function ($q) use ($fromCarbon, $toCarbon) {
+                        $q->whereBetween('callback_received_at', [$fromCarbon, $toCarbon])
+                          ->orWhere(function ($oq) use ($fromCarbon, $toCarbon) {
+                              $oq->whereNull('callback_received_at')
+                                 ->whereBetween('created_at', [$fromCarbon, $toCarbon]);
+                          });
+                    })
+                    ->when($targetGender, fn($q, $g) => $q->whereHas('person', fn($pq) => $pq->where('gender', $g)))
+                    ->with(['person.roomAssignments' => fn($q) => $q->active()->with('room.dormitory')]);
 
-            foreach ($gatewayTrx as $trx) {
-                $netTrx = (float) ($trx->net_amount > 0 ? $trx->net_amount : ((float)$trx->bill_amount + (float)($trx->pocket_money_amount ?? 0)));
-                $totalGross += (float) $trx->total_amount;
-                $totalMdr   += (float) $trx->mdr_amount;
-                $totalNet   += $netTrx;
+                $gatewayTrx = $gatewayQuery->get();
+                $totalTrx += $gatewayTrx->count();
 
-                $person = $trx->person;
-                $activeAssignment = $person?->roomAssignments?->first();
-                $dormId = $activeAssignment?->room?->dormitory_id;
+                foreach ($gatewayTrx as $trx) {
+                    $netTrx = (float) ($trx->net_amount > 0 ? $trx->net_amount : ((float)$trx->bill_amount + (float)($trx->pocket_money_amount ?? 0)));
+                    $totalGross += (float) $trx->total_amount;
+                    $totalMdr   += (float) $trx->mdr_amount;
+                    $totalNet   += $netTrx;
 
-                foreach ($trx->bill_breakdown ?? [] as $item) {
-                    $amt = (float) ($item['pay_portion'] ?? $item['net_amount'] ?? 0);
-                    $type = $item['bill_type'] ?? '';
+                    $person = $trx->person;
+                    $activeAssignment = $person?->roomAssignments?->first();
+                    $dormId = $activeAssignment?->room?->dormitory_id;
 
-                    $this->allocateToCategory($categories, $type, $amt, $person?->gender, $item['config_label'] ?? null);
+                    foreach ($trx->bill_breakdown ?? [] as $item) {
+                        $amt = (float) ($item['pay_portion'] ?? $item['net_amount'] ?? 0);
+                        $type = $item['bill_type'] ?? '';
+
+                        $this->allocateToCategory($categories, $type, $amt, $person?->gender, $item['config_label'] ?? null);
+
+                        if ($type === 'kas_komplek' && $dormId && isset($dormBreakdown[$dormId])) {
+                            $dormBreakdown[$dormId]['total_amount'] += $amt;
+                            $dormBreakdown[$dormId]['count_bills']++;
+                            if ($person && !in_array($person->id, $dormBreakdown[$dormId]['santri_ids'])) {
+                                $dormBreakdown[$dormId]['santri_ids'][] = $person->id;
+                                $dormBreakdown[$dormId]['count_santri']++;
+                            }
+                        }
+                    }
+
+                    if ((float)($trx->pocket_money_amount ?? 0) > 0) {
+                        $this->allocateToCategory($categories, 'pocket_money', (float)$trx->pocket_money_amount, $person?->gender, 'Titipan Uang Saku Santri');
+                    }
+                }
+            }
+
+            // 2. Process Cashier Payments
+            if ($source === 'kasir' || $source === 'all') {
+                $kasirQuery = BillPayment::where(function ($q) {
+                        $q->where('payment_method', 'not like', 'gateway%')
+                          ->orWhereNull('payment_method');
+                    })
+                    ->where(function ($q) use ($dateFrom, $dateTo, $fromCarbon, $toCarbon) {
+                        $q->whereBetween('payment_date', [$dateFrom, $dateTo])
+                          ->orWhereBetween('created_at', [$fromCarbon, $toCarbon]);
+                    })
+                    ->when($targetGender, fn($q, $g) => $q->whereHas('bill.person', fn($pq) => $pq->where('gender', $g)))
+                    ->with(['bill.person.roomAssignments' => fn($q) => $q->active()->with('room.dormitory'), 'bill.config']);
+
+                $kasirPayments = $kasirQuery->get();
+                $totalTrx += $kasirPayments->count();
+
+                foreach ($kasirPayments as $pay) {
+                    $amt = (float) $pay->amount_paid;
+                    $totalGross += $amt;
+                    $totalNet   += $amt;
+
+                    $bill = $pay->bill;
+                    $person = $bill?->person;
+                    $activeAssignment = $person?->roomAssignments?->first();
+                    $dormId = $activeAssignment?->room?->dormitory_id;
+                    $type = $bill?->bill_type ?? '';
+
+                    $this->allocateToCategory($categories, $type, $amt, $person?->gender, $bill?->config?->label ?? null);
 
                     if ($type === 'kas_komplek' && $dormId && isset($dormBreakdown[$dormId])) {
                         $dormBreakdown[$dormId]['total_amount'] += $amt;
@@ -160,113 +206,82 @@ class SettlementReportController extends Controller
                     }
                 }
 
-                if ((float)($trx->pocket_money_amount ?? 0) > 0) {
-                    $this->allocateToCategory($categories, 'pocket_money', (float)$trx->pocket_money_amount, $person?->gender, 'Titipan Uang Saku Santri');
-                }
-            }
-        }
+                // Hitung titipan uang saku dari transfer manual yang disetujui kasir
+                $manualSubsWithPocket = ManualTransferSubmission::where('status', 'approved')
+                    ->where('pocket_money_amount', '>', 0)
+                    ->where(function ($q) use ($dateFrom, $dateTo, $fromCarbon, $toCarbon) {
+                        $q->whereBetween('verified_at', [$fromCarbon, $toCarbon])
+                          ->orWhere(function ($oq) use ($fromCarbon, $toCarbon) {
+                              $oq->whereNull('verified_at')
+                                 ->whereBetween('created_at', [$fromCarbon, $toCarbon]);
+                          });
+                    })
+                    ->when($targetGender, fn($q, $g) => $q->whereHas('person', fn($pq) => $pq->where('gender', $g)))
+                    ->with('person')
+                    ->get();
 
-        // 2. Process Cashier Payments
-        if ($source === 'kasir' || $source === 'all') {
-            $kasirQuery = BillPayment::where(function ($q) {
-                    $q->where('payment_method', 'not like', 'gateway%')
-                      ->orWhereNull('payment_method');
-                })
-                ->where(function ($q) use ($dateFrom, $dateTo, $fromCarbon, $toCarbon) {
-                    $q->whereBetween('payment_date', [$dateFrom, $dateTo])
-                      ->orWhereBetween('created_at', [$fromCarbon, $toCarbon]);
-                })
-                ->when($targetGender, fn($q, $g) => $q->whereHas('bill.person', fn($pq) => $pq->where('gender', $g)))
-                ->with(['bill.person.roomAssignments' => fn($q) => $q->active()->with('room.dormitory'), 'bill.config']);
-
-            $kasirPayments = $kasirQuery->get();
-            $totalTrx += $kasirPayments->count();
-
-            foreach ($kasirPayments as $pay) {
-                $amt = (float) $pay->amount_paid;
-                $totalGross += $amt;
-                $totalNet   += $amt;
-
-                $bill = $pay->bill;
-                $person = $bill?->person;
-                $activeAssignment = $person?->roomAssignments?->first();
-                $dormId = $activeAssignment?->room?->dormitory_id;
-                $type = $bill?->bill_type ?? '';
-
-                $this->allocateToCategory($categories, $type, $amt, $person?->gender, $bill?->config?->label ?? null);
-
-                if ($type === 'kas_komplek' && $dormId && isset($dormBreakdown[$dormId])) {
-                    $dormBreakdown[$dormId]['total_amount'] += $amt;
-                    $dormBreakdown[$dormId]['count_bills']++;
-                    if ($person && !in_array($person->id, $dormBreakdown[$dormId]['santri_ids'])) {
-                        $dormBreakdown[$dormId]['santri_ids'][] = $person->id;
-                        $dormBreakdown[$dormId]['count_santri']++;
-                    }
+                foreach ($manualSubsWithPocket as $mSub) {
+                    $amtPm = (float) $mSub->pocket_money_amount;
+                    $totalGross += $amtPm;
+                    $totalNet   += $amtPm;
+                    $this->allocateToCategory($categories, 'pocket_money', $amtPm, $mSub->person?->gender, 'Titipan Uang Saku Santri');
                 }
             }
 
-            // Hitung titipan uang saku dari transfer manual yang disetujui kasir
-            $manualSubsWithPocket = ManualTransferSubmission::where('status', 'approved')
-                ->where('pocket_money_amount', '>', 0)
-                ->where(function ($q) use ($dateFrom, $dateTo, $fromCarbon, $toCarbon) {
-                    $q->whereBetween('verified_at', [$fromCarbon, $toCarbon])
-                      ->orWhere(function ($oq) use ($fromCarbon, $toCarbon) {
-                          $oq->whereNull('verified_at')
-                             ->whereBetween('created_at', [$fromCarbon, $toCarbon]);
-                      });
-                })
-                ->when($targetGender, fn($q, $g) => $q->whereHas('person', fn($pq) => $pq->where('gender', $g)))
-                ->with('person')
-                ->get();
+            $sourceLabel = match ($source) {
+                'gateway' => '⚡ Khusus Gateway Online',
+                'kasir'   => '💵 Khusus Kasir Manual (Tunai / Bank)',
+                default   => '🌐 Seluruh Pembayaran (Gateway + Kasir)',
+            };
 
-            foreach ($manualSubsWithPocket as $mSub) {
-                $amtPm = (float) $mSub->pocket_money_amount;
-                $totalGross += $amtPm;
-                $totalNet   += $amtPm;
-                $this->allocateToCategory($categories, 'pocket_money', $amtPm, $mSub->person?->gender, 'Titipan Uang Saku Santri');
-            }
+            $periodLabel = Carbon::parse($dateFrom)->locale('id')->translatedFormat('d M Y') . ' s/d ' . Carbon::parse($dateTo)->locale('id')->translatedFormat('d M Y');
+
+            $genderLabel = match ($targetGender) {
+                'L' => 'Unit Putra',
+                'P' => 'Unit Putri',
+                default => 'Semua Unit (Konsolidasi)',
+            };
+
+            $genderSuffix = match ($targetGender) {
+                'L' => '-Putra',
+                'P' => '-Putri',
+                default => '-Konsolidasi',
+            };
+
+            $activeDormBreakdown = array_values(array_filter($dormBreakdown, fn($d) => $d['total_amount'] > 0));
+
+            $data = [
+                'app_name'            => $appName,
+                'period_label'        => $periodLabel,
+                'source_label'        => $sourceLabel,
+                'gender_label'        => $genderLabel,
+                'total_gross'         => $totalGross,
+                'total_mdr'           => $totalMdr,
+                'total_net'           => $totalNet,
+                'total_trx'           => $totalTrx,
+                'category_breakdown'  => array_values(array_filter($categories, fn($c) => $c['amount'] > 0)),
+                'dormitory_breakdown' => $activeDormBreakdown,
+                'generated_at'        => now()->locale('id')->translatedFormat('d F Y, H:i') . ' WIB',
+                'generated_by'        => auth()->user()?->name ?? 'Bendahara Pusat',
+            ];
+
+            $pdf = Pdf::loadView('pdf.rekap-settlement', $data)->setPaper('a4', 'portrait');
+
+            return $pdf->stream('Rekap-Settlement' . $genderSuffix . '-' . Carbon::parse($dateFrom)->format('Ymd') . '-' . Carbon::parse($dateTo)->format('Ymd') . '.pdf');
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('Settlement Rekap PDF Error: ' . $e->getMessage(), [
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return new Response('<div style="font-family:sans-serif;padding:30px;max-width:800px;margin:30px auto;background:#fff1f2;border:1.5px solid #f43f5e;border-radius:12px;color:#881337;">'
+                . '<h2 style="margin-top:0;color:#e11d48;">Terjadi Kesalahan Saat Menghasilkan Rekap PDF</h2>'
+                . '<p><strong>Pesan:</strong> ' . htmlspecialchars($e->getMessage()) . '</p>'
+                . '<p><strong>Lokasi File:</strong> ' . htmlspecialchars($e->getFile()) . ' (Baris ' . $e->getLine() . ')</p>'
+                . '<pre style="background:#ffffff;padding:15px;border-radius:8px;font-size:11px;overflow-x:auto;border:1px solid #fecdd3;color:#475569;">' . htmlspecialchars($e->getTraceAsString()) . '</pre>'
+                . '</div>', 500, ['Content-Type' => 'text/html; charset=UTF-8']);
         }
-
-        $sourceLabel = match ($source) {
-            'gateway' => '⚡ Khusus Gateway Online',
-            'kasir'   => '💵 Khusus Kasir Manual (Tunai / Bank)',
-            default   => '🌐 Seluruh Pembayaran (Gateway + Kasir)',
-        };
-
-        $periodLabel = Carbon::parse($dateFrom)->locale('id')->translatedFormat('d M Y') . ' s/d ' . Carbon::parse($dateTo)->locale('id')->translatedFormat('d M Y');
-
-        $genderLabel = match ($targetGender) {
-            'L' => 'Unit Putra',
-            'P' => 'Unit Putri',
-            default => 'Semua Unit (Konsolidasi)',
-        };
-
-        $genderSuffix = match ($targetGender) {
-            'L' => '-Putra',
-            'P' => '-Putri',
-            default => '-Konsolidasi',
-        };
-
-        $activeDormBreakdown = array_values(array_filter($dormBreakdown, fn($d) => $d['total_amount'] > 0));
-
-        $data = [
-            'app_name'            => $appName,
-            'period_label'        => $periodLabel,
-            'source_label'        => $sourceLabel,
-            'gender_label'        => $genderLabel,
-            'total_gross'         => $totalGross,
-            'total_mdr'           => $totalMdr,
-            'total_net'           => $totalNet,
-            'total_trx'           => $totalTrx,
-            'category_breakdown'  => array_values(array_filter($categories, fn($c) => $c['amount'] > 0)),
-            'dormitory_breakdown' => $activeDormBreakdown,
-            'generated_at'        => now()->locale('id')->translatedFormat('d F Y, H:i') . ' WIB',
-            'generated_by'        => auth()->user()?->name ?? 'Bendahara Pusat',
-        ];
-
-        $pdf = Pdf::loadView('pdf.rekap-settlement', $data)->setPaper('a4', 'portrait');
-
-        return $pdf->stream('Rekap-Settlement' . $genderSuffix . '-' . Carbon::parse($dateFrom)->format('Ymd') . '-' . Carbon::parse($dateTo)->format('Ymd') . '.pdf');
     }
 
     /**
@@ -389,34 +404,49 @@ class SettlementReportController extends Controller
      */
     public function downloadSlipKomplekPdf(Request $request, string $dormitoryId): Response
     {
-        $this->preparePdfEnvironment();
-        $genderScope = $this->resolveGenderScope();
-        $dormitory = Dormitory::findOrFail($dormitoryId);
+        try {
+            $this->preparePdfEnvironment();
+            $genderScope = $this->resolveGenderScope();
+            $dormitory = Dormitory::findOrFail($dormitoryId);
 
-        if ($genderScope && $dormitory->gender !== $genderScope) {
-            abort(403, 'Akses ditolak: Anda tidak memiliki wewenang untuk mengunduh slip kas komplek unit ini.');
+            if ($genderScope && $dormitory->gender !== $genderScope) {
+                abort(403, 'Akses ditolak: Anda tidak memiliki wewenang untuk mengunduh slip kas komplek unit ini.');
+            }
+
+            $dateFrom  = $request->query('date_from', now()->startOfMonth()->toDateString());
+            $dateTo    = $request->query('date_to', now()->toDateString());
+            $appName   = config('app.name', 'Pondok Pesantren Al-Fithroh');
+            $periodLabel = Carbon::parse($dateFrom)->locale('id')->translatedFormat('d M Y') . ' s/d ' . Carbon::parse($dateTo)->locale('id')->translatedFormat('d M Y');
+
+            $dormData = $this->getDormitorySlipData($request, $dormitoryId);
+
+            $data = [
+                'app_name'     => $appName,
+                'dormitory'    => $dormitory,
+                'period_label' => $periodLabel,
+                'total_amount' => $dormData['total_amount'],
+                'santri_list'  => $dormData['santri_list'],
+                'generated_at' => now()->locale('id')->translatedFormat('d F Y, H:i') . ' WIB',
+                'generated_by' => auth()->user()?->name ?? 'Bendahara Pusat',
+            ];
+
+            $pdf = Pdf::loadView('pdf.slip-kas-komplek', $data)->setPaper('a4', 'portrait');
+
+            return $pdf->stream('Slip-Kas-' . \Illuminate\Support\Str::slug($dormitory->name) . '.pdf');
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('Settlement Slip Komplek Error: ' . $e->getMessage(), [
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return new Response('<div style="font-family:sans-serif;padding:30px;max-width:800px;margin:30px auto;background:#fff1f2;border:1.5px solid #f43f5e;border-radius:12px;color:#881337;">'
+                . '<h2 style="margin-top:0;color:#e11d48;">Terjadi Kesalahan Saat Menghasilkan Slip Kas Komplek PDF</h2>'
+                . '<p><strong>Pesan:</strong> ' . htmlspecialchars($e->getMessage()) . '</p>'
+                . '<p><strong>Lokasi File:</strong> ' . htmlspecialchars($e->getFile()) . ' (Baris ' . $e->getLine() . ')</p>'
+                . '<pre style="background:#ffffff;padding:15px;border-radius:8px;font-size:11px;overflow-x:auto;border:1px solid #fecdd3;color:#475569;">' . htmlspecialchars($e->getTraceAsString()) . '</pre>'
+                . '</div>', 500, ['Content-Type' => 'text/html; charset=UTF-8']);
         }
-
-        $dateFrom  = $request->query('date_from', now()->startOfMonth()->toDateString());
-        $dateTo    = $request->query('date_to', now()->toDateString());
-        $appName   = config('app.name', 'Pondok Pesantren Al-Fithroh');
-        $periodLabel = Carbon::parse($dateFrom)->locale('id')->translatedFormat('d M Y') . ' s/d ' . Carbon::parse($dateTo)->locale('id')->translatedFormat('d M Y');
-
-        $dormData = $this->getDormitorySlipData($request, $dormitoryId);
-
-        $data = [
-            'app_name'     => $appName,
-            'dormitory'    => $dormitory,
-            'period_label' => $periodLabel,
-            'total_amount' => $dormData['total_amount'],
-            'santri_list'  => $dormData['santri_list'],
-            'generated_at' => now()->locale('id')->translatedFormat('d F Y, H:i') . ' WIB',
-            'generated_by' => auth()->user()?->name ?? 'Bendahara Pusat',
-        ];
-
-        $pdf = Pdf::loadView('pdf.slip-kas-komplek', $data)->setPaper('a4', 'portrait');
-
-        return $pdf->stream('Slip-Kas-' . \Illuminate\Support\Str::slug($dormitory->name) . '.pdf');
     }
 
     /**
@@ -521,36 +551,51 @@ class SettlementReportController extends Controller
      */
     public function downloadSlipKategoriPdf(Request $request, string $categoryKey): Response
     {
-        $this->preparePdfEnvironment();
-        $genderScope = $this->resolveGenderScope();
-        $targetGender = $genderScope ?: ($request->filled('gender') ? $request->query('gender') : null);
+        try {
+            $this->preparePdfEnvironment();
+            $genderScope = $this->resolveGenderScope();
+            $targetGender = $genderScope ?: ($request->filled('gender') ? $request->query('gender') : null);
 
-        $catData = $this->getCategorySlipData($request, $categoryKey);
-        $meta    = $catData['meta'];
+            $catData = $this->getCategorySlipData($request, $categoryKey);
+            $meta    = $catData['meta'];
 
-        if ($meta['filter_gender'] && $targetGender && $targetGender !== $meta['filter_gender']) {
-            abort(403, 'Akses ditolak untuk unit ini.');
+            if ($meta['filter_gender'] && $targetGender && $targetGender !== $meta['filter_gender']) {
+                abort(403, 'Akses ditolak untuk unit ini.');
+            }
+
+            $dateFrom   = $request->query('date_from', now()->startOfMonth()->toDateString());
+            $dateTo     = $request->query('date_to', now()->toDateString());
+            $appName    = config('app.name', 'Pondok Pesantren Al-Fithroh');
+            $periodLabel = Carbon::parse($dateFrom)->locale('id')->translatedFormat('d M Y') . ' s/d ' . Carbon::parse($dateTo)->locale('id')->translatedFormat('d M Y');
+
+            $data = [
+                'app_name'       => $appName,
+                'category_key'   => $categoryKey,
+                'meta'           => $meta,
+                'period_label'   => $periodLabel,
+                'total_amount'   => $catData['total_amount'],
+                'santri_list'    => $catData['santri_list'],
+                'generated_at'   => now()->locale('id')->translatedFormat('d F Y, H:i') . ' WIB',
+                'generated_by'   => auth()->user()?->name ?? 'Bendahara Pusat',
+            ];
+
+            $pdf = Pdf::loadView('pdf.slip-serah-terima-kategori', $data)->setPaper('a4', 'portrait');
+
+            return $pdf->stream('Slip-Serah-Terima-' . \Illuminate\Support\Str::slug($meta['title']) . '.pdf');
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('Settlement Slip Kategori Error: ' . $e->getMessage(), [
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return new Response('<div style="font-family:sans-serif;padding:30px;max-width:800px;margin:30px auto;background:#fff1f2;border:1.5px solid #f43f5e;border-radius:12px;color:#881337;">'
+                . '<h2 style="margin-top:0;color:#e11d48;">Terjadi Kesalahan Saat Menghasilkan Slip Kategori PDF</h2>'
+                . '<p><strong>Pesan:</strong> ' . htmlspecialchars($e->getMessage()) . '</p>'
+                . '<p><strong>Lokasi File:</strong> ' . htmlspecialchars($e->getFile()) . ' (Baris ' . $e->getLine() . ')</p>'
+                . '<pre style="background:#ffffff;padding:15px;border-radius:8px;font-size:11px;overflow-x:auto;border:1px solid #fecdd3;color:#475569;">' . htmlspecialchars($e->getTraceAsString()) . '</pre>'
+                . '</div>', 500, ['Content-Type' => 'text/html; charset=UTF-8']);
         }
-
-        $dateFrom   = $request->query('date_from', now()->startOfMonth()->toDateString());
-        $dateTo     = $request->query('date_to', now()->toDateString());
-        $appName    = config('app.name', 'Pondok Pesantren Al-Fithroh');
-        $periodLabel = Carbon::parse($dateFrom)->locale('id')->translatedFormat('d M Y') . ' s/d ' . Carbon::parse($dateTo)->locale('id')->translatedFormat('d M Y');
-
-        $data = [
-            'app_name'       => $appName,
-            'category_key'   => $categoryKey,
-            'meta'           => $meta,
-            'period_label'   => $periodLabel,
-            'total_amount'   => $catData['total_amount'],
-            'santri_list'    => $catData['santri_list'],
-            'generated_at'   => now()->locale('id')->translatedFormat('d F Y, H:i') . ' WIB',
-            'generated_by'   => auth()->user()?->name ?? 'Bendahara Pusat',
-        ];
-
-        $pdf = Pdf::loadView('pdf.slip-serah-terima-kategori', $data)->setPaper('a4', 'portrait');
-
-        return $pdf->stream('Slip-Serah-Terima-' . \Illuminate\Support\Str::slug($meta['title']) . '.pdf');
     }
 
     /**
@@ -802,66 +847,81 @@ class SettlementReportController extends Controller
      */
     public function downloadBatchSlipsPdf(Request $request): Response
     {
-        $this->preparePdfEnvironment();
-        $genderScope = $this->resolveGenderScope();
-        $targetGender = $genderScope ?: ($request->filled('gender') ? $request->query('gender') : null);
+        try {
+            $this->preparePdfEnvironment();
+            $genderScope = $this->resolveGenderScope();
+            $targetGender = $genderScope ?: ($request->filled('gender') ? $request->query('gender') : null);
 
-        $dateFrom   = $request->query('date_from', now()->startOfMonth()->toDateString());
-        $dateTo     = $request->query('date_to', now()->toDateString());
-        $appName    = config('app.name', 'Pondok Pesantren Al-Fithroh');
-        $periodLabel = Carbon::parse($dateFrom)->locale('id')->translatedFormat('d M Y') . ' s/d ' . Carbon::parse($dateTo)->locale('id')->translatedFormat('d M Y');
+            $dateFrom   = $request->query('date_from', now()->startOfMonth()->toDateString());
+            $dateTo     = $request->query('date_to', now()->toDateString());
+            $appName    = config('app.name', 'Pondok Pesantren Al-Fithroh');
+            $periodLabel = Carbon::parse($dateFrom)->locale('id')->translatedFormat('d M Y') . ' s/d ' . Carbon::parse($dateTo)->locale('id')->translatedFormat('d M Y');
 
-        $categoryKeys = match ($targetGender) {
-            'L' => ['syahriah_putra', 'madrasah', 'kitab', 'majek_pagi', 'majek_sore', 'pocket_money'],
-            'P' => ['syahriah_putri', 'madrasah', 'kitab', 'majek_pagi', 'majek_sore', 'pocket_money'],
-            default => ['syahriah_putra', 'syahriah_putri', 'madrasah', 'kitab', 'majek_pagi', 'majek_sore', 'pocket_money'],
-        };
-        $slips = [];
+            $categoryKeys = match ($targetGender) {
+                'L' => ['syahriah_putra', 'madrasah', 'kitab', 'majek_pagi', 'majek_sore', 'pocket_money'],
+                'P' => ['syahriah_putri', 'madrasah', 'kitab', 'majek_pagi', 'majek_sore', 'pocket_money'],
+                default => ['syahriah_putra', 'syahriah_putri', 'madrasah', 'kitab', 'majek_pagi', 'majek_sore', 'pocket_money'],
+            };
+            $slips = [];
 
-        foreach ($categoryKeys as $catKey) {
-            $catData = $this->getCategorySlipData($request, $catKey);
-            if ($catData['total_amount'] > 0) {
-                $slips[] = [
-                    'type'         => 'kategori',
-                    'meta'         => $catData['meta'],
-                    'total_amount' => $catData['total_amount'],
-                    'santri_list'  => $catData['santri_list'],
-                ];
+            foreach ($categoryKeys as $catKey) {
+                $catData = $this->getCategorySlipData($request, $catKey);
+                if ($catData['total_amount'] > 0) {
+                    $slips[] = [
+                        'type'         => 'kategori',
+                        'meta'         => $catData['meta'],
+                        'total_amount' => $catData['total_amount'],
+                        'santri_list'  => $catData['santri_list'],
+                    ];
+                }
             }
-        }
 
-        $dormitories = Dormitory::active()
-            ->when($targetGender, fn($q, $g) => $q->where('gender', $g))
-            ->orderByRaw("gender ASC, name ASC")->get();
+            $dormitories = Dormitory::active()
+                ->when($targetGender, fn($q, $g) => $q->where('gender', $g))
+                ->orderByRaw("gender ASC, name ASC")->get();
 
-        foreach ($dormitories as $dorm) {
-            $dormData = $this->getDormitorySlipData($request, $dorm->id);
-            if ($dormData['total_amount'] > 0) {
-                $slips[] = [
-                    'type'         => 'komplek',
-                    'meta'         => [
-                        'title'          => 'Kas Komplek ' . $dorm->name,
-                        'recipient_role' => 'Bendahara ' . $dorm->name,
-                        'unit_label'     => 'Asrama ' . ($dorm->gender === 'P' ? 'Putri' : 'Putra'),
-                    ],
-                    'dormitory'    => $dorm,
-                    'total_amount' => $dormData['total_amount'],
-                    'santri_list'  => $dormData['santri_list'],
-                ];
+            foreach ($dormitories as $dorm) {
+                $dormData = $this->getDormitorySlipData($request, $dorm->id);
+                if ($dormData['total_amount'] > 0) {
+                    $slips[] = [
+                        'type'         => 'komplek',
+                        'meta'         => [
+                            'title'          => 'Kas Komplek ' . $dorm->name,
+                            'recipient_role' => 'Bendahara ' . $dorm->name,
+                            'unit_label'     => 'Asrama ' . ($dorm->gender === 'P' ? 'Putri' : 'Putra'),
+                        ],
+                        'dormitory'    => $dorm,
+                        'total_amount' => $dormData['total_amount'],
+                        'santri_list'  => $dormData['santri_list'],
+                    ];
+                }
             }
+
+            $data = [
+                'app_name'     => $appName,
+                'period_label' => $periodLabel,
+                'slips'        => $slips,
+                'generated_at' => now()->locale('id')->translatedFormat('d F Y, H:i') . ' WIB',
+                'generated_by' => auth()->user()?->name ?? 'Bendahara Pusat',
+            ];
+
+            $pdf = Pdf::loadView('pdf.slip-batch-all', $data)->setPaper('a4', 'portrait');
+
+            return $pdf->stream('Batch-Slip-Serah-Terima-' . Carbon::parse($dateFrom)->format('Ymd') . '.pdf');
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('Settlement Batch Slips Error: ' . $e->getMessage(), [
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return new Response('<div style="font-family:sans-serif;padding:30px;max-width:800px;margin:30px auto;background:#fff1f2;border:1.5px solid #f43f5e;border-radius:12px;color:#881337;">'
+                . '<h2 style="margin-top:0;color:#e11d48;">Terjadi Kesalahan Saat Menghasilkan Batch Slip PDF</h2>'
+                . '<p><strong>Pesan:</strong> ' . htmlspecialchars($e->getMessage()) . '</p>'
+                . '<p><strong>Lokasi File:</strong> ' . htmlspecialchars($e->getFile()) . ' (Baris ' . $e->getLine() . ')</p>'
+                . '<pre style="background:#ffffff;padding:15px;border-radius:8px;font-size:11px;overflow-x:auto;border:1px solid #fecdd3;color:#475569;">' . htmlspecialchars($e->getTraceAsString()) . '</pre>'
+                . '</div>', 500, ['Content-Type' => 'text/html; charset=UTF-8']);
         }
-
-        $data = [
-            'app_name'     => $appName,
-            'period_label' => $periodLabel,
-            'slips'        => $slips,
-            'generated_at' => now()->locale('id')->translatedFormat('d F Y, H:i') . ' WIB',
-            'generated_by' => auth()->user()?->name ?? 'Bendahara Pusat',
-        ];
-
-        $pdf = Pdf::loadView('pdf.slip-batch-all', $data)->setPaper('a4', 'portrait');
-
-        return $pdf->stream('Batch-Slip-Serah-Terima-' . Carbon::parse($dateFrom)->format('Ymd') . '.pdf');
     }
 
     /**

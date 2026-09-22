@@ -15,10 +15,6 @@
 
         .slip-page {
             padding: 25px 30px;
-            page-break-after: always;
-        }
-        .slip-page:last-child {
-            page-break-after: auto;
         }
 
         /* ── HEADER ── */
@@ -117,7 +113,7 @@
 <body>
 
 @forelse($slips as $idx => $slip)
-    <div class="slip-page">
+    <div class="slip-page" @if(!$loop->last) style="page-break-after: always;" @endif>
         {{-- HEADER --}}
         <div class="header">
             <table class="header-table">
