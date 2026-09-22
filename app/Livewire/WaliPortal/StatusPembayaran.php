@@ -155,10 +155,10 @@ class StatusPembayaran extends Component
             9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Desember'
         ];
 
-        $interval = $bill->config?->interval ?? 'monthly';
+        $interval = $bill->config?->interval ?? '';
 
-        if (in_array($interval, ['semester', '2x_yearly'])) {
-            $s = $bill->period_sub ?? ($bill->period_month && $bill->period_month <= 6 ? 1 : 2);
+        if (in_array($interval, ['semester', '2x_yearly']) || in_array($bill->bill_type, ['kebersihan', 'syahriah_madrasah'])) {
+            $s = $bill->period_sub ?? ($bill->period_month && $bill->period_month <= 6 ? 1 : ($bill->period_month ? 2 : 1));
             return "Semester {$s} ({$bill->period_year})";
         }
 

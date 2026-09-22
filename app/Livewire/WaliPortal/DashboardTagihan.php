@@ -637,11 +637,11 @@ class DashboardTagihan extends Component
 
     public function getBillPeriodLabel(Bill $bill): string
     {
-        $interval = $bill->config?->interval ?? 'monthly';
+        $interval = $bill->config?->interval ?? '';
         $dueStr = $bill->due_date ? ' • Tenggat: ' . $bill->due_date->translatedFormat('d M Y') : '';
 
-        if (in_array($interval, ['semester', '2x_yearly'])) {
-            $s = $bill->period_sub ?? ($bill->period_month && $bill->period_month <= 6 ? 1 : 2);
+        if (in_array($interval, ['semester', '2x_yearly']) || in_array($bill->bill_type, ['kebersihan', 'syahriah_madrasah'])) {
+            $s = $bill->period_sub ?? ($bill->period_month && $bill->period_month <= 6 ? 1 : ($bill->period_month ? 2 : 1));
             return "Semester {$s} ({$bill->period_year}){$dueStr}";
         }
 
@@ -686,13 +686,13 @@ class DashboardTagihan extends Component
             return 'current';
         }
 
-        $interval = $bill->config?->interval ?? 'monthly';
+        $interval = $bill->config?->interval ?? '';
         $bYear    = $bill->period_year ?? (int)($bill->due_date ? $bill->due_date->format('Y') : $bill->created_at->format('Y'));
         $bMonth   = $bill->period_month ?? (int)($bill->due_date ? $bill->due_date->format('m') : $bill->created_at->format('m'));
         $sub      = $bill->period_sub;
 
-        if (in_array($interval, ['semester', '2x_yearly'])) {
-            $s = $sub ?? ($bMonth <= 6 ? 1 : 2);
+        if (in_array($interval, ['semester', '2x_yearly']) || in_array($bill->bill_type, ['kebersihan', 'syahriah_madrasah'])) {
+            $s = $sub ?? ($bMonth <= 6 ? 1 : ($bMonth ? 2 : 1));
             $startM = ($s - 1) * 6 + 1;
             $endM   = $s * 6;
         } elseif (in_array($interval, ['caturwulan', '3x_yearly'])) {
