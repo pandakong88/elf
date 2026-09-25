@@ -2026,7 +2026,10 @@ class BillingManager extends Component
 
     public function updatedSelectedBillIds(): void
     {
-        $unpaidGrouped = $this->unpaidBills->groupBy('billing_config_id');
+        // Group unpaid bills by unique config or bill_type
+        $unpaidGrouped = $this->unpaidBills->groupBy(function($b) {
+            return $b->billing_config_id ? ('config_' . $b->billing_config_id) : ('type_' . $b->bill_type);
+        });
 
         // Added elements (newly checked)
         $added = array_diff($this->selectedBillIds, $this->previousSelectedBillIds);
@@ -2035,14 +2038,28 @@ class BillingManager extends Component
 
         // Process added: auto-select prior unpaid bills of the same iuran/config
         foreach ($added as $billId) {
-            $bill = Bill::find($billId);
+            $bill = Bill::with('config')->find($billId);
             if (!$bill) continue;
 
-            $configId = $bill->billing_config_id;
-            if (isset($unpaidGrouped[$configId])) {
-                foreach ($unpaidGrouped[$configId] as $ub) {
-                    $date1 = $ub->due_date ? $ub->due_date->toDateString() : sprintf('%04d-%02d-01', $ub->period_year, $ub->period_month);
-                    $date2 = $bill->due_date ? $bill->due_date->toDateString() : sprintf('%04d-%02d-01', $bill->period_year, $bill->period_month);
+            $interval = $bill->config?->interval ?? '';
+            $isEvent = in_array($interval, ['once', 'insidental', 'event', 'sekali']) 
+                || in_array($bill->bill_type, ['kitab', 'pendaftaran', 'event_iuran', 'majek_pagi', 'majek_sore', 'majek']);
+
+            // Incidental / event / non-recurring bills are selected freely without FIFO
+            if ($isEvent) {
+                continue;
+            }
+
+            $groupKey = $bill->billing_config_id ? ('config_' . $bill->billing_config_id) : ('type_' . $bill->bill_type);
+            if (isset($unpaidGrouped[$groupKey])) {
+                foreach ($unpaidGrouped[$groupKey] as $ub) {
+                    $ubInterval = $ub->config?->interval ?? '';
+                    $ubIsEvent = in_array($ubInterval, ['once', 'insidental', 'event', 'sekali']) 
+                        || in_array($ub->bill_type, ['kitab', 'pendaftaran', 'event_iuran', 'majek_pagi', 'majek_sore', 'majek']);
+                    if ($ubIsEvent) continue;
+
+                    $date1 = $ub->due_date ? $ub->due_date->toDateString() : sprintf('%04d-%02d-01', $ub->period_year, $ub->period_month ?: 1);
+                    $date2 = $bill->due_date ? $bill->due_date->toDateString() : sprintf('%04d-%02d-01', $bill->period_year, $bill->period_month ?: 1);
 
                     $isOlder = false;
                     if ($date1 !== $date2) {
@@ -2060,14 +2077,27 @@ class BillingManager extends Component
 
         // Process removed: auto-deselect succeeding unpaid bills of the same iuran/config
         foreach ($removed as $billId) {
-            $bill = Bill::find($billId);
+            $bill = Bill::with('config')->find($billId);
             if (!$bill) continue;
 
-            $configId = $bill->billing_config_id;
-            if (isset($unpaidGrouped[$configId])) {
-                foreach ($unpaidGrouped[$configId] as $ub) {
-                    $date1 = $ub->due_date ? $ub->due_date->toDateString() : sprintf('%04d-%02d-01', $ub->period_year, $ub->period_month);
-                    $date2 = $bill->due_date ? $bill->due_date->toDateString() : sprintf('%04d-%02d-01', $bill->period_year, $bill->period_month);
+            $interval = $bill->config?->interval ?? '';
+            $isEvent = in_array($interval, ['once', 'insidental', 'event', 'sekali']) 
+                || in_array($bill->bill_type, ['kitab', 'pendaftaran', 'event_iuran', 'majek_pagi', 'majek_sore', 'majek']);
+
+            if ($isEvent) {
+                continue;
+            }
+
+            $groupKey = $bill->billing_config_id ? ('config_' . $bill->billing_config_id) : ('type_' . $bill->bill_type);
+            if (isset($unpaidGrouped[$groupKey])) {
+                foreach ($unpaidGrouped[$groupKey] as $ub) {
+                    $ubInterval = $ub->config?->interval ?? '';
+                    $ubIsEvent = in_array($ubInterval, ['once', 'insidental', 'event', 'sekali']) 
+                        || in_array($ub->bill_type, ['kitab', 'pendaftaran', 'event_iuran', 'majek_pagi', 'majek_sore', 'majek']);
+                    if ($ubIsEvent) continue;
+
+                    $date1 = $ub->due_date ? $ub->due_date->toDateString() : sprintf('%04d-%02d-01', $ub->period_year, $ub->period_month ?: 1);
+                    $date2 = $bill->due_date ? $bill->due_date->toDateString() : sprintf('%04d-%02d-01', $bill->period_year, $bill->period_month ?: 1);
 
                     $isNewer = false;
                     if ($date1 !== $date2) {
