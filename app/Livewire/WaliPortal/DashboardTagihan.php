@@ -15,6 +15,7 @@ use App\Modules\Keuangan\Models\PocketMoneyDeposit;
 use App\Modules\Keuangan\Services\DokuService;
 use App\Modules\Keuangan\Services\DuitkuService;
 use App\Modules\Keuangan\Services\ProofImageCompressionService;
+use App\Services\WhatsAppService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
@@ -453,6 +454,49 @@ class DashboardTagihan extends Component
             }
 
             DB::commit();
+
+            // 6. Kirim Notifikasi Alert ke Grup WhatsApp Bendahara (non-blocking)
+            try {
+                $submission->loadMissing(['person.roomAssignments' => fn($q) => $q->where('status', 'active')->with('room.dormitory')]);
+                $person           = $submission->person;
+                $activeAssignment = $person?->roomAssignments?->first();
+                $dormName         = $activeAssignment?->room?->dormitory?->name;
+                $roomName         = $activeAssignment?->room?->name;
+                $roomLocation     = ($dormName && $roomName) ? "{$dormName} – {$roomName}" : ($dormName ?: ($roomName ?: null));
+
+                $pendingItems = [];
+                foreach ($breakdown as $b) {
+                    $pendingItems[] = [
+                        'bill_label'   => $b['config_label'] ?? $b['bill_type'],
+                        'period_label' => $b['period_label'] ?? '',
+                        'amount'       => $b['amount'] ?? 0,
+                    ];
+                }
+                if ($pocketMoney > 0) {
+                    $pendingItems[] = [
+                        'bill_label'   => 'Titipan Uang Saku',
+                        'period_label' => '',
+                        'amount'       => $pocketMoney,
+                    ];
+                }
+
+                $senderName = $this->senderAccountName 
+                    ?: ($this->senderBank ? "Wali via {$this->senderBank}" : ($person?->santriProfile?->father_name ?: 'Wali Santri'));
+
+                app(WhatsAppService::class)->notifyManualTransferPending(
+                    santriName:        $person?->name ?? 'Santri',
+                    submissionCode:    $submission->submission_code,
+                    bankDestination:   $submission->destination_bank_label ?: ($submission->bank_destination ?? 'Bank'),
+                    submittedAt:       now()->locale('id')->translatedFormat('d F Y, H:i') . ' WIB',
+                    senderAccountName: $senderName,
+                    totalAmount:       $grandTotal,
+                    items:             $pendingItems,
+                    roomLocation:      $roomLocation,
+                    notes:             $this->transferNotes ?: null,
+                );
+            } catch (\Throwable $waErr) {
+                Log::warning('[DashboardTagihan] Gagal kirim WA pending transfer: ' . $waErr->getMessage());
+            }
 
             // Reset form input
             $this->proofImage = null;

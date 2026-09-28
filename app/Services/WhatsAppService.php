@@ -399,6 +399,66 @@ class WhatsAppService
     }
 
     /**
+     * Notifikasi pengajuan transfer manual baru (Pending) ke Grup Bendahara.
+     */
+    public function notifyManualTransferPending(
+        string  $santriName,
+        string  $submissionCode,
+        string  $bankDestination,
+        string  $submittedAt,
+        string  $senderAccountName,
+        float   $totalAmount,
+        array   $items,
+        ?string $roomLocation = null,
+        ?string $notes = null
+    ): bool {
+        if (!config('whatsapp.notify_kasir', true) && !config('whatsapp.notify_gateway', true)) {
+            return false;
+        }
+
+        $appName   = config('app.name', 'Elvith.id');
+        $totalFmt  = number_format($totalAmount, 0, ',', '.');
+        $bankLabel = !empty($bankDestination) ? strtoupper($bankDestination) : 'Rekening Pondok';
+
+        $rincian = '';
+        $idx = 1;
+        foreach ($items as $item) {
+            $label  = !empty($item['bill_label']) ? $item['bill_label'] : (!empty($item['config_label']) ? $item['config_label'] : ucwords(str_replace('_', ' ', $item['bill_type'] ?? 'Tagihan')));
+            $period = !empty($item['period_label']) ? " ({$item['period_label']})" : '';
+            $amount = number_format($item['amount'] ?? $item['pay_portion'] ?? 0, 0, ',', '.');
+
+            $rincian .= "{$idx}. *{$label}{$period}*\n   └ 💵 Rp {$amount}\n";
+            $idx++;
+        }
+
+        $locationLine = !empty($roomLocation) ? "\n• *Kamar/Komplek :* {$roomLocation}" : '';
+        $notesLine    = !empty($notes) ? "\n• *Catatan Wali  :* {$notes}" : '';
+
+        $message = "──────────────────────\n"
+            . "⚠️ *PENGAJUAN TRANSFER MASUK*\n"
+            . "_{$appName} — Menunggu Verifikasi_\n"
+            . "──────────────────────\n\n"
+            . "📌 *DATA PENGAJUAN*\n"
+            . "• *Kode Bukti   :* `{$submissionCode}`\n"
+            . "• *Bank Tujuan  :* 🏦 {$bankLabel}\n"
+            . "• *Waktu Kirim  :* {$submittedAt}\n"
+            . "• *Pengirim     :* {$senderAccountName}"
+            . $notesLine . "\n\n"
+            . "👤 *DATA SANTRI*\n"
+            . "• *Nama Santri  :* *{$santriName}*"
+            . $locationLine . "\n\n"
+            . "📦 *RINCIAN PENGAJUAN*\n"
+            . ($rincian ?: "• (rincian pembayaran)\n") . "\n"
+            . "──────────────────────\n"
+            . "💵 *NOMINAL KLAIM : Rp {$totalFmt}*\n"
+            . "──────────────────────\n"
+            . "🔔 *TINDAKAN BENDAHARA:*\n"
+            . "_Mohon cek mutasi rekening & verifikasi di Dashboard Keuangan._";
+
+        return $this->sendToGroup($message);
+    }
+
+    /**
      * Notifikasi verifikasi transfer manual (Portal Wali) ke Grup Bendahara.
      */
     public function notifyManualTransferVerified(
