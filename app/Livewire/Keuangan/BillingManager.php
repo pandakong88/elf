@@ -25,6 +25,8 @@ use App\Modules\Keuangan\Models\PocketMoneyDeposit;
 use App\Modules\Core\Models\LandingPageContent;
 use App\Traits\HasGenderScope;
 use App\Livewire\Concerns\SendsToast;
+use App\Services\WhatsAppService;
+use Illuminate\Support\Facades\Log;
 
 class BillingManager extends Component
 {
@@ -190,6 +192,8 @@ class BillingManager extends Component
     public float   $lastTotalPaid           = 0.00;
     public ?string $lastSantriName          = null;
     public int     $lastItemsCount          = 0;
+    public ?string $lastWaliPhone           = null;
+    public ?string $lastWaDirectUrl         = null;
     public string  $cashierHistoryMode      = 'receipt'; // 'receipt' (default) | 'item'
 
     // Kasir: Pengelolaan Cuti / Bebas Tagihan Santri
@@ -2462,8 +2466,17 @@ class BillingManager extends Component
         $paymentGroupId = (string) Str::uuid();
         $totalActuallyPaid = 0.0;
         $itemsPaidCount = 0;
+        $paidSummaryItems = [];
 
-        DB::transaction(function () use ($billsToPay, $billingService, $receiptNo, $paymentGroupId, &$totalActuallyPaid, &$itemsPaidCount) {
+        $santri = Person::with([
+            'roomAssignments' => fn($q) => $q->where('status', 'active')->with('room.dormitory'),
+            'santriProfile'
+        ])->find($this->selectedSantriId);
+
+        $months = [1=>'Januari',2=>'Februari',3=>'Maret',4=>'April',5=>'Mei',6=>'Juni',
+                   7=>'Juli',8=>'Agustus',9=>'September',10=>'Oktober',11=>'November',12=>'Desember'];
+
+        DB::transaction(function () use ($billsToPay, $billingService, $receiptNo, $paymentGroupId, $months, &$totalActuallyPaid, &$itemsPaidCount, &$paidSummaryItems) {
             $remainingAmount = $this->payAmount;
 
             foreach ($billsToPay as $bill) {
@@ -2483,16 +2496,82 @@ class BillingManager extends Component
                     $receiptNo,
                     $paymentGroupId,
                     $this->payAmount,
-                    0.00
+                    0.00,
+                    false // Jangan kirim per item, akan dikirim gabungan di bawah
                 );
 
                 $totalActuallyPaid += $paymentForThisBill;
                 $itemsPaidCount++;
                 $remainingAmount -= $paymentForThisBill;
+
+                $interval = $bill->config?->interval ?? '';
+                $isSemester = in_array($interval, ['semester', '2x_yearly']) || ($bill->bill_type === 'syahriah_madrasah');
+                $sem = $bill->period_sub ?: ($bill->period_month && $bill->period_month <= 6 ? 1 : 2);
+                $period = match(true) {
+                    $isSemester                                                    => 'Semester '.$sem.'/'.$bill->period_year,
+                    in_array($interval, ['once','insidental','event','sekali'])   => 'Event '.($bill->period_year ?? ''),
+                    default                                                        => ($months[$bill->period_month ?? 0] ?? '').' '.($bill->period_year ?? ''),
+                };
+
+                $remainingAfterPay = max(0, (float)$bill->amount - ((float)$bill->amount_paid + $paymentForThisBill));
+
+                $paidSummaryItems[] = [
+                    'bill_label'   => $bill->config?->label ?? ucwords(str_replace('_', ' ', $bill->bill_type ?? '')),
+                    'period_label' => trim($period),
+                    'amount'       => $paymentForThisBill,
+                    'is_partial'   => $remainingAfterPay > 0,
+                    'remaining'    => $remainingAfterPay,
+                ];
             }
         });
 
-        $santri = Person::find($this->selectedSantriId);
+        // Ambil Data Lokasi Santri
+        $activeAssignment = $santri?->roomAssignments?->first();
+        $dormName         = $activeAssignment?->room?->dormitory?->name;
+        $roomName         = $activeAssignment?->room?->name;
+        $roomLocation     = ($dormName && $roomName) ? "{$dormName} – {$roomName}" : ($dormName ?: ($roomName ?: null));
+
+        // 1. Kirim Notifikasi Gabungan ke Grup WhatsApp Bendahara
+        try {
+            app(WhatsAppService::class)->notifyKasirMultiPayment(
+                santriName:   $santri?->name ?? 'Santri',
+                receiptNo:    $receiptNo,
+                method:       $this->payMethod,
+                paidAt:       now()->locale('id')->translatedFormat('d F Y, H:i') . ' WIB',
+                totalAmount:  $totalActuallyPaid,
+                items:        $paidSummaryItems,
+                loggedByName: auth()->user()?->name ?? 'Kasir',
+                roomLocation: $roomLocation,
+                notes:        $this->payNotes ?: null,
+            );
+        } catch (\Throwable $e) {
+            Log::warning('[BillingManager] Gagal kirim WA grup kasir: ' . $e->getMessage());
+        }
+
+        // 2. Siapkan Direct Link WhatsApp (wa.me) Gratis untuk Wali Santri
+        $waliPhone = $santri?->santriProfile?->father_phone 
+            ?: $santri?->santriProfile?->mother_phone 
+            ?: $santri?->santriProfile?->guardian_phone 
+            ?: $santri?->phone;
+
+        $receiptUrl = route('bukti-bayar.kuitansi', $receiptNo);
+
+        $this->lastWaliPhone = $waliPhone;
+        if ($waliPhone) {
+            $this->lastWaDirectUrl = app(WhatsAppService::class)->buildWaliDirectWaUrl(
+                phone:        $waliPhone,
+                santriName:   $santri?->name ?? 'Santri',
+                receiptNo:    $receiptNo,
+                method:       $this->payMethod,
+                paidAt:       now()->locale('id')->translatedFormat('d F Y, H:i') . ' WIB',
+                totalAmount:  $totalActuallyPaid,
+                items:        $paidSummaryItems,
+                roomLocation: $roomLocation,
+                receiptUrl:   $receiptUrl,
+            );
+        } else {
+            $this->lastWaDirectUrl = null;
+        }
 
         $this->lastReceiptNo = $receiptNo;
         $this->lastPaymentGroupId = $paymentGroupId;

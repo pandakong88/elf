@@ -128,7 +128,7 @@ class WhatsAppService
     }
 
     /**
-     * Kirim kuitansi pelunasan digital ke WhatsApp Wali Santri.
+     * Kirim kuitansi pelunasan digital ke WhatsApp Wali Santri (Fonnte).
      */
     public function notifyWaliPaymentReceipt(
         string  $phone,
@@ -138,7 +138,8 @@ class WhatsAppService
         string  $paidAt,
         float   $totalAmount,
         array   $breakdown = [],
-        ?string $roomLocation = null
+        ?string $roomLocation = null,
+        ?string $receiptUrl = null
     ): bool {
         if (!config('whatsapp.notify_wali', true)) {
             return false;
@@ -148,12 +149,12 @@ class WhatsAppService
         $rincian = '';
 
         foreach ($breakdown as $item) {
-            $label   = $item['config_label'] ?? ucwords(str_replace('_', ' ', $item['bill_type'] ?? ''));
+            $label   = $item['config_label'] ?? $item['bill_label'] ?? ucwords(str_replace('_', ' ', $item['bill_type'] ?? ''));
             $period  = $item['period_label'] ?? '';
-            $amount  = number_format($item['pay_portion'] ?? $item['net_amount'] ?? 0, 0, ',', '.');
+            $amount  = number_format($item['pay_portion'] ?? $item['net_amount'] ?? $item['amount'] ?? 0, 0, ',', '.');
             
             $isPartial = !empty($item['is_partial']);
-            $remaining = max(0, ((float)($item['bill_remaining'] ?? 0)) - ((float)($item['pay_portion'] ?? $item['net_amount'] ?? 0)));
+            $remaining = max(0, ((float)($item['bill_remaining'] ?? $item['remaining'] ?? 0)) - ((float)($item['pay_portion'] ?? $item['net_amount'] ?? $item['amount'] ?? 0)));
 
             if ($isPartial && $remaining > 0) {
                 $remFmt = number_format($remaining, 0, ',', '.');
@@ -162,22 +163,24 @@ class WhatsAppService
                 $statusTag = " 🟢 *(Lunas)*";
             }
 
-            $rincian .= "• {$label} ({$period}) : Rp {$amount}{$statusTag}\n";
+            $rincian .= "• {$label}" . ($period ? " ({$period})" : "") . " : Rp {$amount}{$statusTag}\n";
         }
 
         $totalFmt = number_format($totalAmount, 0, ',', '.');
         $locationLine = !empty($roomLocation) ? "\n🏠 *Komplek/Kamar:* {$roomLocation}" : '';
+        $receiptLine  = !empty($receiptUrl) ? "\n📄 *Kuitansi Digital:* {$receiptUrl}\n" : '';
 
         $message = "Assalamu'alaikum Warahmatullahi Wabarakatuh.\n\n"
-            . "Terima kasih, pembayaran administrasi pesantren untuk santri:\n"
-            . "👤 *Nama:* {$santriName}"
+            . "Alhamdulillah, pembayaran administrasi pesantren telah berhasil dicatat:\n"
+            . "👤 *Santri:* {$santriName}"
             . $locationLine . "\n"
             . "🧾 *No. Transaksi:* {$orderId}\n"
             . "💳 *Metode:* {$channelLabel}\n"
             . "📅 *Waktu:* {$paidAt}\n\n"
-            . "📦 *Rincian Pelunasan:*\n"
+            . "📦 *Rincian Pembayaran:*\n"
             . ($rincian ?: "• (rincian umum)\n")
-            . "\n💰 *Total Diterima:* *Rp {$totalFmt}*\n\n"
+            . "\n💰 *Total Diterima:* *Rp {$totalFmt}*\n"
+            . $receiptLine . "\n"
             . "Semoga barokah dan bermanfaat bagi kelancaran tholabul 'ilmi ananda. Aamiin.\n\n"
             . "— *Pengurus Keuangan {$appName}*";
 
@@ -185,7 +188,73 @@ class WhatsAppService
     }
 
     /**
-     * Notifikasi pembayaran gateway (Duitku).
+     * Buat URL direct WhatsApp (wa.me) kuitansi gratis untuk wali santri.
+     */
+    public function buildWaliDirectWaUrl(
+        string  $phone,
+        string  $santriName,
+        string  $receiptNo,
+        string  $method,
+        string  $paidAt,
+        float   $totalAmount,
+        array   $items = [],
+        ?string $roomLocation = null,
+        ?string $receiptUrl = null
+    ): string {
+        $formattedPhone = $this->formatPhoneNumber($phone);
+        if (empty($formattedPhone)) {
+            return '';
+        }
+
+        $appName = config('app.name', 'Pondok Pesantren Al-Fithroh');
+        $methodLabel = match (strtoupper($method)) {
+            'CASH'     => '💵 Tunai (Kasir)',
+            'TRANSFER' => '🏦 Transfer Bank',
+            'EWALLET'  => '📱 E-Wallet',
+            default    => strtoupper($method),
+        };
+
+        $rincian = '';
+        foreach ($items as $item) {
+            $label   = $item['bill_label'] ?? $item['config_label'] ?? ucwords(str_replace('_', ' ', $item['bill_type'] ?? ''));
+            $period  = $item['period_label'] ?? '';
+            $amount  = number_format($item['amount'] ?? $item['pay_portion'] ?? $item['net_amount'] ?? 0, 0, ',', '.');
+            $isPartial = !empty($item['is_partial']);
+            $remaining = (float)($item['remaining'] ?? 0);
+
+            if ($isPartial && $remaining > 0) {
+                $remFmt = number_format($remaining, 0, ',', '.');
+                $statusTag = " ⏳ (Cicilan - Sisa: Rp {$remFmt})";
+            } else {
+                $statusTag = " 🟢 (Lunas)";
+            }
+
+            $rincian .= "• {$label}" . ($period ? " ({$period})" : "") . " : Rp {$amount}{$statusTag}\n";
+        }
+
+        $totalFmt = number_format($totalAmount, 0, ',', '.');
+        $locationLine = !empty($roomLocation) ? "\n🏠 *Komplek/Kamar:* {$roomLocation}" : '';
+        $receiptLine  = !empty($receiptUrl) ? "\n📄 *Unduh Kuitansi Digital:*\n{$receiptUrl}\n" : '';
+
+        $message = "Assalamu'alaikum Warahmatullahi Wabarakatuh.\n\n"
+            . "Alhamdulillah, pembayaran administrasi pesantren untuk ananda tercatat:\n"
+            . "👤 *Santri:* {$santriName}"
+            . $locationLine . "\n"
+            . "🧾 *No. Kuitansi:* {$receiptNo}\n"
+            . "💳 *Metode:* {$methodLabel}\n"
+            . "📅 *Waktu:* {$paidAt}\n\n"
+            . "📦 *Rincian Pelunasan:*\n"
+            . ($rincian ?: "• (pembayaran tagihan)\n")
+            . "\n💰 *Total Diterima:* *Rp {$totalFmt}*\n"
+            . $receiptLine . "\n"
+            . "Jazakumullahu khairan katsiran. Semoga barokah dan melancarkan proses tholabul 'ilmi ananda. Aamiin.\n\n"
+            . "— *Pengurus Keuangan {$appName}*";
+
+        return "https://wa.me/{$formattedPhone}?text=" . rawurlencode($message);
+    }
+
+    /**
+     * Notifikasi pembayaran gateway (Duitku / DOKU) ke Grup Bendahara.
      */
     public function notifyGatewayPayment(
         string  $santriName,
@@ -202,7 +271,7 @@ class WhatsAppService
             return false;
         }
 
-        $appName = config('app.name', 'Elvith');
+        $appName = config('app.name', 'Elvith.id');
         $rincian = '';
 
         foreach ($breakdown as $item) {
@@ -210,7 +279,6 @@ class WhatsAppService
             $period  = $item['period_label'] ?? '';
             $amount  = number_format($item['pay_portion'] ?? $item['net_amount'] ?? 0, 0, ',', '.');
 
-            // Deteksi cicilan / sebagian
             $isPartial = !empty($item['is_partial']);
             $remaining = max(0, ((float)($item['bill_remaining'] ?? 0)) - ((float)($item['pay_portion'] ?? $item['net_amount'] ?? 0)));
 
@@ -218,10 +286,10 @@ class WhatsAppService
                 $remFmt = number_format($remaining, 0, ',', '.');
                 $statusTag = " ⏳ *(Cicilan - Sisa: Rp {$remFmt})*";
             } else {
-                $statusTag = "";
+                $statusTag = " 🟢";
             }
 
-            $rincian .= "• {$label} – {$period} → Rp {$amount}{$statusTag}\n";
+            $rincian .= "• {$label}" . ($period ? " – {$period}" : "") . " → Rp {$amount}{$statusTag}\n";
         }
 
         $totalFmt = number_format($totalAmount, 0, ',', '.');
@@ -230,24 +298,91 @@ class WhatsAppService
             ? "\n💸 *Biaya Layanan:* Rp " . number_format($mdrAmount, 0, ',', '.') . " (ditanggung wali)"
             : '';
 
-        $message = "✅ *PEMBAYARAN DITERIMA*\n"
-            . "━━━━━━━━━━━━━━━━━\n\n"
+        $message = "🟢 *[PAYMENT GATEWAY - UANG MASUK]*\n"
+            . "━━━━━━━━━━━━━━━━━━━━━━\n\n"
             . "📋 *Santri:* {$santriName}"
             . $locationLine . "\n"
-            . "🏷 *No. Order:* {$orderId}\n"
+            . "🏷 *No. Order:* `{$orderId}`\n"
             . "💳 *Metode:* {$channelLabel} (Online)\n"
             . "📅 *Waktu:* {$paidAt}"
             . $mdrInfo . "\n\n"
             . "📦 *Rincian Tagihan:*\n"
             . ($rincian ?: "• (tidak ada rincian)\n")
-            . "\n💰 *Total Dibayar:* Rp {$totalFmt}\n\n"
-            . "_Via {$appName} Billing System_";
+            . "\n💰 *Total Diterima:* *Rp {$totalFmt}*\n\n"
+            . "━━━━━━━━━━━━━━━━━━━━━━\n"
+            . "_Sistem Keuangan {$appName}_";
 
         return $this->sendToGroup($message);
     }
 
     /**
-     * Notifikasi pembayaran kasir (manual).
+     * Notifikasi pembayaran kasir (manual multi-tagihan) ke Grup Bendahara.
+     */
+    public function notifyKasirMultiPayment(
+        string  $santriName,
+        string  $receiptNo,
+        string  $method,
+        string  $paidAt,
+        float   $totalAmount,
+        array   $items,
+        string  $loggedByName,
+        ?string $roomLocation = null,
+        ?string $notes = null
+    ): bool {
+        if (!config('whatsapp.notify_kasir', true)) {
+            return false;
+        }
+
+        $appName     = config('app.name', 'Elvith.id');
+        $totalFmt    = number_format($totalAmount, 0, ',', '.');
+        $methodLabel = match (strtoupper($method)) {
+            'CASH'     => '💵 Tunai (Kasir)',
+            'TRANSFER' => '🏦 Transfer Bank',
+            'EWALLET'  => '📱 E-Wallet',
+            default    => strtoupper($method),
+        };
+
+        $rincian = '';
+        foreach ($items as $item) {
+            $label     = $item['bill_label'] ?? $item['config_label'] ?? ucwords(str_replace('_', ' ', $item['bill_type'] ?? ''));
+            $period    = $item['period_label'] ?? '';
+            $amount    = number_format($item['amount'] ?? $item['pay_portion'] ?? 0, 0, ',', '.');
+            $isPartial = !empty($item['is_partial']);
+            $remaining = (float)($item['remaining'] ?? 0);
+
+            if ($isPartial && $remaining > 0) {
+                $remFmt = number_format($remaining, 0, ',', '.');
+                $statusTag = " ⏳ *(Cicilan - Sisa: Rp {$remFmt})*";
+            } else {
+                $statusTag = " 🟢";
+            }
+
+            $rincian .= "• {$label}" . ($period ? " – {$period}" : "") . " → Rp {$amount}{$statusTag}\n";
+        }
+
+        $locationLine = !empty($roomLocation) ? "\n🏠 *Komplek/Kamar:* {$roomLocation}" : '';
+        $notesLine    = !empty($notes) && $notes !== 'Pembayaran Kasir' ? "\n📝 *Catatan:* {$notes}" : '';
+
+        $message = "💰 *[KASIR - PEMBAYARAN DICATAT]*\n"
+            . "━━━━━━━━━━━━━━━━━━━━━━\n\n"
+            . "📋 *Santri:* {$santriName}"
+            . $locationLine . "\n"
+            . "🧾 *No. Kuitansi:* `{$receiptNo}`\n"
+            . "💳 *Metode:* {$methodLabel}\n"
+            . "📅 *Waktu:* {$paidAt}\n"
+            . "👤 *Kasir Bertugas:* {$loggedByName}"
+            . $notesLine . "\n\n"
+            . "📦 *Rincian Tagihan Dibayar:*\n"
+            . ($rincian ?: "• (rincian pembayaran)\n")
+            . "\n💰 *Total Uang Diterima:* *Rp {$totalFmt}*\n\n"
+            . "━━━━━━━━━━━━━━━━━━━━━━\n"
+            . "_Sistem Kasir {$appName}_";
+
+        return $this->sendToGroup($message);
+    }
+
+    /**
+     * Notifikasi pembayaran kasir (single tagihan legacy).
      */
     public function notifyKasirPayment(
         string  $santriName,
@@ -259,32 +394,22 @@ class WhatsAppService
         string  $loggedByName,
         ?string $notes = null
     ): bool {
-        if (!config('whatsapp.notify_kasir', true)) {
-            return false;
-        }
-
-        $appName     = config('app.name', 'Elvith');
-        $amountFmt   = number_format($amount, 0, ',', '.');
-        $methodLabel = match (strtolower($method)) {
-            'cash'     => '💵 Tunai',
-            'transfer' => '🏦 Transfer Bank',
-            default    => strtoupper($method),
-        };
-
-        $notesLine = $notes ? "\n📝 *Catatan:* {$notes}" : '';
-
-        $message = "💰 *PEMBAYARAN KASIR DICATAT*\n"
-            . "━━━━━━━━━━━━━━━━━\n\n"
-            . "📋 *Santri:* {$santriName}\n"
-            . "📦 *Tagihan:* {$billLabel} – {$periodLabel}\n"
-            . "💳 *Metode:* {$methodLabel}\n"
-            . "📅 *Waktu:* {$paidAt}\n"
-            . "👤 *Kasir:* {$loggedByName}"
-            . $notesLine . "\n\n"
-            . "💰 *Jumlah:* Rp {$amountFmt}\n\n"
-            . "_Via {$appName} Billing System_";
-
-        return $this->sendToGroup($message);
+        return $this->notifyKasirMultiPayment(
+            santriName:   $santriName,
+            receiptNo:    '-',
+            method:       $method,
+            paidAt:       $paidAt,
+            totalAmount:  $amount,
+            items:        [[
+                'bill_label'   => $billLabel,
+                'period_label' => $periodLabel,
+                'amount'       => $amount,
+                'is_partial'   => false,
+                'remaining'    => 0,
+            ]],
+            loggedByName: $loggedByName,
+            notes:        $notes
+        );
     }
 }
 

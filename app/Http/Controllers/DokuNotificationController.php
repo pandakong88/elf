@@ -207,16 +207,11 @@ class DokuNotificationController extends Controller
 
                 Log::info('[DokuNotification] Successfully processed payment for ' . $invoiceNumber . ', Receipt: ' . $receiptNo);
 
-                // 3d. Kirim Notifikasi WhatsApp (jika service aktif)
+                // 3d. Kirim Notifikasi WhatsApp ke Grup Bendahara & Wali (via Job Queue)
                 try {
-                    if (class_exists(WhatsAppService::class) && $trx->person) {
-                        $wa = app(WhatsAppService::class);
-                        if (method_exists($wa, 'sendPaymentSuccessReceipt')) {
-                            $wa->sendPaymentSuccessReceipt($trx, $receiptNo);
-                        }
-                    }
+                    \App\Jobs\SendWhatsAppPaymentNotificationJob::dispatch($trx->id);
                 } catch (\Throwable $waErr) {
-                    Log::warning('[DokuNotification] WA notification failed: ' . $waErr->getMessage());
+                    Log::warning('[DokuNotification] WA job dispatch failed: ' . $waErr->getMessage());
                 }
 
                 return response()->json([

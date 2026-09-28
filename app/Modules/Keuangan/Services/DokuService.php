@@ -530,16 +530,11 @@ class DokuService
             }
         }
 
-        // Kirim WhatsApp jika service aktif
+        // Kirim Notifikasi WhatsApp ke Grup Bendahara & Wali (via Job Queue)
         try {
-            if (class_exists(\App\Services\WhatsAppService::class) && $trx->person) {
-                $wa = app(\App\Services\WhatsAppService::class);
-                if (method_exists($wa, 'sendPaymentSuccessReceipt')) {
-                    $wa->sendPaymentSuccessReceipt($trx, $receiptNo);
-                }
-            }
+            \App\Jobs\SendWhatsAppPaymentNotificationJob::dispatch($trx->id);
         } catch (\Throwable $e) {
-            Log::warning('[DokuService] WhatsApp receipt notification failed: ' . $e->getMessage());
+            Log::warning('[DokuService] WhatsApp receipt notification job failed: ' . $e->getMessage());
         }
     }
 }

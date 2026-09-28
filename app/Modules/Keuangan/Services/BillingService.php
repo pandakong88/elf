@@ -243,7 +243,8 @@ class BillingService
         ?string $receiptNo = null,
         ?string $paymentGroupId = null,
         ?float $tenderedAmount = null,
-        ?float $changeAmount = 0.0
+        ?float $changeAmount = 0.0,
+        bool $triggerGroupNotification = true
     ): BillPayment {
         $payment = DB::transaction(function () use ($billId, $amount, $method, $notes, $loggedByUserId, $receiptNo, $paymentGroupId, $tenderedAmount, $changeAmount) {
             $bill = Bill::findOrFail($billId);
@@ -269,10 +270,11 @@ class BillingService
         });
 
         // ── Notifikasi WA grup admin (non-blocking) ─────────────────────────
-        if (strtolower($method) !== 'gateway_duitku') {
+        if ($triggerGroupNotification && !in_array(strtolower($method), ['gateway_duitku', 'gateway_doku'])) {
             try {
-                $payment->loadMissing(['bill.config', 'bill.person', 'logger']);
+                $payment->loadMissing(['bill.config', 'bill.person.roomAssignments.room.dormitory', 'logger']);
                 $bill     = $payment->bill;
+                $person   = $bill?->person;
                 $months   = [1=>'Januari',2=>'Februari',3=>'Maret',4=>'April',5=>'Mei',6=>'Juni',
                              7=>'Juli',8=>'Agustus',9=>'September',10=>'Oktober',11=>'November',12=>'Desember'];
                 $interval = $bill?->config?->interval ?? '';
@@ -284,14 +286,28 @@ class BillingService
                     default                                                        => ($months[$bill?->period_month ?? 0] ?? '').' '.($bill?->period_year ?? ''),
                 };
 
-                app(WhatsAppService::class)->notifyKasirPayment(
-                    santriName:   $bill?->person?->name ?? '—',
-                    billLabel:    $bill?->config?->label ?? ucwords(str_replace('_',' ',$bill?->bill_type ?? '')),
-                    periodLabel:  trim($period),
+                $activeAssignment = $person?->roomAssignments?->where('status', 'active')->first() ?? $person?->roomAssignments?->first();
+                $dormName         = $activeAssignment?->room?->dormitory?->name;
+                $roomName         = $activeAssignment?->room?->name;
+                $roomLocation     = ($dormName && $roomName) ? "{$dormName} – {$roomName}" : ($dormName ?: ($roomName ?: null));
+
+                $remaining = max(0, (float)$bill->amount - (float)$bill->amount_paid);
+
+                app(WhatsAppService::class)->notifyKasirMultiPayment(
+                    santriName:   $person?->name ?? '—',
+                    receiptNo:    $receiptNo ?? '-',
                     method:       $method,
                     paidAt:       now()->locale('id')->translatedFormat('d F Y, H:i').' WIB',
-                    amount:       $amount,
+                    totalAmount:  $amount,
+                    items:        [[
+                        'bill_label'   => $bill?->config?->label ?? ucwords(str_replace('_',' ',$bill?->bill_type ?? '')),
+                        'period_label' => trim($period),
+                        'amount'       => $amount,
+                        'is_partial'   => $remaining > 0,
+                        'remaining'    => $remaining,
+                    ]],
                     loggedByName: $payment->logger?->name ?? 'Sistem',
+                    roomLocation: $roomLocation,
                     notes:        $notes,
                 );
             } catch (\Throwable $e) {

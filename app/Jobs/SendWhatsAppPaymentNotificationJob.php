@@ -84,7 +84,7 @@ class SendWhatsAppPaymentNotificationJob implements ShouldQueue
             Log::warning("[SendWhatsAppPaymentNotificationJob] Gagal kirim ke grup: " . $e->getMessage());
         }
 
-        // 2. Kirim kuitansi WhatsApp ke Nomor Pribadi Wali Santri (jika ada)
+        // 2. Kirim kuitansi WhatsApp ke Nomor Pribadi Wali Santri (jika aktif di konfigurasi)
         try {
             $waliPhone = $person?->santriProfile?->father_phone 
                 ?: $person?->santriProfile?->mother_phone 
@@ -92,6 +92,8 @@ class SendWhatsAppPaymentNotificationJob implements ShouldQueue
                 ?: $person?->phone;
 
             if ($waliPhone) {
+                $receiptUrl = route('bukti-bayar.gateway', $transaction->id);
+
                 $whatsAppService->notifyWaliPaymentReceipt(
                     phone:        $waliPhone,
                     santriName:   $santriName,
@@ -101,6 +103,7 @@ class SendWhatsAppPaymentNotificationJob implements ShouldQueue
                     totalAmount:  (float) $transaction->total_amount,
                     breakdown:    $breakdown,
                     roomLocation: $roomLocation,
+                    receiptUrl:   $receiptUrl,
                 );
             }
         } catch (\Throwable $e) {
