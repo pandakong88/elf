@@ -2844,14 +2844,16 @@ class BillingManager extends Component
                 $roomName         = $activeAssignment?->room?->name;
                 $roomLocation     = ($dormName && $roomName) ? "{$dormName} – {$roomName}" : ($dormName ?: ($roomName ?: null));
 
+                $totalTransfer = (float) ($sub->total_transfer_amount ?: (($sub->total_bills_amount ?? 0) + ($sub->pocket_money_amount ?? 0)));
+
                 app(WhatsAppService::class)->notifyManualTransferVerified(
                     santriName:      $person?->name ?? 'Santri',
                     receiptNo:       $receiptNo,
                     submissionCode:  $sub->submission_code,
-                    bankDestination: $sub->bank_destination ?? 'Bank',
+                    bankDestination: $sub->destination_bank_label ?: ($sub->bank_destination ?? 'Bank'),
                     verifiedAt:      $now->locale('id')->translatedFormat('d F Y, H:i') . ' WIB',
                     verifiedByName:  $user?->name ?? 'Bendahara',
-                    totalAmount:     (float) $sub->total_amount,
+                    totalAmount:     $totalTransfer,
                     items:           $verifiedItems,
                     roomLocation:    $roomLocation,
                 );
