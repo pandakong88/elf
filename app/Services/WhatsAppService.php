@@ -399,6 +399,73 @@ class WhatsAppService
     }
 
     /**
+     * Notifikasi verifikasi transfer manual (Portal Wali) ke Grup Bendahara.
+     */
+    public function notifyManualTransferVerified(
+        string  $santriName,
+        string  $receiptNo,
+        string  $submissionCode,
+        string  $bankDestination,
+        string  $verifiedAt,
+        string  $verifiedByName,
+        float   $totalAmount,
+        array   $items,
+        ?string $roomLocation = null
+    ): bool {
+        if (!config('whatsapp.notify_kasir', true) && !config('whatsapp.notify_gateway', true)) {
+            return false;
+        }
+
+        $appName     = config('app.name', 'Elvith.id');
+        $totalFmt    = number_format($totalAmount, 0, ',', '.');
+        $bankLabel   = !empty($bankDestination) ? strtoupper($bankDestination) : 'Rekening Pondok';
+
+        $rincian = '';
+        $idx = 1;
+        foreach ($items as $item) {
+            $label     = !empty($item['bill_label']) ? $item['bill_label'] : (!empty($item['config_label']) ? $item['config_label'] : ucwords(str_replace('_', ' ', $item['bill_type'] ?? 'Tagihan')));
+            $period    = !empty($item['period_label']) ? " ({$item['period_label']})" : '';
+            $amount    = number_format($item['amount'] ?? $item['pay_portion'] ?? 0, 0, ',', '.');
+            $isPartial = !empty($item['is_partial']);
+            $remaining = (float)($item['remaining'] ?? 0);
+
+            if ($isPartial && $remaining > 0) {
+                $remFmt = number_format($remaining, 0, ',', '.');
+                $statusTag = "⏳ *[Cicilan - Sisa: Rp {$remFmt}]*";
+            } else {
+                $statusTag = "✅ *[LUNAS]*";
+            }
+
+            $rincian .= "{$idx}. *{$label}{$period}*\n   └ 💵 Rp {$amount}  {$statusTag}\n";
+            $idx++;
+        }
+
+        $locationLine = !empty($roomLocation) ? "\n• *Kamar/Komplek :* {$roomLocation}" : '';
+
+        $message = "──────────────────────\n"
+            . "🏦 *TRANSFER MANUAL DIVERIFIKASI*\n"
+            . "_{$appName} — Verifikasi Portal Wali_\n"
+            . "──────────────────────\n\n"
+            . "📌 *DATA TRANSAKSI*\n"
+            . "• *No. Kuitansi :* `{$receiptNo}`\n"
+            . "• *Kode Bukti   :* `{$submissionCode}`\n"
+            . "• *Bank Tujuan  :* 🏦 {$bankLabel}\n"
+            . "• *Waktu Sah    :* {$verifiedAt}\n"
+            . "• *Verifikator  :* {$verifiedByName}\n\n"
+            . "👤 *DATA SANTRI*\n"
+            . "• *Nama Santri  :* *{$santriName}*"
+            . $locationLine . "\n\n"
+            . "📦 *RINCIAN PELUNASAN*\n"
+            . ($rincian ?: "• (rincian pembayaran)\n") . "\n"
+            . "──────────────────────\n"
+            . "💵 *TOTAL TRANSFER : Rp {$totalFmt}*\n"
+            . "──────────────────────\n"
+            . "_Alhamdulillah, bukti transfer telah disetujui & dibukukan._";
+
+        return $this->sendToGroup($message);
+    }
+
+    /**
      * Notifikasi pembayaran kasir (single tagihan legacy).
      */
     public function notifyKasirPayment(

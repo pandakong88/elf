@@ -2764,13 +2764,36 @@ class BillingManager extends Component
             $receiptNo = BillPayment::generateReceiptNo();
             $paymentGroupId = (string) Str::uuid();
             $now = now();
+            $verifiedItems = [];
+            $months = [1=>'Januari',2=>'Februari',3=>'Maret',4=>'April',5=>'Mei',6=>'Juni',
+                       7=>'Juli',8=>'Agustus',9=>'September',10=>'Oktober',11=>'November',12=>'Desember'];
+
             foreach (($sub->bill_breakdown ?? []) as $item) {
                 if (empty($item['bill_id'])) continue;
-                $bill = Bill::find($item['bill_id']);
+                $bill = Bill::with('config')->find($item['bill_id']);
                 if (!$bill) continue;
 
                 $payPortion = (float) ($item['amount'] ?? 0);
                 if ($payPortion <= 0) continue;
+
+                $interval = $bill->config?->interval ?? '';
+                $isSemester = in_array($interval, ['semester', '2x_yearly']) || ($bill->bill_type === 'syahriah_madrasah');
+                $sem = $bill->period_sub ?: ($bill->period_month && $bill->period_month <= 6 ? 1 : 2);
+                $period = match(true) {
+                    $isSemester                                                    => 'Semester '.$sem.'/'.$bill->period_year,
+                    in_array($interval, ['once','insidental','event','sekali'])   => 'Event '.($bill->period_year ?? ''),
+                    default                                                        => ($months[$bill->period_month ?? 0] ?? '').' '.($bill->period_year ?? ''),
+                };
+
+                $remainingAfterPay = max(0, (float)$bill->amount - ((float)$bill->amount_paid + $payPortion));
+
+                $verifiedItems[] = [
+                    'bill_label'   => !empty($bill->config?->label) ? $bill->config->label : (!empty($bill->bill_type) ? ucwords(str_replace('_', ' ', $bill->bill_type)) : 'Tagihan'),
+                    'period_label' => trim($period),
+                    'amount'       => $payPortion,
+                    'is_partial'   => $remainingAfterPay > 0,
+                    'remaining'    => $remainingAfterPay,
+                ];
 
                 // Create BillPayment record (Bill::recalculateStatus handles bill status/amount_paid automatically on saved hook)
                 BillPayment::create([
@@ -2792,6 +2815,14 @@ class BillingManager extends Component
                     'received_by' => $user?->id,
                     'received_at' => $now,
                 ]);
+
+                $verifiedItems[] = [
+                    'bill_label'   => 'Titipan Uang Saku',
+                    'period_label' => '',
+                    'amount'       => (float) $sub->pocket_money_amount,
+                    'is_partial'   => false,
+                    'remaining'    => 0,
+                ];
             }
 
             // Update ManualTransferSubmission
@@ -2803,6 +2834,30 @@ class BillingManager extends Component
             ]);
 
             DB::commit();
+
+            // Kirim notifikasi WA ke Grup Bendahara (non-blocking)
+            try {
+                $sub->loadMissing(['person.roomAssignments' => fn($q) => $q->where('status', 'active')->with('room.dormitory')]);
+                $person           = $sub->person;
+                $activeAssignment = $person?->roomAssignments?->first();
+                $dormName         = $activeAssignment?->room?->dormitory?->name;
+                $roomName         = $activeAssignment?->room?->name;
+                $roomLocation     = ($dormName && $roomName) ? "{$dormName} – {$roomName}" : ($dormName ?: ($roomName ?: null));
+
+                app(WhatsAppService::class)->notifyManualTransferVerified(
+                    santriName:      $person?->name ?? 'Santri',
+                    receiptNo:       $receiptNo,
+                    submissionCode:  $sub->submission_code,
+                    bankDestination: $sub->bank_destination ?? 'Bank',
+                    verifiedAt:      $now->locale('id')->translatedFormat('d F Y, H:i') . ' WIB',
+                    verifiedByName:  $user?->name ?? 'Bendahara',
+                    totalAmount:     (float) $sub->total_amount,
+                    items:           $verifiedItems,
+                    roomLocation:    $roomLocation,
+                );
+            } catch (\Throwable $waErr) {
+                Log::warning('[BillingManager] Gagal kirim WA verifikasi transfer: ' . $waErr->getMessage());
+            }
 
             $this->closeTransferVerifyModal();
             $this->toastSuccess("Pembayaran transfer [{$sub->submission_code}] berhasil disetujui. Nota kuitansi {$receiptNo} telah diterbitkan.");
