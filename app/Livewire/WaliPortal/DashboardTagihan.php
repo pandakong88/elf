@@ -483,6 +483,9 @@ class DashboardTagihan extends Component
                 $senderName = $this->senderAccountName 
                     ?: ($this->senderBank ? "Wali via {$this->senderBank}" : ($person?->santriProfile?->father_name ?: 'Wali Santri'));
 
+                $proofUrl  = route('transfer-proof.view', $submission->id);
+                $verifyUrl = url('/keuangan/billing?tab=transfer');
+
                 app(WhatsAppService::class)->notifyManualTransferPending(
                     santriName:        $person?->name ?? 'Santri',
                     submissionCode:    $submission->submission_code,
@@ -493,6 +496,8 @@ class DashboardTagihan extends Component
                     items:             $pendingItems,
                     roomLocation:      $roomLocation,
                     notes:             $this->transferNotes ?: null,
+                    proofUrl:          $proofUrl,
+                    verifyUrl:         $verifyUrl,
                 );
             } catch (\Throwable $waErr) {
                 Log::warning('[DashboardTagihan] Gagal kirim WA pending transfer: ' . $waErr->getMessage());

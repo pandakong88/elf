@@ -269,7 +269,8 @@ class WhatsAppService
         float   $mdrAmount,
         float   $totalAmount,
         array   $breakdown = [],
-        ?string $roomLocation = null
+        ?string $roomLocation = null,
+        ?string $receiptUrl = null
     ): bool {
         if (!config('whatsapp.notify_gateway', true)) {
             return false;
@@ -303,6 +304,11 @@ class WhatsAppService
             ? "\n• *Biaya Layanan :* Rp " . number_format($mdrAmount, 0, ',', '.') . " (MDR)"
             : '';
 
+        $actionSection = "\n──────────────────────\n"
+            . "🔗 *AKSI & BUKTI TRANSAKSI:*\n"
+            . (!empty($receiptUrl) ? "📄 *Lihat Bukti Bayar:*\n{$receiptUrl}\n" : "")
+            . "👉 *Dashboard Keuangan:*\n" . url('/keuangan/billing') . "\n";
+
         $message = "──────────────────────\n"
             . "🟢 *PEMBAYARAN ONLINE MASUK*\n"
             . "_{$appName} — Payment Gateway_\n"
@@ -318,7 +324,8 @@ class WhatsAppService
             . "📦 *RINCIAN TAGIHAN*\n"
             . ($rincian ?: "• (rincian pembayaran)\n") . "\n"
             . "──────────────────────\n"
-            . "💵 *TOTAL DITERIMA : Rp {$totalFmt}*\n"
+            . "💵 *TOTAL DITERIMA : Rp {$totalFmt}*"
+            . $actionSection
             . "──────────────────────\n"
             . "_Alhamdulillah, pembayaran terverifikasi otomatis._";
 
@@ -337,7 +344,8 @@ class WhatsAppService
         array   $items,
         string  $loggedByName,
         ?string $roomLocation = null,
-        ?string $notes = null
+        ?string $notes = null,
+        ?string $receiptUrl = null
     ): bool {
         if (!config('whatsapp.notify_kasir', true)) {
             return false;
@@ -375,6 +383,12 @@ class WhatsAppService
         $locationLine = !empty($roomLocation) ? "\n• *Kamar/Komplek :* {$roomLocation}" : '';
         $notesLine    = !empty($notes) && $notes !== 'Pembayaran Kasir' ? "\n• *Catatan        :* {$notes}" : '';
 
+        $kuitansiLink = $receiptUrl ?: ($receiptNo !== '-' ? route('bukti-bayar.kuitansi', $receiptNo) : null);
+        $actionSection = "\n──────────────────────\n"
+            . "🔗 *AKSI & BUKTI TRANSAKSI:*\n"
+            . ($kuitansiLink ? "📄 *Lihat Nota Kuitansi:*\n{$kuitansiLink}\n" : "")
+            . "👉 *Buka Kasir Pembayaran:*\n" . url('/keuangan/billing?tab=kasir') . "\n";
+
         $message = "──────────────────────\n"
             . "💰 *LAPORAN PEMBAYARAN KASIR*\n"
             . "_{$appName} — Keuangan Pesantren_\n"
@@ -391,7 +405,8 @@ class WhatsAppService
             . "📦 *RINCIAN PEMBAYARAN*\n"
             . ($rincian ?: "• (rincian pembayaran)\n") . "\n"
             . "──────────────────────\n"
-            . "💵 *TOTAL DITERIMA : Rp {$totalFmt}*\n"
+            . "💵 *TOTAL DITERIMA : Rp {$totalFmt}*"
+            . $actionSection
             . "──────────────────────\n"
             . "_Alhamdulillah, dana telah dibukukan._";
 
@@ -410,7 +425,9 @@ class WhatsAppService
         float   $totalAmount,
         array   $items,
         ?string $roomLocation = null,
-        ?string $notes = null
+        ?string $notes = null,
+        ?string $proofUrl = null,
+        ?string $verifyUrl = null
     ): bool {
         if (!config('whatsapp.notify_kasir', true) && !config('whatsapp.notify_gateway', true)) {
             return false;
@@ -434,6 +451,9 @@ class WhatsAppService
         $locationLine = !empty($roomLocation) ? "\n• *Kamar/Komplek :* {$roomLocation}" : '';
         $notesLine    = !empty($notes) ? "\n• *Catatan Wali  :* {$notes}" : '';
 
+        $proofLink  = !empty($proofUrl) ? "🔍 *Lihat Foto Struk Transfer:*\n{$proofUrl}\n" : "";
+        $actionLink = !empty($verifyUrl) ? $verifyUrl : url('/keuangan/billing?tab=transfer');
+
         $message = "──────────────────────\n"
             . "⚠️ *PENGAJUAN TRANSFER MASUK*\n"
             . "_{$appName} — Menunggu Verifikasi_\n"
@@ -451,9 +471,12 @@ class WhatsAppService
             . ($rincian ?: "• (rincian pembayaran)\n") . "\n"
             . "──────────────────────\n"
             . "💵 *NOMINAL KLAIM : Rp {$totalFmt}*\n"
-            . "──────────────────────\n"
+            . "──────────────────────\n\n"
             . "🔔 *TINDAKAN BENDAHARA:*\n"
-            . "_Mohon cek mutasi rekening & verifikasi di Dashboard Keuangan._";
+            . $proofLink
+            . "👉 *Verifikasi di Web Dashboard:*\n{$actionLink}\n"
+            . "──────────────────────\n"
+            . "_Mohon cek mutasi rekening & setujui jika valid._";
 
         return $this->sendToGroup($message);
     }
@@ -470,7 +493,8 @@ class WhatsAppService
         string  $verifiedByName,
         float   $totalAmount,
         array   $items,
-        ?string $roomLocation = null
+        ?string $roomLocation = null,
+        ?string $receiptUrl = null
     ): bool {
         if (!config('whatsapp.notify_kasir', true) && !config('whatsapp.notify_gateway', true)) {
             return false;
@@ -502,6 +526,12 @@ class WhatsAppService
 
         $locationLine = !empty($roomLocation) ? "\n• *Kamar/Komplek :* {$roomLocation}" : '';
 
+        $kuitansiLink = $receiptUrl ?: ($receiptNo !== '-' ? route('bukti-bayar.kuitansi', $receiptNo) : null);
+        $actionSection = "\n──────────────────────\n"
+            . "🔗 *AKSI & BUKTI TRANSAKSI:*\n"
+            . ($kuitansiLink ? "📄 *Lihat Nota Kuitansi Sah:*\n{$kuitansiLink}\n" : "")
+            . "👉 *Menu Verifikasi Transfer:*\n" . url('/keuangan/billing?tab=transfer') . "\n";
+
         $message = "──────────────────────\n"
             . "🏦 *TRANSFER MANUAL DIVERIFIKASI*\n"
             . "_{$appName} — Verifikasi Portal Wali_\n"
@@ -518,7 +548,8 @@ class WhatsAppService
             . "📦 *RINCIAN PELUNASAN*\n"
             . ($rincian ?: "• (rincian pembayaran)\n") . "\n"
             . "──────────────────────\n"
-            . "💵 *TOTAL TRANSFER : Rp {$totalFmt}*\n"
+            . "💵 *TOTAL TRANSFER : Rp {$totalFmt}*"
+            . $actionSection
             . "──────────────────────\n"
             . "_Alhamdulillah, bukti transfer telah disetujui & dibukukan._";
 

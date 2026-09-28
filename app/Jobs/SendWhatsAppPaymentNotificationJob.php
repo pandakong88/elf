@@ -67,6 +67,8 @@ class SendWhatsAppPaymentNotificationJob implements ShouldQueue
             ? "{$dormName} – {$roomName}" 
             : ($dormName ?: ($roomName ?: null));
 
+        $receiptUrl = route('bukti-bayar.gateway', $transaction->id);
+
         // 1. Kirim notifikasi ke Grup WhatsApp Bendahara
         try {
             $whatsAppService->notifyGatewayPayment(
@@ -79,6 +81,7 @@ class SendWhatsAppPaymentNotificationJob implements ShouldQueue
                 totalAmount:  (float) $transaction->total_amount,
                 breakdown:    $breakdown,
                 roomLocation: $roomLocation,
+                receiptUrl:   $receiptUrl,
             );
         } catch (\Throwable $e) {
             Log::warning("[SendWhatsAppPaymentNotificationJob] Gagal kirim ke grup: " . $e->getMessage());

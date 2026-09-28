@@ -2531,6 +2531,8 @@ class BillingManager extends Component
         $roomName         = $activeAssignment?->room?->name;
         $roomLocation     = ($dormName && $roomName) ? "{$dormName} – {$roomName}" : ($dormName ?: ($roomName ?: null));
 
+        $receiptUrl = route('bukti-bayar.kuitansi', $receiptNo);
+
         // 1. Kirim Notifikasi Gabungan ke Grup WhatsApp Bendahara
         try {
             app(WhatsAppService::class)->notifyKasirMultiPayment(
@@ -2543,6 +2545,7 @@ class BillingManager extends Component
                 loggedByName: auth()->user()?->name ?? 'Kasir',
                 roomLocation: $roomLocation,
                 notes:        $this->payNotes ?: null,
+                receiptUrl:   $receiptUrl,
             );
         } catch (\Throwable $e) {
             Log::warning('[BillingManager] Gagal kirim WA grup kasir: ' . $e->getMessage());
@@ -2845,6 +2848,7 @@ class BillingManager extends Component
                 $roomLocation     = ($dormName && $roomName) ? "{$dormName} – {$roomName}" : ($dormName ?: ($roomName ?: null));
 
                 $totalTransfer = (float) ($sub->total_transfer_amount ?: (($sub->total_bills_amount ?? 0) + ($sub->pocket_money_amount ?? 0)));
+                $receiptUrl    = route('bukti-bayar.kuitansi', $receiptNo);
 
                 app(WhatsAppService::class)->notifyManualTransferVerified(
                     santriName:      $person?->name ?? 'Santri',
@@ -2856,6 +2860,7 @@ class BillingManager extends Component
                     totalAmount:     $totalTransfer,
                     items:           $verifiedItems,
                     roomLocation:    $roomLocation,
+                    receiptUrl:      $receiptUrl,
                 );
             } catch (\Throwable $waErr) {
                 Log::warning('[BillingManager] Gagal kirim WA verifikasi transfer: ' . $waErr->getMessage());
