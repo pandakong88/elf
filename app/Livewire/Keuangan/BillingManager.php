@@ -2516,7 +2516,7 @@ class BillingManager extends Component
                 $remainingAfterPay = max(0, (float)$bill->amount - ((float)$bill->amount_paid + $paymentForThisBill));
 
                 $paidSummaryItems[] = [
-                    'bill_label'   => $bill->config?->label ?? ucwords(str_replace('_', ' ', $bill->bill_type ?? '')),
+                    'bill_label'   => !empty($bill->config?->label) ? $bill->config->label : (!empty($bill->bill_type) ? ucwords(str_replace('_', ' ', $bill->bill_type)) : 'Tagihan'),
                     'period_label' => trim($period),
                     'amount'       => $paymentForThisBill,
                     'is_partial'   => $remainingAfterPay > 0,

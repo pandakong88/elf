@@ -147,10 +147,11 @@ class WhatsAppService
 
         $appName = config('app.name', 'Pondok Pesantren Al-Fithroh');
         $rincian = '';
+        $idx = 1;
 
         foreach ($breakdown as $item) {
-            $label   = $item['config_label'] ?? $item['bill_label'] ?? ucwords(str_replace('_', ' ', $item['bill_type'] ?? ''));
-            $period  = $item['period_label'] ?? '';
+            $label   = !empty($item['config_label']) ? $item['config_label'] : (!empty($item['bill_label']) ? $item['bill_label'] : ucwords(str_replace('_', ' ', $item['bill_type'] ?? 'Tagihan')));
+            $period  = !empty($item['period_label']) ? " ({$item['period_label']})" : '';
             $amount  = number_format($item['pay_portion'] ?? $item['net_amount'] ?? $item['amount'] ?? 0, 0, ',', '.');
             
             $isPartial = !empty($item['is_partial']);
@@ -158,30 +159,31 @@ class WhatsAppService
 
             if ($isPartial && $remaining > 0) {
                 $remFmt = number_format($remaining, 0, ',', '.');
-                $statusTag = " ⏳ *(Cicilan - Sisa: Rp {$remFmt})*";
+                $statusTag = "⏳ *(Cicilan - Sisa: Rp {$remFmt})*";
             } else {
-                $statusTag = " 🟢 *(Lunas)*";
+                $statusTag = "✅ *(Lunas)*";
             }
 
-            $rincian .= "• {$label}" . ($period ? " ({$period})" : "") . " : Rp {$amount}{$statusTag}\n";
+            $rincian .= "{$idx}. *{$label}{$period}*\n   └ 💵 Rp {$amount}  {$statusTag}\n";
+            $idx++;
         }
 
         $totalFmt = number_format($totalAmount, 0, ',', '.');
-        $locationLine = !empty($roomLocation) ? "\n🏠 *Komplek/Kamar:* {$roomLocation}" : '';
-        $receiptLine  = !empty($receiptUrl) ? "\n📄 *Kuitansi Digital:* {$receiptUrl}\n" : '';
+        $locationLine = !empty($roomLocation) ? "\n🏠 *Kamar/Komplek:* {$roomLocation}" : '';
+        $receiptLine  = !empty($receiptUrl) ? "\n📄 *Unduh Kuitansi Digital:*\n{$receiptUrl}\n" : '';
 
         $message = "Assalamu'alaikum Warahmatullahi Wabarakatuh.\n\n"
-            . "Alhamdulillah, pembayaran administrasi pesantren telah berhasil dicatat:\n"
-            . "👤 *Santri:* {$santriName}"
+            . "Alhamdulillah, pembayaran administrasi pesantren telah berhasil dicatat:\n\n"
+            . "👤 *Santri:* *{$santriName}*"
             . $locationLine . "\n"
-            . "🧾 *No. Transaksi:* {$orderId}\n"
+            . "🧾 *No. Transaksi:* `{$orderId}`\n"
             . "💳 *Metode:* {$channelLabel}\n"
             . "📅 *Waktu:* {$paidAt}\n\n"
             . "📦 *Rincian Pembayaran:*\n"
-            . ($rincian ?: "• (rincian umum)\n")
-            . "\n💰 *Total Diterima:* *Rp {$totalFmt}*\n"
+            . ($rincian ?: "• (rincian umum)\n") . "\n"
+            . "💰 *Total Diterima:* *Rp {$totalFmt}*\n"
             . $receiptLine . "\n"
-            . "Semoga barokah dan bermanfaat bagi kelancaran tholabul 'ilmi ananda. Aamiin.\n\n"
+            . "Jazakumullahu khairan katsiran. Semoga barokah dan melancarkan proses tholabul 'ilmi ananda. Aamiin.\n\n"
             . "— *Pengurus Keuangan {$appName}*";
 
         return $this->sendToNumber($phone, $message);
@@ -215,37 +217,39 @@ class WhatsAppService
         };
 
         $rincian = '';
+        $idx = 1;
         foreach ($items as $item) {
-            $label   = $item['bill_label'] ?? $item['config_label'] ?? ucwords(str_replace('_', ' ', $item['bill_type'] ?? ''));
-            $period  = $item['period_label'] ?? '';
-            $amount  = number_format($item['amount'] ?? $item['pay_portion'] ?? $item['net_amount'] ?? 0, 0, ',', '.');
+            $label     = !empty($item['bill_label']) ? $item['bill_label'] : (!empty($item['config_label']) ? $item['config_label'] : ucwords(str_replace('_', ' ', $item['bill_type'] ?? 'Tagihan')));
+            $period    = !empty($item['period_label']) ? " ({$item['period_label']})" : '';
+            $amount    = number_format($item['amount'] ?? $item['pay_portion'] ?? $item['net_amount'] ?? 0, 0, ',', '.');
             $isPartial = !empty($item['is_partial']);
             $remaining = (float)($item['remaining'] ?? 0);
 
             if ($isPartial && $remaining > 0) {
                 $remFmt = number_format($remaining, 0, ',', '.');
-                $statusTag = " ⏳ (Cicilan - Sisa: Rp {$remFmt})";
+                $statusTag = "⏳ (Cicilan - Sisa: Rp {$remFmt})";
             } else {
-                $statusTag = " 🟢 (Lunas)";
+                $statusTag = "✅ (Lunas)";
             }
 
-            $rincian .= "• {$label}" . ($period ? " ({$period})" : "") . " : Rp {$amount}{$statusTag}\n";
+            $rincian .= "{$idx}. *{$label}{$period}*\n   └ Rp {$amount} {$statusTag}\n";
+            $idx++;
         }
 
         $totalFmt = number_format($totalAmount, 0, ',', '.');
-        $locationLine = !empty($roomLocation) ? "\n🏠 *Komplek/Kamar:* {$roomLocation}" : '';
+        $locationLine = !empty($roomLocation) ? "\n🏠 *Kamar/Komplek:* {$roomLocation}" : '';
         $receiptLine  = !empty($receiptUrl) ? "\n📄 *Unduh Kuitansi Digital:*\n{$receiptUrl}\n" : '';
 
         $message = "Assalamu'alaikum Warahmatullahi Wabarakatuh.\n\n"
-            . "Alhamdulillah, pembayaran administrasi pesantren untuk ananda tercatat:\n"
-            . "👤 *Santri:* {$santriName}"
+            . "Alhamdulillah, pembayaran administrasi santri telah berhasil dicatat:\n\n"
+            . "👤 *Santri:* *{$santriName}*"
             . $locationLine . "\n"
-            . "🧾 *No. Kuitansi:* {$receiptNo}\n"
+            . "🧾 *No. Kuitansi:* `{$receiptNo}`\n"
             . "💳 *Metode:* {$methodLabel}\n"
             . "📅 *Waktu:* {$paidAt}\n\n"
             . "📦 *Rincian Pelunasan:*\n"
-            . ($rincian ?: "• (pembayaran tagihan)\n")
-            . "\n💰 *Total Diterima:* *Rp {$totalFmt}*\n"
+            . ($rincian ?: "• (pembayaran tagihan)\n") . "\n"
+            . "💰 *Total Diterima:* *Rp {$totalFmt}*\n"
             . $receiptLine . "\n"
             . "Jazakumullahu khairan katsiran. Semoga barokah dan melancarkan proses tholabul 'ilmi ananda. Aamiin.\n\n"
             . "— *Pengurus Keuangan {$appName}*";
@@ -271,46 +275,52 @@ class WhatsAppService
             return false;
         }
 
-        $appName = config('app.name', 'Elvith.id');
-        $rincian = '';
+        $appName  = config('app.name', 'Elvith.id');
+        $totalFmt = number_format($totalAmount, 0, ',', '.');
+        $rincian  = '';
+        $idx      = 1;
 
         foreach ($breakdown as $item) {
-            $label   = $item['config_label'] ?? ucwords(str_replace('_', ' ', $item['bill_type'] ?? ''));
-            $period  = $item['period_label'] ?? '';
-            $amount  = number_format($item['pay_portion'] ?? $item['net_amount'] ?? 0, 0, ',', '.');
-
+            $label     = !empty($item['config_label']) ? $item['config_label'] : (!empty($item['bill_label']) ? $item['bill_label'] : ucwords(str_replace('_', ' ', $item['bill_type'] ?? 'Tagihan')));
+            $period    = !empty($item['period_label']) ? " ({$item['period_label']})" : '';
+            $amount    = number_format($item['pay_portion'] ?? $item['net_amount'] ?? $item['amount'] ?? 0, 0, ',', '.');
             $isPartial = !empty($item['is_partial']);
-            $remaining = max(0, ((float)($item['bill_remaining'] ?? 0)) - ((float)($item['pay_portion'] ?? $item['net_amount'] ?? 0)));
+            $remaining = max(0, ((float)($item['bill_remaining'] ?? $item['remaining'] ?? 0)) - ((float)($item['pay_portion'] ?? $item['net_amount'] ?? $item['amount'] ?? 0)));
 
             if ($isPartial && $remaining > 0) {
                 $remFmt = number_format($remaining, 0, ',', '.');
-                $statusTag = " ⏳ *(Cicilan - Sisa: Rp {$remFmt})*";
+                $statusTag = "⏳ *[Cicilan - Sisa: Rp {$remFmt}]*";
             } else {
-                $statusTag = " 🟢";
+                $statusTag = "✅ *[LUNAS]*";
             }
 
-            $rincian .= "• {$label}" . ($period ? " – {$period}" : "") . " → Rp {$amount}{$statusTag}\n";
+            $rincian .= "{$idx}. *{$label}{$period}*\n   └ 💵 Rp {$amount}  {$statusTag}\n";
+            $idx++;
         }
 
-        $totalFmt = number_format($totalAmount, 0, ',', '.');
-        $locationLine = !empty($roomLocation) ? "\n🏠 *Komplek/Kamar:* {$roomLocation}" : '';
-        $mdrInfo  = $mdrAmount > 0
-            ? "\n💸 *Biaya Layanan:* Rp " . number_format($mdrAmount, 0, ',', '.') . " (ditanggung wali)"
+        $locationLine = !empty($roomLocation) ? "\n• *Kamar/Komplek :* {$roomLocation}" : '';
+        $mdrInfo      = $mdrAmount > 0
+            ? "\n• *Biaya Layanan :* Rp " . number_format($mdrAmount, 0, ',', '.') . " (MDR)"
             : '';
 
-        $message = "🟢 *[PAYMENT GATEWAY - UANG MASUK]*\n"
-            . "━━━━━━━━━━━━━━━━━━━━━━\n\n"
-            . "📋 *Santri:* {$santriName}"
-            . $locationLine . "\n"
-            . "🏷 *No. Order:* `{$orderId}`\n"
-            . "💳 *Metode:* {$channelLabel} (Online)\n"
-            . "📅 *Waktu:* {$paidAt}"
+        $message = "──────────────────────\n"
+            . "🟢 *PEMBAYARAN ONLINE MASUK*\n"
+            . "_{$appName} — Payment Gateway_\n"
+            . "──────────────────────\n\n"
+            . "📌 *DATA TRANSAKSI*\n"
+            . "• *No. Order    :* `{$orderId}`\n"
+            . "• *Waktu        :* {$paidAt}\n"
+            . "• *Metode       :* 📱 {$channelLabel} (Online)"
             . $mdrInfo . "\n\n"
-            . "📦 *Rincian Tagihan:*\n"
-            . ($rincian ?: "• (tidak ada rincian)\n")
-            . "\n💰 *Total Diterima:* *Rp {$totalFmt}*\n\n"
-            . "━━━━━━━━━━━━━━━━━━━━━━\n"
-            . "_Sistem Keuangan {$appName}_";
+            . "👤 *DATA SANTRI*\n"
+            . "• *Nama Santri  :* *{$santriName}*"
+            . $locationLine . "\n\n"
+            . "📦 *RINCIAN TAGIHAN*\n"
+            . ($rincian ?: "• (rincian pembayaran)\n") . "\n"
+            . "──────────────────────\n"
+            . "💵 *TOTAL DITERIMA : Rp {$totalFmt}*\n"
+            . "──────────────────────\n"
+            . "_Alhamdulillah, pembayaran terverifikasi otomatis._";
 
         return $this->sendToGroup($message);
     }
@@ -343,40 +353,47 @@ class WhatsAppService
         };
 
         $rincian = '';
+        $idx = 1;
         foreach ($items as $item) {
-            $label     = $item['bill_label'] ?? $item['config_label'] ?? ucwords(str_replace('_', ' ', $item['bill_type'] ?? ''));
-            $period    = $item['period_label'] ?? '';
+            $label     = !empty($item['bill_label']) ? $item['bill_label'] : (!empty($item['config_label']) ? $item['config_label'] : ucwords(str_replace('_', ' ', $item['bill_type'] ?? 'Tagihan')));
+            $period    = !empty($item['period_label']) ? " ({$item['period_label']})" : '';
             $amount    = number_format($item['amount'] ?? $item['pay_portion'] ?? 0, 0, ',', '.');
             $isPartial = !empty($item['is_partial']);
             $remaining = (float)($item['remaining'] ?? 0);
 
             if ($isPartial && $remaining > 0) {
                 $remFmt = number_format($remaining, 0, ',', '.');
-                $statusTag = " ⏳ *(Cicilan - Sisa: Rp {$remFmt})*";
+                $statusTag = "⏳ *[Cicilan - Sisa: Rp {$remFmt}]*";
             } else {
-                $statusTag = " 🟢";
+                $statusTag = "✅ *[LUNAS]*";
             }
 
-            $rincian .= "• {$label}" . ($period ? " – {$period}" : "") . " → Rp {$amount}{$statusTag}\n";
+            $rincian .= "{$idx}. *{$label}{$period}*\n   └ 💵 Rp {$amount}  {$statusTag}\n";
+            $idx++;
         }
 
-        $locationLine = !empty($roomLocation) ? "\n🏠 *Komplek/Kamar:* {$roomLocation}" : '';
-        $notesLine    = !empty($notes) && $notes !== 'Pembayaran Kasir' ? "\n📝 *Catatan:* {$notes}" : '';
+        $locationLine = !empty($roomLocation) ? "\n• *Kamar/Komplek :* {$roomLocation}" : '';
+        $notesLine    = !empty($notes) && $notes !== 'Pembayaran Kasir' ? "\n• *Catatan        :* {$notes}" : '';
 
-        $message = "💰 *[KASIR - PEMBAYARAN DICATAT]*\n"
-            . "━━━━━━━━━━━━━━━━━━━━━━\n\n"
-            . "📋 *Santri:* {$santriName}"
-            . $locationLine . "\n"
-            . "🧾 *No. Kuitansi:* `{$receiptNo}`\n"
-            . "💳 *Metode:* {$methodLabel}\n"
-            . "📅 *Waktu:* {$paidAt}\n"
-            . "👤 *Kasir Bertugas:* {$loggedByName}"
+        $message = "──────────────────────\n"
+            . "💰 *LAPORAN PEMBAYARAN KASIR*\n"
+            . "_{$appName} — Keuangan Pesantren_\n"
+            . "──────────────────────\n\n"
+            . "📌 *DATA TRANSAKSI*\n"
+            . "• *No. Kuitansi :* `{$receiptNo}`\n"
+            . "• *Waktu        :* {$paidAt}\n"
+            . "• *Metode       :* {$methodLabel}\n"
+            . "• *Kasir        :* {$loggedByName}"
             . $notesLine . "\n\n"
-            . "📦 *Rincian Tagihan Dibayar:*\n"
-            . ($rincian ?: "• (rincian pembayaran)\n")
-            . "\n💰 *Total Uang Diterima:* *Rp {$totalFmt}*\n\n"
-            . "━━━━━━━━━━━━━━━━━━━━━━\n"
-            . "_Sistem Kasir {$appName}_";
+            . "👤 *DATA SANTRI*\n"
+            . "• *Nama Santri  :* *{$santriName}*"
+            . $locationLine . "\n\n"
+            . "📦 *RINCIAN PEMBAYARAN*\n"
+            . ($rincian ?: "• (rincian pembayaran)\n") . "\n"
+            . "──────────────────────\n"
+            . "💵 *TOTAL DITERIMA : Rp {$totalFmt}*\n"
+            . "──────────────────────\n"
+            . "_Alhamdulillah, dana telah dibukukan._";
 
         return $this->sendToGroup($message);
     }
