@@ -38,7 +38,7 @@ class NotificationSettings extends Component
         $this->statusType = 'success';
     }
 
-    public function testNotification(FcmNotificationService $fcm)
+    public function testNotification()
     {
         $userId = Auth::id();
         $tokens = FcmToken::tokensForUser($userId);
@@ -49,15 +49,21 @@ class NotificationSettings extends Component
             return;
         }
 
-        $fcm->sendToUser(
-            userId: $userId,
-            title: '🔔 Uji Coba Notifikasi Mandiri',
-            body: 'Halo ' . Auth::user()->name . '! Notifikasi sistem Elvith bekerja optimal di HP/Laptop Anda.',
-            clickUrl: route('system.notifications')
-        );
+        try {
+            $fcm = app(FcmNotificationService::class);
+            $fcm->sendToUser(
+                userId: $userId,
+                title: '🔔 Uji Coba Notifikasi Mandiri',
+                body: 'Halo ' . Auth::user()->name . '! Notifikasi sistem Elvith bekerja optimal di HP/Laptop Anda.',
+                clickUrl: route('system.notifications')
+            );
 
-        $this->message = 'Notifikasi uji coba berhasil dikirim ke perangkat Anda!';
-        $this->statusType = 'success';
+            $this->message = 'Notifikasi uji coba berhasil dikirim ke perangkat Anda!';
+            $this->statusType = 'success';
+        } catch (\Throwable $e) {
+            $this->message = 'Gagal mengirim: ' . $e->getMessage();
+            $this->statusType = 'error';
+        }
     }
 
     public function render()
