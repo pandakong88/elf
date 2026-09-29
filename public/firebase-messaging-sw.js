@@ -1,6 +1,4 @@
 // Firebase Messaging Service Worker (Background Push Notifications)
-// Terpisah dari service-worker.js PWA — ini khusus untuk FCM background messages
-
 importScripts('https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js');
 importScripts('https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging-compat.js');
 
@@ -15,35 +13,48 @@ firebase.initializeApp({
 
 const messaging = firebase.messaging();
 
-// Handle background messages (saat tab ditutup / browser di background)
-messaging.onBackgroundMessage(function(payload) {
-    console.log('[FCM SW] Background message received:', payload);
+// Universal push listener (fallback standar browser jika SDK background delay)
+self.addEventListener('push', function(event) {
+    let title = 'Elvith Notifikasi';
+    let body = 'Ada update baru dari sistem Elvith.';
+    let clickUrl = '/keuangan/billing';
+    let icon = '/icons/icon-192x192.png';
 
-    const notifTitle = payload.notification?.title ?? 'Elvith Notifikasi';
-    const notifBody  = payload.notification?.body  ?? '';
-    const clickUrl   = payload.fcmOptions?.link ?? payload.data?.url ?? '/';
+    if (event.data) {
+        try {
+            const data = event.data.json();
+            title = data.notification?.title || data.data?.title || title;
+            body = data.notification?.body || data.data?.body || body;
+            clickUrl = data.fcmOptions?.link || data.data?.url || clickUrl;
+        } catch (e) {
+            body = event.data.text() || body;
+        }
+    }
 
     const options = {
-        body:             notifBody,
-        icon:             '/icons/icon-192x192.png',
-        badge:            '/icons/icon-72x72.png',
+        body: body,
+        icon: icon,
+        badge: '/icons/icon-72x72.png',
+        vibrate: [200, 100, 200],
         requireInteraction: true,
-        tag:              'elvith-' + (payload.data?.type ?? 'notif'),
-        data:             { url: clickUrl },
+        tag: 'elvith-notif-' + Date.now(),
+        data: { url: clickUrl }
     };
 
-    self.registration.showNotification(notifTitle, options);
+    event.waitUntil(
+        self.registration.showNotification(title, options)
+    );
 });
 
-// Handle notification click — buka tab/fokus ke URL yang ditentukan
+// Handle notification click
 self.addEventListener('notificationclick', function(event) {
     event.notification.close();
-    const url = event.notification.data?.url ?? '/';
+    const url = event.notification.data?.url || '/';
 
     event.waitUntil(
         clients.matchAll({ type: 'window', includeUncontrolled: true }).then(function(clientList) {
             for (const client of clientList) {
-                if (client.url === url && 'focus' in client) {
+                if (client.url.includes(url) && 'focus' in client) {
                     return client.focus();
                 }
             }

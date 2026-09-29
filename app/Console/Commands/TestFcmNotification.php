@@ -5,6 +5,8 @@ namespace App\Console\Commands;
 use Illuminate\Console\Command;
 use App\Models\FcmToken;
 use App\Services\FcmNotificationService;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 
 class TestFcmNotification extends Command
 {
@@ -18,27 +20,42 @@ class TestFcmNotification extends Command
 
         if ($count === 0) {
             $this->warn("PERHATIAN: Belum ada token tersimpan di tabel fcm_tokens!");
-            $this->line("Buka browser, login sebagai admin di https://dev.elvith.id/login dan klik 'Izinkan' notifikasi.");
             return 1;
         }
 
         $tokens = FcmToken::with('user')->get();
         foreach ($tokens as $t) {
             $userEmail = $t->user?->email ?? 'Unknown User';
-            $this->line("- User: {$userEmail} | Diupdate: {$t->last_active_at} | Token: " . substr($t->token, 0, 25) . "...");
+            $this->line("- User: {$userEmail} | Diupdate: {$t->last_active_at} | Token: " . substr($t->token, 0, 30) . "...");
         }
 
-        $this->info("Mengirim notifikasi uji coba ke semua user terdaftar...");
-        foreach ($tokens as $t) {
-            $fcm->sendToUser(
-                userId: $t->user_id,
-                title: '🔔 Tes Notifikasi Elvith',
-                body: 'Halo Admin! Push notification Firebase berhasil terhubung ke perangkat ini.',
-                clickUrl: url('/dashboard')
-            );
+        $this->info("Mengirim notifikasi uji coba ke Google FCM...");
+        
+        $firstToken = $tokens->first()->token;
+        $projectId = config('services.firebase.project_id');
+        
+        // Panggil service
+        $fcm->sendToUser(
+            userId: $tokens->first()->user_id,
+            title: '🔔 Tes Notifikasi Elvith',
+            body: 'Halo Admin! Push notification Firebase berhasil terhubung ke perangkat ini.',
+            clickUrl: url('/dashboard')
+        );
+
+        $this->info("Selesai dipanggil! Cek storage/logs/laravel.log untuk detail respon dari Google FCM.");
+        
+        // Baca 5 baris terakhir laravel.log
+        $logFile = storage_path('logs/laravel.log');
+        if (file_exists($logFile)) {
+            $lines = array_slice(file($logFile), -10);
+            $this->warn("--- Cuplikan Log Terakhir ---");
+            foreach ($lines as $line) {
+                if (str_contains($line, '[FCM]')) {
+                    $this->line(trim($line));
+                }
+            }
         }
 
-        $this->info("Selesai diproses! Periksa log dan layar browser/HP Anda.");
         return 0;
     }
 }
