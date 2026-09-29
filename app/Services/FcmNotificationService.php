@@ -81,9 +81,15 @@ class FcmNotificationService
                             'link' => $clickUrl ?? '/',
                         ],
                     ],
-                    'data' => array_map('strval', $data),
                 ],
             ];
+
+            // Google FCM v1 requires 'data' to be a JSON Object (Map), NEVER an empty List []
+            if (!empty($data)) {
+                $payload['message']['data'] = array_map('strval', $data);
+            } else {
+                $payload['message']['data'] = ['click_url' => (string) ($clickUrl ?? '/')];
+            }
 
             $response = Http::withToken($accessToken)
                 ->post("https://fcm.googleapis.com/v1/projects/{$projectId}/messages:send", $payload);
