@@ -30,20 +30,53 @@ class FcmNotificationService
      */
     public function sendToRole(string $role, string $title, string $body, array $data = [], ?string $clickUrl = null): void
     {
-        $users = \App\Models\User::role($role)->get();
-
-        foreach ($users as $user) {
-            $this->sendToUser($user->id, $title, $body, $data, $clickUrl);
+        try {
+            $users = \App\Models\User::role($role)->get();
+            foreach ($users as $user) {
+                $this->sendToUser($user->id, $title, $body, $data, $clickUrl);
+            }
+        } catch (\Throwable $e) {
+            Log::warning("[FCM] Failed finding users with role {$role}: " . $e->getMessage());
         }
     }
 
     /**
-     * Send to multiple roles (e.g. ['admin', 'bendahara']).
+     * Send to multiple roles (e.g. ['admin', 'bendahara', 'super-admin']).
+     * If roles don't match or return 0 tokens, broadcast to all active FCM tokens.
      */
     public function sendToRoles(array $roles, string $title, string $body, array $data = [], ?string $clickUrl = null): void
     {
-        foreach ($roles as $role) {
-            $this->sendToRole($role, $title, $body, $data, $clickUrl);
+        $sentUserIds = [];
+
+        try {
+            $users = \App\Models\User::whereHas('roles', function ($q) use ($roles) {
+                $q->whereIn('name', $roles);
+            })->get();
+
+            foreach ($users as $user) {
+                $sentUserIds[] = $user->id;
+                $this->sendToUser($user->id, $title, $body, $data, $clickUrl);
+            }
+        } catch (\Throwable $e) {
+            Log::warning("[FCM] sendToRoles query error: " . $e->getMessage());
+        }
+
+        // Jika tidak ada user dengan role tersebut yang punya token, kirim ke SEMUA token aktif pengurus
+        if (empty($sentUserIds)) {
+            Log::info("[FCM] No users found with specified roles, broadcasting to all registered FCM tokens");
+            $this->broadcastToAll($title, $body, $data, $clickUrl);
+        }
+    }
+
+    /**
+     * Broadcast notification to all registered devices.
+     */
+    public function broadcastToAll(string $title, string $body, array $data = [], ?string $clickUrl = null): void
+    {
+        $tokens = FcmToken::where('last_active_at', '>', now()->subDays(60))->pluck('token')->unique();
+
+        foreach ($tokens as $token) {
+            $this->sendViaHttpV1($token, $title, $body, $data, $clickUrl);
         }
     }
 

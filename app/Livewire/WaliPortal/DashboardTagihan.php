@@ -571,7 +571,16 @@ class DashboardTagihan extends Component
                 $fcmBody = "{$santriLabel} ({$roomLocation}) — {$formattedNominal}. Menunggu verifikasi Anda.";
 
                 app(\App\Services\FcmNotificationService::class)->sendToRoles(
-                    roles: ['admin', 'bendahara', 'super-admin'],
+                    roles: [
+                        'admin',
+                        'super-admin',
+                        'bendahara',
+                        'bendahara-pondok',
+                        'bendahara-putra',
+                        'bendahara-putri',
+                        'bendahara-unit',
+                        'manajemen'
+                    ],
                     title: $fcmTitle,
                     body:  $fcmBody,
                     data: [
