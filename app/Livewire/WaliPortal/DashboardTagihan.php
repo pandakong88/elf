@@ -517,7 +517,7 @@ class DashboardTagihan extends Component
 
             // 9. Kirim Notifikasi Alert ke Grup WhatsApp Bendahara (non-blocking)
             try {
-                $submission->loadMissing(['person.roomAssignments' => fn($q) => $q->where('status', 'active')->with('room.dormitory')]);
+                $submission->loadMissing(['person.roomAssignments' => fn($q) => $q->where('is_active', true)->with('room.dormitory')]);
                 $person           = $submission->person;
                 $activeAssignment = $person?->roomAssignments?->first();
                 $dormName         = $activeAssignment?->room?->dormitory?->name;

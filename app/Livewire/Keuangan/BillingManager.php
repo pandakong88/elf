@@ -2489,7 +2489,7 @@ class BillingManager extends Component
         $paidSummaryItems = [];
 
         $santri = Person::with([
-            'roomAssignments' => fn($q) => $q->where('status', 'active')->with('room.dormitory'),
+            'roomAssignments' => fn($q) => $q->where('is_active', true)->with('room.dormitory'),
             'santriProfile'
         ])->find($this->selectedSantriId);
 
@@ -2860,7 +2860,7 @@ class BillingManager extends Component
 
             // Kirim notifikasi WA ke Grup Bendahara (non-blocking)
             try {
-                $sub->loadMissing(['person.roomAssignments' => fn($q) => $q->where('status', 'active')->with('room.dormitory')]);
+                $sub->loadMissing(['person.roomAssignments' => fn($q) => $q->where('is_active', true)->with('room.dormitory')]);
                 $person           = $sub->person;
                 $activeAssignment = $person?->roomAssignments?->first();
                 $dormName         = $activeAssignment?->room?->dormitory?->name;
