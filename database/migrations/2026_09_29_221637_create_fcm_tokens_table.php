@@ -8,9 +8,13 @@ return new class extends Migration
 {
     public function up(): void
     {
+        if (Schema::hasTable('fcm_tokens')) {
+            return;
+        }
+
         Schema::create('fcm_tokens', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->constrained()->onDelete('cascade');
+            $table->foreignUuid('user_id')->constrained('users')->onDelete('cascade');
             $table->text('token');                          // FCM device token
             $table->string('device_info')->nullable();      // browser/OS info
             $table->timestamp('last_active_at')->nullable();
