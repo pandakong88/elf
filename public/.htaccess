@@ -4,6 +4,14 @@
     AddType application/javascript .js
 </IfModule>
 
+# PWA: Force override any PHP/Laravel no-store headers at Apache level
+# This runs AFTER PHP and overrides StartSession Cache-Control
+<IfModule mod_headers.c>
+    Header always unset Cache-Control
+    Header always unset Pragma
+    Header always set Cache-Control "public, max-age=0, must-revalidate"
+</IfModule>
+
 # PWA: Service Worker must NOT be cached by CDN/browser (Chrome requirement)
 <FilesMatch "^service-worker\.js$">
     <IfModule mod_headers.c>
