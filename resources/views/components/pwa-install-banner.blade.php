@@ -2,31 +2,27 @@
         canInstall: false, 
         isDismissed: localStorage.getItem('elvith_pwa_dismissed') === 'true',
         isIOS: /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream,
+        isAndroid: /Android/.test(navigator.userAgent),
         isStandalone: window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true,
-        showIOSGuide: false,
+        showHelp: false,
         init() {
             if (this.isStandalone) return;
             
-            // Check Android / Chromium install prompt
+            // Catch installable event from browser
             window.addEventListener('pwa-installable', () => {
                 if (!this.isDismissed) this.canInstall = true;
             });
 
-            // If prompt was already caught before Alpine init
             if (window.deferredPwaPrompt && !this.isDismissed) {
                 this.canInstall = true;
             }
 
-            // Show for iOS if mobile and not in standalone
-            if (this.isIOS && !this.isStandalone && !this.isDismissed) {
+            // Always show on mobile browser if not standalone yet
+            if ((this.isAndroid || this.isIOS) && !this.isDismissed) {
                 this.canInstall = true;
             }
         },
         async promptInstall() {
-            if (this.isIOS) {
-                this.showIOSGuide = true;
-                return;
-            }
             if (window.deferredPwaPrompt) {
                 window.deferredPwaPrompt.prompt();
                 const { outcome } = await window.deferredPwaPrompt.userChoice;
@@ -34,6 +30,9 @@
                     this.canInstall = false;
                 }
                 window.deferredPwaPrompt = null;
+            } else {
+                // If browser did not fire beforeinstallprompt (e.g. Chrome/Samsung Internet timing)
+                this.showHelp = true;
             }
         },
         dismiss() {
@@ -62,7 +61,7 @@
                 <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">PWA</span>
             </h4>
             <p class="text-xs text-slate-300 mt-0.5 leading-snug">
-                Akses lebih cepat, hemat kuota & mudah dibuka langsung dari Beranda HP.
+                Akses lebih cepat & mudah dibuka langsung dari layar HP tanpa buka browser.
             </p>
         </div>
         <button @click="dismiss()" class="text-slate-400 hover:text-white p-1 -mr-1 -mt-1 rounded-lg hover:bg-slate-800 transition">
@@ -72,16 +71,28 @@
         </button>
     </div>
 
-    <!-- iOS Guide Modal / Popup -->
-    <div x-show="showIOSGuide" class="text-xs bg-slate-800/90 rounded-xl p-3 border border-slate-700 text-slate-300 space-y-1.5">
-        <div class="font-semibold text-emerald-400 flex items-center gap-1">
-            <span>Cara pasang di iPhone/iPad:</span>
-        </div>
-        <ol class="list-decimal list-inside space-y-1 text-[11px] text-slate-300">
-            <li>Tekan tombol Bagikan / <strong>Share</strong> (<svg class="w-3.5 h-3.5 inline-block text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"></path></svg>) di Safari</li>
-            <li>Pilih menu <strong>"Tambahkan ke Layar Utama"</strong> (<em>Add to Home Screen</em>)</li>
-            <li>Tekan <strong>Tambah</strong> (<em>Add</em>) di pojok kanan atas</li>
-        </ol>
+    <!-- Help Instructions Modal/Box if direct prompt is blocked by browser -->
+    <div x-show="showHelp" class="text-xs bg-slate-800/90 rounded-xl p-3 border border-slate-700 text-slate-300 space-y-1.5">
+        <template x-if="isAndroid">
+            <div>
+                <div class="font-semibold text-emerald-400 mb-1">Cara pasang di Android (Chrome/Browser):</div>
+                <ol class="list-decimal list-inside space-y-1 text-[11px] text-slate-300">
+                    <li>Tekan tombol **titik tiga (⋮)** di pojok kanan atas browser.</li>
+                    <li>Pilih menu **"Install aplikasi"** atau **"Tambahkan ke Layar Utama"** (*Add to Home Screen*).</li>
+                    <li>Tekan **Install / Tambahkan**.</li>
+                </ol>
+            </div>
+        </template>
+        <template x-if="isIOS">
+            <div>
+                <div class="font-semibold text-emerald-400 mb-1">Cara pasang di iPhone/Safari:</div>
+                <ol class="list-decimal list-inside space-y-1 text-[11px] text-slate-300">
+                    <li>Tekan tombol **Bagikan** (ikon kotak panah atas) di bilah Safari.</li>
+                    <li>Pilih menu **"Tambahkan ke Layar Utama"**.</li>
+                    <li>Tekan **Tambah** di pojok kanan atas.</li>
+                </ol>
+            </div>
+        </template>
     </div>
 
     <div class="flex items-center gap-2 pt-1">
@@ -89,7 +100,7 @@
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
             </svg>
-            <span x-text="isIOS ? 'Petunjuk Pasang' : 'Pasang Sekarang'"></span>
+            <span>Pasang Sekarang</span>
         </button>
         <button @click="dismiss()" class="py-2 px-3 bg-slate-800 hover:bg-slate-700 text-slate-300 font-medium rounded-xl text-xs transition">
             Nanti Saja

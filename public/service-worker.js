@@ -1,7 +1,7 @@
-﻿const CACHE_NAME = 'elvith-pwa-v1';
+﻿const CACHE_NAME = 'elvith-pwa-v2';
 const OFFLINE_URL = '/offline';
 
-// Static assets to precache immediately
+// Static assets to precache
 const PRECACHE_ASSETS = [
     OFFLINE_URL,
     '/manifest.json',
@@ -11,16 +11,19 @@ const PRECACHE_ASSETS = [
     '/icons/apple-touch-icon.png'
 ];
 
-// Install Event: cache core offline assets
+// Install Event
 self.addEventListener('install', (event) => {
+    self.skipWaiting();
     event.waitUntil(
         caches.open(CACHE_NAME).then((cache) => {
-            return cache.addAll(PRECACHE_ASSETS);
-        }).then(() => self.skipWaiting())
+            return cache.addAll(PRECACHE_ASSETS).catch((err) => {
+                console.warn('Precache non-fatal error:', err);
+            });
+        })
     );
 });
 
-// Activate Event: clean up older caches
+// Activate Event
 self.addEventListener('activate', (event) => {
     event.waitUntil(
         caches.keys().then((cacheNames) => {
@@ -35,23 +38,22 @@ self.addEventListener('activate', (event) => {
     );
 });
 
-// Fetch Event: Smart network-first for pages/API, Cache-first for static assets
+// Fetch Event
 self.addEventListener('fetch', (event) => {
     const request = event.request;
 
-    // Skip non-GET requests (e.g., Livewire POST, Payment form submissions)
     if (request.method !== 'GET') {
         return;
     }
 
     const url = new URL(request.url);
 
-    // Skip external API requests & Livewire update endpoints
+    // Skip cross-origin or Livewire dynamic requests
     if (url.origin !== self.origin || url.pathname.startsWith('/livewire/')) {
         return;
     }
 
-    // HTML Navigation requests: Network first -> fallback to /offline if offline
+    // HTML Navigation: Network First -> fallback to offline page
     if (request.mode === 'navigate' || (request.headers.get('accept') && request.headers.get('accept').includes('text/html'))) {
         event.respondWith(
             fetch(request).catch(() => {
@@ -61,7 +63,7 @@ self.addEventListener('fetch', (event) => {
         return;
     }
 
-    // Static Assets (Images, Icons, CSS, JS, Fonts): Cache first with network fallback
+    // Static Assets
     if (
         request.destination === 'image' ||
         request.destination === 'style' ||
@@ -74,23 +76,16 @@ self.addEventListener('fetch', (event) => {
         event.respondWith(
             caches.match(request).then((cachedResponse) => {
                 if (cachedResponse) {
-                    // Update cache in background
-                    fetch(request).then((networkResponse) => {
-                        if (networkResponse && networkResponse.status === 200) {
-                            caches.open(CACHE_NAME).then((cache) => cache.put(request, networkResponse));
-                        }
-                    }).catch(() => {});
                     return cachedResponse;
                 }
                 return fetch(request).then((networkResponse) => {
-                    if (!networkResponse || networkResponse.status !== 200 || networkResponse.type !== 'basic') {
-                        return networkResponse;
+                    if (networkResponse && networkResponse.status === 200 && networkResponse.type === 'basic') {
+                        const clone = networkResponse.clone();
+                        caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
                     }
-                    const responseToCache = networkResponse.clone();
-                    caches.open(CACHE_NAME).then((cache) => {
-                        cache.put(request, responseToCache);
-                    });
                     return networkResponse;
+                }).catch(() => {
+                    // Fail silently for non-critical assets
                 });
             })
         );
