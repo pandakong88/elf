@@ -12,27 +12,30 @@
     Header always set Cache-Control "public, max-age=0, must-revalidate"
 </IfModule>
 
-# PWA: Service Worker must NOT be cached by CDN/browser (Chrome requirement)
+# PWA: Service Worker must NOT be cached (Chrome installability requirement)
 <FilesMatch "^service-worker\.js$">
     <IfModule mod_headers.c>
-        Header set Cache-Control "no-cache, no-store, must-revalidate"
-        Header set Service-Worker-Allowed "/"
+        Header always unset Cache-Control
+        Header always set Cache-Control "no-cache, no-store, must-revalidate"
+        Header always set Service-Worker-Allowed "/"
     </IfModule>
 </FilesMatch>
 
-# PWA: manifest.json served with correct MIME and short cache
+# PWA: manifest.json - correct MIME and short cache
 <FilesMatch "^manifest\.(json|webmanifest)$">
     <IfModule mod_headers.c>
-        Header set Cache-Control "public, max-age=86400"
-        Header set Access-Control-Allow-Origin "*"
+        Header always unset Cache-Control
+        Header always set Cache-Control "public, max-age=3600"
+        Header always set Access-Control-Allow-Origin "*"
     </IfModule>
 </FilesMatch>
 
-# PWA Icons: allow caching
+# PWA Icons: long cache ok
 <FilesMatch "\.(png|jpg|jpeg|gif|ico|svg|webp)$">
     <IfModule mod_headers.c>
-        Header set Cache-Control "public, max-age=2592000"
-        Header set Access-Control-Allow-Origin "*"
+        Header always unset Cache-Control
+        Header always set Cache-Control "public, max-age=2592000"
+        Header always set Access-Control-Allow-Origin "*"
     </IfModule>
 </FilesMatch>
 
