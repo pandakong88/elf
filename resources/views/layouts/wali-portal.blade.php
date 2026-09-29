@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ $title ?? 'Portal Wali Santri — Al-Fithroh' }}</title>
+    @include('components.pwa-meta')
     <script>
         if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
             document.documentElement.classList.add('dark');
@@ -544,6 +545,7 @@
         <p class="text-[11px] text-slate-400 dark:text-slate-500">Layanan Informasi Tagihan Wali Santri © {{ date('Y') }}</p>
     </footer>
 
+    @include('components.pwa-install-banner')
     @livewireScripts
 </body>
 </html>
