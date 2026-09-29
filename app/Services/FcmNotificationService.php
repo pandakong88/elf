@@ -11,7 +11,7 @@ class FcmNotificationService
     /**
      * Send a push notification to all devices of a specific user.
      */
-    public function sendToUser(int $userId, string $title, string $body, array $data = [], ?string $clickUrl = null): void
+    public function sendToUser(string|int $userId, string $title, string $body, array $data = [], ?string $clickUrl = null): void
     {
         $tokens = FcmToken::tokensForUser($userId);
 

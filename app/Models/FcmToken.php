@@ -26,12 +26,12 @@ class FcmToken extends Model
     /**
      * Save or update a token for a user (upsert by token value).
      */
-    public static function saveToken(int $userId, string $token, ?string $deviceInfo = null): void
+    public static function saveToken(string|int $userId, string $token, ?string $deviceInfo = null): void
     {
         static::updateOrCreate(
             ['token' => $token],
             [
-                'user_id'        => $userId,
+                'user_id'        => (string) $userId,
                 'device_info'    => $deviceInfo,
                 'last_active_at' => now(),
             ]
@@ -46,7 +46,7 @@ class FcmToken extends Model
     /**
      * Get all active tokens for a specific user.
      */
-    public static function tokensForUser(int $userId): array
+    public static function tokensForUser(string|int $userId): array
     {
         return static::where('user_id', $userId)
             ->where('last_active_at', '>', now()->subDays(60))
