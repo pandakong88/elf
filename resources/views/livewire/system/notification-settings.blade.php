@@ -13,12 +13,13 @@
             </div>
         </div>
         <div class="flex flex-wrap items-center gap-2">
-            <!-- Tombol Minta Izin Browser -->
+            <!-- Tombol Daftarkan / Sambungkan Ulang Perangkat -->
             <button type="button"
-                    onclick="triggerRequestPermission()"
+                    id="btn-register-device"
+                    onclick="triggerManualRegistration()"
                     class="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold transition-all shadow-lg shadow-blue-600/20 shrink-0">
-                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
-                <span>Aktifkan Izin Browser</span>
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                <span id="btn-register-text">Sambungkan Perangkat Ini</span>
             </button>
 
             <!-- Tombol Tes Notifikasi -->
@@ -30,6 +31,11 @@
                 <span wire:loading wire:target="testNotification">Mengirim...</span>
             </button>
         </div>
+    </div>
+
+    <!-- Alert Status Interaktif -->
+    <div id="client-alert-box" class="hidden p-4 rounded-xl text-xs font-semibold flex items-center gap-3">
+        <span id="client-alert-text"></span>
     </div>
 
     @if($message)
@@ -68,8 +74,8 @@
         <div class="pt-2 text-xs text-slate-400 leading-relaxed bg-slate-950/50 p-4 rounded-xl border border-slate-800/50">
             <span class="font-bold text-slate-300">💡 Panduan untuk Admin / Bendahara:</span>
             <ul class="list-disc list-inside mt-1 space-y-1">
-                <li>Klik tombol biru <strong>"Aktifkan Izin Browser"</strong> jika browser Anda belum memunculkan pop-up izin notifikasi.</li>
-                <li>Notifikasi akan otomatis berbunyi ketika ada wali santri mengirim bukti transfer baru.</li>
+                <li>Jika perangkat Anda belum terdaftar di bawah, klik tombol biru <strong>"Sambungkan Perangkat Ini"</strong>.</li>
+                <li>Setelah tersambung, Anda bisa menguji bunyi notifikasi dengan tombol hijau di sampingnya.</li>
             </ul>
         </div>
     </div>
@@ -80,7 +86,7 @@
 
         @if(empty($userTokens))
             <div class="text-center py-8 text-slate-500 text-xs">
-                Belum ada perangkat yang terdaftar. Klik tombol biru <strong>"Aktifkan Izin Browser"</strong> di atas.
+                Belum ada perangkat yang terdaftar. Klik tombol biru <strong>"Sambungkan Perangkat Ini"</strong> di atas.
             </div>
         @else
             <div class="space-y-3">
@@ -124,24 +130,73 @@
         }
     }
 
-    async function triggerRequestPermission() {
-        if (window.elvithFcm) {
-            const success = await window.elvithFcm.requestPermissionAndRegister();
+    function showClientAlert(text, isSuccess) {
+        const box = document.getElementById('client-alert-box');
+        const textSpan = document.getElementById('client-alert-text');
+        if (!box || !textSpan) return;
+
+        textSpan.innerText = text;
+        box.className = 'p-4 rounded-xl text-xs font-semibold flex items-center gap-3 ' + 
+            (isSuccess ? 'bg-emerald-500/10 border border-emerald-500/20 text-emerald-300' : 'bg-rose-500/10 border border-rose-500/20 text-rose-300');
+        box.classList.remove('hidden');
+    }
+
+    async function triggerManualRegistration() {
+        const btnText = document.getElementById('btn-register-text');
+        if (btnText) btnText.innerText = 'Menghubungkan...';
+
+        try {
+            if (!('Notification' in window) || !('serviceWorker' in navigator)) {
+                showClientAlert('Browser tidak mendukung notifikasi push.', false);
+                return;
+            }
+
+            const permission = await Notification.requestPermission();
             updatePermissionUI();
-            if (success) {
-                // Refresh komponen Livewire untuk memperbarui data tabel
-                if (window.Livewire) {
-                    window.location.reload();
-                }
+
+            if (permission !== 'granted') {
+                showClientAlert('Izin notifikasi tidak diberikan di browser.', false);
+                return;
             }
-        } else {
-            if ('Notification' in window) {
-                const res = await Notification.requestPermission();
-                updatePermissionUI();
-                if (res === 'granted') {
-                    window.location.reload();
-                }
+
+            // Daftarkan Service Worker
+            const swReg = await navigator.serviceWorker.register('/firebase-messaging-sw.js', { scope: '/' });
+            await navigator.serviceWorker.ready;
+
+            const messaging = firebase.messaging();
+            messaging.useServiceWorker(swReg);
+
+            const VAPID_KEY = "BC9so406q2ySAfwRFSvUqWMkntM3pgaQ-W0TpCo6NInrOkJsiryrqDTElPxH5Iva6iHrcz61LlALMaY7ETKCtHE";
+            const token = await messaging.getToken({ vapidKey: VAPID_KEY });
+
+            if (!token) {
+                showClientAlert('Gagal mengambil token dari Google Firebase.', false);
+                return;
             }
+
+            const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+            const res = await fetch('/fcm/token', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': csrf,
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({ token: token })
+            });
+
+            const data = await res.json();
+            if (data.status === 'ok') {
+                showClientAlert('Perangkat berhasil tersambung kembali ke notifikasi Elvith!', true);
+                setTimeout(() => window.location.reload(), 1000);
+            } else {
+                showClientAlert('Server menolak penyimpanan token: ' + JSON.stringify(data), false);
+            }
+        } catch (err) {
+            console.error(err);
+            showClientAlert('Terjadi kesalahan: ' + err.message, false);
+        } finally {
+            if (btnText) btnText.innerText = 'Sambungkan Perangkat Ini';
         }
     }
 
