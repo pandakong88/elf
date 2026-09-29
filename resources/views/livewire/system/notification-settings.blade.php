@@ -12,12 +12,24 @@
                 <p class="text-xs sm:text-sm text-slate-400">Kelola izin browser dan perangkat Anda untuk menerima notifikasi transfer santri.</p>
             </div>
         </div>
-        <button wire:click="testNotification" 
-                wire:loading.attr="disabled"
-                class="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition-all shadow-lg shadow-emerald-600/20 shrink-0">
-            <span wire:loading.remove wire:target="testNotification">🔔 Tes Bunyi Notifikasi</span>
-            <span wire:loading wire:target="testNotification">Mengirim...</span>
-        </button>
+        <div class="flex flex-wrap items-center gap-2">
+            <!-- Tombol Minta Izin Browser -->
+            <button type="button"
+                    onclick="triggerRequestPermission()"
+                    class="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold transition-all shadow-lg shadow-blue-600/20 shrink-0">
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                <span>Aktifkan Izin Browser</span>
+            </button>
+
+            <!-- Tombol Tes Notifikasi -->
+            <button type="button"
+                    wire:click="testNotification" 
+                    wire:loading.attr="disabled"
+                    class="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition-all shadow-lg shadow-emerald-600/20 shrink-0">
+                <span wire:loading.remove wire:target="testNotification">🔔 Tes Bunyi Notifikasi</span>
+                <span wire:loading wire:target="testNotification">Mengirim...</span>
+            </button>
+        </div>
     </div>
 
     @if($message)
@@ -54,10 +66,10 @@
         </div>
 
         <div class="pt-2 text-xs text-slate-400 leading-relaxed bg-slate-950/50 p-4 rounded-xl border border-slate-800/50">
-            <span class="font-bold text-slate-300">💡 Tips untuk Admin / Bendahara:</span>
+            <span class="font-bold text-slate-300">💡 Panduan untuk Admin / Bendahara:</span>
             <ul class="list-disc list-inside mt-1 space-y-1">
-                <li>Notifikasi akan otomatis muncul ketika ada wali santri mengirim bukti transfer baru.</li>
-                <li>Jika notifikasi belum berbunyi di HP, pastikan setelan notifikasi Chrome di pengaturan Android diatur ke <strong>"Diizinkan"</strong>.</li>
+                <li>Klik tombol biru <strong>"Aktifkan Izin Browser"</strong> jika browser Anda belum memunculkan pop-up izin notifikasi.</li>
+                <li>Notifikasi akan otomatis berbunyi ketika ada wali santri mengirim bukti transfer baru.</li>
             </ul>
         </div>
     </div>
@@ -68,7 +80,7 @@
 
         @if(empty($userTokens))
             <div class="text-center py-8 text-slate-500 text-xs">
-                Belum ada perangkat yang terdaftar. Buka website ini di browser Anda dan izinkan notifikasi saat diminta.
+                Belum ada perangkat yang terdaftar. Klik tombol biru <strong>"Aktifkan Izin Browser"</strong> di atas.
             </div>
         @else
             <div class="space-y-3">
@@ -81,7 +93,8 @@
                             </div>
                             <span class="text-[11px] text-slate-500 block">Terakhir aktif: {{ \Carbon\Carbon::parse($t['last_active_at'])->translatedFormat('d M Y, H:i') }} WIB</span>
                         </div>
-                        <button wire:click="deleteToken({{ $t['id'] }})"
+                        <button type="button"
+                                wire:click="deleteToken({{ $t['id'] }})"
                                 class="text-xs font-bold text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 px-3 py-1.5 rounded-lg border border-rose-500/30 transition-all self-start sm:self-auto">
                             Putus Perangkat
                         </button>
@@ -93,22 +106,45 @@
 </div>
 
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
+    function updatePermissionUI() {
         const permLabel = document.getElementById('browser-permission-label');
+        if (!permLabel) return;
+
         if ('Notification' in window) {
             if (Notification.permission === 'granted') {
                 permLabel.innerText = 'Diizinkan (Aktif)';
                 permLabel.className = 'text-sm font-bold text-emerald-400';
             } else if (Notification.permission === 'denied') {
-                permLabel.innerText = 'Diblokir / Nonaktif';
+                permLabel.innerText = 'Diblokir';
                 permLabel.className = 'text-sm font-bold text-rose-400';
             } else {
                 permLabel.innerText = 'Belum Diatur';
                 permLabel.className = 'text-sm font-bold text-amber-400';
             }
-        } else {
-            permLabel.innerText = 'Browser Tidak Didukung';
-            permLabel.className = 'text-sm font-bold text-slate-500';
         }
-    });
+    }
+
+    async function triggerRequestPermission() {
+        if (window.elvithFcm) {
+            const success = await window.elvithFcm.requestPermissionAndRegister();
+            updatePermissionUI();
+            if (success) {
+                // Refresh komponen Livewire untuk memperbarui data tabel
+                if (window.Livewire) {
+                    window.location.reload();
+                }
+            }
+        } else {
+            if ('Notification' in window) {
+                const res = await Notification.requestPermission();
+                updatePermissionUI();
+                if (res === 'granted') {
+                    window.location.reload();
+                }
+            }
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', updatePermissionUI);
+    document.addEventListener('livewire:navigated', updatePermissionUI);
 </script>

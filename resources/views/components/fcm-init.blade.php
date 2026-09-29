@@ -4,59 +4,49 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging-compat.js"></script>
 
 <script>
-(function() {
-    console.log('[FCM] Memulai inisialisasi FCM via Compat SDK...');
+window.elvithFcm = {
+    messaging: null,
+    isInitialized: false,
 
-    const firebaseConfig = {
-        apiKey:            "AIzaSyCEiBx6quKPkuFpKpA2nvFvapVfylTGvDA",
-        authDomain:        "elvith.firebaseapp.com",
-        projectId:         "elvith",
-        storageBucket:     "elvith.firebasestorage.app",
-        messagingSenderId: "577760254277",
-        appId:             "1:577760254277:web:da29e5e357811ca86d462c",
-    };
-
-    const VAPID_KEY = "BC9so406q2ySAfwRFSvUqWMkntM3pgaQ-W0TpCo6NInrOkJsiryrqDTElPxH5Iva6iHrcz61LlALMaY7ETKCtHE";
-
-    if (!firebase.apps.length) {
-        firebase.initializeApp(firebaseConfig);
-    }
-
-    if (!('serviceWorker' in navigator) || !('Notification' in window)) {
-        console.warn('[FCM] Browser tidak mendukung ServiceWorker atau Notification');
-        return;
-    }
-
-    const messaging = firebase.messaging();
-
-    async function registerAndSaveToken() {
+    async requestPermissionAndRegister() {
+        console.log('[FCM] Meminta izin notifikasi browser secara manual...');
         try {
-            const swReg = await navigator.serviceWorker.register('/firebase-messaging-sw.js', { scope: '/' });
-            console.log('[FCM] ServiceWorker registered scope:', swReg.scope);
-
-            // Gunakan SW registration untuk messaging
-            messaging.useServiceWorker(swReg);
+            if (!('Notification' in window)) {
+                alert('Browser Anda tidak mendukung notifikasi Web Push.');
+                return false;
+            }
 
             const permission = await Notification.requestPermission();
-            console.log('[FCM] Permission status:', permission);
+            console.log('[FCM] Permission result:', permission);
 
-            if (permission !== 'granted') {
-                console.warn('[FCM] Izin notifikasi tidak diberikan');
-                return;
+            if (permission === 'granted') {
+                return await this.registerToken();
+            } else if (permission === 'denied') {
+                alert('Izin notifikasi diblokir di setelan browser. Buka ikon gembok di address bar untuk mengubah izin ke "Izinkan".');
+                return false;
+            } else {
+                return false;
             }
+        } catch (err) {
+            console.error('[FCM] Gagal request permission:', err);
+            return false;
+        }
+    },
 
-            console.log('[FCM] Mengambil device token dari Google...');
-            const token = await messaging.getToken({ vapidKey: VAPID_KEY });
+    async registerToken() {
+        try {
+            if (!('serviceWorker' in navigator)) return false;
 
-            if (!token) {
-                console.warn('[FCM] Token kosong');
-                return;
-            }
+            const swReg = await navigator.serviceWorker.register('/firebase-messaging-sw.js', { scope: '/' });
+            this.messaging.useServiceWorker(swReg);
 
-            console.log('[FCM] Token didapat:', token.substring(0, 25) + '...');
+            const VAPID_KEY = "BC9so406q2ySAfwRFSvUqWMkntM3pgaQ-W0TpCo6NInrOkJsiryrqDTElPxH5Iva6iHrcz61LlALMaY7ETKCtHE";
+            const token = await this.messaging.getToken({ vapidKey: VAPID_KEY });
+
+            if (!token) return false;
 
             const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
-            const response = await fetch('/fcm/token', {
+            const res = await fetch('/fcm/token', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -66,36 +56,40 @@
                 body: JSON.stringify({ token: token })
             });
 
-            const result = await response.json();
-            console.log('[FCM] Sukses simpan token ke database:', result);
-
-            // Handler pesan masuk saat tab web aktif
-            messaging.onMessage(function(payload) {
-                console.log('[FCM] Pesan foreground:', payload);
-                const title = payload.notification?.title || 'Notifikasi Elvith';
-                const body = payload.notification?.body || '';
-                const clickUrl = payload.fcmOptions?.link || payload.data?.url || '/keuangan/billing';
-
-                if (Notification.permission === 'granted') {
-                    const notif = new Notification(title, {
-                        body: body,
-                        icon: '/icons/icon-192x192.png',
-                        badge: '/icons/icon-72x72.png',
-                        requireInteraction: true
-                    });
-                    notif.onclick = function() {
-                        window.focus();
-                        window.location.href = clickUrl;
-                    };
-                }
-            });
-
-        } catch (error) {
-            console.error('[FCM] Terjadi kendala saat registrasi token:', error);
+            console.log('[FCM] Token tersimpan ke backend');
+            return true;
+        } catch (e) {
+            console.error('[FCM] Error register token:', e);
+            return false;
         }
     }
+};
 
-    registerAndSaveToken();
+(function() {
+    const firebaseConfig = {
+        apiKey:            "AIzaSyCEiBx6quKPkuFpKpA2nvFvapVfylTGvDA",
+        authDomain:        "elvith.firebaseapp.com",
+        projectId:         "elvith",
+        storageBucket:     "elvith.firebasestorage.app",
+        messagingSenderId: "577760254277",
+        appId:             "1:577760254277:web:da29e5e357811ca86d462c",
+    };
+
+    if (!firebase.apps.length) {
+        firebase.initializeApp(firebaseConfig);
+    }
+
+    if (!('serviceWorker' in navigator) || !('Notification' in window)) {
+        return;
+    }
+
+    window.elvithFcm.messaging = firebase.messaging();
+    window.elvithFcm.isInitialized = true;
+
+    // Jika izin sudah diberikan sebelumnya, daftarkan otomatis di background
+    if (Notification.permission === 'granted') {
+        window.elvithFcm.registerToken();
+    }
 })();
 </script>
 @endauth
