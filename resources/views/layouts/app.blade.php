@@ -8,6 +8,7 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @livewireStyles
     @include('components.pwa-meta')
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     
     <style>
         body {
@@ -544,5 +545,6 @@
         document.addEventListener('livewire:navigated', initThemeToggle);
     </script>
     @include('components.pwa-install-banner')
+    @include('components.fcm-init')
 </body>
 </html>
