@@ -22,7 +22,7 @@ window.elvithFcm = {
             if (permission === 'granted') {
                 return await this.registerToken();
             } else if (permission === 'denied') {
-                alert('Izin notifikasi diblokir di setelan browser. Buka ikon gembok di address bar untuk mengubah izin ke "Izinkan".');
+                alert('Izin notifikasi diblokir di setelan browser. Buka ikon setelan situs (gembok/slider) di address bar untuk mengubah izin ke "Izinkan".');
                 return false;
             } else {
                 return false;
@@ -38,12 +38,20 @@ window.elvithFcm = {
             if (!('serviceWorker' in navigator)) return false;
 
             const swReg = await navigator.serviceWorker.register('/firebase-messaging-sw.js', { scope: '/' });
+            if (!this.messaging && firebase.apps.length) {
+                this.messaging = firebase.messaging();
+            }
             this.messaging.useServiceWorker(swReg);
 
             const VAPID_KEY = "BC9so406q2ySAfwRFSvUqWMkntM3pgaQ-W0TpCo6NInrOkJsiryrqDTElPxH5Iva6iHrcz61LlALMaY7ETKCtHE";
             const token = await this.messaging.getToken({ vapidKey: VAPID_KEY });
 
-            if (!token) return false;
+            if (!token) {
+                console.warn('[FCM] Token kosong didapat dari Google');
+                return false;
+            }
+
+            console.log('[FCM] Token didapat:', token.substring(0, 20) + '...');
 
             const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
             const res = await fetch('/fcm/token', {
@@ -56,7 +64,8 @@ window.elvithFcm = {
                 body: JSON.stringify({ token: token })
             });
 
-            console.log('[FCM] Token tersimpan ke backend');
+            const data = await res.json();
+            console.log('[FCM] Hasil simpan token backend:', data);
             return true;
         } catch (e) {
             console.error('[FCM] Error register token:', e);
@@ -86,7 +95,7 @@ window.elvithFcm = {
     window.elvithFcm.messaging = firebase.messaging();
     window.elvithFcm.isInitialized = true;
 
-    // Jika izin sudah diberikan sebelumnya, daftarkan otomatis di background
+    // Jika izin sudah diberikan sebelumnya, daftarkan otomatis
     if (Notification.permission === 'granted') {
         window.elvithFcm.registerToken();
     }
