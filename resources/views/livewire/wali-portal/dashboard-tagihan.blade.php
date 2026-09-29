@@ -222,11 +222,17 @@
                                 @php
                                     $remaining = max(0, $bill->amount - $bill->amount_paid);
                                     $isPartial = $bill->status === 'partial';
+                                    $isPending = in_array((string)$bill->id, $pendingTransferBillIds ?? []);
                                 @endphp
-                                <div class="bg-white dark:bg-slate-900 p-3 rounded-2xl border border-rose-200 dark:border-rose-900/60 flex items-center justify-between text-xs">
+                                <div class="bg-white dark:bg-slate-900 p-3 rounded-2xl border {{ $isPending ? 'border-amber-300 dark:border-amber-700/60 bg-amber-50/20' : 'border-rose-200 dark:border-rose-900/60' }} flex items-center justify-between text-xs">
                                     <div>
-                                        <div class="font-extrabold text-slate-900 dark:text-white">
-                                            {{ $this->getBillDisplayName($bill) }}
+                                        <div class="font-extrabold text-slate-900 dark:text-white flex items-center gap-1.5 flex-wrap">
+                                            <span>{{ $this->getBillDisplayName($bill) }}</span>
+                                            @if($isPending)
+                                                <span class="px-2 py-0.5 bg-amber-500/15 border border-amber-500/30 text-amber-700 dark:text-amber-300 rounded-md text-[9px] font-black">
+                                                    ⏳ Menunggu Verifikasi
+                                                </span>
+                                            @endif
                                         </div>
                                         <div class="text-[11px] text-slate-500 dark:text-slate-400">
                                             Periode: {{ $this->getBillPeriodLabel($bill) }}
@@ -236,10 +242,12 @@
                                         </div>
                                     </div>
                                     <div class="text-right">
-                                        <div class="font-black text-rose-600 dark:text-rose-400 text-sm">
+                                        <div class="font-black {{ $isPending ? 'text-amber-600 dark:text-amber-400' : 'text-rose-600 dark:text-rose-400' }} text-sm">
                                             Rp {{ number_format($remaining, 0, ',', '.') }}
                                         </div>
-                                        @if($isPartial)
+                                        @if($isPending)
+                                            <span class="text-[9px] text-amber-600 dark:text-amber-400 font-bold block">Sedang diproses</span>
+                                        @elseif($isPartial)
                                             <span class="text-[9px] text-amber-600 dark:text-amber-400 font-bold block">Dicicil sebagian</span>
                                         @endif
                                     </div>
@@ -264,11 +272,17 @@
                                 @php
                                     $isPaid = $bill->status === 'paid';
                                     $remaining = max(0, $bill->amount - $bill->amount_paid);
+                                    $isPending = in_array((string)$bill->id, $pendingTransferBillIds ?? []);
                                 @endphp
-                                <div class="p-3 rounded-2xl border flex items-center justify-between text-xs {{ $isPaid ? 'bg-emerald-50/60 dark:bg-emerald-950/20 border-emerald-200/80 dark:border-emerald-800/40' : 'bg-slate-50 dark:bg-slate-950 border-slate-200/80 dark:border-slate-800' }}">
+                                <div class="p-3 rounded-2xl border flex items-center justify-between text-xs {{ $isPaid ? 'bg-emerald-50/60 dark:bg-emerald-950/20 border-emerald-200/80 dark:border-emerald-800/40' : ($isPending ? 'bg-amber-50/20 border-amber-300 dark:border-amber-700/60' : 'bg-slate-50 dark:bg-slate-950 border-slate-200/80 dark:border-slate-800') }}">
                                     <div>
-                                        <div class="font-extrabold {{ $isPaid ? 'text-emerald-900 dark:text-emerald-200' : 'text-slate-900 dark:text-white' }}">
-                                            {{ $this->getBillDisplayName($bill) }}
+                                        <div class="font-extrabold flex items-center gap-1.5 flex-wrap {{ $isPaid ? 'text-emerald-900 dark:text-emerald-200' : 'text-slate-900 dark:text-white' }}">
+                                            <span>{{ $this->getBillDisplayName($bill) }}</span>
+                                            @if($isPending)
+                                                <span class="px-2 py-0.5 bg-amber-500/15 border border-amber-500/30 text-amber-700 dark:text-amber-300 rounded-md text-[9px] font-black">
+                                                    ⏳ Menunggu Verifikasi
+                                                </span>
+                                            @endif
                                         </div>
                                         <div class="text-[11px] text-slate-500 dark:text-slate-400">
                                             Nominal: Rp {{ number_format($bill->amount, 0, ',', '.') }}
@@ -283,6 +297,11 @@
                                             <span class="inline-flex items-center gap-1 px-2.5 py-1 bg-emerald-600 text-white rounded-xl text-[10px] font-black uppercase">
                                                 ✓ Lunas
                                             </span>
+                                        @elseif($isPending)
+                                            <span class="font-black text-amber-600 dark:text-amber-400 text-sm block">
+                                                Rp {{ number_format($remaining, 0, ',', '.') }}
+                                            </span>
+                                            <span class="text-[10px] font-bold text-amber-600 dark:text-amber-400 block">Sedang diproses</span>
                                         @else
                                             <span class="font-black text-slate-900 dark:text-white text-sm block">
                                                 Rp {{ number_format($remaining, 0, ',', '.') }}
@@ -311,11 +330,17 @@
                                 @php
                                     $isPaid = $bill->status === 'paid';
                                     $remaining = max(0, $bill->amount - $bill->amount_paid);
+                                    $isPending = in_array((string)$bill->id, $pendingTransferBillIds ?? []);
                                 @endphp
-                                <div class="p-3 rounded-2xl border flex items-center justify-between text-xs {{ $isPaid ? 'bg-emerald-50/60 dark:bg-emerald-950/20 border-emerald-200/80 dark:border-emerald-800/40' : 'bg-slate-50 dark:bg-slate-950 border-slate-200/80 dark:border-slate-800' }}">
+                                <div class="p-3 rounded-2xl border flex items-center justify-between text-xs {{ $isPaid ? 'bg-emerald-50/60 dark:bg-emerald-950/20 border-emerald-200/80 dark:border-emerald-800/40' : ($isPending ? 'bg-amber-50/20 border-amber-300 dark:border-amber-700/60' : 'bg-slate-50 dark:bg-slate-950 border-slate-200/80 dark:border-slate-800') }}">
                                     <div>
-                                        <div class="font-extrabold text-slate-900 dark:text-white">
-                                            {{ $this->getBillDisplayName($bill) }}
+                                        <div class="font-extrabold flex items-center gap-1.5 flex-wrap text-slate-900 dark:text-white">
+                                            <span>{{ $this->getBillDisplayName($bill) }}</span>
+                                            @if($isPending)
+                                                <span class="px-2 py-0.5 bg-amber-500/15 border border-amber-500/30 text-amber-700 dark:text-amber-300 rounded-md text-[9px] font-black">
+                                                    ⏳ Menunggu Verifikasi
+                                                </span>
+                                            @endif
                                         </div>
                                         <div class="text-[11px] text-slate-500 dark:text-slate-400">
                                             {{ $this->getBillPeriodLabel($bill) }}
@@ -329,12 +354,18 @@
                                             <span class="inline-flex items-center gap-1 px-2.5 py-1 bg-emerald-600 text-white rounded-xl text-[10px] font-black uppercase">
                                                 ✓ Lunas
                                             </span>
+                                        @elseif($isPending)
+                                            <span class="font-black text-amber-600 dark:text-amber-400 text-sm block">
+                                                Rp {{ number_format($remaining, 0, ',', '.') }}
+                                            </span>
+                                            <span class="text-[10px] font-bold text-amber-600 dark:text-amber-400 block">Sedang diproses</span>
                                         @else
                                             <span class="font-black text-slate-900 dark:text-white text-sm block">
                                                 Rp {{ number_format($remaining, 0, ',', '.') }}
                                             </span>
                                             <span class="text-[10px] font-bold text-amber-600 dark:text-amber-400 block">Belum Lunas</span>
                                         @endif
+                                    </div>
                                 </div>
                             @endforeach
                         </div>
@@ -424,7 +455,8 @@
                                     @foreach($pastUnpaidList as $bill)
                                         @php
                                             $maxKekurangan = max(0, (float)$bill->amount - (float)$bill->amount_paid);
-                                            $isChecked = in_array($bill->id, $selectedBillIds);
+                                            $isPending = in_array((string)$bill->id, $pendingTransferBillIds ?? []);
+                                            $isChecked = in_array($bill->id, $selectedBillIds) && !$isPending;
                                             $isEditingCustom = $editingCustomBills[$bill->id] ?? false;
                                             $customVal = $customAmounts[$bill->id] ?? null;
                                             $payAmount = (isset($customVal) && is_numeric($customVal) && (float)$customVal > 0)
@@ -432,33 +464,43 @@
                                                 : $maxKekurangan;
                                             $sisaTagihan = max(0, $maxKekurangan - $payAmount);
                                         @endphp
-                                        <div class="p-2.5 sm:p-3 rounded-xl border transition-all {{ $isChecked ? 'border-rose-400 bg-rose-50/40 dark:bg-rose-950/20' : 'border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/40 hover:border-slate-300' }}">
+                                        <div class="p-2.5 sm:p-3 rounded-xl border transition-all {{ $isPending ? 'border-amber-300 dark:border-amber-700/60 bg-amber-50/20' : ($isChecked ? 'border-rose-400 bg-rose-50/40 dark:bg-rose-950/20' : 'border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/40 hover:border-slate-300') }}">
                                             <div class="flex items-center gap-2.5">
                                                 <input type="checkbox" 
-                                                       wire:click="toggleBillSelection('{{ $bill->id }}')"
+                                                       @if($isPending)
+                                                           disabled
+                                                           title="Sedang menunggu verifikasi bendahara"
+                                                       @else
+                                                           wire:click="toggleBillSelection('{{ $bill->id }}')"
+                                                       @endif
                                                        {{ $isChecked ? 'checked' : '' }}
-                                                       class="w-4 h-4 rounded text-rose-600 focus:ring-rose-500 border-slate-300 dark:border-slate-700 cursor-pointer">
+                                                       class="w-4 h-4 rounded text-rose-600 focus:ring-rose-500 border-slate-300 dark:border-slate-700 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed">
                                                 
                                                 <div class="flex-1 min-w-0">
-                                                    <div class="flex items-center justify-between gap-1">
+                                                    <div class="flex items-center justify-between gap-1 flex-wrap">
                                                         <span class="font-extrabold text-xs text-slate-900 dark:text-white truncate">
                                                             {{ $this->getBillDisplayName($bill) }}
                                                         </span>
-                                                        <span class="text-xs font-black text-rose-600 dark:text-rose-400 shrink-0">
+                                                        <span class="text-xs font-black {{ $isPending ? 'text-amber-600 dark:text-amber-400' : 'text-rose-600 dark:text-rose-400' }} shrink-0">
                                                             Rp {{ number_format($maxKekurangan, 0, ',', '.') }}
                                                         </span>
                                                     </div>
-                                                    <div class="text-[10px] text-slate-500 dark:text-slate-400">
-                                                        {{ $this->getBillPeriodLabel($bill) }}
+                                                    <div class="text-[10px] text-slate-500 dark:text-slate-400 flex items-center justify-between gap-1 mt-0.5 flex-wrap">
+                                                        <span>{{ $this->getBillPeriodLabel($bill) }}</span>
+                                                        @if($isPending)
+                                                            <span class="px-1.5 py-0.5 bg-amber-500/15 border border-amber-500/30 text-amber-700 dark:text-amber-300 rounded text-[9px] font-black">
+                                                                ⏳ Sedang Diverifikasi
+                                                            </span>
+                                                        @endif
                                                         @if(!empty($bill->notes))
-                                                            <span class="block text-[10px] text-amber-600 dark:text-amber-400 font-medium mt-0.5">📌 {{ $bill->notes }}</span>
+                                                            <span class="block text-[10px] text-amber-600 dark:text-amber-400 font-medium w-full">📌 {{ $bill->notes }}</span>
                                                         @endif
                                                     </div>
                                                 </div>
                                             </div>
 
                                             <!-- Inline Cicilan Bar if Checked -->
-                                            @if($isChecked)
+                                            @if($isChecked && !$isPending)
                                                 <div class="mt-2 pt-1.5 border-t border-rose-200/60 dark:border-rose-900/40 flex flex-wrap items-center justify-between gap-1.5 text-[10px]">
                                                     @if(!$isEditingCustom)
                                                         <span class="text-emerald-700 dark:text-emerald-400 font-bold">
@@ -527,7 +569,8 @@
                                     @foreach($currentUnpaidList as $bill)
                                         @php
                                             $maxKekurangan = max(0, (float)$bill->amount - (float)$bill->amount_paid);
-                                            $isChecked = in_array($bill->id, $selectedBillIds);
+                                            $isPending = in_array((string)$bill->id, $pendingTransferBillIds ?? []);
+                                            $isChecked = in_array($bill->id, $selectedBillIds) && !$isPending;
                                             $isEditingCustom = $editingCustomBills[$bill->id] ?? false;
                                             $customVal = $customAmounts[$bill->id] ?? null;
                                             $payAmount = (isset($customVal) && is_numeric($customVal) && (float)$customVal > 0)
@@ -535,33 +578,43 @@
                                                 : $maxKekurangan;
                                             $sisaTagihan = max(0, $maxKekurangan - $payAmount);
                                         @endphp
-                                        <div class="p-2.5 sm:p-3 rounded-xl border transition-all {{ $isChecked ? 'border-emerald-500 bg-emerald-50/40 dark:bg-emerald-950/20' : 'border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/40 hover:border-slate-300' }}">
+                                        <div class="p-2.5 sm:p-3 rounded-xl border transition-all {{ $isPending ? 'border-amber-300 dark:border-amber-700/60 bg-amber-50/20' : ($isChecked ? 'border-emerald-500 bg-emerald-50/40 dark:bg-emerald-950/20' : 'border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/40 hover:border-slate-300') }}">
                                             <div class="flex items-center gap-2.5">
                                                 <input type="checkbox" 
-                                                       wire:click="toggleBillSelection('{{ $bill->id }}')"
+                                                       @if($isPending)
+                                                           disabled
+                                                           title="Sedang menunggu verifikasi bendahara"
+                                                       @else
+                                                           wire:click="toggleBillSelection('{{ $bill->id }}')"
+                                                       @endif
                                                        {{ $isChecked ? 'checked' : '' }}
-                                                       class="w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500 border-slate-300 dark:border-slate-700 cursor-pointer">
+                                                       class="w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500 border-slate-300 dark:border-slate-700 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed">
                                                 
                                                 <div class="flex-1 min-w-0">
-                                                    <div class="flex items-center justify-between gap-1">
+                                                    <div class="flex items-center justify-between gap-1 flex-wrap">
                                                         <span class="font-extrabold text-xs text-slate-900 dark:text-white truncate">
                                                             {{ $this->getBillDisplayName($bill) }}
                                                         </span>
-                                                        <span class="text-xs font-black text-emerald-700 dark:text-emerald-400 shrink-0">
+                                                        <span class="text-xs font-black {{ $isPending ? 'text-amber-600 dark:text-amber-400' : 'text-emerald-700 dark:text-emerald-400' }} shrink-0">
                                                             Rp {{ number_format($maxKekurangan, 0, ',', '.') }}
                                                         </span>
                                                     </div>
-                                                    <div class="text-[10px] text-slate-500 dark:text-slate-400">
-                                                        {{ $this->getBillPeriodLabel($bill) }}
+                                                    <div class="text-[10px] text-slate-500 dark:text-slate-400 flex items-center justify-between gap-1 mt-0.5 flex-wrap">
+                                                        <span>{{ $this->getBillPeriodLabel($bill) }}</span>
+                                                        @if($isPending)
+                                                            <span class="px-1.5 py-0.5 bg-amber-500/15 border border-amber-500/30 text-amber-700 dark:text-amber-300 rounded text-[9px] font-black">
+                                                                ⏳ Sedang Diverifikasi
+                                                            </span>
+                                                        @endif
                                                         @if(!empty($bill->notes))
-                                                            <span class="block text-[10px] text-amber-600 dark:text-amber-400 font-medium mt-0.5">📌 {{ $bill->notes }}</span>
+                                                            <span class="block text-[10px] text-amber-600 dark:text-amber-400 font-medium w-full">📌 {{ $bill->notes }}</span>
                                                         @endif
                                                     </div>
                                                 </div>
                                             </div>
 
                                             <!-- Inline Cicilan Bar if Checked -->
-                                            @if($isChecked)
+                                            @if($isChecked && !$isPending)
                                                 <div class="mt-2 pt-1.5 border-t border-emerald-200/60 dark:border-emerald-900/40 flex flex-wrap items-center justify-between gap-1.5 text-[10px]">
                                                     @if(!$isEditingCustom)
                                                         <span class="text-emerald-700 dark:text-emerald-400 font-bold">
@@ -635,7 +688,8 @@
                                         @foreach($futureUnpaidList as $bill)
                                             @php
                                                 $maxKekurangan = max(0, (float)$bill->amount - (float)$bill->amount_paid);
-                                                $isChecked = in_array($bill->id, $selectedBillIds);
+                                                $isPending = in_array((string)$bill->id, $pendingTransferBillIds ?? []);
+                                                $isChecked = in_array($bill->id, $selectedBillIds) && !$isPending;
                                                 $isEditingCustom = $editingCustomBills[$bill->id] ?? false;
                                                 $customVal = $customAmounts[$bill->id] ?? null;
                                                 $payAmount = (isset($customVal) && is_numeric($customVal) && (float)$customVal > 0)
@@ -643,32 +697,42 @@
                                                     : $maxKekurangan;
                                                 $sisaTagihan = max(0, $maxKekurangan - $payAmount);
                                             @endphp
-                                            <div class="p-2.5 rounded-xl border transition-all {{ $isChecked ? 'border-emerald-500 bg-emerald-50/40 dark:bg-emerald-950/20' : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:border-slate-300' }}">
+                                            <div class="p-2.5 rounded-xl border transition-all {{ $isPending ? 'border-amber-300 dark:border-amber-700/60 bg-amber-50/20' : ($isChecked ? 'border-emerald-500 bg-emerald-50/40 dark:bg-emerald-950/20' : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:border-slate-300') }}">
                                                 <div class="flex items-center gap-2.5">
                                                     <input type="checkbox" 
-                                                           wire:click="toggleBillSelection('{{ $bill->id }}')"
+                                                           @if($isPending)
+                                                               disabled
+                                                               title="Sedang menunggu verifikasi bendahara"
+                                                           @else
+                                                               wire:click="toggleBillSelection('{{ $bill->id }}')"
+                                                           @endif
                                                            {{ $isChecked ? 'checked' : '' }}
-                                                           class="w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500 border-slate-300 dark:border-slate-700 cursor-pointer">
+                                                           class="w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500 border-slate-300 dark:border-slate-700 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed">
                                                     
                                                     <div class="flex-1 min-w-0">
-                                                        <div class="flex items-center justify-between gap-1">
+                                                        <div class="flex items-center justify-between gap-1 flex-wrap">
                                                             <span class="font-extrabold text-xs text-slate-900 dark:text-white truncate">
                                                                 {{ $this->getBillDisplayName($bill) }}
                                                             </span>
-                                                            <span class="text-xs font-black text-emerald-700 dark:text-emerald-400 shrink-0">
+                                                            <span class="text-xs font-black {{ $isPending ? 'text-amber-600 dark:text-amber-400' : 'text-emerald-700 dark:text-emerald-400' }} shrink-0">
                                                                 Rp {{ number_format($maxKekurangan, 0, ',', '.') }}
                                                             </span>
                                                         </div>
-                                                        <div class="text-[10px] text-slate-500 dark:text-slate-400">
-                                                            {{ $this->getBillPeriodLabel($bill) }}
+                                                        <div class="text-[10px] text-slate-500 dark:text-slate-400 flex items-center justify-between gap-1 mt-0.5 flex-wrap">
+                                                            <span>{{ $this->getBillPeriodLabel($bill) }}</span>
+                                                            @if($isPending)
+                                                                <span class="px-1.5 py-0.5 bg-amber-500/15 border border-amber-500/30 text-amber-700 dark:text-amber-300 rounded text-[9px] font-black">
+                                                                    ⏳ Sedang Diverifikasi
+                                                                </span>
+                                                            @endif
                                                             @if(!empty($bill->notes))
-                                                                <span class="block text-[10px] text-amber-600 dark:text-amber-400 font-medium mt-0.5">📌 {{ $bill->notes }}</span>
+                                                                <span class="block text-[10px] text-amber-600 dark:text-amber-400 font-medium w-full">📌 {{ $bill->notes }}</span>
                                                             @endif
                                                         </div>
                                                     </div>
                                                 </div>
 
-                                                @if($isChecked)
+                                                @if($isChecked && !$isPending)
                                                     <div class="mt-2 pt-1.5 border-t border-emerald-200/60 dark:border-emerald-900/40 flex flex-wrap items-center justify-between gap-1.5 text-[10px]">
                                                         @if(!$isEditingCustom)
                                                             <span class="text-emerald-700 dark:text-emerald-400 font-bold">
@@ -970,7 +1034,7 @@
 
                 <!-- ─── FORM TRANSFER MANUAL ────────────────────────────────── -->
                 @if($checkoutMethod === 'manual')
-                    <div x-data="{ showConfirmSendModal: false }" class="space-y-3 pt-1">
+                    <div x-data="{ showConfirmSendModal: false, isSubmitting: false }" class="space-y-3 pt-1">
                         
                         {{-- DIALOG / MODAL KONFIRMASI PENGIRIMAN BUKTI TRANSFER --}}
                         <div x-show="showConfirmSendModal"
@@ -1095,14 +1159,17 @@
                                 <div class="p-4 bg-slate-50 dark:bg-slate-950/80 border-t border-slate-100 dark:border-slate-800 flex items-center justify-end gap-2.5 shrink-0">
                                     <button type="button" 
                                             @click="showConfirmSendModal = false"
-                                            class="px-4 py-2.5 rounded-xl bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-bold transition-all">
+                                            :disabled="isSubmitting"
+                                            class="px-4 py-2.5 rounded-xl bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-bold transition-all disabled:opacity-50">
                                         Periksa Kembali
                                     </button>
                                     <button type="button" 
                                             wire:click="submitManualTransfer"
                                             wire:loading.attr="disabled"
-                                            @click="showConfirmSendModal = false"
-                                            class="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white text-xs font-extrabold shadow-md shadow-emerald-600/25 transition-all flex items-center justify-center gap-1.5 active:scale-98">
+                                            wire:target="submitManualTransfer"
+                                            :disabled="isSubmitting"
+                                            @click="if (isSubmitting) return; isSubmitting = true; showConfirmSendModal = false; setTimeout(() => { isSubmitting = false; }, 4000);"
+                                            class="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white text-xs font-extrabold shadow-md shadow-emerald-600/25 transition-all flex items-center justify-center gap-1.5 active:scale-98 disabled:opacity-50 disabled:cursor-not-allowed">
                                         <span wire:loading.remove wire:target="submitManualTransfer" class="flex items-center gap-1.5">
                                             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
                                             <span>✓ Ya, Kirim Sekarang</span>
@@ -1236,7 +1303,8 @@
                             @if($proofImage && count($selectedBillIds) > 0)
                                 <button type="button" 
                                         @click="showConfirmSendModal = true"
-                                        class="w-full py-3.5 px-4 bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white font-extrabold rounded-xl transition-all shadow-md shadow-emerald-600/20 flex items-center justify-center gap-2 text-xs active:scale-[0.99] cursor-pointer">
+                                        :disabled="isSubmitting"
+                                        class="w-full py-3.5 px-4 bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white font-extrabold rounded-xl transition-all shadow-md shadow-emerald-600/20 flex items-center justify-center gap-2 text-xs active:scale-[0.99] cursor-pointer disabled:opacity-50">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                                     <span>Kirim &amp; Konfirmasi Bukti Pembayaran</span>
                                 </button>
@@ -1244,7 +1312,10 @@
                                 <button type="button" 
                                         wire:click="submitManualTransfer"
                                         wire:loading.attr="disabled"
-                                        class="w-full py-3 px-4 bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white font-bold rounded-xl transition-all shadow-xs flex items-center justify-center gap-2 text-xs disabled:opacity-50">
+                                        wire:target="submitManualTransfer"
+                                        :disabled="isSubmitting"
+                                        @click="if (isSubmitting) return; isSubmitting = true; setTimeout(() => { isSubmitting = false; }, 4000);"
+                                        class="w-full py-3 px-4 bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white font-bold rounded-xl transition-all shadow-xs flex items-center justify-center gap-2 text-xs disabled:opacity-50 disabled:cursor-not-allowed">
                                     <span wire:loading.remove wire:target="submitManualTransfer" class="flex items-center gap-1.5">
                                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
                                         <span>Kirim Bukti Pembayaran</span>

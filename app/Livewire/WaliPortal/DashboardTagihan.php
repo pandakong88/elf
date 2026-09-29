@@ -18,6 +18,7 @@ use App\Modules\Keuangan\Services\ProofImageCompressionService;
 use App\Services\WhatsAppService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Cache;
 
 class DashboardTagihan extends Component
 {
@@ -212,12 +213,30 @@ class DashboardTagihan extends Component
         ];
     }
 
+    public function getPendingTransferBillIds(): array
+    {
+        $pendingSubs = ManualTransferSubmission::where('person_id', $this->personId)
+            ->where('status', 'pending')
+            ->get();
+
+        $ids = [];
+        foreach ($pendingSubs as $sub) {
+            if (!empty($sub->bill_ids) && is_array($sub->bill_ids)) {
+                $ids = array_merge($ids, $sub->bill_ids);
+            }
+        }
+
+        return array_values(array_unique(array_map('strval', $ids)));
+    }
+
     public function selectQuickMode(string $mode): void
     {
         $this->fifoNotice = null;
         $partition = $this->getUnpaidBillsPartition();
-        $pastIds = $partition['past']->pluck('id')->toArray();
-        $currentIds = $partition['current']->pluck('id')->toArray();
+        $pendingIds = $this->getPendingTransferBillIds();
+
+        $pastIds = $partition['past']->pluck('id')->filter(fn($id) => !in_array((string)$id, $pendingIds))->values()->toArray();
+        $currentIds = $partition['current']->pluck('id')->filter(fn($id) => !in_array((string)$id, $pendingIds))->values()->toArray();
 
         if ($mode === 'all_active') {
             $this->selectedBillIds = array_values(array_unique(array_merge($pastIds, $currentIds)));
@@ -233,6 +252,14 @@ class DashboardTagihan extends Component
     public function toggleBillSelection(string $billId): void
     {
         $this->fifoNotice = null;
+        $pendingIds = $this->getPendingTransferBillIds();
+
+        // Cegah memilih tagihan yang sudah memiliki bukti transfer berstatus pending verifikasi
+        if (in_array((string)$billId, $pendingIds)) {
+            $this->fifoNotice = 'Tagihan ini sudah memiliki pengajuan bukti transfer yang sedang MENUNGGU VERIFIKASI Bendahara.';
+            return;
+        }
+
         $targetBill = Bill::with('config')->find($billId);
         if (!$targetBill) {
             return;
@@ -356,26 +383,47 @@ class DashboardTagihan extends Component
     {
         $this->manualErrorMessage = null;
         $this->manualSuccessMessage = null;
+
+        // 1. Anti-Double Submit / In-Flight Guard
+        if ($this->isSubmittingManual) {
+            return;
+        }
+
+        $lockKey = "submit_manual_transfer_{$this->personId}";
+        $lock = Cache::lock($lockKey, 15);
+        if (!$lock->get()) {
+            $this->manualErrorMessage = 'Pengajuan sedang diproses. Mohon tunggu beberapa detik...';
+            return;
+        }
+
         $this->isSubmittingManual = true;
 
-        $this->validate([
-            'selectedBillIds' => ['required', 'array', 'min:1'],
-            'proofImage'      => ['required', 'image', 'max:12288'], // max 12MB raw (will be compressed)
-            'senderBank'      => ['nullable', 'string', 'max:50'],
-            'senderAccountName' => ['nullable', 'string', 'max:100'],
-            'transferNotes'   => ['nullable', 'string', 'max:255'],
-        ], [
-            'selectedBillIds.required' => 'Pilih minimal satu tagihan yang ingin dibayar.',
-            'selectedBillIds.min'      => 'Pilih minimal satu tagihan yang ingin dibayar.',
-            'proofImage.required'      => 'Foto bukti transfer wajib diunggah.',
-            'proofImage.image'         => 'File bukti transfer harus berupa gambar (JPG, PNG, atau WebP).',
-            'proofImage.max'           => 'Ukuran file foto maksimal 12MB.',
-        ]);
-
         try {
-            DB::beginTransaction();
+            $this->validate([
+                'selectedBillIds' => ['required', 'array', 'min:1'],
+                'proofImage'      => ['required', 'image', 'max:12288'], // max 12MB raw (will be compressed)
+                'senderBank'      => ['nullable', 'string', 'max:50'],
+                'senderAccountName' => ['nullable', 'string', 'max:100'],
+                'transferNotes'   => ['nullable', 'string', 'max:255'],
+            ], [
+                'selectedBillIds.required' => 'Pilih minimal satu tagihan yang ingin dibayar.',
+                'selectedBillIds.min'      => 'Pilih minimal satu tagihan yang ingin dibayar.',
+                'proofImage.required'      => 'Foto bukti transfer wajib diunggah.',
+                'proofImage.image'         => 'File bukti transfer harus berupa gambar (JPG, PNG, atau WebP).',
+                'proofImage.max'           => 'Ukuran file foto maksimal 12MB.',
+            ]);
 
-            // 1. Ambil data tagihan aktif
+            // 2. Proteksi Tagihan yang Masih Berstatus Pending Verifikasi
+            $pendingBillIds = $this->getPendingTransferBillIds();
+            $conflicts = array_intersect(array_map('strval', $this->selectedBillIds), $pendingBillIds);
+            if (!empty($conflicts)) {
+                $conflictBills = Bill::with('config')->whereIn('id', $conflicts)->get();
+                $conflictNames = $conflictBills->map(fn($b) => $this->getBillDisplayName($b) . ($b->period_month ? ' (' . $this->getMonthName($b->period_month) . ')' : ''))->join(', ');
+                
+                throw new \Exception("Tagihan [{$conflictNames}] sudah memiliki bukti transfer yang sedang MENUNGGU VERIFIKASI Bendahara. Anda tidak perlu mengunggah ulang.");
+            }
+
+            // 3. Ambil data tagihan aktif
             $bills = Bill::with('config')
                 ->whereIn('id', $this->selectedBillIds)
                 ->where('person_id', $this->personId)
@@ -386,7 +434,7 @@ class DashboardTagihan extends Component
                 throw new \Exception('Tagihan yang dipilih tidak ditemukan atau sudah lunas.');
             }
 
-            // 2. Susun Breakdown Tagihan
+            // 4. Susun Breakdown Tagihan
             $breakdown = [];
             $totalBills = 0.0;
 
@@ -398,7 +446,6 @@ class DashboardTagihan extends Component
                     : $maxKekurangan;
 
                 $totalBills += $payAmount;
-                $monthName = $this->getMonthName($bill->period_month);
                 $periodLabel = $this->getBillPeriodLabel($bill);
 
                 $breakdown[] = [
@@ -413,7 +460,20 @@ class DashboardTagihan extends Component
             $pocketMoney = ($this->includePocketMoney && $this->pocketMoneyAmount > 0) ? (float)$this->pocketMoneyAmount : 0.0;
             $grandTotal = $totalBills + $pocketMoney;
 
-            // 3. Kompresi Cerdas & Simpan Gambar
+            // 5. Anti-Spam / Pencegahan Upload Bukti Duplikat Beruntun
+            $recentDuplicate = ManualTransferSubmission::where('person_id', $this->personId)
+                ->where('status', 'pending')
+                ->where('total_transfer_amount', $grandTotal)
+                ->where('created_at', '>=', now()->subMinutes(3))
+                ->first();
+
+            if ($recentDuplicate) {
+                throw new \Exception("Pengajuan bukti transfer dengan nominal Rp " . number_format($grandTotal, 0, ',', '.') . " baru saja dikirim (Kode: {$recentDuplicate->submission_code}) dan sedang dalam antrean verifikasi Bendahara.");
+            }
+
+            DB::beginTransaction();
+
+            // 6. Kompresi Cerdas & Simpan Gambar
             $compressedResult = $compressor->compressAndStore(
                 file: $this->proofImage,
                 disk: 'public',
@@ -424,7 +484,7 @@ class DashboardTagihan extends Component
 
             $proofPath = $compressedResult['path'];
 
-            // 4. Buat Record Manual Transfer Submission
+            // 7. Buat Record Manual Transfer Submission
             $submission = ManualTransferSubmission::create([
                 'submission_code'       => ManualTransferSubmission::generateSubmissionCode(),
                 'person_id'             => $this->personId,
@@ -441,7 +501,7 @@ class DashboardTagihan extends Component
                 'status'                => 'pending',
             ]);
 
-            // 5. Catat Titipan Uang Saku jika ada
+            // 8. Catat Titipan Uang Saku jika ada
             if ($pocketMoney > 0) {
                 PocketMoneyDeposit::create([
                     'person_id'    => $this->personId,
@@ -455,7 +515,7 @@ class DashboardTagihan extends Component
 
             DB::commit();
 
-            // 6. Kirim Notifikasi Alert ke Grup WhatsApp Bendahara (non-blocking)
+            // 9. Kirim Notifikasi Alert ke Grup WhatsApp Bendahara (non-blocking)
             try {
                 $submission->loadMissing(['person.roomAssignments' => fn($q) => $q->where('status', 'active')->with('room.dormitory')]);
                 $person           = $submission->person;
@@ -511,7 +571,7 @@ class DashboardTagihan extends Component
             $this->includePocketMoney = false;
             $this->pocketMoneyAmount = 0.0;
             $this->customPocketMoney = '';
-            $this->isSubmittingManual = false;
+            $this->selectedBillIds = [];
 
             // Pindah ke tab riwayat & tampilkan notifikasi sukses
             $this->portalTab = 'riwayat';
@@ -524,8 +584,14 @@ class DashboardTagihan extends Component
                 'person_id' => $this->personId,
                 'error'     => $e->getMessage(),
             ]);
-            $this->manualErrorMessage = 'Gagal menyimpan pengajuan: ' . $e->getMessage();
+            $this->manualErrorMessage = $e->getMessage();
+        } finally {
             $this->isSubmittingManual = false;
+            try {
+                $lock?->release();
+            } catch (\Throwable $e) {
+                // Ignore lock release error
+            }
         }
     }
 
@@ -1087,11 +1153,15 @@ class DashboardTagihan extends Component
                 return $periodA <=> $periodB;
             })->values();
 
+        $pendingTransferBillIds = $this->getPendingTransferBillIds();
+
         $mandatoryBillIds = collect()
             ->merge($pastUnpaidBills)
             ->merge($eventBills->whereIn('status', ['unpaid', 'partial']))
             ->merge($currentMonthBills->whereIn('status', ['unpaid', 'partial']))
             ->pluck('id')
+            ->filter(fn($id) => !in_array((string)$id, $pendingTransferBillIds))
+            ->values()
             ->toArray();
 
         if (!$this->isInitialized) {
@@ -1316,6 +1386,7 @@ class DashboardTagihan extends Component
             'paymentHistory'          => $paymentHistory,
             'historyYears'            => $historyYears,
             'lastUpdatedLabel'        => $lastUpdatedLabel,
+            'pendingTransferBillIds'  => $pendingTransferBillIds,
         ])->layout('layouts.wali-portal', ['title' => 'Portal Wali — ' . $santri->name]);
     }
 }
