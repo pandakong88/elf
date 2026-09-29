@@ -1,4 +1,4 @@
-// Firebase Messaging Service Worker (Background Push Notifications)
+// Firebase Messaging Service Worker (Background Push Notifications) v2
 importScripts('https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js');
 importScripts('https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging-compat.js');
 
@@ -13,11 +13,18 @@ firebase.initializeApp({
 
 const messaging = firebase.messaging();
 
-// Firebase SDK otomatis menampilkan notifikasi dari payload.webpush.notification.
-// Di onBackgroundMessage kita TIDAK memanggil self.registration.showNotification lagi
-// agar tidak memunculkan notifikasi ganda/dobel di layar Android.
+// Update service worker immediately
+self.addEventListener('install', function(event) {
+    self.skipWaiting();
+});
+
+self.addEventListener('activate', function(event) {
+    event.waitUntil(clients.claim());
+});
+
+// Firebase background message listener (silent - let SDK render webpush payload)
 messaging.onBackgroundMessage(function(payload) {
-    console.log('[FCM SW] Background payload diterima:', payload);
+    console.log('[FCM SW v2] Background payload received');
 });
 
 // Handle notification click — arahkan ke tab verifikasi transfer
