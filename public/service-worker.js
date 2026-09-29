@@ -1,22 +1,17 @@
-﻿const CACHE_NAME = 'elvith-pwa-v2';
+﻿const CACHE_NAME = 'elvith-pwa-v3';
 const OFFLINE_URL = '/offline';
-
-// Static assets to precache
-const PRECACHE_ASSETS = [
-    OFFLINE_URL,
-    '/manifest.json',
-    '/images/logo-alfithroh.png',
-    '/icons/icon-192x192.png',
-    '/icons/icon-512x512.png',
-    '/icons/apple-touch-icon.png'
-];
 
 // Install Event
 self.addEventListener('install', (event) => {
     self.skipWaiting();
     event.waitUntil(
         caches.open(CACHE_NAME).then((cache) => {
-            return cache.addAll(PRECACHE_ASSETS).catch((err) => {
+            return cache.addAll([
+                OFFLINE_URL,
+                '/images/logo-alfithroh.png',
+                '/icons/icon-192x192.png',
+                '/icons/icon-512x512.png'
+            ]).catch((err) => {
                 console.warn('Precache non-fatal error:', err);
             });
         })
@@ -38,7 +33,7 @@ self.addEventListener('activate', (event) => {
     );
 });
 
-// Fetch Event
+// Fetch Event (Required by Chrome for Installability)
 self.addEventListener('fetch', (event) => {
     const request = event.request;
 
@@ -84,9 +79,7 @@ self.addEventListener('fetch', (event) => {
                         caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
                     }
                     return networkResponse;
-                }).catch(() => {
-                    // Fail silently for non-critical assets
-                });
+                }).catch(() => {});
             })
         );
     }
