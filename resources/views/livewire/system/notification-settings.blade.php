@@ -164,10 +164,14 @@
             await navigator.serviceWorker.ready;
 
             const messaging = firebase.messaging();
-            messaging.useServiceWorker(swReg);
 
             const VAPID_KEY = "BC9so406q2ySAfwRFSvUqWMkntM3pgaQ-W0TpCo6NInrOkJsiryrqDTElPxH5Iva6iHrcz61LlALMaY7ETKCtHE";
-            const token = await messaging.getToken({ vapidKey: VAPID_KEY });
+            
+            // Di Firebase v9/v10 Compat, serviceWorkerRegistration dimasukkan di dalam options getToken
+            const token = await messaging.getToken({ 
+                vapidKey: VAPID_KEY,
+                serviceWorkerRegistration: swReg
+            });
 
             if (!token) {
                 showClientAlert('Gagal mengambil token dari Google Firebase.', false);
