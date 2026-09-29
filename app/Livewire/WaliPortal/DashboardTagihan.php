@@ -106,7 +106,9 @@ class DashboardTagihan extends Component
             ->first();
 
         if ($sub) {
-            $this->selectedBillIds = array_map('strval', (array) ($sub->bill_ids ?? []));
+            $pendingIds = $this->getPendingTransferBillIds();
+            $subBillIds = array_map('strval', (array) ($sub->bill_ids ?? []));
+            $this->selectedBillIds = array_values(array_diff($subBillIds, $pendingIds));
             if ($sub->pocket_money_amount > 0) {
                 $this->includePocketMoney = true;
                 $this->pocketMoneyAmount = (float) $sub->pocket_money_amount;
@@ -160,7 +162,11 @@ class DashboardTagihan extends Component
 
     public function selectAllBills(array $allBillIds): void
     {
-        $this->selectedBillIds = $allBillIds;
+        $pendingIds = $this->getPendingTransferBillIds();
+        $this->selectedBillIds = array_values(array_filter(
+            array_map('strval', $allBillIds),
+            fn($id) => !in_array($id, $pendingIds)
+        ));
     }
 
     public function deselectAllBills(): void
@@ -235,8 +241,8 @@ class DashboardTagihan extends Component
         $partition = $this->getUnpaidBillsPartition();
         $pendingIds = $this->getPendingTransferBillIds();
 
-        $pastIds = $partition['past']->pluck('id')->filter(fn($id) => !in_array((string)$id, $pendingIds))->values()->toArray();
-        $currentIds = $partition['current']->pluck('id')->filter(fn($id) => !in_array((string)$id, $pendingIds))->values()->toArray();
+        $pastIds = $partition['past']->pluck('id')->map('strval')->filter(fn($id) => !in_array($id, $pendingIds))->values()->toArray();
+        $currentIds = $partition['current']->pluck('id')->map('strval')->filter(fn($id) => !in_array($id, $pendingIds))->values()->toArray();
 
         if ($mode === 'all_active') {
             $this->selectedBillIds = array_values(array_unique(array_merge($pastIds, $currentIds)));
@@ -247,6 +253,8 @@ class DashboardTagihan extends Component
         } elseif ($mode === 'none') {
             $this->selectedBillIds = [];
         }
+
+        $this->selectedBillIds = array_values(array_diff(array_map('strval', $this->selectedBillIds), $pendingIds));
     }
 
     public function toggleBillSelection(string $billId): void
@@ -257,6 +265,7 @@ class DashboardTagihan extends Component
         // Cegah memilih tagihan yang sudah memiliki bukti transfer berstatus pending verifikasi
         if (in_array((string)$billId, $pendingIds)) {
             $this->fifoNotice = 'Tagihan ini sudah memiliki pengajuan bukti transfer yang sedang MENUNGGU VERIFIKASI Bendahara.';
+            $this->selectedBillIds = array_values(array_diff(array_map('strval', $this->selectedBillIds), [(string)$billId]));
             return;
         }
 
@@ -268,15 +277,16 @@ class DashboardTagihan extends Component
         $interval = $targetBill->config?->interval ?? '';
         $isEvent = in_array($interval, ['once', 'insidental', 'event', 'sekali']) || in_array($targetBill->bill_type, ['kitab', 'pendaftaran', 'event_iuran']);
 
-        $isSelected = in_array($billId, $this->selectedBillIds);
+        $isSelected = in_array((string)$billId, array_map('strval', $this->selectedBillIds));
 
         // Tagihan insidental / event / kitab: Bebas dipilih secara mandiri tanpa aturan FIFO
         if ($isEvent) {
             if ($isSelected) {
-                $this->selectedBillIds = array_values(array_diff($this->selectedBillIds, [$billId]));
+                $this->selectedBillIds = array_values(array_diff(array_map('strval', $this->selectedBillIds), [(string)$billId]));
             } else {
-                $this->selectedBillIds[] = $billId;
+                $this->selectedBillIds[] = (string)$billId;
             }
+            $this->selectedBillIds = array_values(array_diff(array_map('strval', $this->selectedBillIds), $pendingIds));
             return;
         }
 
@@ -299,13 +309,14 @@ class DashboardTagihan extends Component
             return $a->created_at <=> $b->created_at;
         })->values();
 
-        $billIndex = $sameTypeBills->search(fn($b) => $b->id === $billId);
+        $billIndex = $sameTypeBills->search(fn($b) => (string)$b->id === (string)$billId);
         if ($billIndex === false) {
             if ($isSelected) {
-                $this->selectedBillIds = array_values(array_diff($this->selectedBillIds, [$billId]));
+                $this->selectedBillIds = array_values(array_diff(array_map('strval', $this->selectedBillIds), [(string)$billId]));
             } else {
-                $this->selectedBillIds[] = $billId;
+                $this->selectedBillIds[] = (string)$billId;
             }
+            $this->selectedBillIds = array_values(array_diff(array_map('strval', $this->selectedBillIds), $pendingIds));
             return;
         }
 
@@ -313,25 +324,31 @@ class DashboardTagihan extends Component
 
         if ($isSelected) {
             // Uncheck: Uncheck tagihan ini beserta tagihan setelahnya (hanya untuk jenis yang sama)
-            $billsToUncheck = $sameTypeBills->slice($billIndex)->pluck('id')->toArray();
-            $intersectFuture = array_intersect($this->selectedBillIds, array_slice($billsToUncheck, 1));
+            $billsToUncheck = $sameTypeBills->slice($billIndex)->pluck('id')->map('strval')->toArray();
+            $intersectFuture = array_intersect(array_map('strval', $this->selectedBillIds), array_slice($billsToUncheck, 1));
 
-            $this->selectedBillIds = array_values(array_diff($this->selectedBillIds, $billsToUncheck));
+            $this->selectedBillIds = array_values(array_diff(array_map('strval', $this->selectedBillIds), $billsToUncheck));
 
             if (!empty($intersectFuture)) {
                 $this->fifoNotice = 'Tagihan bulan berjalan/mendatang disesuaikan karena tunggakan lama belum dipilih.';
             }
         } else {
-            // Check: Check tagihan ini beserta tunggakan sebelumnya (hanya untuk jenis yang sama)
-            $billsToCheck = $sameTypeBills->slice(0, $billIndex + 1)->pluck('id')->toArray();
-            $missingOlder = array_diff($billsToCheck, $this->selectedBillIds);
+            // Check: Check tagihan ini beserta tunggakan sebelumnya (hanya untuk jenis yang sama), KECUALI yang pending verifikasi!
+            $billsToCheck = $sameTypeBills->slice(0, $billIndex + 1)->pluck('id')->map('strval')->toArray();
+            // Buang tagihan yang sedang menunggu verifikasi agar TIDAK TERHITUNG dan TIDAK BISA DICEKLIST
+            $billsToCheck = array_values(array_diff($billsToCheck, $pendingIds));
 
-            $this->selectedBillIds = array_values(array_unique(array_merge($this->selectedBillIds, $billsToCheck)));
+            $missingOlder = array_diff($billsToCheck, array_map('strval', $this->selectedBillIds));
+
+            $this->selectedBillIds = array_values(array_unique(array_merge(array_map('strval', $this->selectedBillIds), $billsToCheck)));
 
             if (count($missingOlder) > 1) {
                 $this->fifoNotice = 'Tagihan tunggakan bulan sebelumnya otomatis diikutsertakan agar urutan pelunasan tertib.';
             }
         }
+
+        // Sanitasi ganda untuk memastikan tidak pernah ada pendingIds yang tertinggal
+        $this->selectedBillIds = array_values(array_diff(array_map('strval', $this->selectedBillIds), $pendingIds));
     }
 
     public function toggleCustomAmountInput(string $billId): void
@@ -1186,12 +1203,19 @@ class DashboardTagihan extends Component
 
         $pendingTransferBillIds = $this->getPendingTransferBillIds();
 
+        // 1. Bersihkan $this->selectedBillIds agar bebas dari pendingTransferBillIds
+        $this->selectedBillIds = array_values(array_diff(
+            array_map('strval', $this->selectedBillIds),
+            $pendingTransferBillIds
+        ));
+
         $mandatoryBillIds = collect()
             ->merge($pastUnpaidBills)
             ->merge($eventBills->whereIn('status', ['unpaid', 'partial']))
             ->merge($currentMonthBills->whereIn('status', ['unpaid', 'partial']))
             ->pluck('id')
-            ->filter(fn($id) => !in_array((string)$id, $pendingTransferBillIds))
+            ->map('strval')
+            ->filter(fn($id) => !in_array($id, $pendingTransferBillIds))
             ->values()
             ->toArray();
 
@@ -1205,7 +1229,9 @@ class DashboardTagihan extends Component
 
         if (!empty($this->selectedBillIds)) {
             foreach ($unpaidQueue as $bill) {
-                if (!in_array($bill->id, $this->selectedBillIds)) continue;
+                $billStrId = (string) $bill->id;
+                if (!in_array($billStrId, $this->selectedBillIds)) continue;
+                if (in_array($billStrId, $pendingTransferBillIds)) continue;
 
                 $maxKekurangan = max(0, (float)$bill->amount - (float)$bill->amount_paid);
                 if ($maxKekurangan <= 0) continue;
@@ -1375,7 +1401,7 @@ class DashboardTagihan extends Component
         $pastUnpaidList = $partition['past'];
         $currentUnpaidList = $partition['current'];
         $futureUnpaidList = $partition['future'];
-        $hasPastUnpaid = $pastUnpaidList->isNotEmpty();
+        $hasPastUnpaid = $pastUnpaidList->reject(fn($b) => in_array((string)$b->id, $pendingTransferBillIds))->isNotEmpty();
 
         return view('livewire.wali-portal.dashboard-tagihan', [
             'portalTab'               => $this->portalTab,
