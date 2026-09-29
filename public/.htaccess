@@ -1,8 +1,32 @@
-﻿<IfModule mod_mime.c>
+<IfModule mod_mime.c>
     AddType application/manifest+json .webmanifest
     AddType application/manifest+json .json
     AddType application/javascript .js
 </IfModule>
+
+# PWA: Service Worker must NOT be cached by CDN/browser (Chrome requirement)
+<FilesMatch "^service-worker\.js$">
+    <IfModule mod_headers.c>
+        Header set Cache-Control "no-cache, no-store, must-revalidate"
+        Header set Service-Worker-Allowed "/"
+    </IfModule>
+</FilesMatch>
+
+# PWA: manifest.json served with correct MIME and short cache
+<FilesMatch "^manifest\.(json|webmanifest)$">
+    <IfModule mod_headers.c>
+        Header set Cache-Control "public, max-age=86400"
+        Header set Access-Control-Allow-Origin "*"
+    </IfModule>
+</FilesMatch>
+
+# PWA Icons: allow caching
+<FilesMatch "\.(png|jpg|jpeg|gif|ico|svg|webp)$">
+    <IfModule mod_headers.c>
+        Header set Cache-Control "public, max-age=2592000"
+        Header set Access-Control-Allow-Origin "*"
+    </IfModule>
+</FilesMatch>
 
 <IfModule mod_rewrite.c>
     <IfModule mod_negotiation.c>
