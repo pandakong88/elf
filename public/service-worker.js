@@ -1,4 +1,4 @@
-﻿const CACHE_NAME = 'elvith-pwa-v3';
+const CACHE_NAME = 'elvith-pwa-v3';
 const OFFLINE_URL = '/offline';
 
 // Install Event
