@@ -46,25 +46,34 @@ class FcmNotificationService
      */
     public function sendToRoles(array $roles, string $title, string $body, array $data = [], ?string $clickUrl = null): void
     {
-        $sentUserIds = [];
+        $targetTokens = collect();
 
         try {
-            $users = \App\Models\User::whereHas('roles', function ($q) use ($roles) {
+            $userIds = \App\Models\User::whereHas('roles', function ($q) use ($roles) {
                 $q->whereIn('name', $roles);
-            })->get();
+            })->pluck('id');
 
-            foreach ($users as $user) {
-                $sentUserIds[] = $user->id;
-                $this->sendToUser($user->id, $title, $body, $data, $clickUrl);
+            if ($userIds->isNotEmpty()) {
+                $tokens = FcmToken::whereIn('user_id', $userIds)
+                    ->where('last_active_at', '>', now()->subDays(60))
+                    ->pluck('token');
+                $targetTokens = $targetTokens->merge($tokens);
             }
         } catch (\Throwable $e) {
             Log::warning("[FCM] sendToRoles query error: " . $e->getMessage());
         }
 
-        // Jika tidak ada user dengan role tersebut yang punya token, kirim ke SEMUA token aktif pengurus
-        if (empty($sentUserIds)) {
-            Log::info("[FCM] No users found with specified roles, broadcasting to all registered FCM tokens");
-            $this->broadcastToAll($title, $body, $data, $clickUrl);
+        // Jika tidak ada user dengan role tersebut yang punya token di DB, broadcast ke semua token aktif
+        if ($targetTokens->isEmpty()) {
+            Log::info("[FCM] No tokens found for specified roles, broadcasting to all registered tokens");
+            $targetTokens = FcmToken::where('last_active_at', '>', now()->subDays(60))->pluck('token');
+        }
+
+        // Unique token agar tidak pernah terkirim 2x ke token yang sama
+        $uniqueTokens = $targetTokens->unique()->filter();
+
+        foreach ($uniqueTokens as $token) {
+            $this->sendViaHttpV1($token, $title, $body, $data, $clickUrl);
         }
     }
 
@@ -94,24 +103,27 @@ class FcmNotificationService
                 return;
             }
 
+            // Gunakan webpush.notification saja TANPA generic message.notification.
+            // Jika generic notification DAN webpush.notification diisi bersamaan,
+            // Chrome Android sering merender keduanya (1 dari generic engine, 1 dari webpush engine).
+            $tag = !empty($data['submission_code']) 
+                ? ('elvith-sub-' . $data['submission_code']) 
+                : ('elvith-msg-' . md5($title . $body));
+
             $payload = [
                 'message' => [
                     'token' => $token,
-                    'notification' => [
-                        'title' => $title,
-                        'body'  => $body,
-                    ],
                     'webpush' => [
                         'notification' => [
-                            'title' => $title,
-                            'body'  => $body,
-                            'icon'  => '/icons/icon-192x192.png',
-                            'badge' => '/icons/icon-72x72.png',
+                            'title'              => $title,
+                            'body'               => $body,
+                            'icon'               => '/icons/icon-192x192.png',
+                            'badge'              => '/icons/icon-72x72.png',
+                            'tag'                => $tag,
                             'requireInteraction' => true,
-                            'tag'   => 'elvith-payment-' . ($data['type'] ?? 'notif'),
                         ],
                         'fcm_options' => [
-                            'link' => $clickUrl ?? '/',
+                            'link' => $clickUrl ?? '/keuangan/billing?tab=transfers',
                         ],
                     ],
                 ],
