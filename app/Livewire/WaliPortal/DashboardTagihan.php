@@ -484,7 +484,7 @@ class DashboardTagihan extends Component
                     ?: ($this->senderBank ? "Wali via {$this->senderBank}" : ($person?->santriProfile?->father_name ?: 'Wali Santri'));
 
                 $proofUrl  = route('transfer-proof.view', $submission->id);
-                $verifyUrl = url('/keuangan/billing?tab=transfer');
+                $verifyUrl = url('/keuangan/billing?tab=transfers');
 
                 app(WhatsAppService::class)->notifyManualTransferPending(
                     santriName:        $person?->name ?? 'Santri',

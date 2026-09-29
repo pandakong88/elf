@@ -4,6 +4,7 @@ namespace App\Livewire\Keuangan;
 
 use Livewire\Component;
 use Livewire\WithPagination;
+use Livewire\Attributes\Url;
 use App\Modules\Core\Models\Person;
 use App\Modules\Keuangan\Models\Bill;
 use App\Modules\Keuangan\Models\BillingConfiguration;
@@ -33,6 +34,7 @@ class BillingManager extends Component
     use WithPagination, HasGenderScope, SendsToast;
 
     // Tabs
+    #[Url(as: 'tab')]
     public string $activeTab = 'bendahara';
 
     // Tab: Rekonsiliasi & Settlement (Fase 4)
@@ -748,10 +750,28 @@ class BillingManager extends Component
 
     public function mount(): void
     {
-        if (request()->has('tab')) {
-            $this->activeTab = (string) request()->query('tab');
-        } elseif (request()->has('activeTab')) {
-            $this->activeTab = (string) request()->query('activeTab');
+        $rawTab = request()->query('tab') ?: request()->query('activeTab');
+        if ($rawTab) {
+            $tab = strtolower(trim((string)$rawTab));
+            if (in_array($tab, ['transfer', 'transfers', 'manual_transfers', 'verifikasi'])) {
+                $this->activeTab = 'transfers';
+            } elseif (in_array($tab, ['kasir', 'cashier'])) {
+                $this->activeTab = 'cashier';
+            } elseif (in_array($tab, ['gateway', 'gateway_transactions'])) {
+                $this->activeTab = 'gateway_transactions';
+            } elseif (in_array($tab, ['log', 'payments_log', 'riwayat'])) {
+                $this->activeTab = 'payments_log';
+            } elseif (in_array($tab, ['settlement', 'rekonsiliasi'])) {
+                $this->activeTab = 'settlement';
+            } elseif (in_array($tab, ['exceptions', 'dispensasi'])) {
+                $this->activeTab = 'exceptions';
+            } elseif (in_array($tab, ['registration_rates', 'santri_baru'])) {
+                $this->activeTab = 'registration_rates';
+            } elseif (in_array($tab, ['installments', 'cicilan'])) {
+                $this->activeTab = 'installments';
+            } else {
+                $this->activeTab = $rawTab;
+            }
         }
 
         $this->genMonth = 1;

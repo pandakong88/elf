@@ -387,7 +387,7 @@ class WhatsAppService
         $actionSection = "\n──────────────────────\n"
             . "🔗 *AKSI & BUKTI TRANSAKSI:*\n"
             . ($kuitansiLink ? "📄 *Lihat Nota Kuitansi:*\n{$kuitansiLink}\n" : "")
-            . "👉 *Buka Kasir Pembayaran:*\n" . url('/keuangan/billing?tab=kasir') . "\n";
+            . "👉 *Buka Kasir Pembayaran:*\n" . url('/keuangan/billing?tab=cashier') . "\n";
 
         $message = "──────────────────────\n"
             . "💰 *LAPORAN PEMBAYARAN KASIR*\n"
@@ -452,7 +452,7 @@ class WhatsAppService
         $notesLine    = !empty($notes) ? "\n• *Catatan Wali  :* {$notes}" : '';
 
         $proofLink  = !empty($proofUrl) ? "🔍 *Lihat Foto Struk Transfer:*\n{$proofUrl}\n" : "";
-        $actionLink = !empty($verifyUrl) ? $verifyUrl : url('/keuangan/billing?tab=transfer');
+        $actionLink = !empty($verifyUrl) ? $verifyUrl : url('/keuangan/billing?tab=transfers');
 
         $message = "──────────────────────\n"
             . "⚠️ *PENGAJUAN TRANSFER MASUK*\n"
@@ -530,7 +530,7 @@ class WhatsAppService
         $actionSection = "\n──────────────────────\n"
             . "🔗 *AKSI & BUKTI TRANSAKSI:*\n"
             . ($kuitansiLink ? "📄 *Lihat Nota Kuitansi Sah:*\n{$kuitansiLink}\n" : "")
-            . "👉 *Menu Verifikasi Transfer:*\n" . url('/keuangan/billing?tab=transfer') . "\n";
+            . "👉 *Menu Verifikasi Transfer:*\n" . url('/keuangan/billing?tab=transfers') . "\n";
 
         $message = "──────────────────────\n"
             . "🏦 *TRANSFER MANUAL DIVERIFIKASI*\n"
