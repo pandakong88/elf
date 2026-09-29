@@ -23,10 +23,6 @@ return Application::configure(basePath: dirname(__DIR__))
             'permission'         => \Spatie\Permission\Middleware\PermissionMiddleware::class,
             'role_or_permission' => \Spatie\Permission\Middleware\RoleOrPermissionMiddleware::class,
         ]);
-        // PWA: override Laravel no-store headers so Chrome can install the app
-        // Must use prependToGroup so this middleware wraps OUTSIDE StartSession
-        // and processes the RESPONSE LAST (after StartSession sets no-store)
-        $middleware->prependToGroup('web', \App\Http\Middleware\PwaInstallableHeaders::class);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(

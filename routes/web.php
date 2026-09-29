@@ -7,7 +7,6 @@ use App\Http\Controllers\PedomanController;
 use App\Http\Controllers\MediaStreamController;
 
 Route::get('/', \App\Livewire\Public\LandingPage::class)->name('landing-page');
-Route::view('/offline', 'offline')->name('offline');
 
 // FCM Token — simpan token perangkat admin/bendahara (harus login)
 Route::post('/fcm/token', [\App\Http\Controllers\FcmTokenController::class, 'store'])

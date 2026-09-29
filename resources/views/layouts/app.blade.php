@@ -7,7 +7,6 @@
     <!-- Tailwind CSS (via Vite) & Livewire Styles -->
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @livewireStyles
-    @include('components.pwa-meta')
     <meta name="csrf-token" content="{{ csrf_token() }}">
     
     <style>
@@ -544,7 +543,6 @@
         initThemeToggle();
         document.addEventListener('livewire:navigated', initThemeToggle);
     </script>
-    @include('components.pwa-install-banner')
     @include('components.fcm-init')
 </body>
 </html>

@@ -7,7 +7,6 @@
     <!-- Tailwind CSS (via Vite) & Livewire Styles -->
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @livewireStyles
-    @include('components.pwa-meta')
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -220,6 +219,5 @@
             }
         });
     </script>
-    @include('components.pwa-install-banner')
 </body>
 </html>
