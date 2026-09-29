@@ -563,6 +563,28 @@ class DashboardTagihan extends Component
                 Log::warning('[DashboardTagihan] Gagal kirim WA pending transfer: ' . $waErr->getMessage());
             }
 
+            // ─── Push Notification via Firebase FCM ke Admin & Bendahara ──────
+            try {
+                $fcmTitle = "💰 Transfer Baru Masuk (Verifikasi)";
+                $formattedNominal = 'Rp ' . number_format($grandTotal, 0, ',', '.');
+                $santriLabel = $person?->name ?? 'Santri';
+                $fcmBody = "{$santriLabel} ({$roomLocation}) — {$formattedNominal}. Menunggu verifikasi Anda.";
+
+                app(\App\Services\FcmNotificationService::class)->sendToRoles(
+                    roles: ['admin', 'bendahara', 'super-admin'],
+                    title: $fcmTitle,
+                    body:  $fcmBody,
+                    data: [
+                        'type'            => 'manual_transfer',
+                        'submission_id'   => (string) $submission->id,
+                        'submission_code' => (string) $submission->submission_code,
+                    ],
+                    clickUrl: url('/keuangan/billing?tab=transfers')
+                );
+            } catch (\Throwable $fcmErr) {
+                Log::warning('[DashboardTagihan] Gagal kirim FCM pending transfer: ' . $fcmErr->getMessage());
+            }
+
             // Reset form input
             $this->proofImage = null;
             $this->senderBank = '';
