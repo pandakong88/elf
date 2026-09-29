@@ -5,64 +5,75 @@
     import { getMessaging, getToken, onMessage } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging.js";
 
     const firebaseConfig = {
-        apiKey:            "{{ config('services.firebase.api_key') }}",
-        authDomain:        "{{ config('services.firebase.project_id') }}.firebaseapp.com",
-        projectId:         "{{ config('services.firebase.project_id') }}",
-        storageBucket:     "{{ config('services.firebase.project_id') }}.firebasestorage.app",
-        messagingSenderId: "{{ config('services.firebase.messaging_sender_id') }}",
-        appId:             "{{ config('services.firebase.app_id') }}",
+        apiKey:            "AIzaSyCEiBx6quKPkuFpKpA2nvFvapVfylTGvDA",
+        authDomain:        "elvith.firebaseapp.com",
+        projectId:         "elvith",
+        storageBucket:     "elvith.firebasestorage.app",
+        messagingSenderId: "577760254277",
+        appId:             "1:577760254277:web:da29e5e357811ca86d462c",
     };
 
-    const VAPID_KEY = "{{ config('services.firebase.vapid_key') }}";
+    const VAPID_KEY = "BC9so406q2ySAfwRFSvUqWMkntM3pgaQ-W0TpCo6NInrOkJsiryrqDTElPxH5Iva6iHrcz61LlALMaY7ETKCtHE";
 
     const app       = initializeApp(firebaseConfig);
     const messaging = getMessaging(app);
 
     async function initFcm() {
+        console.log('[FCM] Memulai inisialisasi FCM...');
         try {
+            if (!('serviceWorker' in navigator)) {
+                console.warn('[FCM] Browser tidak mendukung ServiceWorker');
+                return;
+            }
+
             // Register Firebase background SW
             const swReg = await navigator.serviceWorker.register('/firebase-messaging-sw.js', { scope: '/' });
+            console.log('[FCM] ServiceWorker registered:', swReg.scope);
 
             // Request notification permission
             const permission = await Notification.requestPermission();
+            console.log('[FCM] Permission status:', permission);
             if (permission !== 'granted') {
-                console.log('[FCM] Notification permission denied');
+                console.warn('[FCM] Izin notifikasi belum diberikan atau ditolak');
                 return;
             }
 
             // Get FCM token
+            console.log('[FCM] Meminta token ke Google Firebase...');
             const token = await getToken(messaging, {
-                vapidKey:            VAPID_KEY,
+                vapidKey: VAPID_KEY,
                 serviceWorkerRegistration: swReg,
             });
 
             if (!token) {
-                console.warn('[FCM] Could not get token — try again later');
+                console.warn('[FCM] Tidak berhasil mendapatkan token');
                 return;
             }
 
+            console.log('[FCM] Token berhasil didapat:', token.substring(0, 20) + '...');
+
             // Save token to backend
-            await fetch('/fcm/token', {
+            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+            const res = await fetch('/fcm/token', {
                 method:  'POST',
                 headers: {
-                    'Content-Type':     'application/json',
-                    'X-CSRF-TOKEN':     document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ?? '',
-                    'Accept':           'application/json',
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': csrfToken,
+                    'Accept':       'application/json',
                 },
                 body: JSON.stringify({ token }),
             });
 
-            console.log('[FCM] Token saved successfully');
+            const data = await res.json();
+            console.log('[FCM] Respon simpan token backend:', data);
 
-            // Handle foreground messages (saat tab sedang aktif/terbuka)
+            // Foreground message handler
             onMessage(messaging, (payload) => {
-                console.log('[FCM] Foreground message:', payload);
-
-                const title   = payload.notification?.title ?? 'Elvith';
+                console.log('[FCM] Foreground push diterima:', payload);
+                const title   = payload.notification?.title ?? 'Elvith Notifikasi';
                 const body    = payload.notification?.body  ?? '';
                 const clickUrl = payload.fcmOptions?.link ?? payload.data?.url ?? '/';
 
-                // Show browser notification even when tab is open
                 if (Notification.permission === 'granted') {
                     const notif = new Notification(title, {
                         body:  body,
@@ -79,13 +90,15 @@
             });
 
         } catch (err) {
-            console.warn('[FCM] Init error:', err);
+            console.error('[FCM] Init error detail:', err);
         }
     }
 
-    // Init after page load
-    if ('serviceWorker' in navigator && 'Notification' in window) {
-        window.addEventListener('load', initFcm);
+    // Jalankan segera saat DOM siap
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initFcm);
+    } else {
+        initFcm();
     }
 </script>
 @endauth
