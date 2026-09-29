@@ -13,35 +13,22 @@ firebase.initializeApp({
 
 const messaging = firebase.messaging();
 
-// Handle background messages
+// Firebase SDK otomatis menampilkan notifikasi dari payload.webpush.notification.
+// Di onBackgroundMessage kita TIDAK memanggil self.registration.showNotification lagi
+// agar tidak memunculkan notifikasi ganda/dobel di layar Android.
 messaging.onBackgroundMessage(function(payload) {
-    const title = payload.notification?.title || payload.data?.title || 'Elvith Notifikasi';
-    const body  = payload.notification?.body  || payload.data?.body  || '';
-    const clickUrl = payload.fcmOptions?.link || payload.data?.url   || '/keuangan/billing';
-    const tag   = payload.data?.submission_code ? ('sub-' + payload.data.submission_code) : 'elvith-transfer-single';
-
-    const options = {
-        body: body,
-        icon: '/icons/icon-192x192.png',
-        badge: '/icons/icon-72x72.png',
-        vibrate: [200, 100, 200],
-        requireInteraction: true,
-        tag: tag, // Tag stabil agar notifikasi menumpuk rapi / tidak menduplikasi
-        data: { url: clickUrl }
-    };
-
-    return self.registration.showNotification(title, options);
+    console.log('[FCM SW] Background payload diterima:', payload);
 });
 
-// Handle notification click
+// Handle notification click — arahkan ke tab verifikasi transfer
 self.addEventListener('notificationclick', function(event) {
     event.notification.close();
-    const url = event.notification.data?.url || '/keuangan/billing';
+    const url = event.notification.data?.url || '/keuangan/billing?tab=transfers';
 
     event.waitUntil(
         clients.matchAll({ type: 'window', includeUncontrolled: true }).then(function(clientList) {
             for (const client of clientList) {
-                if (client.url.includes(url) && 'focus' in client) {
+                if (client.url.includes('keuangan/billing') && 'focus' in client) {
                     return client.focus();
                 }
             }
