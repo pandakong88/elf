@@ -15,31 +15,32 @@
 
 <!-- Service Worker Registration & PWA Install Prompt Handler -->
 <script>
-    if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-            navigator.serviceWorker.register('/service-worker.js', { scope: '/' })
-                .then(reg => {
-                    // Service worker registered successfully
-                })
-                .catch(err => {
-                    console.debug('ServiceWorker registration skipped or failed:', err);
-                });
-        });
-    }
-
     // Global PWA Install Prompt State
     window.deferredPwaPrompt = null;
     window.addEventListener('beforeinstallprompt', (e) => {
-        // Prevent Chrome 67 and earlier from automatically showing the prompt
+        // Prevent default mini-infobar on mobile Chrome
         e.preventDefault();
-        // Stash the event so it can be triggered later.
+        // Stash the event so it can be triggered later
         window.deferredPwaPrompt = e;
+        console.log('[PWA] beforeinstallprompt captured!');
         // Dispatch custom event for UI banners
         window.dispatchEvent(new CustomEvent('pwa-installable'));
     });
 
     window.addEventListener('appinstalled', () => {
         window.deferredPwaPrompt = null;
-        console.debug('Elvith PWA was successfully installed.');
+        console.log('[PWA] App installed successfully');
     });
+
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('/service-worker.js', { scope: '/' })
+                .then(reg => {
+                    console.log('[PWA] ServiceWorker registered:', reg.scope);
+                })
+                .catch(err => {
+                    console.warn('[PWA] ServiceWorker registration error:', err);
+                });
+        });
+    }
 </script>
