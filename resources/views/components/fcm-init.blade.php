@@ -1,8 +1,11 @@
 {{-- FCM Push Notification Init — hanya di-render untuk user yang sudah login --}}
 @auth
-<script type="module">
-    import { initializeApp }  from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-    import { getMessaging, getToken, onMessage } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging.js";
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging-compat.js"></script>
+
+<script>
+(function() {
+    console.log('[FCM] Memulai inisialisasi FCM via Compat SDK...');
 
     const firebaseConfig = {
         apiKey:            "AIzaSyCEiBx6quKPkuFpKpA2nvFvapVfylTGvDA",
@@ -15,90 +18,84 @@
 
     const VAPID_KEY = "BC9so406q2ySAfwRFSvUqWMkntM3pgaQ-W0TpCo6NInrOkJsiryrqDTElPxH5Iva6iHrcz61LlALMaY7ETKCtHE";
 
-    const app       = initializeApp(firebaseConfig);
-    const messaging = getMessaging(app);
+    if (!firebase.apps.length) {
+        firebase.initializeApp(firebaseConfig);
+    }
 
-    async function initFcm() {
-        console.log('[FCM] Memulai inisialisasi FCM...');
+    if (!('serviceWorker' in navigator) || !('Notification' in window)) {
+        console.warn('[FCM] Browser tidak mendukung ServiceWorker atau Notification');
+        return;
+    }
+
+    const messaging = firebase.messaging();
+
+    async function registerAndSaveToken() {
         try {
-            if (!('serviceWorker' in navigator)) {
-                console.warn('[FCM] Browser tidak mendukung ServiceWorker');
-                return;
-            }
-
-            // Register Firebase background SW
             const swReg = await navigator.serviceWorker.register('/firebase-messaging-sw.js', { scope: '/' });
-            console.log('[FCM] ServiceWorker registered:', swReg.scope);
+            console.log('[FCM] ServiceWorker registered scope:', swReg.scope);
 
-            // Request notification permission
+            // Gunakan SW registration untuk messaging
+            messaging.useServiceWorker(swReg);
+
             const permission = await Notification.requestPermission();
             console.log('[FCM] Permission status:', permission);
+
             if (permission !== 'granted') {
-                console.warn('[FCM] Izin notifikasi belum diberikan atau ditolak');
+                console.warn('[FCM] Izin notifikasi tidak diberikan');
                 return;
             }
 
-            // Get FCM token
-            console.log('[FCM] Meminta token ke Google Firebase...');
-            const token = await getToken(messaging, {
-                vapidKey: VAPID_KEY,
-                serviceWorkerRegistration: swReg,
-            });
+            console.log('[FCM] Mengambil device token dari Google...');
+            const token = await messaging.getToken({ vapidKey: VAPID_KEY });
 
             if (!token) {
-                console.warn('[FCM] Tidak berhasil mendapatkan token');
+                console.warn('[FCM] Token kosong');
                 return;
             }
 
-            console.log('[FCM] Token berhasil didapat:', token.substring(0, 20) + '...');
+            console.log('[FCM] Token didapat:', token.substring(0, 25) + '...');
 
-            // Save token to backend
-            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
-            const res = await fetch('/fcm/token', {
-                method:  'POST',
+            const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+            const response = await fetch('/fcm/token', {
+                method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': csrfToken,
-                    'Accept':       'application/json',
+                    'X-CSRF-TOKEN': csrf,
+                    'Accept': 'application/json'
                 },
-                body: JSON.stringify({ token }),
+                body: JSON.stringify({ token: token })
             });
 
-            const data = await res.json();
-            console.log('[FCM] Respon simpan token backend:', data);
+            const result = await response.json();
+            console.log('[FCM] Sukses simpan token ke database:', result);
 
-            // Foreground message handler
-            onMessage(messaging, (payload) => {
-                console.log('[FCM] Foreground push diterima:', payload);
-                const title   = payload.notification?.title ?? 'Elvith Notifikasi';
-                const body    = payload.notification?.body  ?? '';
-                const clickUrl = payload.fcmOptions?.link ?? payload.data?.url ?? '/';
+            // Handler pesan masuk saat tab web aktif
+            messaging.onMessage(function(payload) {
+                console.log('[FCM] Pesan foreground:', payload);
+                const title = payload.notification?.title || 'Notifikasi Elvith';
+                const body = payload.notification?.body || '';
+                const clickUrl = payload.fcmOptions?.link || payload.data?.url || '/keuangan/billing';
 
                 if (Notification.permission === 'granted') {
                     const notif = new Notification(title, {
-                        body:  body,
-                        icon:  '/icons/icon-192x192.png',
+                        body: body,
+                        icon: '/icons/icon-192x192.png',
                         badge: '/icons/icon-72x72.png',
-                        tag:   'elvith-fg-' + Date.now(),
-                        requireInteraction: true,
+                        requireInteraction: true
                     });
-                    notif.onclick = () => {
+                    notif.onclick = function() {
                         window.focus();
                         window.location.href = clickUrl;
                     };
                 }
             });
 
-        } catch (err) {
-            console.error('[FCM] Init error detail:', err);
+        } catch (error) {
+            console.error('[FCM] Terjadi kendala saat registrasi token:', error);
         }
     }
 
-    // Jalankan segera saat DOM siap
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', initFcm);
-    } else {
-        initFcm();
-    }
+    registerAndSaveToken();
+})();
 </script>
 @endauth
