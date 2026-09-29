@@ -85,6 +85,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/dashboard', [WebAuthController::class, 'dashboard'])->name('dashboard');
     
     // System Access Control & CMS Pages
+    Route::get('/system/notifications', \App\Livewire\System\NotificationSettings::class)->name('system.notifications');
     Route::get('/system/roles-permissions', \App\Livewire\System\RolePermissionManager::class)->name('system.roles-permissions');
     Route::get('/system/cms', \App\Livewire\System\LandingPageCMS::class)->name('system.cms');
     Route::get('/system/wali-cms', \App\Livewire\System\WaliPortalCMS::class)->name('system.wali-cms');
