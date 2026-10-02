@@ -14,6 +14,7 @@ use App\Modules\Core\Models\Person;
 use App\Modules\Kepengasuhan\Models\Dormitory;
 use App\Traits\HasGenderScope;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class MajekManager extends Component
 {
@@ -1438,6 +1439,11 @@ class MajekManager extends Component
             $bills = Bill::where('reference_id', $reg->id)->orderBy('bill_type', 'asc')->get();
         }
 
+        $billingService = app(\App\Modules\Keuangan\Services\BillingService::class);
+        $receiptNo      = $billingService->generateReceiptNumber();
+        $paymentGroupId = (string) Str::uuid();
+        $paidItems      = [];
+        $totalAllocated = 0.0;
         $remainingToPay = $payAmount;
 
         foreach ($bills as $bill) {
@@ -1449,15 +1455,56 @@ class MajekManager extends Component
 
             $allocate = min($remainingToPay, $billRemaining);
 
-            app(\App\Modules\Keuangan\Services\BillingService::class)->recordPayment(
-                billId:         $bill->id,
-                amount:         $allocate,
-                method:         $this->payMethod,
-                notes:          'Setoran Majek ' . $this->monthLabel . ($allocate < $billRemaining ? ' (Cicilan)' : ''),
-                loggedByUserId: (string) auth()->id(),
+            $billingService->recordPayment(
+                billId:                    $bill->id,
+                amount:                    $allocate,
+                method:                    $this->payMethod,
+                notes:                     'Setoran Majek ' . $this->monthLabel . ($allocate < $billRemaining ? ' (Cicilan)' : ''),
+                loggedByUserId:            (string) auth()->id(),
+                receiptNo:                 $receiptNo,
+                paymentGroupId:            $paymentGroupId,
+                tenderedAmount:            $payAmount,
+                changeAmount:              0.0,
+                triggerGroupNotification: false,
             );
 
+            $remainingAfterPay = max(0, $billRemaining - $allocate);
+            $paidItems[] = [
+                'bill_label'   => $bill->config?->label ?? ucwords(str_replace('_', ' ', $bill->bill_type)),
+                'period_label' => $this->monthLabel . ' ' . ($bill->period_year ?? $reg->year),
+                'amount'       => $allocate,
+                'is_partial'   => $remainingAfterPay > 0,
+                'remaining'    => $remainingAfterPay,
+            ];
+
+            $totalAllocated += $allocate;
             $remainingToPay -= $allocate;
+        }
+
+        if (!empty($paidItems)) {
+            $reg->loadMissing(['person.roomAssignments.room.dormitory']);
+            $person = $reg->person;
+            $activeAssignment = $person?->roomAssignments?->where('status', 'active')->first() ?? $person?->roomAssignments?->first();
+            $dormName         = $activeAssignment?->room?->dormitory?->name;
+            $roomName         = $activeAssignment?->room?->name;
+            $roomLocation     = ($dormName && $roomName) ? "{$dormName} – {$roomName}" : ($dormName ?: ($roomName ?: null));
+
+            try {
+                app(\App\Services\WhatsAppService::class)->notifyKasirMultiPayment(
+                    santriName:   $person?->name ?? '—',
+                    receiptNo:    $receiptNo,
+                    method:       $this->payMethod,
+                    paidAt:       now()->locale('id')->translatedFormat('d F Y, H:i') . ' WIB',
+                    totalAmount:  $totalAllocated,
+                    items:        $paidItems,
+                    loggedByName: auth()->user()?->name ?? 'Kasir',
+                    roomLocation: $roomLocation,
+                    notes:        'Setoran Majek ' . $this->monthLabel,
+                    receiptUrl:   route('bukti-bayar.kuitansi', $receiptNo),
+                );
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::warning('[MajekManager] Gagal kirim WA grup: ' . $e->getMessage());
+            }
         }
     }
 

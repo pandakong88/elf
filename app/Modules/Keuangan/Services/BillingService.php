@@ -246,6 +246,9 @@ class BillingService
         ?float $changeAmount = 0.0,
         bool $triggerGroupNotification = true
     ): BillPayment {
+        $receiptNo      = $receiptNo ?: $this->generateReceiptNumber();
+        $paymentGroupId = $paymentGroupId ?: (string) Str::uuid();
+
         $payment = DB::transaction(function () use ($billId, $amount, $method, $notes, $loggedByUserId, $receiptNo, $paymentGroupId, $tenderedAmount, $changeAmount) {
             $bill = Bill::findOrFail($billId);
 
@@ -295,7 +298,7 @@ class BillingService
 
                 app(WhatsAppService::class)->notifyKasirMultiPayment(
                     santriName:   $person?->name ?? '—',
-                    receiptNo:    $receiptNo ?? '-',
+                    receiptNo:    $receiptNo,
                     method:       $method,
                     paidAt:       now()->locale('id')->translatedFormat('d F Y, H:i').' WIB',
                     totalAmount:  $amount,
@@ -309,6 +312,7 @@ class BillingService
                     loggedByName: $payment->logger?->name ?? 'Sistem',
                     roomLocation: $roomLocation,
                     notes:        $notes,
+                    receiptUrl:   route('bukti-bayar.kuitansi', $receiptNo),
                 );
             } catch (\Throwable $e) {
                 \Illuminate\Support\Facades\Log::warning('[WhatsApp] Gagal kirim notifikasi kasir', ['error' => $e->getMessage()]);

@@ -3129,7 +3129,7 @@
 
                                             <!-- Aksi Kuitansi -->
                                             <td class="py-4 px-4 text-center">
-                                                <a href="{{ route('bukti-bayar.kuitansi', ['receiptNo' => ($rcpt->receipt_no ?: $rcpt->group_key), 'from' => 'payments_log']) }}" target="_blank"
+                                                <a href="{{ route('bukti-bayar.kuitansi', ['receiptNo' => ($rcpt->receipt_slug ?? ($rcpt->receipt_no ?: $rcpt->group_key)), 'from' => 'payments_log']) }}" target="_blank"
                                                    class="inline-flex items-center gap-1.5 px-3 py-2 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white rounded-xl text-[10px] font-bold transition-all shadow-sm shadow-indigo-600/20 whitespace-nowrap"
                                                    title="Cetak Lembar Kuitansi PDF">
                                                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

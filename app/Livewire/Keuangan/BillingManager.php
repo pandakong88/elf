@@ -4198,6 +4198,7 @@ class BillingManager extends Component
                 return (object) [
                     'group_key'        => $group->group_key,
                     'receipt_no'       => $first?->receipt_no ?: ('KSR-' . substr($first?->id ?? '', 0, 8)),
+                    'receipt_slug'     => $first?->receipt_no ?: $first?->id,
                     'is_legacy'        => empty($first?->receipt_no),
                     'payment_date'     => $first?->payment_date ?: $first?->created_at,
                     'created_at'       => $first?->created_at,

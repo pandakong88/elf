@@ -206,6 +206,37 @@ class BuktiBayarController extends Controller
         ->orWhere('id', $identifier)
         ->get();
 
+        // Fallback 1: Jika $identifier adalah format legacy pseudo-receipt "KSR-{id_prefix}"
+        if ($payments->isEmpty() && str_starts_with($identifier, 'KSR-')) {
+            $prefix = substr($identifier, 4);
+            if (strlen($prefix) >= 6) {
+                $payments = BillPayment::with([
+                    'bill.config',
+                    'bill.person.activeMadrasahEnrollment.kelas',
+                    'bill.person.activeRoomAssignment.room.dormitory',
+                    'logger'
+                ])
+                ->where('id', 'like', $prefix . '%')
+                ->get();
+            }
+        }
+
+        // Fallback 2: Jika ditemukan 1 item dan memiliki payment_group_id, muat seluruh item dalam grup tersebut
+        if ($payments->count() === 1 && !empty($payments->first()->payment_group_id)) {
+            $groupId = $payments->first()->payment_group_id;
+            $groupPayments = BillPayment::with([
+                'bill.config',
+                'bill.person.activeMadrasahEnrollment.kelas',
+                'bill.person.activeRoomAssignment.room.dormitory',
+                'logger'
+            ])
+            ->where('payment_group_id', $groupId)
+            ->get();
+            if ($groupPayments->isNotEmpty()) {
+                $payments = $groupPayments;
+            }
+        }
+
         if ($payments->isEmpty()) {
             abort(404, 'Data kuitansi / pembayaran tidak ditemukan.');
         }
@@ -318,8 +349,9 @@ class BuktiBayarController extends Controller
             'terbilang'       => $this->terbilang($totalAmount),
             'notes'           => $firstPayment->notes,
             'generated_at'    => now()->translatedFormat('d F Y, H:i') . ' WIB',
-            'back_url'        => $backUrl,
-            'back_label'      => $backLabel,
+            'back_url'         => $backUrl,
+            'back_label'       => $backLabel,
+            'pdf_download_url' => route('bukti-bayar.kuitansi.pdf', $receiptNo),
         ];
     }
 
