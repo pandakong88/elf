@@ -9,10 +9,28 @@ use Illuminate\Support\Facades\Http;
 class FcmNotificationService
 {
     /**
+     * Check if FCM Push Notification is globally enabled via Developer Settings.
+     */
+    public function isEnabled(): bool
+    {
+        try {
+            $val = \App\Modules\Core\Models\LandingPageContent::where('key', 'fcm_enabled')->value('value');
+            return $val !== '0';
+        } catch (\Throwable $e) {
+            return true;
+        }
+    }
+
+    /**
      * Send a push notification to all devices of a specific user.
      */
     public function sendToUser(string|int $userId, string $title, string $body, array $data = [], ?string $clickUrl = null): void
     {
+        if (!$this->isEnabled()) {
+            Log::info("[FCM] Push Notification is globally DISABLED via Developer Settings");
+            return;
+        }
+
         $tokens = FcmToken::tokensForUser($userId);
 
         if (empty($tokens)) {
@@ -53,6 +71,11 @@ class FcmNotificationService
      */
     public function sendToRoles(array $roles, string $title, string $body, array $data = [], ?string $clickUrl = null, ?string $gender = null): void
     {
+        if (!$this->isEnabled()) {
+            Log::info("[FCM] Push Notification is globally DISABLED via Developer Settings");
+            return;
+        }
+
         $targetTokens = collect();
 
         try {
@@ -126,7 +149,45 @@ class FcmNotificationService
      */
     public function sendToFinancialOfficers(?string $santriGender, string $title, string $body, array $data = [], ?string $clickUrl = null): void
     {
-        $roles = ['super-admin', 'bendahara-pondok', 'manajemen'];
+        if (!$this->isEnabled()) {
+            Log::info("[FCM] Push Notification is globally DISABLED via Developer Settings");
+            return;
+        }
+
+        $notifyPondok = true;
+        $notifySuperAdmin = true;
+        $notifyManajemen = false;
+
+        try {
+            $contents = \App\Modules\Core\Models\LandingPageContent::whereIn('key', [
+                'fcm_notify_bendahara_pondok',
+                'fcm_notify_super_admin',
+                'fcm_notify_manajemen'
+            ])->pluck('value', 'key');
+
+            if (isset($contents['fcm_notify_bendahara_pondok'])) {
+                $notifyPondok = $contents['fcm_notify_bendahara_pondok'] !== '0';
+            }
+            if (isset($contents['fcm_notify_super_admin'])) {
+                $notifySuperAdmin = $contents['fcm_notify_super_admin'] !== '0';
+            }
+            if (isset($contents['fcm_notify_manajemen'])) {
+                $notifyManajemen = $contents['fcm_notify_manajemen'] === '1';
+            }
+        } catch (\Throwable $e) {
+            // Gunakan default
+        }
+
+        $roles = [];
+        if ($notifySuperAdmin) {
+            $roles[] = 'super-admin';
+        }
+        if ($notifyPondok) {
+            $roles[] = 'bendahara-pondok';
+        }
+        if ($notifyManajemen) {
+            $roles[] = 'manajemen';
+        }
 
         if ($santriGender === 'L') {
             $roles[] = 'bendahara-putra';
@@ -135,6 +196,11 @@ class FcmNotificationService
         } else {
             $roles[] = 'bendahara-putra';
             $roles[] = 'bendahara-putri';
+        }
+
+        if (empty($roles)) {
+            Log::info("[FCM] No roles configured to receive financial notifications");
+            return;
         }
 
         $this->sendToRoles(

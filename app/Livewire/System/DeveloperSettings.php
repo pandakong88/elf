@@ -19,6 +19,25 @@ class DeveloperSettings extends Component
     public $doku_secret_key = '';
     public $doku_expiry_minutes = 1440;
 
+    // Push Notification & WhatsApp Settings
+    public $fcm_enabled = true;
+    public $fcm_notify_bendahara_pondok = true;
+    public $fcm_notify_super_admin = true;
+    public $fcm_notify_manajemen = false;
+    public $wa_notify_transfers = true;
+
+    // Firebase Diagnostics & Info
+    public $firebaseCredentialsExist = false;
+    public $firebaseProjectId = '';
+    public $activeTokensCount = 0;
+    public $tokenStats = [];
+
+    // Test Notification Form
+    public $test_target = 'me';
+    public $test_title = '🔔 Uji Coba dari Developer Mode';
+    public $test_body = 'Ini adalah pesan uji coba push notifikasi sistem Elvith.';
+    public $testNotificationResult = null;
+
     public $dokuTestResult = null;
     public $successMessage = '';
 
@@ -39,6 +58,15 @@ class DeveloperSettings extends Component
         $this->doku_client_id      = $contents['doku_client_id'] ?? config('doku.client_id', '');
         $this->doku_secret_key     = $contents['doku_secret_key'] ?? config('doku.secret_key', '');
         $this->doku_expiry_minutes = (int) ($contents['doku_expiry_minutes'] ?? config('doku.expiry_minutes', 1440));
+
+        // Notification & WhatsApp Settings
+        $this->fcm_enabled                 = ($contents['fcm_enabled'] ?? '1') === '1';
+        $this->fcm_notify_bendahara_pondok = ($contents['fcm_notify_bendahara_pondok'] ?? '1') === '1';
+        $this->fcm_notify_super_admin      = ($contents['fcm_notify_super_admin'] ?? '1') === '1';
+        $this->fcm_notify_manajemen        = ($contents['fcm_notify_manajemen'] ?? '0') === '1';
+        $this->wa_notify_transfers         = ($contents['wa_notify_transfers'] ?? '1') === '1';
+
+        $this->checkFirebaseHealth();
     }
 
     public function saveSettings()
@@ -119,7 +147,108 @@ class DeveloperSettings extends Component
             ]
         );
 
-        $this->successMessage = 'Seluruh pengaturan Developer & Payment Gateway DOKU berhasil disimpan!';
+        // 3. Push Notification & WhatsApp Settings
+        LandingPageContent::updateOrCreate(
+            ['key' => 'fcm_enabled'],
+            ['value' => $this->fcm_enabled ? '1' : '0', 'type' => 'text', 'section' => 'notifications', 'title' => 'Aktifkan Master Push Notification']
+        );
+        LandingPageContent::updateOrCreate(
+            ['key' => 'fcm_notify_bendahara_pondok'],
+            ['value' => $this->fcm_notify_bendahara_pondok ? '1' : '0', 'type' => 'text', 'section' => 'notifications', 'title' => 'Teruskan Notifikasi ke Bendahara Pondok']
+        );
+        LandingPageContent::updateOrCreate(
+            ['key' => 'fcm_notify_super_admin'],
+            ['value' => $this->fcm_notify_super_admin ? '1' : '0', 'type' => 'text', 'section' => 'notifications', 'title' => 'Teruskan Notifikasi ke Super Admin']
+        );
+        LandingPageContent::updateOrCreate(
+            ['key' => 'fcm_notify_manajemen'],
+            ['value' => $this->fcm_notify_manajemen ? '1' : '0', 'type' => 'text', 'section' => 'notifications', 'title' => 'Teruskan Notifikasi ke Manajemen']
+        );
+        LandingPageContent::updateOrCreate(
+            ['key' => 'wa_notify_transfers'],
+            ['value' => $this->wa_notify_transfers ? '1' : '0', 'type' => 'text', 'section' => 'notifications', 'title' => 'Kirim Alert WA ke Grup Bendahara']
+        );
+
+        $this->checkFirebaseHealth();
+        $this->successMessage = 'Seluruh pengaturan Developer, Payment Gateway DOKU, & Notifikasi berhasil disimpan!';
+    }
+
+    public function checkFirebaseHealth()
+    {
+        $credPath = storage_path('app/firebase/firebase_credentials.json');
+        $this->firebaseCredentialsExist = file_exists($credPath);
+        $this->firebaseProjectId = config('services.firebase.project_id', '-');
+
+        $tokens = \App\Models\FcmToken::with(['user.roles', 'user.person'])
+            ->where('last_active_at', '>', now()->subDays(60))
+            ->get();
+
+        $this->activeTokensCount = $tokens->count();
+
+        $stats = [
+            'super_admin'      => 0,
+            'bendahara_putra'  => 0,
+            'bendahara_putri'  => 0,
+            'bendahara_pondok' => 0,
+            'others'           => 0,
+        ];
+
+        foreach ($tokens as $t) {
+            $roles = $t->user?->roles->pluck('name')->toArray() ?? [];
+            if (in_array('super-admin', $roles)) $stats['super_admin']++;
+            elseif (in_array('bendahara-putra', $roles)) $stats['bendahara_putra']++;
+            elseif (in_array('bendahara-putri', $roles)) $stats['bendahara_putri']++;
+            elseif (in_array('bendahara-pondok', $roles)) $stats['bendahara_pondok']++;
+            else $stats['others']++;
+        }
+
+        $this->tokenStats = $stats;
+    }
+
+    public function sendTestPushNotification()
+    {
+        if (!auth()->check() || !auth()->user()->hasRole('super-admin')) {
+            abort(403, 'Akses Ditolak.');
+        }
+
+        $fcm = app(\App\Services\FcmNotificationService::class);
+        $title = $this->test_title ?: '🔔 Test Notifikasi Developer';
+        $body = $this->test_body ?: ('Uji coba push notification pada ' . now()->format('d M Y, H:i:s'));
+
+        try {
+            if ($this->test_target === 'me') {
+                $fcm->sendToUser(auth()->id(), $title, $body, clickUrl: route('system.dev-settings'));
+                $this->testNotificationResult = [
+                    'success' => true,
+                    'message' => 'Notifikasi uji coba berhasil dikirim ke perangkat Anda sendiri!'
+                ];
+            } elseif ($this->test_target === 'putra') {
+                $fcm->sendToFinancialOfficers('L', $title, $body, clickUrl: url('/keuangan/billing?tab=transfers'));
+                $this->testNotificationResult = [
+                    'success' => true,
+                    'message' => 'Notifikasi uji coba berhasil dikirim ke channel Bendahara Putra!'
+                ];
+            } elseif ($this->test_target === 'putri') {
+                $fcm->sendToFinancialOfficers('P', $title, $body, clickUrl: url('/keuangan/billing?tab=transfers'));
+                $this->testNotificationResult = [
+                    'success' => true,
+                    'message' => 'Notifikasi uji coba berhasil dikirim ke channel Bendahara Putri!'
+                ];
+            } elseif ($this->test_target === 'all_bendahara') {
+                $fcm->sendToFinancialOfficers(null, $title, $body, clickUrl: url('/keuangan/billing?tab=transfers'));
+                $this->testNotificationResult = [
+                    'success' => true,
+                    'message' => 'Notifikasi uji coba berhasil dikirim ke Seluruh Bendahara (Putra & Putri)!'
+                ];
+            }
+        } catch (\Throwable $e) {
+            $this->testNotificationResult = [
+                'success' => false,
+                'message' => 'Gagal mengirim notifikasi: ' . $e->getMessage()
+            ];
+        }
+
+        $this->checkFirebaseHealth();
     }
 
     public function testDokuConnection()

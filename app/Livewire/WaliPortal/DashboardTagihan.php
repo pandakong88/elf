@@ -532,50 +532,55 @@ class DashboardTagihan extends Component
 
             DB::commit();
 
-            // 9. Kirim Notifikasi Alert ke Grup WhatsApp Bendahara (non-blocking)
+            // 9. Kirim Notifikasi Alert ke Grup WhatsApp Bendahara (jika diaktifkan di Developer Settings)
             try {
-                $submission->loadMissing(['person.roomAssignments' => fn($q) => $q->where('is_active', true)->with('room.dormitory')]);
-                $person           = $submission->person;
-                $activeAssignment = $person?->roomAssignments?->first();
-                $dormName         = $activeAssignment?->room?->dormitory?->name;
-                $roomName         = $activeAssignment?->room?->name;
-                $roomLocation     = ($dormName && $roomName) ? "{$dormName} – {$roomName}" : ($dormName ?: ($roomName ?: null));
+                $isWaEnabled = \App\Modules\Core\Models\LandingPageContent::where('key', 'wa_notify_transfers')->value('value') !== '0';
+                if ($isWaEnabled) {
+                    $submission->loadMissing(['person.roomAssignments' => fn($q) => $q->where('is_active', true)->with('room.dormitory')]);
+                    $person           = $submission->person;
+                    $activeAssignment = $person?->roomAssignments?->first();
+                    $dormName         = $activeAssignment?->room?->dormitory?->name;
+                    $roomName         = $activeAssignment?->room?->name;
+                    $roomLocation     = ($dormName && $roomName) ? "{$dormName} – {$roomName}" : ($dormName ?: ($roomName ?: null));
 
-                $pendingItems = [];
-                foreach ($breakdown as $b) {
-                    $pendingItems[] = [
-                        'bill_label'   => $b['config_label'] ?? $b['bill_type'],
-                        'period_label' => $b['period_label'] ?? '',
-                        'amount'       => $b['amount'] ?? 0,
-                    ];
+                    $pendingItems = [];
+                    foreach ($breakdown as $b) {
+                        $pendingItems[] = [
+                            'bill_label'   => $b['config_label'] ?? $b['bill_type'],
+                            'period_label' => $b['period_label'] ?? '',
+                            'amount'       => $b['amount'] ?? 0,
+                        ];
+                    }
+                    if ($pocketMoney > 0) {
+                        $pendingItems[] = [
+                            'bill_label'   => 'Titipan Uang Saku',
+                            'period_label' => '',
+                            'amount'       => $pocketMoney,
+                        ];
+                    }
+
+                    $senderName = $this->senderAccountName 
+                        ?: ($this->senderBank ? "Wali via {$this->senderBank}" : ($person?->santriProfile?->father_name ?: 'Wali Santri'));
+
+                    $proofUrl  = route('transfer-proof.view', $submission->id);
+                    $verifyUrl = url('/keuangan/billing?tab=transfers');
+
+                    app(WhatsAppService::class)->notifyManualTransferPending(
+                        santriName:        $person?->name ?? 'Santri',
+                        submissionCode:    $submission->submission_code,
+                        bankDestination:   $submission->destination_bank_label ?: ($submission->bank_destination ?? 'Bank'),
+                        submittedAt:       now()->locale('id')->translatedFormat('d F Y, H:i') . ' WIB',
+                        senderAccountName: $senderName,
+                        totalAmount:       $grandTotal,
+                        items:             $pendingItems,
+                        roomLocation:      $roomLocation,
+                        notes:             $this->transferNotes ?: null,
+                        proofUrl:          $proofUrl,
+                        verifyUrl:         $verifyUrl,
+                    );
+                } else {
+                    Log::info('[DashboardTagihan] WhatsApp Alert ke Grup Bendahara dinonaktifkan via Developer Settings');
                 }
-                if ($pocketMoney > 0) {
-                    $pendingItems[] = [
-                        'bill_label'   => 'Titipan Uang Saku',
-                        'period_label' => '',
-                        'amount'       => $pocketMoney,
-                    ];
-                }
-
-                $senderName = $this->senderAccountName 
-                    ?: ($this->senderBank ? "Wali via {$this->senderBank}" : ($person?->santriProfile?->father_name ?: 'Wali Santri'));
-
-                $proofUrl  = route('transfer-proof.view', $submission->id);
-                $verifyUrl = url('/keuangan/billing?tab=transfers');
-
-                app(WhatsAppService::class)->notifyManualTransferPending(
-                    santriName:        $person?->name ?? 'Santri',
-                    submissionCode:    $submission->submission_code,
-                    bankDestination:   $submission->destination_bank_label ?: ($submission->bank_destination ?? 'Bank'),
-                    submittedAt:       now()->locale('id')->translatedFormat('d F Y, H:i') . ' WIB',
-                    senderAccountName: $senderName,
-                    totalAmount:       $grandTotal,
-                    items:             $pendingItems,
-                    roomLocation:      $roomLocation,
-                    notes:             $this->transferNotes ?: null,
-                    proofUrl:          $proofUrl,
-                    verifyUrl:         $verifyUrl,
-                );
             } catch (\Throwable $waErr) {
                 Log::warning('[DashboardTagihan] Gagal kirim WA pending transfer: ' . $waErr->getMessage());
             }
