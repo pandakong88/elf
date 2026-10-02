@@ -301,8 +301,26 @@ class FcmNotificationService
             $credentialPath = config('services.firebase.credentials_path');
 
             if (!$credentialPath || !file_exists($credentialPath)) {
-                Log::warning("[FCM] Service account credentials not found at: {$credentialPath}");
-                return null;
+                $fallbacks = [
+                    storage_path('app/firebase-service-account.json'),
+                    storage_path('app/firebase/firebase_credentials.json'),
+                    storage_path('app/firebase/firebase-service-account.json'),
+                    base_path('firebase-service-account.json'),
+                ];
+                $found = null;
+                foreach ($fallbacks as $fb) {
+                    if (file_exists($fb)) {
+                        $found = $fb;
+                        break;
+                    }
+                }
+
+                if ($found) {
+                    $credentialPath = $found;
+                } else {
+                    Log::warning("[FCM] Service account credentials not found at: {$credentialPath}");
+                    return null;
+                }
             }
 
             $credentials = json_decode(file_get_contents($credentialPath), true);

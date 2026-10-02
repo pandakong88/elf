@@ -203,8 +203,8 @@
                         </span>
                     </div>
                     <div class="text-[11px] text-slate-500 dark:text-slate-400 space-y-0.5">
-                        <p>Project: <span class="font-mono font-bold text-slate-800 dark:text-slate-200">{{ $firebaseProjectId ?: 'elvith-notif' }}</span></p>
-                        <p class="truncate" title="storage/app/firebase/firebase_credentials.json">File: <span class="font-mono text-[10px]">firebase_credentials.json</span></p>
+                        <p>Project: <span class="font-mono font-bold text-slate-800 dark:text-slate-200">{{ $firebaseProjectId ?: 'elvith' }}</span></p>
+                        <p class="truncate" title="{{ $firebaseCredentialPath ?: 'Belum terkonfigurasi' }}">File: <span class="font-mono text-[10px]">{{ $firebaseCredentialFile ?: 'firebase-service-account.json' }}</span></p>
                     </div>
                 </div>
 

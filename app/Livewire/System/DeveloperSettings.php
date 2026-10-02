@@ -28,6 +28,8 @@ class DeveloperSettings extends Component
 
     // Firebase Diagnostics & Info
     public $firebaseCredentialsExist = false;
+    public $firebaseCredentialFile = 'firebase-service-account.json';
+    public $firebaseCredentialPath = '';
     public $firebaseProjectId = '';
     public $activeTokensCount = 0;
     public $tokenStats = [];
@@ -175,9 +177,33 @@ class DeveloperSettings extends Component
 
     public function checkFirebaseHealth()
     {
-        $credPath = storage_path('app/firebase/firebase_credentials.json');
-        $this->firebaseCredentialsExist = file_exists($credPath);
+        $possiblePaths = array_filter([
+            config('services.firebase.credentials_path'),
+            storage_path('app/firebase-service-account.json'),
+            storage_path('app/firebase/firebase_credentials.json'),
+            storage_path('app/firebase/firebase-service-account.json'),
+            base_path('firebase-service-account.json'),
+        ]);
+
+        $this->firebaseCredentialsExist = false;
+        $this->firebaseCredentialFile = 'firebase-service-account.json';
+        $this->firebaseCredentialPath = '';
         $this->firebaseProjectId = config('services.firebase.project_id', '-');
+
+        foreach ($possiblePaths as $path) {
+            if ($path && file_exists($path)) {
+                $this->firebaseCredentialsExist = true;
+                $this->firebaseCredentialFile = basename($path);
+                $this->firebaseCredentialPath = $path;
+                try {
+                    $json = json_decode(file_get_contents($path), true);
+                    if (!empty($json['project_id'])) {
+                        $this->firebaseProjectId = $json['project_id'];
+                    }
+                } catch (\Throwable $e) {}
+                break;
+            }
+        }
 
         $tokens = \App\Models\FcmToken::with(['user.roles', 'user.person'])
             ->where('last_active_at', '>', now()->subDays(60))
