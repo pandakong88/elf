@@ -343,6 +343,9 @@
                         <span class="sm:hidden">Wali</span>
                     </a>
 
+                    <!-- In-App Notification Center (Bell Icon) -->
+                    <livewire:system.notification-bell />
+
                     <!-- Theme Toggle Button -->
                     <button id="theme-toggle" type="button" class="p-2 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-all" title="Ubah Tema">
                         <!-- Dark Icon -->

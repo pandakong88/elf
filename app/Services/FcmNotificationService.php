@@ -26,6 +26,23 @@ class FcmNotificationService
      */
     public function sendToUser(string|int $userId, string $title, string $body, array $data = [], ?string $clickUrl = null): void
     {
+        // 1. Simpan ke database notification (In-App Notification Center / Header Bell)
+        try {
+            $user = \App\Models\User::find($userId);
+            if ($user) {
+                $category = $data['category'] ?? 'transfer';
+                $user->notify(new \App\Notifications\GeneralAppNotification(
+                    title: $title,
+                    body: $body,
+                    actionUrl: $clickUrl,
+                    category: $category,
+                    metadata: $data
+                ));
+            }
+        } catch (\Throwable $e) {
+            Log::warning("[FCM] Failed to create database notification for user {$userId}: " . $e->getMessage());
+        }
+
         if (!$this->isEnabled()) {
             Log::info("[FCM] Push Notification is globally DISABLED via Developer Settings");
             return;
@@ -84,7 +101,7 @@ class FcmNotificationService
             })->with(['roles', 'person'])->get();
 
             // Filter users based on gender scope if specified
-            $filteredUserIds = $users->filter(function ($user) use ($gender) {
+            $filteredUsers = $users->filter(function ($user) use ($gender) {
                 if (!$gender) {
                     return true;
                 }
@@ -110,7 +127,25 @@ class FcmNotificationService
 
                 // Super-admin, manajemen, and bendahara-pondok receive both
                 return true;
-            })->pluck('id');
+            });
+
+            // Simpan ke in-app database notification untuk masing-masing user target (Header Bell)
+            try {
+                $category = $data['category'] ?? 'transfer';
+                foreach ($filteredUsers as $targetUser) {
+                    $targetUser->notify(new \App\Notifications\GeneralAppNotification(
+                        title: $title,
+                        body: $body,
+                        actionUrl: $clickUrl,
+                        category: $category,
+                        metadata: $data
+                    ));
+                }
+            } catch (\Throwable $notifErr) {
+                Log::warning("[FCM] In-app notification creation error in sendToRoles: " . $notifErr->getMessage());
+            }
+
+            $filteredUserIds = $filteredUsers->pluck('id');
 
             if ($filteredUserIds->isNotEmpty()) {
                 $tokens = FcmToken::whereIn('user_id', $filteredUserIds)
