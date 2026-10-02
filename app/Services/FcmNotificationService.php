@@ -41,20 +41,56 @@ class FcmNotificationService
     }
 
     /**
-     * Send to multiple roles (e.g. ['admin', 'bendahara', 'super-admin']).
-     * If roles don't match or return 0 tokens, broadcast to all active FCM tokens.
+     * Send to multiple roles with optional gender scoping.
+     * E.g. roles = ['bendahara-putra', 'super-admin'], gender = 'L'
+     *
+     * @param array $roles
+     * @param string $title
+     * @param string $body
+     * @param array $data
+     * @param string|null $clickUrl
+     * @param string|null $gender 'L' for Putra, 'P' for Putri, or null for both
      */
-    public function sendToRoles(array $roles, string $title, string $body, array $data = [], ?string $clickUrl = null): void
+    public function sendToRoles(array $roles, string $title, string $body, array $data = [], ?string $clickUrl = null, ?string $gender = null): void
     {
         $targetTokens = collect();
 
         try {
-            $userIds = \App\Models\User::whereHas('roles', function ($q) use ($roles) {
+            $users = \App\Models\User::whereHas('roles', function ($q) use ($roles) {
                 $q->whereIn('name', $roles);
+            })->with(['roles', 'person'])->get();
+
+            // Filter users based on gender scope if specified
+            $filteredUserIds = $users->filter(function ($user) use ($gender) {
+                if (!$gender) {
+                    return true;
+                }
+
+                $userRoles = $user->roles->pluck('name')->toArray();
+
+                // If user is bendahara-putri, only receive if gender is 'P'
+                if (in_array('bendahara-putri', $userRoles) && !in_array('bendahara-putra', $userRoles) && !in_array('super-admin', $userRoles) && !in_array('bendahara-pondok', $userRoles)) {
+                    return $gender === 'P';
+                }
+
+                // If user is bendahara-putra, only receive if gender is 'L'
+                if (in_array('bendahara-putra', $userRoles) && !in_array('bendahara-putri', $userRoles) && !in_array('super-admin', $userRoles) && !in_array('bendahara-pondok', $userRoles)) {
+                    return $gender === 'L';
+                }
+
+                // If user has associated person with gender, and they are not super-admin/manajemen/bendahara-pondok
+                if (!in_array('super-admin', $userRoles) && !in_array('manajemen', $userRoles) && !in_array('bendahara-pondok', $userRoles)) {
+                    if ($user->person && $user->person->gender) {
+                        return $user->person->gender === $gender;
+                    }
+                }
+
+                // Super-admin, manajemen, and bendahara-pondok receive both
+                return true;
             })->pluck('id');
 
-            if ($userIds->isNotEmpty()) {
-                $tokens = FcmToken::whereIn('user_id', $userIds)
+            if ($filteredUserIds->isNotEmpty()) {
+                $tokens = FcmToken::whereIn('user_id', $filteredUserIds)
                     ->where('last_active_at', '>', now()->subDays(60))
                     ->pluck('token');
                 $targetTokens = $targetTokens->merge($tokens);
@@ -63,10 +99,10 @@ class FcmNotificationService
             Log::warning("[FCM] sendToRoles query error: " . $e->getMessage());
         }
 
-        // Jika tidak ada user dengan role tersebut yang punya token di DB, broadcast ke semua token aktif
+        // Jangan broadcast ke semua token jika target kosong untuk mencegah kebocoran data
         if ($targetTokens->isEmpty()) {
-            Log::info("[FCM] No tokens found for specified roles, broadcasting to all registered tokens");
-            $targetTokens = FcmToken::where('last_active_at', '>', now()->subDays(60))->pluck('token');
+            Log::info("[FCM] No tokens found for specified roles with gender '{$gender}' — skip notification safely");
+            return;
         }
 
         // Unique token agar tidak pernah terkirim 2x ke token yang sama
@@ -75,6 +111,40 @@ class FcmNotificationService
         foreach ($uniqueTokens as $token) {
             $this->sendViaHttpV1($token, $title, $body, $data, $clickUrl);
         }
+    }
+
+    /**
+     * Kirim notifikasi pengajuan / verifikasi keuangan ke bendahara berdasarkan gender santri.
+     * - Santri Putra (L): dikirim ke bendahara-putra, bendahara-pondok, super-admin.
+     * - Santri Putri (P): dikirim ke bendahara-putri, bendahara-pondok, super-admin.
+     *
+     * @param string|null $santriGender 'L' untuk Putra, 'P' untuk Putri, null untuk Global
+     * @param string $title
+     * @param string $body
+     * @param array $data
+     * @param string|null $clickUrl
+     */
+    public function sendToFinancialOfficers(?string $santriGender, string $title, string $body, array $data = [], ?string $clickUrl = null): void
+    {
+        $roles = ['super-admin', 'bendahara-pondok', 'manajemen'];
+
+        if ($santriGender === 'L') {
+            $roles[] = 'bendahara-putra';
+        } elseif ($santriGender === 'P') {
+            $roles[] = 'bendahara-putri';
+        } else {
+            $roles[] = 'bendahara-putra';
+            $roles[] = 'bendahara-putri';
+        }
+
+        $this->sendToRoles(
+            roles: array_unique($roles),
+            title: $title,
+            body: $body,
+            data: $data,
+            clickUrl: $clickUrl,
+            gender: $santriGender
+        );
     }
 
     /**
