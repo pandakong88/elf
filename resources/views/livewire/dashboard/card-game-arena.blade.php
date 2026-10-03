@@ -1,3 +1,41 @@
+<div>
+<style>
+    .elvith-card-shell {
+        position: relative;
+        width: 100%;
+        aspect-ratio: 5 / 7;
+        min-height: 185px;
+        max-height: 310px;
+    }
+    .elvith-3d-scene {
+        perspective: 1000px;
+        -webkit-perspective: 1000px;
+    }
+    .elvith-flipper {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        transform-style: preserve-3d;
+        -webkit-transform-style: preserve-3d;
+        transition: transform 0.65s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    .elvith-flipper.flipped {
+        transform: rotateY(180deg);
+        -webkit-transform: rotateY(180deg);
+    }
+    .elvith-card-face {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        backface-visibility: hidden;
+        -webkit-backface-visibility: hidden;
+    }
+    .elvith-card-back {
+        transform: rotateY(180deg);
+        -webkit-transform: rotateY(180deg);
+    }
+</style>
 <div x-data="{
     audioCtx: null,
     soundEnabled: true,
@@ -405,7 +443,7 @@ class="relative w-full rounded-2xl sm:rounded-3xl overflow-hidden border border-
                                 <span>Kartu Kamu</span>
                             </span>
 
-                            <div class="relative w-full aspect-[2.5/3.6] rounded-xl sm:rounded-2xl p-2 sm:p-3.5 bg-gradient-to-br from-white via-[#fafafc] to-[#f0f0f4] shadow-[0_12px_30px_rgba(0,0,0,0.6),0_0_0_1px_rgba(255,255,255,0.9)_inset] border border-slate-300 flex flex-col justify-between select-none text-{{ $currentCard['color'] === 'red' ? 'rose-600' : 'slate-900' }}">
+                            <div class="elvith-card-shell rounded-xl sm:rounded-2xl p-2 sm:p-3.5 bg-gradient-to-br from-white via-[#fafafc] to-[#f0f0f4] shadow-[0_12px_30px_rgba(0,0,0,0.6),0_0_0_1px_rgba(255,255,255,0.9)_inset] border border-slate-300 flex flex-col justify-between select-none text-{{ $currentCard['color'] === 'red' ? 'rose-600' : 'slate-900' }}">
                                 <!-- Top-Left Index -->
                                 <div class="flex flex-col items-start leading-none space-y-0.5">
                                     <span class="text-xl xs:text-2xl sm:text-3xl font-black font-serif-display">{{ $currentCard['rank_label'] }}</span>
@@ -469,14 +507,14 @@ class="relative w-full rounded-2xl sm:rounded-3xl overflow-hidden border border-
                             </span>
 
                             <!-- 3D Card Container with Perspective -->
-                            <div class="relative w-full aspect-[2.5/3.6] [perspective:1000px]">
+                            <div class="elvith-card-shell elvith-3d-scene">
                                 <!-- Inner Flipper -->
                                 <div 
-                                    class="w-full h-full relative transition-transform duration-700 [transform-style:preserve-3d]"
-                                    :class="{ '[transform:rotateY(180deg)]': isFlipped }"
+                                    class="elvith-flipper"
+                                    :class="{ 'flipped': isFlipped }"
                                 >
                                     <!-- FRONT (CARD BACK / FACEDOWN MISTERI) -->
-                                    <div class="absolute inset-0 w-full h-full rounded-xl sm:rounded-2xl p-2 sm:p-3 bg-white shadow-2xl border border-slate-300 [backface-visibility:hidden]">
+                                    <div class="elvith-card-face rounded-xl sm:rounded-2xl p-2 sm:p-3 bg-white shadow-2xl border border-slate-300">
                                         <div class="w-full h-full rounded-lg sm:rounded-xl bg-gradient-to-br from-indigo-950 via-slate-900 to-indigo-950 border-2 sm:border-4 border-amber-400/80 relative overflow-hidden flex flex-col items-center justify-center text-amber-300 p-2 sm:p-3 text-center">
                                             <div class="absolute inset-0 opacity-25 bg-[radial-gradient(#fbbf24_2px,transparent_2px)] [background-size:12px_12px]"></div>
                                             <div class="w-10 h-10 sm:w-14 sm:h-14 rounded-full border-2 border-amber-400/60 flex items-center justify-center relative shadow-inner">
@@ -492,7 +530,7 @@ class="relative w-full rounded-2xl sm:rounded-3xl overflow-hidden border border-
                                     <!-- BACK (REVEALED REAL CARD) [Rotated 180deg] -->
                                     @if($nextCard)
                                         <div 
-                                            class="absolute inset-0 w-full h-full rounded-xl sm:rounded-2xl p-2 sm:p-3.5 bg-gradient-to-br from-white via-[#fafafc] to-[#f0f0f4] shadow-[0_12px_30px_rgba(0,0,0,0.6),0_0_0_1px_rgba(255,255,255,0.9)_inset] border-2 [backface-visibility:hidden] [transform:rotateY(180deg)] flex flex-col justify-between select-none text-{{ $nextCard['color'] === 'red' ? 'rose-600' : 'slate-900' }}"
+                                            class="elvith-card-face elvith-card-back rounded-xl sm:rounded-2xl p-2 sm:p-3.5 bg-gradient-to-br from-white via-[#fafafc] to-[#f0f0f4] shadow-[0_12px_30px_rgba(0,0,0,0.6),0_0_0_1px_rgba(255,255,255,0.9)_inset] border-2 flex flex-col justify-between select-none text-{{ $nextCard['color'] === 'red' ? 'rose-600' : 'slate-900' }}"
                                             :class="{
                                                 'border-emerald-500 shadow-[0_0_25px_rgba(16,185,129,0.5)]': revealingState === 'won',
                                                 'border-amber-400 shadow-[0_0_25px_rgba(251,191,36,0.5)]': revealingState === 'tie',
@@ -760,3 +798,5 @@ class="relative w-full rounded-2xl sm:rounded-3xl overflow-hidden border border-
 
     </div>
 </div>
+</div>
+
