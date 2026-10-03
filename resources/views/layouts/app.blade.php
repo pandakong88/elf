@@ -325,7 +325,7 @@
         <!-- Main Content Wrapper -->
         <main class="flex-1 flex flex-col overflow-y-auto">
             <!-- Top Header Navbar -->
-            <header class="h-16 bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between px-4 sm:px-6 lg:px-8 transition-colors duration-300">
+            <header class="h-16 bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between px-4 sm:px-6 lg:px-8 transition-colors duration-300 relative z-30">
                 <div class="flex items-center gap-3">
                     <!-- Hamburger Toggle Button -->
                     <button type="button" @click="sidebarOpen = !sidebarOpen" class="p-2 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl lg:hidden transition-colors" title="Buka Menu">

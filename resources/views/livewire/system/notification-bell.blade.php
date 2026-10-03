@@ -20,6 +20,13 @@
         @endif
     </button>
 
+    {{-- Mobile Overlay Backdrop --}}
+    <div x-show="open" 
+         x-transition.opacity.duration.200ms
+         @click="open = false" 
+         class="fixed inset-0 bg-slate-950/40 backdrop-blur-xs z-40 sm:hidden"
+         x-cloak></div>
+
     {{-- Notification Dropdown --}}
     <div x-show="open" 
          @click.away="open = false"
@@ -31,7 +38,7 @@
          x-transition:leave-start="opacity-100 scale-100 translate-y-0"
          x-transition:leave-end="opacity-0 scale-95 translate-y-2"
          x-cloak
-         class="absolute right-0 mt-2.5 w-80 sm:w-96 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl z-50 overflow-hidden text-slate-800 dark:text-slate-200">
+         class="fixed sm:absolute left-3 right-3 sm:left-auto sm:right-0 top-16 mt-2 sm:mt-2.5 sm:w-96 max-w-md sm:max-w-none mx-auto sm:mx-0 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl z-50 overflow-hidden text-slate-800 dark:text-slate-200">
         
         {{-- Header Dropdown --}}
         <div class="px-4 py-3 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-950/40">
@@ -54,7 +61,7 @@
         </div>
 
         {{-- Notification List --}}
-        <div class="max-h-[380px] overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800/60">
+        <div class="max-h-[60vh] sm:max-h-[380px] overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800/60">
             @forelse($notifications as $notification)
                 @php
                     $isUnread = is_null($notification->read_at);
