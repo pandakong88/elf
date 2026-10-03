@@ -6,10 +6,16 @@
     .elvith-card-shell {
         position: relative;
         width: 100%;
+        max-width: 100%;
         aspect-ratio: 5 / 7.2;
-        min-height: 195px;
-        max-height: 320px;
-        filter: drop-shadow(0 14px 26px rgba(0, 0, 0, 0.65));
+        border-radius: 0.95rem;
+        filter: drop-shadow(0 8px 18px rgba(0, 0, 0, 0.6));
+    }
+    @media (min-width: 640px) {
+        .elvith-card-shell {
+            border-radius: 1.25rem;
+            filter: drop-shadow(0 14px 26px rgba(0, 0, 0, 0.65));
+        }
     }
     .elvith-3d-scene {
         perspective: 1200px;
@@ -34,7 +40,13 @@
         height: 100%;
         backface-visibility: hidden;
         -webkit-backface-visibility: hidden;
-        border-radius: 1.15rem;
+        border-radius: 0.95rem;
+        overflow: hidden;
+    }
+    @media (min-width: 640px) {
+        .elvith-card-face {
+            border-radius: 1.25rem;
+        }
     }
     .elvith-card-back {
         transform: rotateY(180deg);
@@ -43,28 +55,51 @@
 
     /* Luxury Bicycle Card Surface */
     .card-luxury-surface {
+        border-radius: 0.95rem;
         background: linear-gradient(155deg, #ffffff 0%, #fafafb 50%, #f1f1f5 100%);
-        border: 1.5px solid rgba(203, 213, 225, 0.8);
+        border: 1.5px solid rgba(203, 213, 225, 0.85);
         box-shadow: 
             inset 0 0 0 1px rgba(255, 255, 255, 0.95),
-            inset 0 0 16px rgba(0, 0, 0, 0.03),
-            0 12px 28px -4px rgba(0, 0, 0, 0.5);
+            inset 0 0 12px rgba(0, 0, 0, 0.03),
+            0 8px 18px -3px rgba(0, 0, 0, 0.45);
+        overflow: hidden;
+    }
+    @media (min-width: 640px) {
+        .card-luxury-surface {
+            border-radius: 1.25rem;
+            box-shadow: 
+                inset 0 0 0 1px rgba(255, 255, 255, 0.95),
+                inset 0 0 16px rgba(0, 0, 0, 0.03),
+                0 12px 28px -4px rgba(0, 0, 0, 0.5);
+        }
     }
 
     /* Pinstripe Inner Frame like Classic Playing Cards */
     .card-inner-frame {
         position: absolute;
-        inset: 6px;
+        inset: 3.5px;
         border: 1px solid rgba(203, 213, 225, 0.7);
-        border-radius: 0.85rem;
+        border-radius: 0.75rem;
         pointer-events: none;
+    }
+    @media (min-width: 640px) {
+        .card-inner-frame {
+            inset: 6px;
+            border-radius: 0.95rem;
+        }
     }
     .card-inner-frame::after {
         content: '';
         position: absolute;
-        inset: 2px;
+        inset: 1.5px;
         border: 1px dashed rgba(203, 213, 225, 0.45);
-        border-radius: 0.75rem;
+        border-radius: 0.65rem;
+    }
+    @media (min-width: 640px) {
+        .card-inner-frame::after {
+            inset: 2px;
+            border-radius: 0.8rem;
+        }
     }
 
     /* Velvet Felt Mat Table */
@@ -427,14 +462,14 @@ class="relative w-full rounded-2xl sm:rounded-3xl overflow-hidden border border-
     </div>
 
     <!-- Main Grid: Card Table (Left/Center) + Live Leaderboard (Right) -->
-    <div class="relative z-10 grid grid-cols-1 xl:grid-cols-12 gap-4 sm:gap-6 p-2.5 sm:p-5 lg:p-8">
+    <div class="relative z-10 grid grid-cols-1 xl:grid-cols-12 gap-3 sm:gap-6 p-1.5 sm:p-5 lg:p-8">
         
         <!-- CARD TABLE ARENA (8 Cols) - VELVET FELT CASINO MAT -->
-        <div class="xl:col-span-8 flex flex-col items-center justify-between rounded-2xl sm:rounded-3xl p-3.5 sm:p-6 lg:p-8 table-felt-mat relative overflow-hidden min-h-[470px] sm:min-h-[570px]">
+        <div class="xl:col-span-8 flex flex-col items-center justify-between rounded-2xl sm:rounded-3xl px-2 py-3 sm:p-6 lg:p-8 table-felt-mat relative overflow-hidden min-h-[440px] sm:min-h-[570px]">
             
             <!-- Table Subtle Pattern / Gold Trim Ring -->
             <div class="absolute inset-0 opacity-10 pointer-events-none bg-[radial-gradient(#fbbf24_1px,transparent_1px)] [background-size:20px_20px]"></div>
-            <div class="absolute inset-1.5 sm:inset-3 rounded-[16px] sm:rounded-[22px] border border-amber-400/25 pointer-events-none"></div>
+            <div class="absolute inset-1 sm:inset-3 rounded-[14px] sm:rounded-[22px] border border-amber-400/25 pointer-events-none"></div>
 
             <!-- Top Game HUD (Score, Message, Streak) - Mobile Glassmorphism -->
             <div class="w-full flex items-center justify-between gap-1.5 sm:gap-4 z-10 mb-2 sm:mb-4">
@@ -532,59 +567,59 @@ class="relative w-full rounded-2xl sm:rounded-3xl overflow-hidden border border-
 
                 @else
                     <!-- Active Gameplay: TWO CARDS SIDE-BY-SIDE (High-End Casino Look) -->
-                    <div class="flex flex-row items-center justify-center gap-2 xs:gap-3 sm:gap-6 lg:gap-10 w-full max-w-3xl px-0.5 sm:px-0">
+                    <div class="flex flex-row items-center justify-center gap-1.5 xs:gap-3 sm:gap-6 lg:gap-10 w-full max-w-2xl px-0 sm:px-0">
                         
                         <!-- CARD 1: KARTU SAAT INI (FACE UP) -->
-                        <div class="flex flex-col items-center flex-1 max-w-[170px] sm:max-w-[220px]">
+                        <div class="flex flex-col items-center flex-1 min-w-0 max-w-[138px] xs:max-w-[165px] sm:max-w-[220px]">
                             <span class="text-[9px] sm:text-[11px] font-bold uppercase tracking-wider text-emerald-300 mb-1 sm:mb-2 font-mono flex items-center gap-1 truncate drop-shadow">
                                 <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0 animate-pulse"></span>
-                                <span>Kartu Kamu</span>
+                                <span class="truncate">Kartu Kamu</span>
                             </span>
 
-                            <div class="elvith-card-shell card-luxury-surface p-2.5 sm:p-4 flex flex-col justify-between select-none text-{{ $currentCard['color'] === 'red' ? 'rose-600' : 'slate-900' }}">
+                            <div class="elvith-card-shell card-luxury-surface p-1.5 xs:p-2.5 sm:p-4 flex flex-col justify-between select-none text-{{ $currentCard['color'] === 'red' ? 'rose-600' : 'slate-900' }}">
                                 <!-- Classic Pinstripe Frame -->
                                 <div class="card-inner-frame"></div>
 
                                 <!-- Top-Left Corner Index -->
                                 <div class="relative z-10 flex flex-col items-start leading-none space-y-0.5">
-                                    <span class="text-xl xs:text-2xl sm:text-3xl font-black font-serif-display drop-shadow-sm">{{ $currentCard['rank_label'] }}</span>
-                                    <span class="text-sm xs:text-base sm:text-xl font-black leading-none">{!! $currentCard['symbol_html'] !!}</span>
+                                    <span class="text-base xs:text-xl sm:text-3xl font-black font-serif-display drop-shadow-sm">{{ $currentCard['rank_label'] }}</span>
+                                    <span class="text-xs xs:text-base sm:text-xl font-black leading-none">{!! $currentCard['symbol_html'] !!}</span>
                                 </div>
 
                                 <!-- Center Artwork Motif -->
-                                <div class="relative z-10 flex flex-col items-center justify-center my-auto py-1">
+                                <div class="relative z-10 flex flex-col items-center justify-center my-auto py-0.5 sm:py-1">
                                     @if($currentCard['rank'] === 14)
                                         <!-- Ornate Ace of Spades/Hearts Center -->
                                         <div class="relative flex flex-col items-center justify-center">
-                                            <div class="w-14 h-14 sm:w-20 sm:h-20 rounded-full border-2 border-current/30 flex items-center justify-center bg-current/5 shadow-inner">
-                                                <span class="text-4xl xs:text-5xl sm:text-6xl font-serif font-black leading-none drop-shadow-md">
+                                            <div class="w-9 h-9 xs:w-14 xs:h-14 sm:w-20 sm:h-20 rounded-full border-2 border-current/30 flex items-center justify-center bg-current/5 shadow-inner">
+                                                <span class="text-xl xs:text-4xl sm:text-6xl font-serif font-black leading-none drop-shadow-md">
                                                     {!! $currentCard['symbol_html'] !!}
                                                 </span>
                                             </div>
-                                            <div class="mt-1 px-2 py-0.5 rounded-full border border-current/40 text-[7px] sm:text-[8px] font-black uppercase tracking-widest bg-current/10">
+                                            <div class="mt-0.5 xs:mt-1 px-1 xs:px-2 py-0.5 rounded-full border border-current/40 text-[6px] xs:text-[7px] sm:text-[8px] font-black uppercase tracking-widest bg-current/10">
                                                 ★ ACE (14) ★
                                             </div>
                                         </div>
                                     @elseif($currentCard['rank'] >= 11)
                                         <!-- Court Card Artwork Shield -->
-                                        <div class="w-full py-1.5 px-1 flex flex-col items-center border border-current/30 bg-current/5 rounded-xl shadow-inner">
-                                            <div class="text-3xl xs:text-4xl sm:text-5xl filter drop-shadow">
+                                        <div class="w-full py-1 xs:py-1.5 px-0.5 xs:px-1 flex flex-col items-center border border-current/30 bg-current/5 rounded-lg xs:rounded-xl shadow-inner">
+                                            <div class="text-xl xs:text-3xl sm:text-5xl filter drop-shadow">
                                                 @if($currentCard['rank'] === 13) 👑 @elseif($currentCard['rank'] === 12) 👸 @else 🗡️ @endif
                                             </div>
-                                            <span class="text-[9px] sm:text-xs font-black uppercase tracking-wider mt-0.5 truncate max-w-full">
+                                            <span class="text-[8px] xs:text-[9px] sm:text-xs font-black uppercase tracking-wider mt-0.5 truncate max-w-full">
                                                 {{ $currentCard['title'] }}
                                             </span>
-                                            <span class="text-[8px] sm:text-[10px] font-mono opacity-80 font-bold">Nilai: {{ $currentCard['rank'] }}</span>
+                                            <span class="text-[7px] xs:text-[8px] sm:text-[10px] font-mono opacity-80 font-bold">Nilai: {{ $currentCard['rank'] }}</span>
                                         </div>
                                     @else
                                         <!-- Number Card (2-10): Luxury Royal Seal -->
                                         <div class="relative flex flex-col items-center justify-center">
-                                            <div class="w-12 h-12 xs:w-14 xs:h-14 sm:w-18 sm:h-18 rounded-full border border-current/25 flex items-center justify-center bg-current/5 shadow-inner">
-                                                <span class="text-3xl xs:text-4xl sm:text-5xl font-black leading-none drop-shadow">
+                                            <div class="w-8 h-8 xs:w-12 xs:h-12 sm:w-18 sm:h-18 rounded-full border border-current/25 flex items-center justify-center bg-current/5 shadow-inner">
+                                                <span class="text-lg xs:text-3xl sm:text-5xl font-black leading-none drop-shadow">
                                                     {!! $currentCard['symbol_html'] !!}
                                                 </span>
                                             </div>
-                                            <div class="mt-1 flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-current/10 text-[8px] sm:text-[9px] font-black font-mono">
+                                            <div class="mt-0.5 xs:mt-1 flex items-center gap-1 px-1 xs:px-1.5 py-0.5 rounded-md bg-current/10 text-[7px] xs:text-[8px] sm:text-[9px] font-black font-mono">
                                                 <span>{{ $currentCard['rank_label'] }}</span>
                                                 <span>{!! $currentCard['symbol_html'] !!}</span>
                                             </div>
@@ -594,33 +629,33 @@ class="relative w-full rounded-2xl sm:rounded-3xl overflow-hidden border border-
 
                                 <!-- Bottom-Right Corner Index (Inverted) -->
                                 <div class="relative z-10 flex flex-col items-end leading-none space-y-0.5 rotate-180">
-                                    <span class="text-xl xs:text-2xl sm:text-3xl font-black font-serif-display drop-shadow-sm">{{ $currentCard['rank_label'] }}</span>
-                                    <span class="text-sm xs:text-base sm:text-xl font-black leading-none">{!! $currentCard['symbol_html'] !!}</span>
+                                    <span class="text-base xs:text-xl sm:text-3xl font-black font-serif-display drop-shadow-sm">{{ $currentCard['rank_label'] }}</span>
+                                    <span class="text-xs xs:text-base sm:text-xl font-black leading-none">{!! $currentCard['symbol_html'] !!}</span>
                                 </div>
                             </div>
 
-                            <span class="text-[10px] sm:text-xs font-mono text-amber-200 mt-1 sm:mt-2 font-bold truncate max-w-full text-center drop-shadow">
+                            <span class="text-[9px] xs:text-[10px] sm:text-xs font-mono text-amber-200 mt-1 sm:mt-2 font-bold truncate max-w-full text-center drop-shadow">
                                 {{ $currentCard['title'] }}
                             </span>
                         </div>
 
                         <!-- VS / CHOICE INDICATOR (3D Golden Medallion) -->
-                        <div class="flex flex-col items-center justify-center my-auto shrink-0 px-0.5 sm:px-2 z-10">
-                            <div class="vs-medallion w-9 h-9 sm:w-12 sm:h-12 rounded-full flex items-center justify-center font-black text-[11px] sm:text-sm text-slate-950 font-serif tracking-wider shadow-lg">
+                        <div class="flex flex-col items-center justify-center my-auto shrink-0 px-0.5 sm:px-1.5 z-10">
+                            <div class="vs-medallion w-7 h-7 sm:w-11 sm:h-11 rounded-full flex items-center justify-center font-black text-[9px] sm:text-xs text-slate-950 font-serif tracking-wider shadow-md">
                                 VS
                             </div>
                             @if($lastGuess)
-                                <div class="mt-1.5 px-2 py-0.5 rounded-full text-[8px] sm:text-[10px] font-black uppercase font-mono tracking-wider shadow-md {{ $lastGuess === 'higher' ? 'bg-emerald-500 text-white border border-emerald-300' : 'bg-rose-500 text-white border border-rose-300' }}">
+                                <div class="mt-1 px-1.5 py-0.5 rounded-full text-[7px] sm:text-[9px] font-black uppercase font-mono tracking-wider shadow-md {{ $lastGuess === 'higher' ? 'bg-emerald-500 text-white border border-emerald-300' : 'bg-rose-500 text-white border border-rose-300' }}">
                                     {{ $lastGuess === 'higher' ? '▲ BESAR' : '▼ KECIL' }}
                                 </div>
                             @endif
                         </div>
 
                         <!-- CARD 2: KARTU BERIKUTNYA DENGAN EFEK 3D FLIP ANIMATION -->
-                        <div class="flex flex-col items-center flex-1 max-w-[170px] sm:max-w-[220px]">
+                        <div class="flex flex-col items-center flex-1 min-w-0 max-w-[138px] xs:max-w-[165px] sm:max-w-[220px]">
                             <span class="text-[9px] sm:text-[11px] font-bold uppercase tracking-wider text-amber-300 mb-1 sm:mb-2 font-mono flex items-center gap-1 truncate drop-shadow">
                                 <span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-ping shrink-0"></span>
-                                <span>Berikutnya</span>
+                                <span class="truncate">Berikutnya</span>
                             </span>
 
                             <!-- 3D Card Container with Perspective -->
@@ -631,23 +666,23 @@ class="relative w-full rounded-2xl sm:rounded-3xl overflow-hidden border border-
                                     :class="{ 'flipped': isFlipped }"
                                 >
                                     <!-- FRONT (CARD BACK / FACEDOWN MISTERI DENGAN HOLOGRAPHIC SHIMMER) -->
-                                    <div class="elvith-card-face p-2 sm:p-3 bg-white shadow-2xl border border-slate-300 overflow-hidden shimmer-effect">
-                                        <div class="w-full h-full rounded-xl bg-gradient-to-br from-indigo-950 via-slate-900 to-indigo-950 border-2 sm:border-4 border-amber-400/80 relative overflow-hidden flex flex-col items-center justify-center text-amber-300 p-2 text-center shadow-inner">
+                                    <div class="elvith-card-face p-1.5 xs:p-2 sm:p-3 bg-white shadow-2xl border border-slate-300 overflow-hidden shimmer-effect">
+                                        <div class="w-full h-full rounded-xl bg-gradient-to-br from-indigo-950 via-slate-900 to-indigo-950 border-2 sm:border-4 border-amber-400/80 relative overflow-hidden flex flex-col items-center justify-center text-amber-300 p-1.5 xs:p-2 text-center shadow-inner">
                                             <div class="absolute inset-0 opacity-25 bg-[radial-gradient(#fbbf24_2px,transparent_2px)] [background-size:12px_12px]"></div>
-                                            <div class="w-10 h-10 sm:w-14 sm:h-14 rounded-full border-2 border-amber-400/70 flex items-center justify-center relative shadow-lg bg-amber-400/10">
-                                                <span class="text-xl sm:text-2xl font-black animate-pulse">❓</span>
+                                            <div class="w-8 h-8 xs:w-10 xs:h-10 sm:w-14 sm:h-14 rounded-full border-2 border-amber-400/70 flex items-center justify-center relative shadow-lg bg-amber-400/10">
+                                                <span class="text-base xs:text-xl sm:text-2xl font-black animate-pulse">❓</span>
                                             </div>
-                                            <span class="mt-2 sm:mt-2.5 text-[8px] sm:text-[10px] font-black uppercase tracking-widest text-amber-200 font-serif-display drop-shadow">
+                                            <span class="mt-1.5 sm:mt-2.5 text-[7px] xs:text-[8px] sm:text-[10px] font-black uppercase tracking-widest text-amber-200 font-serif-display drop-shadow">
                                                 MISTERI
                                             </span>
-                                            <span class="text-[7px] sm:text-[8px] text-amber-400/90 font-mono mt-0.5">Tebak Dulu!</span>
+                                            <span class="text-[6px] xs:text-[7px] sm:text-[8px] text-amber-400/90 font-mono mt-0.5">Tebak Dulu!</span>
                                         </div>
                                     </div>
 
                                     <!-- BACK (REVEALED REAL CARD) [Rotated 180deg] -->
                                     @if($nextCard)
                                         <div 
-                                            class="elvith-card-face elvith-card-back card-luxury-surface p-2.5 sm:p-4 flex flex-col justify-between select-none text-{{ $nextCard['color'] === 'red' ? 'rose-600' : 'slate-900' }}"
+                                            class="elvith-card-face elvith-card-back card-luxury-surface p-1.5 xs:p-2.5 sm:p-4 flex flex-col justify-between select-none text-{{ $nextCard['color'] === 'red' ? 'rose-600' : 'slate-900' }}"
                                             :class="{
                                                 'ring-4 ring-emerald-400 shadow-[0_0_35px_rgba(16,185,129,0.7)]': revealingState === 'won',
                                                 'ring-4 ring-amber-400 shadow-[0_0_35px_rgba(251,191,36,0.7)]': revealingState === 'tie',
@@ -660,41 +695,41 @@ class="relative w-full rounded-2xl sm:rounded-3xl overflow-hidden border border-
 
                                             <!-- Top-Left Corner Index -->
                                             <div class="relative z-10 flex flex-col items-start leading-none space-y-0.5">
-                                                <span class="text-xl xs:text-2xl sm:text-3xl font-black font-serif-display drop-shadow-sm">{{ $nextCard['rank_label'] }}</span>
-                                                <span class="text-sm xs:text-base sm:text-xl font-black leading-none">{!! $nextCard['symbol_html'] !!}</span>
+                                                <span class="text-base xs:text-xl sm:text-3xl font-black font-serif-display drop-shadow-sm">{{ $nextCard['rank_label'] }}</span>
+                                                <span class="text-xs xs:text-base sm:text-xl font-black leading-none">{!! $nextCard['symbol_html'] !!}</span>
                                             </div>
 
                                             <!-- Center Artwork Motif -->
-                                            <div class="relative z-10 flex flex-col items-center justify-center my-auto py-1">
+                                            <div class="relative z-10 flex flex-col items-center justify-center my-auto py-0.5 sm:py-1">
                                                 @if($nextCard['rank'] === 14)
                                                     <div class="relative flex flex-col items-center justify-center">
-                                                        <div class="w-14 h-14 sm:w-20 sm:h-20 rounded-full border-2 border-current/30 flex items-center justify-center bg-current/5 shadow-inner">
-                                                            <span class="text-4xl xs:text-5xl sm:text-6xl font-serif font-black leading-none drop-shadow-md">
+                                                        <div class="w-9 h-9 xs:w-14 xs:h-14 sm:w-20 sm:h-20 rounded-full border-2 border-current/30 flex items-center justify-center bg-current/5 shadow-inner">
+                                                            <span class="text-xl xs:text-4xl sm:text-6xl font-serif font-black leading-none drop-shadow-md">
                                                                 {!! $nextCard['symbol_html'] !!}
                                                             </span>
                                                         </div>
-                                                        <div class="mt-1 px-2 py-0.5 rounded-full border border-current/40 text-[7px] sm:text-[8px] font-black uppercase tracking-widest bg-current/10">
+                                                        <div class="mt-0.5 xs:mt-1 px-1 xs:px-2 py-0.5 rounded-full border border-current/40 text-[6px] xs:text-[7px] sm:text-[8px] font-black uppercase tracking-widest bg-current/10">
                                                             ★ ACE (14) ★
                                                         </div>
                                                     </div>
                                                 @elseif($nextCard['rank'] >= 11)
-                                                    <div class="w-full py-1.5 px-1 flex flex-col items-center border border-current/30 bg-current/5 rounded-xl shadow-inner">
-                                                        <div class="text-3xl xs:text-4xl sm:text-5xl filter drop-shadow">
+                                                    <div class="w-full py-1 xs:py-1.5 px-0.5 xs:px-1 flex flex-col items-center border border-current/30 bg-current/5 rounded-lg xs:rounded-xl shadow-inner">
+                                                        <div class="text-xl xs:text-3xl sm:text-5xl filter drop-shadow">
                                                             @if($nextCard['rank'] === 13) 👑 @elseif($nextCard['rank'] === 12) 👸 @else 🗡️ @endif
                                                         </div>
-                                                        <span class="text-[9px] sm:text-xs font-black uppercase tracking-wider mt-0.5 truncate max-w-full">
+                                                        <span class="text-[8px] xs:text-[9px] sm:text-xs font-black uppercase tracking-wider mt-0.5 truncate max-w-full">
                                                             {{ $nextCard['title'] }}
                                                         </span>
-                                                        <span class="text-[8px] sm:text-[10px] font-mono opacity-80 font-bold">Nilai: {{ $nextCard['rank'] }}</span>
+                                                        <span class="text-[7px] xs:text-[8px] sm:text-[10px] font-mono opacity-80 font-bold">Nilai: {{ $nextCard['rank'] }}</span>
                                                     </div>
                                                 @else
                                                     <div class="relative flex flex-col items-center justify-center">
-                                                        <div class="w-12 h-12 xs:w-14 xs:h-14 sm:w-18 sm:h-18 rounded-full border border-current/25 flex items-center justify-center bg-current/5 shadow-inner">
-                                                            <span class="text-3xl xs:text-4xl sm:text-5xl font-black leading-none drop-shadow">
+                                                        <div class="w-8 h-8 xs:w-12 xs:h-12 sm:w-18 sm:h-18 rounded-full border border-current/25 flex items-center justify-center bg-current/5 shadow-inner">
+                                                            <span class="text-lg xs:text-3xl sm:text-5xl font-black leading-none drop-shadow">
                                                                 {!! $nextCard['symbol_html'] !!}
                                                             </span>
                                                         </div>
-                                                        <div class="mt-1 flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-current/10 text-[8px] sm:text-[9px] font-black font-mono">
+                                                        <div class="mt-0.5 xs:mt-1 flex items-center gap-1 px-1 xs:px-1.5 py-0.5 rounded-md bg-current/10 text-[7px] xs:text-[8px] sm:text-[9px] font-black font-mono">
                                                             <span>{{ $nextCard['rank_label'] }}</span>
                                                             <span>{!! $nextCard['symbol_html'] !!}</span>
                                                         </div>
@@ -704,15 +739,15 @@ class="relative w-full rounded-2xl sm:rounded-3xl overflow-hidden border border-
 
                                             <!-- Bottom-Right Corner Index (Inverted) -->
                                             <div class="relative z-10 flex flex-col items-end leading-none space-y-0.5 rotate-180">
-                                                <span class="text-xl xs:text-2xl sm:text-3xl font-black font-serif-display drop-shadow-sm">{{ $nextCard['rank_label'] }}</span>
-                                                <span class="text-sm xs:text-base sm:text-xl font-black leading-none">{!! $nextCard['symbol_html'] !!}</span>
+                                                <span class="text-base xs:text-xl sm:text-3xl font-black font-serif-display drop-shadow-sm">{{ $nextCard['rank_label'] }}</span>
+                                                <span class="text-xs xs:text-base sm:text-xl font-black leading-none">{!! $nextCard['symbol_html'] !!}</span>
                                             </div>
                                         </div>
                                     @endif
                                 </div>
                             </div>
 
-                            <span class="text-[10px] sm:text-xs font-mono text-amber-200 mt-1 sm:mt-2 font-bold truncate max-w-full text-center drop-shadow" x-text="isFlipped ? '{{ $nextCard['title'] ?? '' }}' : 'Tertutup 🔒'"></span>
+                            <span class="text-[9px] xs:text-[10px] sm:text-xs font-mono text-amber-200 mt-1 sm:mt-2 font-bold truncate max-w-full text-center drop-shadow" x-text="isFlipped ? '{{ $nextCard['title'] ?? '' }}' : 'Tertutup 🔒'"></span>
                         </div>
 
                     </div>
