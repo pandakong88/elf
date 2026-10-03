@@ -1,6 +1,9 @@
 <x-app-layout>
     <div class="space-y-8">
-        <!-- 1. Executive Welcome Banner -->
+        <!-- 1. HERO STAGE: ELVITH ROYALE ARENA KARTU HI-LO & LEADERBOARD (PALING ATAS) -->
+        @livewire('dashboard.card-game-arena')
+
+        <!-- 2. Executive Welcome Banner -->
         <div class="bg-slate-950 bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800 text-white rounded-3xl p-6 sm:p-8 border border-slate-700/60 shadow-xl relative overflow-hidden" style="background-color: #020617;">
             <div class="absolute -right-20 -top-20 w-80 h-80 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none"></div>
             <div class="absolute -left-20 -bottom-20 w-80 h-80 bg-blue-500/10 rounded-full blur-3xl pointer-events-none"></div>
@@ -49,7 +52,7 @@
             </div>
         </div>
 
-        <!-- 2. Dev Corner Arcade Box (Multi-Game Randomizer) -->
+        <!-- 3. Dev Corner Arcade Box (Multi-Game Randomizer) -->
         <div x-data="{
             showDevCorner: false,
             activeGame: 'dice',
