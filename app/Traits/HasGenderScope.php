@@ -12,22 +12,32 @@ trait HasGenderScope
         $user = auth()->user();
         if (!$user) return null;
 
-        // Super Admin & Manajemen bypass gender scoping
-        if ($user->hasRole('super-admin') || $user->hasRole('manajemen')) {
+        // Central roles bypass gender scoping (all access: Putra & Putri)
+        if ($user->hasRole([
+            'super-admin',
+            'admin',
+            'manajemen',
+            'pengasuh',
+            'bendahara',
+            'bendahara-pondok',
+            'bendahara-pusat',
+            'bendahara-unit',
+            'admin-data',
+        ])) {
             return null;
         }
 
-        // 1. Check associated person profile
-        if ($user->person?->gender) {
-            return $user->person->gender;
-        }
-
-        // 2. Fallback to gendered roles for backward compatibility
-        if ($user->hasRole('bendahara-putra')) {
+        // Gender-specific roles
+        if ($user->hasRole(['bendahara-putra', 'lurah-putra'])) {
             return 'L';
         }
-        if ($user->hasRole('bendahara-putri')) {
+        if ($user->hasRole(['bendahara-putri', 'lurah-putri'])) {
             return 'P';
+        }
+
+        // Check associated person profile
+        if ($user->person?->gender) {
+            return $user->person->gender;
         }
 
         return null;

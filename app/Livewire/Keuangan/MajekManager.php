@@ -47,6 +47,7 @@ class MajekManager extends Component
 
     // ─── Bulk Mode Properties ────────────────────────────────────────────────
     public string $searchBulkQuery       = '';
+    public string $filterBulkGender      = 'all'; // 'all' | 'L' | 'P'
     public string $filterBulkDormitoryId = '';
     public string $filterBulkRoomId      = '';
     public string $filterBulkStatus      = 'unregistered'; // 'all' | 'unregistered' | 'registered'
@@ -94,17 +95,42 @@ class MajekManager extends Component
 
     // ─── Main Participant Table Filter & Search ────────────────────────────────
     public string $searchParticipant = '';
+    public string $filterGender      = 'all'; // 'all' | 'L' | 'P'
     public array  $filterDormitoryIds = [];
-    public string $filterStatus = 'all'; // 'all' | 'paid' | 'unpaid' | 'partial'
-    public int    $perPage      = 15;
+    public string $filterStatus      = 'all'; // 'all' | 'paid' | 'unpaid' | 'partial'
+    public int    $perPage           = 15;
 
     public function updatingSearchParticipant(): void { $this->resetPage(); }
+    public function updatingFilterGender(): void { $this->resetPage(); }
     public function updatingFilterDormitoryIds(): void { $this->resetPage(); }
     public function updatingFilterStatus(): void { $this->resetPage(); }
     public function updatingPerPage(): void { $this->resetPage(); }
 
+    public function updatedFilterBulkGender(): void
+    {
+        $this->filterBulkDormitoryId = '';
+        $this->filterBulkRoomId = '';
+    }
+
+    protected function currentMainGenderScope(): ?string
+    {
+        if ($scope = $this->genderScope()) {
+            return $scope;
+        }
+        return $this->filterGender !== 'all' ? $this->filterGender : null;
+    }
+
+    protected function currentBulkGenderScope(): ?string
+    {
+        if ($scope = $this->genderScope()) {
+            return $scope;
+        }
+        return $this->filterBulkGender !== 'all' ? $this->filterBulkGender : null;
+    }
+
     protected $queryString = [
         'searchParticipant' => ['except' => ''],
+        'filterGender' => ['except' => 'all'],
         'filterDormitoryIds' => ['except' => []],
         'filterStatus' => ['except' => 'all'],
         'perPage' => ['except' => 15],
@@ -117,7 +143,19 @@ class MajekManager extends Component
     public function mount(): void
     {
         $user = auth()->user();
-        if ($user && ! ($user->hasRole('super-admin') || $user->hasRole('manajemen') || $user->hasRole('pengasuh') || $user->can('manage-majek'))) {
+        if ($user && ! ($user->hasRole([
+            'super-admin',
+            'admin',
+            'manajemen',
+            'pengasuh',
+            'bendahara',
+            'bendahara-pondok',
+            'bendahara-pusat',
+            'bendahara-unit',
+            'bendahara-putra',
+            'bendahara-putri',
+            'admin-data',
+        ]) || $user->can('manage-majek'))) {
             abort(403, 'Anda tidak memiliki akses ke modul Majek (Katering Asrama Pondok).');
         }
 
@@ -142,13 +180,15 @@ class MajekManager extends Component
     #[Computed]
     public function registrations()
     {
+        $gender = $this->currentMainGenderScope();
+
         $query = MajekRegistration::with([
                 'person',
                 'person.roomAssignments' => fn($q) => $q->active()->with('room.dormitory'),
             ])
             ->where('month', $this->month)
             ->where('year',  $this->year)
-            ->whereHas('person', fn($q) => $q->when($this->genderScope(), fn($sq, $g) => $sq->where('gender', $g)));
+            ->whereHas('person', fn($q) => $q->when($gender, fn($sq, $g) => $sq->where('gender', $g)));
 
         // Filter: Search Participant
         if (!empty($this->searchParticipant)) {
@@ -203,21 +243,23 @@ class MajekManager extends Component
     #[Computed]
     public function overallStats(): array
     {
+        $gender = $this->currentMainGenderScope();
+
         $total = MajekRegistration::where('month', $this->month)
                                   ->where('year',  $this->year)
-                                  ->whereHas('person', fn($q) => $q->when($this->genderScope(), fn($sq, $g) => $sq->where('gender', $g)))
+                                  ->whereHas('person', fn($q) => $q->when($gender, fn($sq, $g) => $sq->where('gender', $g)))
                                   ->count();
 
         $paid = MajekRegistration::where('month', $this->month)
                                  ->where('year',  $this->year)
-                                 ->whereHas('person', fn($q) => $q->when($this->genderScope(), fn($sq, $g) => $sq->where('gender', $g)))
+                                 ->whereHas('person', fn($q) => $q->when($gender, fn($sq, $g) => $sq->where('gender', $g)))
                                  ->whereHas('bills')
                                  ->whereDoesntHave('bills', fn($b) => $b->where('status', '!=', 'paid'))
                                  ->count();
 
         $partial = MajekRegistration::where('month', $this->month)
                                     ->where('year',  $this->year)
-                                    ->whereHas('person', fn($q) => $q->when($this->genderScope(), fn($sq, $g) => $sq->where('gender', $g)))
+                                    ->whereHas('person', fn($q) => $q->when($gender, fn($sq, $g) => $sq->where('gender', $g)))
                                     ->whereHas('bills', fn($b) => $b->where('amount_paid', '>', 0))
                                     ->whereHas('bills', fn($b) => $b->where('status', '!=', 'paid'))
                                     ->count();
@@ -381,7 +423,16 @@ class MajekManager extends Component
     public function dormitories()
     {
         return Dormitory::active()
-            ->when($this->genderScope(), fn($q, $g) => $q->where('gender', $g))
+            ->when($this->currentMainGenderScope(), fn($q, $g) => $q->where('gender', $g))
+            ->orderBy('name')
+            ->get();
+    }
+
+    #[Computed]
+    public function modalDormitories()
+    {
+        return Dormitory::active()
+            ->when($this->currentBulkGenderScope(), fn($q, $g) => $q->where('gender', $g))
             ->orderBy('name')
             ->get();
     }
@@ -526,7 +577,7 @@ class MajekManager extends Component
             ->whereHas('activeRoles', function ($q) {
                 $q->where('role_type', 'santri');
             })
-            ->when($this->genderScope(), fn($q, $g) => $q->where('gender', $g))
+            ->when($this->currentBulkGenderScope(), fn($q, $g) => $q->where('gender', $g))
             ->when($this->filterBulkDormitoryId, function ($q) {
                 $q->whereHas('roomAssignments', function ($rq) {
                     $rq->active()->whereHas('room', function ($r) {
@@ -901,6 +952,7 @@ class MajekManager extends Component
 
         // Reset Bulk State
         $this->searchBulkQuery       = '';
+        $this->filterBulkGender      = 'all';
         $this->filterBulkDormitoryId = '';
         $this->filterBulkRoomId      = '';
         $this->filterBulkStatus      = 'unregistered';
@@ -1009,6 +1061,7 @@ class MajekManager extends Component
     public function resetFilters(): void
     {
         $this->searchParticipant  = '';
+        $this->filterGender       = 'all';
         $this->filterDormitoryIds = [];
         $this->filterStatus       = 'all';
         $this->resetPage();
@@ -1654,7 +1707,7 @@ class MajekManager extends Component
     {
         $query = MajekRegistration::where('month', $this->month)
             ->where('year', $this->year)
-            ->when($this->genderScope(), function ($q, $g) {
+            ->when($this->currentMainGenderScope(), function ($q, $g) {
                 $q->whereHas('person', fn($pq) => $pq->where('gender', $g));
             })
             ->when($this->filterDormitoryIds, function ($q) {

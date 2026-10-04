@@ -154,6 +154,26 @@
             </div>
 
             <div class="grid grid-cols-1 sm:flex items-center gap-2.5 w-full sm:w-auto">
+                {{-- Gender Filter --}}
+                @if(!$this->genderScope())
+                    <div class="w-full sm:w-36 shrink-0">
+                        <select wire:model.live="filterGender"
+                            class="w-full px-3 py-2.5 text-xs font-bold border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 rounded-xl text-slate-700 dark:text-slate-300 outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-400 transition-all">
+                            <option value="all">👥 Semua Gender</option>
+                            <option value="L">👦 Santri Putra</option>
+                            <option value="P">👧 Santri Putri</option>
+                        </select>
+                    </div>
+                @else
+                    <div class="hidden sm:flex items-center px-3 py-2.5 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/50 rounded-xl text-[11px] font-black text-amber-700 dark:text-amber-400 shrink-0">
+                        @if($this->genderScope() === 'L')
+                            👦 Scope: Putra
+                        @else
+                            👧 Scope: Putri
+                        @endif
+                    </div>
+                @endif
+
                 {{-- Status Filter --}}
                 <div class="w-full sm:w-40 shrink-0">
                     <select wire:model.live="filterStatus"
@@ -188,14 +208,14 @@
                             <label class="flex items-center gap-2 px-2.5 py-2 hover:bg-slate-50 dark:hover:bg-slate-800/50 rounded-xl cursor-pointer select-none">
                                 <input type="checkbox" value="{{ $dorm->id }}" wire:model.live="filterDormitoryIds"
                                     class="rounded text-amber-500 focus:ring-amber-500 border-slate-300 dark:border-slate-700">
-                                <span class="text-xs text-slate-700 dark:text-slate-300 font-semibold">{{ $dorm->name }}</span>
+                                <span class="text-xs text-slate-700 dark:text-slate-300 font-semibold">{{ $dorm->name }} ({{ $dorm->gender === 'P' ? 'Putri' : 'Putra' }})</span>
                             </label>
                         @endforeach
                     </div>
                 </div>
 
                 {{-- Reset Filters Button --}}
-                @if($searchParticipant !== '' || !empty($filterDormitoryIds) || $filterStatus !== 'all')
+                @if($searchParticipant !== '' || !empty($filterDormitoryIds) || $filterStatus !== 'all' || $filterGender !== 'all')
                     <button type="button" wire:click="resetFilters"
                         class="w-full sm:w-auto px-4 py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-750 text-slate-600 dark:text-slate-300 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 shrink-0 border border-slate-200/40 dark:border-slate-700/60 shadow-xs">
                         🧹 Reset
@@ -709,8 +729,8 @@
                                     </div>
                                 </div>
 
-                                {{-- Baris 2: Filter Pencarian, Komplek, Kamar, & Status --}}
-                                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 text-xs">
+                                {{-- Baris 2: Filter Pencarian, Gender, Komplek, Kamar, & Status --}}
+                                <div class="grid grid-cols-1 sm:grid-cols-2 {{ !$this->genderScope() ? 'lg:grid-cols-5' : 'lg:grid-cols-4' }} gap-2.5 text-xs">
                                     {{-- Cari Nama / NIS --}}
                                     <div>
                                         <label class="block text-[9px] font-extrabold text-slate-400 uppercase tracking-wider mb-1">Cari Nama / NIS / NIK</label>
@@ -722,13 +742,26 @@
                                         </div>
                                     </div>
 
+                                    {{-- Filter Gender Santri (Hanya tampil jika user punya akses kedua gender) --}}
+                                    @if(!$this->genderScope())
+                                    <div>
+                                        <label class="block text-[9px] font-extrabold text-slate-400 uppercase tracking-wider mb-1">Gender Santri</label>
+                                        <select wire:model.live="filterBulkGender"
+                                            class="w-full px-2.5 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-xs font-semibold focus:ring-2 focus:ring-amber-500/30 outline-none">
+                                            <option value="all">👥 Semua Gender</option>
+                                            <option value="L">👦 Santri Putra</option>
+                                            <option value="P">👧 Santri Putri</option>
+                                        </select>
+                                    </div>
+                                    @endif
+
                                     {{-- Filter Komplek --}}
                                     <div>
                                         <label class="block text-[9px] font-extrabold text-slate-400 uppercase tracking-wider mb-1">Komplek / Asrama</label>
                                         <select wire:model.live="filterBulkDormitoryId"
                                             class="w-full px-2.5 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-xs font-semibold focus:ring-2 focus:ring-amber-500/30 outline-none">
                                             <option value="">🏢 Semua Komplek</option>
-                                            @foreach($this->dormitories as $dorm)
+                                            @foreach($this->modalDormitories as $dorm)
                                                 <option value="{{ $dorm->id }}">{{ $dorm->name }} ({{ $dorm->gender === 'P' ? 'Putri' : 'Putra' }})</option>
                                             @endforeach
                                         </select>
