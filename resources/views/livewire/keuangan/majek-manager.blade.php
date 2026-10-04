@@ -802,8 +802,8 @@
 
                             <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
                                 
-                                {{-- ─── KOLOM KIRI (7/12): DAFTAR SANTRI UNTUK DICENTANG ─── --}}
-                                <div class="lg:col-span-7 space-y-2.5 flex flex-col">
+                                {{-- ─── KOLOM KIRI (8/12 atau 12/12): DAFTAR SANTRI UNTUK DICENTANG ─── --}}
+                                <div class="{{ $showSelectedPanel ? 'lg:col-span-8' : 'lg:col-span-12' }} space-y-2.5 flex flex-col transition-all duration-200">
                                     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 px-1">
                                         <div class="flex items-center gap-2">
                                             <span class="text-xs font-black text-slate-800 dark:text-slate-200 uppercase tracking-wide">
@@ -814,7 +814,7 @@
                                             </span>
                                         </div>
 
-                                        <div class="flex items-center gap-1.5">
+                                        <div class="flex items-center gap-1.5 flex-wrap">
                                             <button type="button" wire:click="selectAllFilteredStudents"
                                                 class="px-2.5 py-1 bg-amber-500/10 hover:bg-amber-500/20 text-amber-700 dark:text-amber-300 border border-amber-300/40 rounded-lg text-[10px] font-extrabold transition-all flex items-center gap-1">
                                                 ✓ Centang Semua
@@ -822,6 +822,16 @@
                                             <button type="button" wire:click="clearAllBulkSelections"
                                                 class="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 text-rose-500 rounded-lg text-[10px] font-extrabold transition-all">
                                                 ✕ Bersihkan
+                                            </button>
+                                            {{-- Toggle Panel Terpilih di Desktop --}}
+                                            <button type="button" wire:click="toggleSelectedPanel"
+                                                class="hidden lg:flex px-2.5 py-1 rounded-lg text-[10px] font-extrabold transition-all items-center gap-1 border border-slate-200/80 dark:border-slate-700 {{ $showSelectedPanel ? 'bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-300' : 'bg-amber-500 hover:bg-amber-600 text-white shadow-2xs' }}"
+                                                title="{{ $showSelectedPanel ? 'Ciutkan panel kanan agar tabel santri tampil full width' : 'Buka panel rincian santri terpilih' }}">
+                                                @if($showSelectedPanel)
+                                                    <span>◀ Ciutkan Panel</span>
+                                                @else
+                                                    <span>🧺 Buka Panel Terpilih (<strong>{{ $selectedCount }}</strong>)</span>
+                                                @endif
                                             </button>
                                         </div>
                                     </div>
@@ -925,30 +935,35 @@
                                     @endif
                                 </div>
 
-                                {{-- ─── KOLOM KANAN (5/12): KERANJANG SANTRI TERPILIH & OVERRIDE ─── --}}
-                                <div class="lg:col-span-5 bg-amber-50/50 dark:bg-amber-950/20 border border-amber-200/60 dark:border-amber-900/40 rounded-2xl p-3 sm:p-4 space-y-3 flex flex-col">
-                                    <div class="flex items-center justify-between border-b border-amber-200/50 dark:border-amber-900/40 pb-2.5">
+                                {{-- ─── KOLOM KANAN (4/12): KERANJANG SANTRI TERPILIH (COMPACT) ─── --}}
+                                <div class="{{ $showSelectedPanel ? 'lg:col-span-4' : 'hidden' }} bg-slate-50/70 dark:bg-slate-900/50 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-3 space-y-2.5 flex flex-col transition-all duration-200 shadow-xs">
+                                    {{-- Header Keranjang --}}
+                                    <div class="flex items-center justify-between border-b border-slate-200/60 dark:border-slate-800 pb-2">
                                         <div>
-                                            <h4 class="text-xs font-black text-amber-950 dark:text-amber-200 uppercase tracking-wide flex items-center gap-1.5">
-                                                🧺 Santri Terpilih (<strong>{{ $selectedCount }}</strong>)
+                                            <h4 class="text-xs font-black text-slate-850 dark:text-slate-100 uppercase tracking-wide flex items-center gap-1.5">
+                                                <span>🧺 Santri Terpilih</span>
+                                                <span class="px-1.5 py-0.2 rounded-md bg-amber-500/15 text-amber-600 dark:text-amber-400 font-black text-[10px]">
+                                                    {{ $selectedCount }}
+                                                </span>
                                             </h4>
-                                            <p class="text-[9px] text-amber-700/80 dark:text-amber-400/80 font-semibold">
-                                                Rincian sesi, hari, dan estimasi biaya
-                                            </p>
+                                            <div class="text-[10px] font-mono font-bold text-slate-500 dark:text-slate-400 mt-0.5">
+                                                Total: <span class="text-amber-600 dark:text-amber-400 font-black">Rp {{ number_format($totalEstimasi, 0, ',', '.') }}</span>
+                                            </div>
                                         </div>
 
                                         @if($selectedCount > 0)
                                             <div class="flex items-center gap-1">
+                                                <span class="text-[9px] text-slate-400 font-bold hidden xl:inline">Semua:</span>
                                                 <button type="button" wire:click="setAllSelectedSessions('2x')" title="Samakan Semua Sesi ke 2x"
-                                                    class="px-2 py-0.5 bg-amber-500 hover:bg-amber-600 text-white rounded text-[8px] font-black shadow-2xs">
+                                                    class="px-1.5 py-0.5 bg-amber-500 hover:bg-amber-600 text-white rounded text-[9px] font-black shadow-2xs transition-all">
                                                     2x
                                                 </button>
                                                 <button type="button" wire:click="setAllSelectedSessions('pagi')" title="Samakan Semua Sesi ke Pagi Saja"
-                                                    class="px-2 py-0.5 bg-sky-500 hover:bg-sky-600 text-white rounded text-[8px] font-black shadow-2xs">
+                                                    class="px-1.5 py-0.5 bg-sky-500 hover:bg-sky-600 text-white rounded text-[9px] font-black shadow-2xs transition-all">
                                                     Pagi
                                                 </button>
                                                 <button type="button" wire:click="setAllSelectedSessions('sore')" title="Samakan Semua Sesi ke Sore Saja"
-                                                    class="px-2 py-0.5 bg-indigo-500 hover:bg-indigo-600 text-white rounded text-[8px] font-black shadow-2xs">
+                                                    class="px-1.5 py-0.5 bg-indigo-500 hover:bg-indigo-600 text-white rounded text-[9px] font-black shadow-2xs transition-all">
                                                     Sore
                                                 </button>
                                             </div>
@@ -956,69 +971,90 @@
                                     </div>
 
                                     @if($selectedCount === 0)
-                                        <div class="py-12 text-center text-amber-700/60 dark:text-amber-400/60 text-xs italic bg-white/60 dark:bg-slate-900/40 rounded-xl border border-dashed border-amber-200 dark:border-amber-900/50 p-4">
-                                            👈 Centang santri di kolom sebelah kiri untuk menambahkannya ke daftar katering Majek.
+                                        <div class="py-10 text-center text-slate-400 text-xs italic bg-white/60 dark:bg-slate-950/40 rounded-xl border border-dashed border-slate-200 dark:border-slate-800 p-4">
+                                            👈 Centang santri di kolom sebelah kiri untuk menambahkannya ke pendaftaran Majek.
                                         </div>
                                     @else
-                                        {{-- Scrollable List of Selected Students --}}
-                                        <div class="space-y-2 max-h-[42vh] overflow-y-auto pr-1">
+                                        {{-- Scrollable List of Selected Students (Ultra-Compact Cards) --}}
+                                        <div class="space-y-1.5 max-h-[50vh] overflow-y-auto pr-0.5">
                                             @foreach($selectedList as $selStd)
+                                                @php
+                                                    $currentSesi = $bulkSessions[$selStd['id']] ?? $selStd['session'] ?? '2x';
+                                                @endphp
                                                 <div wire:key="selected-card-{{ $selStd['id'] }}"
-                                                    class="bg-white dark:bg-slate-900 border border-amber-200 dark:border-amber-900/60 rounded-xl p-2.5 space-y-2 shadow-2xs">
+                                                    x-data="{ showNote: {{ !empty($bulkNotes[$selStd['id']] ?? '') ? 'true' : 'false' }} }"
+                                                    class="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 hover:border-amber-300 dark:hover:border-amber-700/60 rounded-xl p-2 space-y-1.5 shadow-2xs transition-all">
                                                     
-                                                    <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-1.5">
-                                                        <div class="truncate mr-2">
-                                                            <div class="font-bold text-slate-900 dark:text-slate-100 text-xs truncate">
+                                                    {{-- Baris 1: Nama, Gender, Estimasi, & Tombol Hapus --}}
+                                                    <div class="flex items-center justify-between gap-1.5">
+                                                        <div class="flex items-center gap-1.5 min-w-0">
+                                                            <span class="text-xs shrink-0">{{ $selStd['gender'] === 'P' ? '👧' : '👦' }}</span>
+                                                            <span class="font-extrabold text-slate-850 dark:text-slate-100 text-xs truncate" title="{{ $selStd['name'] }}">
                                                                 {{ $selStd['name'] }}
-                                                            </div>
-                                                            <div class="text-[9px] text-slate-400 font-mono truncate">
-                                                                {{ $selStd['location'] }}
-                                                            </div>
+                                                            </span>
                                                         </div>
-                                                        <button type="button" wire:click="uncheckStudent('{{ $selStd['id'] }}')"
-                                                            class="w-5 h-5 rounded-lg bg-rose-500/10 text-rose-500 hover:bg-rose-500 hover:text-white font-black text-xs transition-all flex items-center justify-center shrink-0"
-                                                            title="Batalkan santri ini">
-                                                            ✕
-                                                        </button>
-                                                    </div>
-
-                                                    <div class="grid grid-cols-5 gap-2 text-xs items-center">
-                                                        {{-- Sesi Dropdown --}}
-                                                        <div class="col-span-3">
-                                                            <select wire:model.live="bulkSessions.{{ $selStd['id'] }}"
-                                                                class="w-full px-2 py-1 text-[11px] font-extrabold border border-amber-300 dark:border-amber-700 bg-amber-50/40 dark:bg-slate-800 text-amber-950 dark:text-amber-100 rounded-lg outline-none">
-                                                                <option value="2x">🍽️ 2x Makan</option>
-                                                                <option value="pagi">🌅 Pagi Saja</option>
-                                                                <option value="sore">🌆 Sore Saja</option>
-                                                            </select>
-                                                        </div>
-
-                                                        {{-- Hari Input --}}
-                                                        <div class="col-span-2 flex items-center gap-1">
-                                                            <input type="number" min="1" max="31" wire:model.live="bulkDays.{{ $selStd['id'] }}"
-                                                                class="w-full px-1.5 py-1 text-[11px] font-mono font-black text-center border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white rounded-lg outline-none">
-                                                            <span class="text-[9px] text-slate-400">hr</span>
+                                                        <div class="flex items-center gap-1.5 shrink-0">
+                                                            <span class="font-mono font-black text-amber-600 dark:text-amber-400 text-xs">
+                                                                Rp {{ number_format($selStd['estimated_total'], 0, ',', '.') }}
+                                                            </span>
+                                                            <button type="button" wire:click="uncheckStudent('{{ $selStd['id'] }}')"
+                                                                class="w-5 h-5 rounded-md text-slate-400 hover:text-white hover:bg-rose-500 font-bold text-xs flex items-center justify-center transition-colors"
+                                                                title="Batalkan santri ini">
+                                                                ✕
+                                                            </button>
                                                         </div>
                                                     </div>
 
-                                                    {{-- Catatan & Estimasi Baris Bawah --}}
-                                                    <div class="flex items-center justify-between gap-2 pt-0.5">
-                                                        <input type="text" placeholder="Catatan opsional..." wire:model.live="bulkNotes.{{ $selStd['id'] }}"
-                                                            class="flex-1 px-2 py-0.5 text-[10px] border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-lg outline-none">
-                                                        <span class="text-[10px] font-black text-amber-600 dark:text-amber-400 shrink-0">
-                                                            Rp {{ number_format($selStd['estimated_total'], 0, ',', '.') }}
-                                                        </span>
+                                                    {{-- Baris 2: Lokasi & Inline Controls (Sesi 1-klik, Hari, Catatan) --}}
+                                                    <div class="flex items-center justify-between gap-1.5 text-[10px]">
+                                                        <div class="text-slate-400 font-mono truncate max-w-[85px] sm:max-w-[110px]" title="{{ $selStd['location'] }}">
+                                                            {{ $selStd['location'] }}
+                                                        </div>
+
+                                                        <div class="flex items-center gap-1 shrink-0">
+                                                            {{-- Sesi Segmented Pill Buttons (1-Klik Ganti) --}}
+                                                            <div class="inline-flex rounded-lg p-0.5 bg-slate-100 dark:bg-slate-800 border border-slate-200/70 dark:border-slate-700/80">
+                                                                <button type="button" wire:click="setStudentSession('{{ $selStd['id'] }}', '2x')"
+                                                                    class="px-1.5 py-0.5 rounded-md font-black text-[9px] transition-all {{ $currentSesi === '2x' ? 'bg-amber-500 text-white shadow-2xs' : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200' }}"
+                                                                    title="2x Makan (Pagi & Sore)">
+                                                                    2x
+                                                                </button>
+                                                                <button type="button" wire:click="setStudentSession('{{ $selStd['id'] }}', 'pagi')"
+                                                                    class="px-1.5 py-0.5 rounded-md font-black text-[9px] transition-all {{ $currentSesi === 'pagi' ? 'bg-sky-500 text-white shadow-2xs' : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200' }}"
+                                                                    title="1x Saja (Pagi)">
+                                                                    Pagi
+                                                                </button>
+                                                                <button type="button" wire:click="setStudentSession('{{ $selStd['id'] }}', 'sore')"
+                                                                    class="px-1.5 py-0.5 rounded-md font-black text-[9px] transition-all {{ $currentSesi === 'sore' ? 'bg-indigo-500 text-white shadow-2xs' : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200' }}"
+                                                                    title="1x Saja (Sore)">
+                                                                    Sore
+                                                                </button>
+                                                            </div>
+
+                                                            {{-- Hari Input --}}
+                                                            <div class="inline-flex items-center gap-0.5">
+                                                                <input type="number" min="1" max="31" wire:model.live.debounce.300ms="bulkDays.{{ $selStd['id'] }}"
+                                                                    class="w-10 px-1 py-0.5 text-[10px] font-mono font-black text-center border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 rounded-md outline-none focus:ring-1 focus:ring-amber-500">
+                                                                <span class="text-[9px] text-slate-400">hr</span>
+                                                            </div>
+
+                                                            {{-- Tombol Toggle Note --}}
+                                                            <button type="button" @click="showNote = !showNote"
+                                                                :class="showNote ? 'bg-amber-500/20 text-amber-600 dark:text-amber-400 font-black' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-200'"
+                                                                class="p-1 rounded-md text-[10px] transition-colors"
+                                                                title="Tambah / Ubah Catatan Santri Ini">
+                                                                📝
+                                                            </button>
+                                                        </div>
+                                                    </div>
+
+                                                    {{-- Baris 3 (Optional - Hanya tampil saat tombol 📝 diklik) --}}
+                                                    <div x-show="showNote" x-transition class="pt-0.5">
+                                                        <input type="text" placeholder="Catatan santri ini..." wire:model.live.debounce.400ms="bulkNotes.{{ $selStd['id'] }}"
+                                                            class="w-full px-2 py-0.5 text-[10px] border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-200 rounded-md outline-none focus:ring-1 focus:ring-amber-500">
                                                     </div>
                                                 </div>
                                             @endforeach
-                                        </div>
-
-                                        {{-- Ringkasan Biaya di Box Kanan --}}
-                                        <div class="pt-2 border-t border-amber-200/60 dark:border-amber-900/40 flex items-center justify-between text-xs">
-                                            <span class="text-[10px] font-bold text-slate-500 uppercase">Total Estimasi:</span>
-                                            <span class="text-xs sm:text-sm font-black text-amber-600 dark:text-amber-400">
-                                                Rp {{ number_format($totalEstimasi, 0, ',', '.') }}
-                                            </span>
                                         </div>
                                     @endif
                                 </div>
