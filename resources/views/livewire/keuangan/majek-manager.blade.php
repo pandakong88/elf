@@ -644,7 +644,7 @@
     {{-- ══════════════════════════════════════════════════════════════════════ --}}
     @if($showAddModal)
         <div wire:key="add-modal-container" class="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-slate-950/70 backdrop-blur-xs">
-            <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-2xl w-full max-w-6xl max-h-[92vh] flex flex-col overflow-hidden animate-zoom-in">
+            <div x-data="{ mobileTab: @entangle('bulkMobileTab') }" class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-2xl w-full max-w-6xl max-h-[92vh] flex flex-col overflow-hidden animate-zoom-in">
                 
                 {{-- Header Modal & Mode Switcher --}}
                 <div class="p-3.5 sm:p-5 border-b border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-50/60 dark:bg-slate-950/30 shrink-0">
@@ -792,7 +792,7 @@
                                 </div>
                             </div>
 
-                            {{-- SPLIT VIEW (2 KOLOM DI DESKTOP): KIRI = PILIH SANTRI, KANAN = KERANJANG TERPILIH --}}
+                            {{-- SPLIT VIEW (2 KOLOM DI DESKTOP, TAB SWITCHER DI MOBILE) --}}
                             @php
                                 $bulkList      = $this->bulkStudentsList;
                                 $selectedList  = $this->selectedStudentsList;
@@ -800,10 +800,37 @@
                                 $totalEstimasi = array_sum(array_column($selectedList, 'estimated_total'));
                             @endphp
 
+                            {{-- Mobile Tab Switcher (Hanya Muncul di Layar HP / < lg) --}}
+                            <div class="flex lg:hidden items-center p-1 bg-slate-200/80 dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700/80 gap-1">
+                                <button type="button" @click="mobileTab = 'list'"
+                                    :class="mobileTab === 'list' ? 'bg-white dark:bg-slate-900 text-amber-600 dark:text-amber-400 shadow-xs font-black' : 'text-slate-600 dark:text-slate-400 font-bold hover:text-slate-900'"
+                                    class="flex-1 py-2 px-3 text-xs rounded-xl transition-all flex items-center justify-center gap-1.5">
+                                    <span>📋 Daftar Santri</span>
+                                    <span class="px-1.5 py-0.2 rounded-md bg-slate-100 dark:bg-slate-800 text-[10px] font-bold">
+                                        {{ count($bulkList) }}
+                                    </span>
+                                </button>
+                                <button type="button" @click="mobileTab = 'selected'"
+                                    :class="mobileTab === 'selected' ? 'bg-white dark:bg-slate-900 text-amber-600 dark:text-amber-400 shadow-xs font-black' : 'text-slate-600 dark:text-slate-400 font-bold hover:text-slate-900'"
+                                    class="flex-1 py-2 px-3 text-xs rounded-xl transition-all flex items-center justify-center gap-1.5 relative">
+                                    <span>🧺 Santri Terpilih</span>
+                                    @if($selectedCount > 0)
+                                        <span class="px-2 py-0.5 rounded-full bg-amber-500 text-white text-[10px] font-black">
+                                            {{ $selectedCount }}
+                                        </span>
+                                    @else
+                                        <span class="px-1.5 py-0.2 rounded-md bg-slate-100 dark:bg-slate-800 text-[10px] font-bold">
+                                            0
+                                        </span>
+                                    @endif
+                                </button>
+                            </div>
+
                             <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
                                 
                                 {{-- ─── KOLOM KIRI (8/12 atau 12/12): DAFTAR SANTRI UNTUK DICENTANG ─── --}}
-                                <div class="{{ $showSelectedPanel ? 'lg:col-span-8' : 'lg:col-span-12' }} space-y-2.5 flex flex-col transition-all duration-200">
+                                <div :class="mobileTab === 'list' ? 'flex' : 'hidden lg:flex'"
+                                     class="{{ $showSelectedPanel ? 'lg:col-span-8' : 'lg:col-span-12' }} space-y-2.5 flex-col transition-all duration-200">
                                     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 px-1">
                                         <div class="flex items-center gap-2">
                                             <span class="text-xs font-black text-slate-800 dark:text-slate-200 uppercase tracking-wide">
@@ -932,11 +959,28 @@
                                                 </div>
                                             @endforeach
                                         </div>
+
+                                        {{-- Tombol Melayang Cepat di Layar HP saat ada santri yang dicentang --}}
+                                        <div x-show="mobileTab === 'list' && {{ $selectedCount }} > 0"
+                                             x-transition:enter="transition ease-out duration-150"
+                                             x-transition:enter-start="opacity-0 translate-y-3 scale-95"
+                                             x-transition:enter-end="opacity-100 translate-y-0 scale-100"
+                                             class="block lg:hidden sticky bottom-1 z-20 pt-2 pb-1 text-center pointer-events-none">
+                                            <button type="button" @click="mobileTab = 'selected'"
+                                                class="pointer-events-auto px-4 py-2.5 rounded-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-black text-xs shadow-lg flex items-center justify-center gap-2 mx-auto border-2 border-white dark:border-slate-800 transition-all active:scale-95">
+                                                <span>🧺 Atur Santri Terpilih</span>
+                                                <span class="px-2 py-0.5 rounded-full bg-white text-amber-600 font-black text-[11px]">
+                                                    {{ $selectedCount }}
+                                                </span>
+                                                <span class="text-xs">➔</span>
+                                            </button>
+                                        </div>
                                     @endif
                                 </div>
 
                                 {{-- ─── KOLOM KANAN (4/12): KERANJANG SANTRI TERPILIH (COMPACT) ─── --}}
-                                <div class="{{ $showSelectedPanel ? 'lg:col-span-4' : 'hidden' }} bg-slate-50/70 dark:bg-slate-900/50 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-3 space-y-2.5 flex flex-col transition-all duration-200 shadow-xs">
+                                <div :class="mobileTab === 'selected' ? 'flex' : 'hidden lg:flex'"
+                                     class="{{ $showSelectedPanel ? 'lg:col-span-4' : 'lg:hidden' }} bg-slate-50/70 dark:bg-slate-900/50 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-3 space-y-2.5 flex-col transition-all duration-200 shadow-xs">
                                     {{-- Header Keranjang --}}
                                     <div class="flex items-center justify-between border-b border-slate-200/60 dark:border-slate-800 pb-2">
                                         <div>
@@ -951,8 +995,14 @@
                                             </div>
                                         </div>
 
+                                        {{-- Tombol Mobile untuk Kembali Memilih Santri --}}
+                                        <button type="button" @click="mobileTab = 'list'"
+                                            class="lg:hidden px-2.5 py-1.5 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 text-amber-700 dark:text-amber-300 font-extrabold text-[11px] flex items-center gap-1 transition-all">
+                                            <span>📋 + Tambah Santri</span>
+                                        </button>
+
                                         @if($selectedCount > 0)
-                                            <div class="flex items-center gap-1">
+                                            <div class="hidden lg:flex items-center gap-1">
                                                 <span class="text-[9px] text-slate-400 font-bold hidden xl:inline">Semua:</span>
                                                 <button type="button" wire:click="setAllSelectedSessions('2x')" title="Samakan Semua Sesi ke 2x"
                                                     class="px-1.5 py-0.5 bg-amber-500 hover:bg-amber-600 text-white rounded text-[9px] font-black shadow-2xs transition-all">
@@ -970,9 +1020,34 @@
                                         @endif
                                     </div>
 
+                                    @if($selectedCount > 0)
+                                        {{-- Quick Batch Session Toolbar on Mobile --}}
+                                        <div class="flex lg:hidden items-center justify-between pt-1 pb-1 border-b border-slate-200/50 dark:border-slate-800/50 text-[10px]">
+                                            <span class="text-slate-400 font-bold">Ubah Semua:</span>
+                                            <div class="flex items-center gap-1">
+                                                <button type="button" wire:click="setAllSelectedSessions('2x')" title="Samakan Semua Sesi ke 2x"
+                                                    class="px-2 py-0.5 bg-amber-500 hover:bg-amber-600 text-white rounded-md text-[9px] font-black shadow-2xs transition-all">
+                                                    2x Makan
+                                                </button>
+                                                <button type="button" wire:click="setAllSelectedSessions('pagi')" title="Samakan Semua Sesi ke Pagi Saja"
+                                                    class="px-2 py-0.5 bg-sky-500 hover:bg-sky-600 text-white rounded-md text-[9px] font-black shadow-2xs transition-all">
+                                                    Pagi
+                                                </button>
+                                                <button type="button" wire:click="setAllSelectedSessions('sore')" title="Samakan Semua Sesi ke Sore Saja"
+                                                    class="px-2 py-0.5 bg-indigo-500 hover:bg-indigo-600 text-white rounded-md text-[9px] font-black shadow-2xs transition-all">
+                                                    Sore
+                                                </button>
+                                            </div>
+                                        </div>
+                                    @endif
+
                                     @if($selectedCount === 0)
-                                        <div class="py-10 text-center text-slate-400 text-xs italic bg-white/60 dark:bg-slate-950/40 rounded-xl border border-dashed border-slate-200 dark:border-slate-800 p-4">
-                                            👈 Centang santri di kolom sebelah kiri untuk menambahkannya ke pendaftaran Majek.
+                                        <div class="py-10 text-center text-slate-400 text-xs italic bg-white/60 dark:bg-slate-950/40 rounded-xl border border-dashed border-slate-200 dark:border-slate-800 p-4 space-y-3">
+                                            <p>👈 Belum ada santri yang dipilih untuk pendaftaran Majek.</p>
+                                            <button type="button" @click="mobileTab = 'list'"
+                                                class="lg:hidden px-3.5 py-1.5 bg-amber-500 hover:bg-amber-600 text-white rounded-xl font-bold text-xs shadow-xs inline-flex items-center gap-1.5">
+                                                <span>📋 Buka Daftar Santri</span>
+                                            </button>
                                         </div>
                                     @else
                                         {{-- Scrollable List of Selected Students (Ultra-Compact Cards) --}}
@@ -1236,16 +1311,32 @@
                 {{-- Footer Modal (Khusus Tab Bulk) --}}
                 @if($addTab === 'bulk')
                     <div class="px-4 sm:px-6 py-3.5 border-t border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-50/60 dark:bg-slate-950/30 shrink-0">
-                        <div class="flex items-center gap-2 text-xs">
-                            <span class="text-slate-500 font-semibold">Total Terpilih:</span>
-                            <span class="px-2 py-0.5 rounded-lg bg-amber-500/20 text-amber-800 dark:text-amber-300 font-black">
-                                {{ $selectedCount }} Santri
-                            </span>
+                        <div class="flex items-center justify-between sm:justify-start gap-2 text-xs w-full sm:w-auto">
+                            <div class="flex items-center gap-2">
+                                <span class="text-slate-500 font-semibold">Total Terpilih:</span>
+                                
+                                {{-- Di mobile, badge ini bisa diklik untuk langsung beralih ke Santri Terpilih tanpa scroll --}}
+                                <button type="button" @click="mobileTab = (mobileTab === 'list' ? 'selected' : 'list')"
+                                    class="lg:pointer-events-none px-2 py-0.5 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-amber-800 dark:text-amber-300 font-black flex items-center gap-1 transition-all"
+                                    title="Klik untuk melihat/mengatur santri terpilih di HP">
+                                    <span>{{ $selectedCount }} Santri</span>
+                                    <span class="lg:hidden text-[9px] underline ml-0.5" x-text="mobileTab === 'list' ? 'Lihat ➔' : 'Daftar ➔'"></span>
+                                </button>
+
+                                @if($selectedCount > 0)
+                                    <span class="text-slate-400">|</span>
+                                    <span class="font-extrabold text-slate-700 dark:text-slate-300 text-[11px] sm:text-xs">
+                                        Total Rp {{ number_format($totalEstimasi, 0, ',', '.') }}
+                                    </span>
+                                @endif
+                            </div>
+
+                            {{-- Tombol Aksi Cepat Mobile di Footer --}}
                             @if($selectedCount > 0)
-                                <span class="text-slate-400">|</span>
-                                <span class="font-extrabold text-slate-700 dark:text-slate-300">
-                                    Total Rp {{ number_format($totalEstimasi, 0, ',', '.') }}
-                                </span>
+                                <button type="button" @click="mobileTab = (mobileTab === 'list' ? 'selected' : 'list')"
+                                    class="lg:hidden px-2.5 py-1 rounded-xl bg-amber-500/10 border border-amber-400/40 text-amber-700 dark:text-amber-300 font-black text-[11px] flex items-center gap-1 shadow-2xs">
+                                    <span x-text="mobileTab === 'list' ? '🧺 Rincian (' + '{{ $selectedCount }}' + ')' : '📋 + Pilih Lagi'"></span>
+                                </button>
                             @endif
                         </div>
 

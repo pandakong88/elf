@@ -52,6 +52,7 @@ class MajekManager extends Component
     public string $filterBulkRoomId      = '';
     public string $filterBulkStatus      = 'unregistered'; // 'all' | 'unregistered' | 'registered'
     public bool   $showSelectedPanel     = true; // Desktop collapse toggle
+    public string $bulkMobileTab         = 'list'; // 'list' | 'selected' for mobile view
     public array  $bulkSelections        = []; // [person_id => bool]
     public array  $bulkSessions          = []; // [person_id => '2x'|'pagi'|'sore']
     public array  $bulkDays              = []; // [person_id => int]
@@ -576,6 +577,11 @@ class MajekManager extends Component
         $this->showSelectedPanel = !$this->showSelectedPanel;
     }
 
+    public function setBulkMobileTab(string $tab): void
+    {
+        $this->bulkMobileTab = in_array($tab, ['list', 'selected']) ? $tab : 'list';
+    }
+
     #[Computed]
     public function bulkStudentsList(): array
     {
@@ -968,6 +974,7 @@ class MajekManager extends Component
         $this->filterBulkRoomId      = '';
         $this->filterBulkStatus      = 'unregistered';
         $this->showSelectedPanel     = true;
+        $this->bulkMobileTab         = 'list';
         $this->bulkSelections        = [];
         $this->bulkSessions          = [];
         $this->bulkDays              = [];
