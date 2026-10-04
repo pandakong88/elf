@@ -644,7 +644,7 @@
     {{-- ══════════════════════════════════════════════════════════════════════ --}}
     @if($showAddModal)
         <div wire:key="add-modal-container" class="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-slate-950/70 backdrop-blur-xs">
-            <div x-data="{ mobileTab: @entangle('bulkMobileTab') }" class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-2xl w-full max-w-6xl max-h-[92vh] flex flex-col overflow-hidden animate-zoom-in">
+            <div x-data="{ mobileTab: @entangle('bulkMobileTab'), showConfirmSave: false, showConfirmSingleSave: false }" class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-2xl w-full max-w-6xl max-h-[92vh] flex flex-col overflow-hidden animate-zoom-in">
                 
                 {{-- Header Modal & Mode Switcher --}}
                 <div class="p-3.5 sm:p-5 border-b border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-50/60 dark:bg-slate-950/30 shrink-0">
@@ -1283,9 +1283,9 @@
                                             </span>
                                         </div>
 
-                                        {{-- Tombol Simpan Instan --}}
-                                        <button type="button" wire:click="addSinglePeserta"
-                                            class="w-full py-3 bg-amber-500 hover:bg-amber-600 text-white rounded-2xl text-xs font-black uppercase tracking-wider transition-all shadow-md flex items-center justify-center gap-2">
+                                        {{-- Tombol Buka Konfirmasi Simpan --}}
+                                        <button type="button" @click="showConfirmSingleSave = true"
+                                            class="w-full py-3 bg-amber-500 hover:bg-amber-600 text-white rounded-2xl text-xs font-black uppercase tracking-wider transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer active:scale-95">
                                             💾 Daftarkan {{ $singleSelectedPerson['name'] }}
                                         </button>
                                     @endif
@@ -1345,12 +1345,210 @@
                                 class="px-4 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-xl text-xs font-bold transition-all">
                                 Batal
                             </button>
-                            <button type="button" wire:click="addPesertaBulk" @if($selectedCount === 0) disabled @endif
+                            <button type="button" @if($selectedCount > 0) @click="showConfirmSave = true" @endif @if($selectedCount === 0) disabled @endif
                                 class="px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all shadow-md flex items-center gap-2
-                                    {{ $selectedCount > 0 ? 'bg-amber-500 hover:bg-amber-600 text-white cursor-pointer' : 'bg-slate-200 dark:bg-slate-800 text-slate-400 cursor-not-allowed' }}">
+                                    {{ $selectedCount > 0 ? 'bg-amber-500 hover:bg-amber-600 text-white cursor-pointer active:scale-95' : 'bg-slate-200 dark:bg-slate-800 text-slate-400 cursor-not-allowed' }}">
                                 <span>💾</span>
                                 <span>SIMPAN {{ $selectedCount }} PESERTA MAJEK</span>
                             </button>
+                        </div>
+                    </div>
+                @endif
+
+                {{-- ══════════════════════════════════════════════════════════════ --}}
+                {{-- DIALOG KONFIRMASI SIMPAN MASSAL (ALERT ELEGAN)                 --}}
+                {{-- ══════════════════════════════════════════════════════════════ --}}
+                <div x-show="showConfirmSave"
+                     x-transition:enter="transition ease-out duration-200"
+                     x-transition:enter-start="opacity-0"
+                     x-transition:enter-end="opacity-100"
+                     x-transition:leave="transition ease-in duration-150"
+                     x-transition:leave-start="opacity-100"
+                     x-transition:leave-end="opacity-0"
+                     class="fixed inset-0 z-[70] flex items-center justify-center p-3 sm:p-4 bg-slate-950/75 backdrop-blur-sm"
+                     style="display: none;"
+                     @click.self="showConfirmSave = false"
+                     @keydown.escape.window="showConfirmSave = false">
+                    
+                    <div x-show="showConfirmSave"
+                         x-transition:enter="transition ease-out duration-200"
+                         x-transition:enter-start="opacity-0 scale-95 translate-y-2"
+                         x-transition:enter-end="opacity-100 scale-100 translate-y-0"
+                         x-transition:leave="transition ease-in duration-150"
+                         x-transition:leave-start="opacity-100 scale-100"
+                         x-transition:leave-end="opacity-0 scale-95"
+                         class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-2xl w-full max-w-md overflow-hidden text-center p-5 sm:p-6 space-y-4">
+                        
+                        {{-- Icon Header --}}
+                        <div class="w-14 h-14 rounded-2xl bg-amber-500/15 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400 flex items-center justify-center mx-auto text-2xl shadow-inner border border-amber-500/20">
+                            🍱
+                        </div>
+
+                        <div>
+                            <div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-500/10 text-amber-700 dark:text-amber-300 font-extrabold text-[10px] uppercase tracking-wider mb-1.5">
+                                <span>🛡️ Konfirmasi Simpan</span>
+                                <span>•</span>
+                                <span>{{ $this->monthLabel }}</span>
+                            </div>
+                            <h3 class="text-base font-black text-slate-900 dark:text-white uppercase tracking-wide">
+                                Daftarkan Peserta Majek?
+                            </h3>
+                            <p class="text-xs text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">
+                                Pastikan santri dan sesi makan sudah sesuai sebelum pendaftaran disimpan.
+                            </p>
+                        </div>
+
+                        {{-- Ringkasan Peserta & Estimasi --}}
+                        <div class="bg-slate-50 dark:bg-slate-950/60 rounded-2xl p-3.5 border border-slate-200/80 dark:border-slate-800 text-left space-y-2 text-xs">
+                            <div class="flex items-center justify-between pb-2 border-b border-slate-200/60 dark:border-slate-800/80">
+                                <span class="text-slate-500 font-bold">Total Santri Terpilih:</span>
+                                <span class="px-2 py-0.5 rounded-lg bg-amber-500/20 text-amber-800 dark:text-amber-300 font-black">
+                                    {{ $selectedCount }} Santri
+                                </span>
+                            </div>
+                            <div class="flex items-center justify-between pb-2 border-b border-slate-200/60 dark:border-slate-800/80">
+                                <span class="text-slate-500 font-bold">Total Tagihan Katering:</span>
+                                <span class="font-mono font-black text-amber-600 dark:text-amber-400 text-sm">
+                                    Rp {{ number_format($totalEstimasi, 0, ',', '.') }}
+                                </span>
+                            </div>
+                            
+                            {{-- Rincian Sesi Makan --}}
+                            <div class="flex items-center justify-between text-[11px] text-slate-500 pt-0.5">
+                                <span class="font-bold">Rincian Sesi:</span>
+                                <div class="flex items-center gap-1 font-bold">
+                                    <span class="px-1.5 py-0.5 rounded bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 text-[10px]">
+                                        2x: {{ count(array_filter($selectedList, fn($s) => ($bulkSessions[$s['id']] ?? $s['session'] ?? '2x') === '2x')) }}
+                                    </span>
+                                    <span class="px-1.5 py-0.5 rounded bg-sky-100 dark:bg-sky-950/60 text-sky-700 dark:text-sky-300 text-[10px]">
+                                        Pagi: {{ count(array_filter($selectedList, fn($s) => ($bulkSessions[$s['id']] ?? $s['session'] ?? '2x') === 'pagi')) }}
+                                    </span>
+                                    <span class="px-1.5 py-0.5 rounded bg-indigo-100 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 text-[10px]">
+                                        Sore: {{ count(array_filter($selectedList, fn($s) => ($bulkSessions[$s['id']] ?? $s['session'] ?? '2x') === 'sore')) }}
+                                    </span>
+                                </div>
+                            </div>
+
+                            {{-- Cuplikan Nama Santri --}}
+                            <div class="pt-1 border-t border-slate-200/50 dark:border-slate-800/60">
+                                <span class="text-[9px] font-extrabold text-slate-400 uppercase tracking-wider block mb-1">Daftar Santri:</span>
+                                <div class="flex flex-wrap gap-1 max-h-20 overflow-y-auto pr-1">
+                                    @foreach(array_slice($selectedList, 0, 8) as $s)
+                                        <span class="px-2 py-0.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 text-[10px] font-bold text-slate-700 dark:text-slate-300 truncate max-w-[125px]">
+                                            {{ $s['gender'] === 'P' ? '👧' : '👦' }} {{ $s['name'] }}
+                                        </span>
+                                    @endforeach
+                                    @if($selectedCount > 8)
+                                        <span class="px-2 py-0.5 rounded-lg bg-amber-500/10 text-amber-700 dark:text-amber-300 text-[10px] font-black">
+                                            +{{ $selectedCount - 8 }} santri lainnya
+                                        </span>
+                                    @endif
+                                </div>
+                            </div>
+                        </div>
+
+                        <p class="text-[10px] text-slate-400 dark:text-slate-500 text-center">
+                            ℹ️ Tagihan katering akan langsung aktif dan muncul di rekapitulasi Majek.
+                        </p>
+
+                        {{-- Action Buttons --}}
+                        <div class="flex items-center gap-2.5 pt-1">
+                            <button type="button" @click="showConfirmSave = false"
+                                class="flex-1 py-2.5 px-4 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl text-xs font-bold transition-all">
+                                Periksa Lagi
+                            </button>
+                            <button type="button" @click="showConfirmSave = false; $wire.addPesertaBulk()" wire:loading.attr="disabled"
+                                class="flex-1 py-2.5 px-4 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white rounded-xl text-xs font-black uppercase tracking-wider transition-all shadow-md flex items-center justify-center gap-1.5 cursor-pointer active:scale-95">
+                                <span wire:loading.remove wire:target="addPesertaBulk">🚀 Ya, Daftarkan</span>
+                                <span wire:loading wire:target="addPesertaBulk" class="inline-flex items-center gap-1">
+                                    <svg class="animate-spin h-3.5 w-3.5 text-white" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg>
+                                    Menyimpan...
+                                </span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- ══════════════════════════════════════════════════════════════ --}}
+                {{-- DIALOG KONFIRMASI SIMPAN CEPAT 1 SANTRI (ALERT ELEGAN)         --}}
+                {{-- ══════════════════════════════════════════════════════════════ --}}
+                @if($singleSelectedPerson)
+                    <div x-show="showConfirmSingleSave"
+                         x-transition:enter="transition ease-out duration-200"
+                         x-transition:enter-start="opacity-0"
+                         x-transition:enter-end="opacity-100"
+                         x-transition:leave="transition ease-in duration-150"
+                         x-transition:leave-start="opacity-100"
+                         x-transition:leave-end="opacity-0"
+                         class="fixed inset-0 z-[70] flex items-center justify-center p-3 sm:p-4 bg-slate-950/75 backdrop-blur-sm"
+                         style="display: none;"
+                         @click.self="showConfirmSingleSave = false"
+                         @keydown.escape.window="showConfirmSingleSave = false">
+                        
+                        <div x-show="showConfirmSingleSave"
+                             x-transition:enter="transition ease-out duration-200"
+                             x-transition:enter-start="opacity-0 scale-95 translate-y-2"
+                             x-transition:enter-end="opacity-100 scale-100 translate-y-0"
+                             x-transition:leave="transition ease-in duration-150"
+                             x-transition:leave-start="opacity-100 scale-100"
+                             x-transition:leave-end="opacity-0 scale-95"
+                             class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-2xl w-full max-w-md overflow-hidden text-center p-5 sm:p-6 space-y-4">
+                            
+                            <div class="w-14 h-14 rounded-2xl bg-amber-500/15 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400 flex items-center justify-center mx-auto text-2xl shadow-inner border border-amber-500/20">
+                                ⚡
+                            </div>
+
+                            <div>
+                                <div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-500/10 text-amber-700 dark:text-amber-300 font-extrabold text-[10px] uppercase tracking-wider mb-1.5">
+                                    <span>🛡️ Konfirmasi Simpan</span>
+                                    <span>•</span>
+                                    <span>{{ $this->monthLabel }}</span>
+                                </div>
+                                <h3 class="text-base font-black text-slate-900 dark:text-white uppercase tracking-wide">
+                                    Daftarkan Santri Ini?
+                                </h3>
+                            </div>
+
+                            <div class="bg-slate-50 dark:bg-slate-950/60 rounded-2xl p-4 border border-slate-200/80 dark:border-slate-800 text-left space-y-2 text-xs">
+                                <div class="flex items-center justify-between pb-2 border-b border-slate-200/60 dark:border-slate-800">
+                                    <span class="text-slate-500 font-bold">Nama Santri:</span>
+                                    <span class="font-extrabold text-slate-900 dark:text-white flex items-center gap-1">
+                                        {{ $singleSelectedPerson['gender'] === 'P' ? '👧' : '👦' }} {{ $singleSelectedPerson['name'] }}
+                                    </span>
+                                </div>
+                                <div class="flex items-center justify-between pb-2 border-b border-slate-200/60 dark:border-slate-800">
+                                    <span class="text-slate-500 font-bold">Pilihan Sesi:</span>
+                                    <span class="px-2 py-0.5 rounded-md font-bold uppercase text-[10px]
+                                        {{ $singleSesi === '2x' ? 'bg-amber-500/15 text-amber-700 dark:text-amber-300' : ($singleSesi === 'pagi' ? 'bg-sky-500/15 text-sky-700 dark:text-sky-300' : 'bg-indigo-500/15 text-indigo-700 dark:text-indigo-300') }}">
+                                        {{ $singleSesi === '2x' ? '🍽️ 2x Makan' : ($singleSesi === 'pagi' ? '🌅 1x Pagi Saja' : '🌆 1x Sore Saja') }}
+                                    </span>
+                                </div>
+                                <div class="flex items-center justify-between pb-2 border-b border-slate-200/60 dark:border-slate-800">
+                                    <span class="text-slate-500 font-bold">Jumlah Hari:</span>
+                                    <span class="font-mono font-black text-slate-800 dark:text-slate-200">{{ $singleDays }} Hari</span>
+                                </div>
+                                <div class="flex items-center justify-between pt-0.5">
+                                    <span class="text-slate-500 font-bold">Total Tagihan:</span>
+                                    <span class="font-mono font-black text-amber-600 dark:text-amber-400 text-sm">
+                                        Rp {{ number_format($singleTotal, 0, ',', '.') }}
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div class="flex items-center gap-2.5 pt-1">
+                                <button type="button" @click="showConfirmSingleSave = false"
+                                    class="flex-1 py-2.5 px-4 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl text-xs font-bold transition-all">
+                                    Batal
+                                </button>
+                                <button type="button" @click="showConfirmSingleSave = false; $wire.addSinglePeserta()" wire:loading.attr="disabled"
+                                    class="flex-1 py-2.5 px-4 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white rounded-xl text-xs font-black uppercase tracking-wider transition-all shadow-md flex items-center justify-center gap-1.5 cursor-pointer active:scale-95">
+                                    <span wire:loading.remove wire:target="addSinglePeserta">🚀 Ya, Daftarkan</span>
+                                    <span wire:loading wire:target="addSinglePeserta" class="inline-flex items-center gap-1">
+                                        <svg class="animate-spin h-3.5 w-3.5 text-white" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg>
+                                        Menyimpan...
+                                    </span>
+                                </button>
+                            </div>
                         </div>
                     </div>
                 @endif
