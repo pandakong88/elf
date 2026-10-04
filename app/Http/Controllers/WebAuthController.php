@@ -198,13 +198,24 @@ class WebAuthController extends Controller
 
         // Detect Gender Scope
         $genderScope = null;
-        if (!$user->hasRole('super-admin') && !$user->hasRole('manajemen')) {
-            if ($user->person?->gender) {
-                $genderScope = $user->person->gender;
-            } elseif ($user->hasRole('bendahara-putra')) {
+        $isCentral = $user->hasAnyRole([
+            'super-admin',
+            'admin',
+            'manajemen',
+            'pengasuh',
+            'bendahara',
+            'bendahara-pondok',
+            'bendahara-pusat',
+            'bendahara-unit',
+            'admin-data',
+        ]);
+        if (!$isCentral) {
+            if ($user->hasRole(['bendahara-putra', 'lurah-putra'])) {
                 $genderScope = 'L';
-            } elseif ($user->hasRole('bendahara-putri')) {
+            } elseif ($user->hasRole(['bendahara-putri', 'lurah-putri'])) {
                 $genderScope = 'P';
+            } elseif ($user->person?->gender) {
+                $genderScope = $user->person->gender;
             }
         }
 

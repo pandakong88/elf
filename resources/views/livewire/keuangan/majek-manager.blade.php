@@ -154,6 +154,26 @@
             </div>
 
             <div class="grid grid-cols-1 sm:flex items-center gap-2.5 w-full sm:w-auto">
+                {{-- Gender Filter --}}
+                @if(!$this->genderScope())
+                    <div class="w-full sm:w-36 shrink-0">
+                        <select wire:model.live="filterGender"
+                            class="w-full px-3 py-2.5 text-xs font-bold border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 rounded-xl text-slate-700 dark:text-slate-300 outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-400 transition-all">
+                            <option value="all">👥 Semua Gender</option>
+                            <option value="L">👦 Santri Putra</option>
+                            <option value="P">👧 Santri Putri</option>
+                        </select>
+                    </div>
+                @else
+                    <div class="hidden sm:flex items-center px-3 py-2.5 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/50 rounded-xl text-[11px] font-black text-amber-700 dark:text-amber-400 shrink-0">
+                        @if($this->genderScope() === 'L')
+                            👦 Scope: Putra
+                        @else
+                            👧 Scope: Putri
+                        @endif
+                    </div>
+                @endif
+
                 {{-- Status Filter --}}
                 <div class="w-full sm:w-40 shrink-0">
                     <select wire:model.live="filterStatus"
@@ -188,14 +208,14 @@
                             <label class="flex items-center gap-2 px-2.5 py-2 hover:bg-slate-50 dark:hover:bg-slate-800/50 rounded-xl cursor-pointer select-none">
                                 <input type="checkbox" value="{{ $dorm->id }}" wire:model.live="filterDormitoryIds"
                                     class="rounded text-amber-500 focus:ring-amber-500 border-slate-300 dark:border-slate-700">
-                                <span class="text-xs text-slate-700 dark:text-slate-300 font-semibold">{{ $dorm->name }}</span>
+                                <span class="text-xs text-slate-700 dark:text-slate-300 font-semibold">{{ $dorm->name }} ({{ $dorm->gender === 'P' ? 'Putri' : 'Putra' }})</span>
                             </label>
                         @endforeach
                     </div>
                 </div>
 
                 {{-- Reset Filters Button --}}
-                @if($searchParticipant !== '' || !empty($filterDormitoryIds) || $filterStatus !== 'all')
+                @if($searchParticipant !== '' || !empty($filterDormitoryIds) || $filterStatus !== 'all' || $filterGender !== 'all')
                     <button type="button" wire:click="resetFilters"
                         class="w-full sm:w-auto px-4 py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-750 text-slate-600 dark:text-slate-300 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 shrink-0 border border-slate-200/40 dark:border-slate-700/60 shadow-xs">
                         🧹 Reset
@@ -620,322 +640,918 @@
     @endif
 
     {{-- ══════════════════════════════════════════════════════════════════════ --}}
-    {{-- MODAL: Pendaftaran Peserta Majek (SUPER BULK REGISTER RESPONSIF)        --}}
+    {{-- MODAL: Pendaftaran Peserta Majek (Mode Massal & Mode Cepat 1 Santri)     --}}
     {{-- ══════════════════════════════════════════════════════════════════════ --}}
     @if($showAddModal)
-        <div wire:key="add-modal-container" class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-xs">
-            <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-2xl w-full max-w-5xl max-h-[90vh] flex flex-col overflow-hidden animate-zoom-in">
+        <div wire:key="add-modal-container" class="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-slate-950/70 backdrop-blur-xs">
+            <div x-data="{ mobileTab: @entangle('bulkMobileTab'), showConfirmSave: false, showConfirmSingleSave: false }" class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-2xl w-full max-w-6xl max-h-[92vh] flex flex-col overflow-hidden animate-zoom-in">
                 
-                {{-- Header --}}
-                <div class="p-4 sm:p-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-950/20 shrink-0">
+                {{-- Header Modal & Mode Switcher --}}
+                <div class="p-3.5 sm:p-5 border-b border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-50/60 dark:bg-slate-950/30 shrink-0">
                     <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 rounded-2xl bg-amber-500/10 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400 flex items-center justify-center text-lg shrink-0">
+                        <div class="w-10 h-10 rounded-2xl bg-amber-500/10 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400 flex items-center justify-center text-xl shrink-0 shadow-2xs">
                             🍱
                         </div>
                         <div>
-                            <h3 class="text-xs sm:text-sm font-extrabold text-slate-900 dark:text-white uppercase tracking-wide">Pendaftaran Bulk Peserta Majek</h3>
-                            <p class="text-[10px] sm:text-[11px] text-slate-400 font-semibold mt-0.5">Cari & pilih banyak santri, lalu atur sesi katering per-santri untuk {{ $this->monthLabel }}</p>
+                            <div class="flex items-center gap-2">
+                                <h3 class="text-xs sm:text-sm font-black text-slate-900 dark:text-white uppercase tracking-wide">Pendaftaran Peserta Majek</h3>
+                                <span class="px-2 py-0.5 rounded-lg bg-amber-500/15 text-amber-700 dark:text-amber-300 font-extrabold text-[9px] uppercase tracking-wider">
+                                    {{ $this->monthLabel }}
+                                </span>
+                            </div>
+                            <p class="text-[10px] text-slate-400 font-semibold mt-0.5">
+                                @if($addTab === 'bulk')
+                                    Mode Massal: Pilih banyak santri per kamar atau komplek sekaligus
+                                @else
+                                    Mode Cepat: Pendaftaran instan 1 santri susulan
+                                @endif
+                            </p>
                         </div>
                     </div>
-                    <button type="button" wire:click="closeAddModal" class="w-8 h-8 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 font-bold transition-all flex items-center justify-center">✕</button>
+
+                    {{-- Mode Switcher Tabs + Close Button --}}
+                    <div class="flex items-center justify-between sm:justify-end gap-2">
+                        <div class="flex items-center p-1 bg-slate-200/70 dark:bg-slate-800 rounded-2xl">
+                            <button type="button" wire:click="switchTab('bulk')"
+                                class="px-3 py-1.5 rounded-xl text-xs font-black transition-all flex items-center gap-1.5 {{ $addTab === 'bulk' ? 'bg-white dark:bg-slate-900 text-amber-600 dark:text-amber-400 shadow-xs' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200' }}">
+                                🏢 Massal (Kamar/Komplek)
+                            </button>
+                            <button type="button" wire:click="switchTab('single')"
+                                class="px-3 py-1.5 rounded-xl text-xs font-black transition-all flex items-center gap-1.5 {{ $addTab === 'single' ? 'bg-white dark:bg-slate-900 text-amber-600 dark:text-amber-400 shadow-xs' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200' }}">
+                                ⚡ Cepat (1 Santri)
+                            </button>
+                        </div>
+                        <button type="button" wire:click="closeAddModal"
+                            class="w-8 h-8 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 font-bold transition-all flex items-center justify-center shrink-0">
+                            ✕
+                        </button>
+                    </div>
                 </div>
 
-                {{-- Modal Body (Scrollable) --}}
-                <div class="p-4 sm:p-6 space-y-6 overflow-y-auto flex-1 text-xs">
-                    
-                    {{-- ─── SECTION 1: CARI & PILIH SANTRI ─── --}}
-                    <div class="space-y-3">
-                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                            <h4 class="text-xs font-black text-slate-800 dark:text-slate-200 uppercase tracking-wide flex items-center gap-1.5">
-                                🔍 Langkah 1: Cari & Centang Santri
-                            </h4>
-                            <div class="flex items-center gap-2">
-                                <button type="button" wire:click="selectAllFilteredStudents"
-                                    class="px-2.5 py-1 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg text-[10px] font-extrabold transition-all">
-                                    ✓ Centang Semua Di Layar
-                                </button>
-                                <button type="button" wire:click="clearAllBulkSelections"
-                                    class="px-2.5 py-1 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-rose-500 rounded-lg text-[10px] font-extrabold transition-all">
-                                    ✕ Kosongkan Pilihan
-                                </button>
-                            </div>
-                        </div>
+                {{-- Modal Body --}}
+                <div class="p-3 sm:p-5 overflow-y-auto flex-1 text-xs">
 
-                        {{-- Multi-Filter Bar: Search, Dormitory Filter, Status Filter --}}
-                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 bg-slate-50 dark:bg-slate-950/40 p-3 rounded-2xl border border-slate-200/60 dark:border-slate-800">
-                            <div>
-                                <label class="block text-[9px] font-extrabold text-slate-400 uppercase tracking-wider mb-1">Cari Nama / NIS</label>
-                                <input type="text" wire:model.live.debounce.250ms="searchBulkQuery"
-                                    placeholder="Ketik nama santri..."
-                                    class="w-full px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-xs font-bold focus:ring-2 focus:ring-amber-500/30 outline-none">
-                            </div>
-                            <div>
-                                <label class="block text-[9px] font-extrabold text-slate-400 uppercase tracking-wider mb-1">Filter Komplek</label>
-                                <select wire:model.live="filterBulkDormitoryId"
-                                    class="w-full px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-xs font-bold focus:ring-2 focus:ring-amber-500/30 outline-none">
-                                    <option value="">Semua Komplek</option>
-                                    @foreach($this->dormitories as $dorm)
-                                        <option value="{{ $dorm->id }}">{{ $dorm->name }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
-                            <div>
-                                <label class="block text-[9px] font-extrabold text-slate-400 uppercase tracking-wider mb-1">Status Pendaftaran</label>
-                                <select wire:model.live="filterBulkStatus"
-                                    class="w-full px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-xs font-bold focus:ring-2 focus:ring-amber-500/30 outline-none">
-                                    <option value="unregistered">Belum Terdaftar Majek</option>
-                                    <option value="all">Semua Santri</option>
-                                    <option value="registered">Sudah Terdaftar Majek</option>
-                                </select>
-                            </div>
-                        </div>
+                    {{-- ══════════════════════════════════════════════════════════ --}}
+                    {{-- TAB 1: PENDAFTARAN MASSAL (BULK MODE)                      --}}
+                    {{-- ══════════════════════════════════════════════════════════ --}}
+                    @if($addTab === 'bulk')
+                        <div class="space-y-4">
 
-                        {{-- Search Results Table / Cards --}}
-                        @php $bulkList = $this->bulkStudentsList; @endphp
-                        @if(empty($bulkList))
-                            <div class="py-6 text-center text-slate-400 text-xs italic bg-slate-50/50 dark:bg-slate-950/20 rounded-2xl border border-dashed border-slate-200 dark:border-slate-800">
-                                Tidak ada santri ditemukan sesuai pencarian/filter di atas.
-                            </div>
-                        @else
-                            {{-- Desktop Table View (sm:block) --}}
-                            <div class="hidden sm:block border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden shadow-xs max-h-48 overflow-y-auto">
-                                <table class="w-full text-left text-xs border-collapse">
-                                    <thead>
-                                        <tr class="bg-slate-100 dark:bg-slate-950 text-[10px] text-slate-500 font-extrabold uppercase tracking-wider border-b border-slate-200 dark:border-slate-800 sticky top-0 z-10">
-                                            <th class="py-2.5 px-4 text-center w-12">Pilih</th>
-                                            <th class="py-2.5 px-4">Nama Santri</th>
-                                            <th class="py-2.5 px-4 w-40">Komplek</th>
-                                            <th class="py-2.5 px-4 text-center w-28">Status Majek</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody class="divide-y divide-slate-200 dark:divide-slate-800">
-                                        @foreach($bulkList as $std)
-                                            @php
-                                                $isSelected = $bulkSelections[$std['id']] ?? false;
-                                                $isRegistered = $std['is_registered'] ?? false;
-                                            @endphp
-                                            <tr wire:key="bulk-student-table-{{ $std['id'] }}" class="transition-colors border-b border-slate-200 dark:border-slate-800
-                                                {{ $isRegistered ? 'bg-slate-50/40 dark:bg-slate-900/40 opacity-60' : ($isSelected ? 'bg-amber-500/10 dark:bg-amber-950/30' : 'bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800/60') }}">
-                                                <td class="py-2 px-4 text-center">
-                                                    @if($isRegistered)
-                                                        <span class="text-emerald-500 font-bold">✓</span>
-                                                    @else
-                                                        <input type="checkbox" wire:click="toggleStudentSelection('{{ $std['id'] }}')" @checked($isSelected)
-                                                            class="w-4 h-4 rounded text-amber-500 focus:ring-amber-500 border-slate-300 dark:border-slate-650 cursor-pointer">
-                                                    @endif
-                                                </td>
-                                                <td class="py-2 px-4 font-bold text-xs">
-                                                    <div class="flex items-center gap-1.5">
-                                                        <span>{{ $std['name'] }}</span>
-                                                        @if($std['gender'] === 'P')
-                                                            <span class="px-1.5 py-0.5 rounded-md bg-purple-500/10 text-purple-600 dark:text-purple-400 text-[8px] font-bold">Putri</span>
-                                                        @endif
-                                                    </div>
-                                                </td>
-                                                <td class="py-2 px-4 text-[10px] text-slate-500 font-mono">{{ $std['dormitory'] }}</td>
-                                                <td class="py-2 px-4 text-center">
-                                                    @if($isRegistered)
-                                                        <span class="px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[8px] font-black uppercase">Sudah Terdaftar</span>
-                                                    @elseif($isSelected)
-                                                        <span class="px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-700 dark:text-amber-300 text-[8px] font-black uppercase">✓ Terpilih</span>
-                                                    @else
-                                                        <span class="text-slate-400 text-[9px]">—</span>
-                                                    @endif
-                                                </td>
-                                            </tr>
-                                        @endforeach
-                                    </tbody>
-                                </table>
-                            </div>
-
-                            {{-- Mobile Card List View (sm:hidden) --}}
-                            <div class="block sm:hidden space-y-2 max-h-48 overflow-y-auto">
-                                @foreach($bulkList as $std)
-                                    @php
-                                        $isSelected = $bulkSelections[$std['id']] ?? false;
-                                        $isRegistered = $std['is_registered'] ?? false;
-                                    @endphp
-                                    <div wire:key="bulk-student-mobile-{{ $std['id'] }}" class="p-2.5 rounded-xl border flex items-center justify-between text-xs transition-colors
-                                        {{ $isRegistered ? 'bg-slate-50/60 dark:bg-slate-950/40 border-slate-200 dark:border-slate-800 opacity-60' : ($isSelected ? 'bg-amber-500/10 border-amber-300 dark:border-amber-800' : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800') }}">
-                                        <div class="flex items-center gap-2.5">
-                                            @if($isRegistered)
-                                                <span class="text-emerald-500 font-bold text-sm">✓</span>
-                                            @else
-                                                <input type="checkbox" wire:click="toggleStudentSelection('{{ $std['id'] }}')" @checked($isSelected)
-                                                    class="w-4 h-4 rounded text-amber-500 focus:ring-amber-500 border-slate-300 dark:border-slate-650 cursor-pointer">
-                                            @endif
-                                            <div>
-                                                <div class="font-extrabold text-slate-800 dark:text-slate-200">{{ $std['name'] }}</div>
-                                                <div class="text-[9px] text-slate-400 font-mono">{{ $std['dormitory'] }}</div>
-                                            </div>
+                            {{-- Preset & Filter Top Bar --}}
+                            <div class="bg-slate-50 dark:bg-slate-950/40 p-3 sm:p-4 rounded-2xl border border-slate-200/70 dark:border-slate-800 space-y-3">
+                                
+                                {{-- Baris 1: Preset Default Sebelum Memilih Santri --}}
+                                <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 pb-3 border-b border-slate-200/50 dark:border-slate-800/80">
+                                    <div class="flex items-center gap-2">
+                                        <span class="w-6 h-6 rounded-lg bg-amber-500/20 text-amber-600 flex items-center justify-center text-xs font-black">⚙️</span>
+                                        <div>
+                                            <span class="text-[10px] font-black uppercase tracking-wider text-slate-700 dark:text-slate-300">Setelan Default Santri Baru:</span>
+                                            <p class="text-[9px] text-slate-400">Santri yang baru dicentang otomatis menerapkan sesi & hari ini</p>
                                         </div>
-                                        @if($isRegistered)
-                                            <span class="px-2 py-0.5 bg-emerald-500/10 text-emerald-600 text-[8px] font-black rounded-md uppercase">Terdaftar</span>
-                                        @elseif($isSelected)
-                                            <span class="px-2 py-0.5 bg-amber-500/20 text-amber-700 dark:text-amber-300 text-[8px] font-black rounded-md uppercase">Terpilih</span>
-                                        @endif
                                     </div>
-                                @endforeach
-                            </div>
-                        @endif
-                    </div>
 
-                    {{-- ─── SECTION 2: RINCIAN KONFIGURASI SANTRI TERPILIH ─── --}}
-                    @php
-                        $selectedList = $this->selectedStudentsList;
-                        $selectedCount = count($selectedList);
-                    @endphp
+                                    <div class="flex items-center gap-2 flex-wrap">
+                                        <div class="flex items-center gap-1.5">
+                                            <span class="text-[10px] font-bold text-slate-500">Sesi:</span>
+                                            <select wire:model.live="presetSesi"
+                                                class="px-2.5 py-1 text-xs font-extrabold border border-amber-300 dark:border-amber-700/60 bg-white dark:bg-slate-900 text-amber-950 dark:text-amber-200 rounded-xl outline-none focus:ring-2 focus:ring-amber-500/30">
+                                                <option value="2x">🍽️ 2x Makan (Pagi & Sore)</option>
+                                                <option value="pagi">🌅 1x Pagi Saja</option>
+                                                <option value="sore">🌆 1x Sore Saja</option>
+                                            </select>
+                                        </div>
 
-                    @if($selectedCount > 0)
-                        <div class="space-y-3 bg-amber-500/5 dark:bg-amber-950/20 p-3.5 sm:p-4 rounded-2xl border border-amber-500/20 animate-fade-in">
-                            
-                            {{-- Header & Mass Quick Actions --}}
-                            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-amber-200/50 dark:border-amber-900/40 pb-3">
-                                <div>
-                                    <h4 class="text-xs font-black text-amber-900 dark:text-amber-200 uppercase tracking-wide flex items-center gap-1.5">
-                                        📝 Langkah 2: Rincian & Sesi (<strong>{{ $selectedCount }}</strong> Santri)
-                                    </h4>
-                                    <p class="text-[10px] text-amber-700/80 dark:text-amber-400/80 font-semibold mt-0.5">
-                                        Atur opsi Sesi (2x / Pagi / Sore) per-santri di bawah ini:
-                                    </p>
+                                        <div class="flex items-center gap-1.5">
+                                            <span class="text-[10px] font-bold text-slate-500">Hari:</span>
+                                            <input type="number" min="1" max="31" wire:model.live="presetDays"
+                                                class="w-16 px-2 py-1 text-xs font-mono font-black text-center border border-amber-300 dark:border-amber-700/60 bg-white dark:bg-slate-900 text-slate-900 dark:text-white rounded-xl outline-none focus:ring-2 focus:ring-amber-500/30">
+                                        </div>
+                                    </div>
                                 </div>
-                                <div class="flex items-center gap-1.5 shrink-0 flex-wrap">
-                                    <span class="text-[9px] font-bold text-amber-800 dark:text-amber-300 mr-1">Samakan Sesi:</span>
-                                    <button type="button" wire:click="setAllSelectedSessions('2x')"
-                                        class="px-2.5 py-1 bg-amber-500 hover:bg-amber-600 text-white rounded-lg text-[9px] font-black shadow-2xs transition-all">
-                                        🍽️ Semua 2x
-                                    </button>
-                                    <button type="button" wire:click="setAllSelectedSessions('pagi')"
-                                        class="px-2.5 py-1 bg-sky-500 hover:bg-sky-600 text-white rounded-lg text-[9px] font-black shadow-2xs transition-all">
-                                        🌅 Semua Pagi
-                                    </button>
-                                    <button type="button" wire:click="setAllSelectedSessions('sore')"
-                                        class="px-2.5 py-1 bg-indigo-500 hover:bg-indigo-600 text-white rounded-lg text-[9px] font-black shadow-2xs transition-all">
-                                        🌆 Semua Sore
-                                    </button>
+
+                                {{-- Baris 2: Filter Pencarian, Gender, Komplek, Kamar, & Status --}}
+                                <div class="grid grid-cols-1 sm:grid-cols-2 {{ !$this->genderScope() ? 'lg:grid-cols-5' : 'lg:grid-cols-4' }} gap-2.5 text-xs">
+                                    {{-- Cari Nama / NIS --}}
+                                    <div>
+                                        <label class="block text-[9px] font-extrabold text-slate-400 uppercase tracking-wider mb-1">Cari Nama / NIS / NIK</label>
+                                        <div class="relative">
+                                            <span class="absolute inset-y-0 left-0 pl-2.5 flex items-center text-slate-400 pointer-events-none text-xs">🔍</span>
+                                            <input type="text" wire:model.live.debounce.250ms="searchBulkQuery"
+                                                placeholder="Ketik nama atau NIS..."
+                                                class="w-full pl-7 pr-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-xs font-semibold focus:ring-2 focus:ring-amber-500/30 outline-none">
+                                        </div>
+                                    </div>
+
+                                    {{-- Filter Gender Santri (Hanya tampil jika user punya akses kedua gender) --}}
+                                    @if(!$this->genderScope())
+                                    <div>
+                                        <label class="block text-[9px] font-extrabold text-slate-400 uppercase tracking-wider mb-1">Gender Santri</label>
+                                        <select wire:model.live="filterBulkGender"
+                                            class="w-full px-2.5 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-xs font-semibold focus:ring-2 focus:ring-amber-500/30 outline-none">
+                                            <option value="all">👥 Semua Gender</option>
+                                            <option value="L">👦 Santri Putra</option>
+                                            <option value="P">👧 Santri Putri</option>
+                                        </select>
+                                    </div>
+                                    @endif
+
+                                    {{-- Filter Komplek --}}
+                                    <div>
+                                        <label class="block text-[9px] font-extrabold text-slate-400 uppercase tracking-wider mb-1">Komplek / Asrama</label>
+                                        <select wire:model.live="filterBulkDormitoryId"
+                                            class="w-full px-2.5 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-xs font-semibold focus:ring-2 focus:ring-amber-500/30 outline-none">
+                                            <option value="">🏢 Semua Komplek</option>
+                                            @foreach($this->modalDormitories as $dorm)
+                                                <option value="{{ $dorm->id }}">{{ $dorm->name }} ({{ $dorm->gender === 'P' ? 'Putri' : 'Putra' }})</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+
+                                    {{-- Filter Kamar (Room) --}}
+                                    <div>
+                                        <label class="block text-[9px] font-extrabold text-slate-400 uppercase tracking-wider mb-1">Kamar Asrama</label>
+                                        <select wire:model.live="filterBulkRoomId" @if(empty($filterBulkDormitoryId)) disabled @endif
+                                            class="w-full px-2.5 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-xs font-semibold focus:ring-2 focus:ring-amber-500/30 outline-none @if(empty($filterBulkDormitoryId)) opacity-60 cursor-not-allowed @endif">
+                                            <option value="">🚪 Semua Kamar</option>
+                                            @foreach($this->availableRooms as $room)
+                                                <option value="{{ $room->id }}">{{ $room->name }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+
+                                    {{-- Filter Status Majek --}}
+                                    <div>
+                                        <label class="block text-[9px] font-extrabold text-slate-400 uppercase tracking-wider mb-1">Status di Bulan Ini</label>
+                                        <select wire:model.live="filterBulkStatus"
+                                            class="w-full px-2.5 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-xs font-semibold focus:ring-2 focus:ring-amber-500/30 outline-none">
+                                            <option value="unregistered">⏳ Belum Terdaftar Majek</option>
+                                            <option value="all">👥 Semua Santri</option>
+                                            <option value="registered">✓ Sudah Terdaftar</option>
+                                        </select>
+                                    </div>
                                 </div>
                             </div>
 
-                            {{-- Selected Students Configuration: Desktop Table (sm:block) --}}
-                            <div class="hidden sm:block border border-amber-200 dark:border-amber-900/60 rounded-xl overflow-hidden shadow-xs max-h-64 overflow-y-auto bg-white dark:bg-slate-900">
-                                <table class="w-full text-left text-xs border-collapse">
-                                    <thead>
-                                        <tr class="bg-amber-100/70 dark:bg-amber-950/80 text-[10px] text-amber-900 dark:text-amber-300 font-extrabold uppercase tracking-wider border-b border-amber-200 dark:border-amber-900 sticky top-0 z-10">
-                                            <th class="py-2.5 px-4 w-10 text-center">Batal</th>
-                                            <th class="py-2.5 px-4">Nama Santri & Komplek</th>
-                                            <th class="py-2.5 px-4 w-44">Pilihan Sesi Makan</th>
-                                            <th class="py-2.5 px-4 w-28 text-center">Hari Aktif</th>
-                                            <th class="py-2.5 px-4">Catatan Khusus</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
-                                        @foreach($selectedList as $selStd)
-                                            <tr wire:key="selected-student-table-{{ $selStd['id'] }}" class="hover:bg-amber-500/5 dark:hover:bg-amber-950/30 transition-colors">
-                                                <td class="py-2.5 px-4 text-center">
-                                                    <button type="button" wire:click="uncheckStudent('{{ $selStd['id'] }}')"
-                                                        class="w-6 h-6 rounded-lg bg-rose-500/10 text-rose-500 hover:bg-rose-500 hover:text-white font-black text-xs transition-all inline-flex items-center justify-center" title="Batalkan Santri Ini">
-                                                        ✕
-                                                    </button>
-                                                </td>
-                                                <td class="py-2.5 px-4">
-                                                    <div class="font-bold text-slate-900 dark:text-slate-100 text-xs">
-                                                        {{ $selStd['name'] }}
-                                                    </div>
-                                                    <div class="text-[9px] text-slate-400 font-mono">
-                                                        {{ $selStd['dormitory'] }}
-                                                    </div>
-                                                </td>
-                                                <td class="py-2.5 px-4">
-                                                    <select wire:model.live="bulkSessions.{{ $selStd['id'] }}"
-                                                        class="w-full px-2.5 py-1.5 text-xs font-extrabold border border-amber-300 dark:border-amber-700 bg-white dark:bg-slate-800 text-amber-950 dark:text-amber-100 rounded-xl outline-none focus:ring-2 focus:ring-amber-500">
-                                                        <option value="2x">🍽️🍽️ 2x Makan (Pagi & Sore)</option>
-                                                        <option value="pagi">🌅 Pagi Saja</option>
-                                                        <option value="sore">🌆 Sore Saja</option>
-                                                    </select>
-                                                </td>
-                                                <td class="py-2.5 px-4 text-center">
-                                                    <input type="number" min="1" max="31" wire:model.live="bulkDays.{{ $selStd['id'] }}"
-                                                        class="w-full px-2 py-1.5 text-xs font-mono font-black text-center border border-amber-300 dark:border-amber-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white rounded-xl outline-none focus:ring-2 focus:ring-amber-500">
-                                                </td>
-                                                <td class="py-2.5 px-4">
-                                                    <input type="text" placeholder="Catatan opsional..." wire:model.live="bulkNotes.{{ $selStd['id'] }}"
-                                                        class="w-full px-2.5 py-1.5 text-xs border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-amber-500">
-                                                </td>
-                                            </tr>
-                                        @endforeach
-                                    </tbody>
-                                </table>
+                            {{-- SPLIT VIEW (2 KOLOM DI DESKTOP, TAB SWITCHER DI MOBILE) --}}
+                            @php
+                                $bulkList      = $this->bulkStudentsList;
+                                $selectedList  = $this->selectedStudentsList;
+                                $selectedCount = count($selectedList);
+                                $totalEstimasi = array_sum(array_column($selectedList, 'estimated_total'));
+                            @endphp
+
+                            {{-- Mobile Tab Switcher (Hanya Muncul di Layar HP / < lg) --}}
+                            <div class="flex lg:hidden items-center p-1 bg-slate-200/80 dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700/80 gap-1">
+                                <button type="button" @click="mobileTab = 'list'"
+                                    :class="mobileTab === 'list' ? 'bg-white dark:bg-slate-900 text-amber-600 dark:text-amber-400 shadow-xs font-black' : 'text-slate-600 dark:text-slate-400 font-bold hover:text-slate-900'"
+                                    class="flex-1 py-2 px-3 text-xs rounded-xl transition-all flex items-center justify-center gap-1.5">
+                                    <span>📋 Daftar Santri</span>
+                                    <span class="px-1.5 py-0.2 rounded-md bg-slate-100 dark:bg-slate-800 text-[10px] font-bold">
+                                        {{ count($bulkList) }}
+                                    </span>
+                                </button>
+                                <button type="button" @click="mobileTab = 'selected'"
+                                    :class="mobileTab === 'selected' ? 'bg-white dark:bg-slate-900 text-amber-600 dark:text-amber-400 shadow-xs font-black' : 'text-slate-600 dark:text-slate-400 font-bold hover:text-slate-900'"
+                                    class="flex-1 py-2 px-3 text-xs rounded-xl transition-all flex items-center justify-center gap-1.5 relative">
+                                    <span>🧺 Santri Terpilih</span>
+                                    @if($selectedCount > 0)
+                                        <span class="px-2 py-0.5 rounded-full bg-amber-500 text-white text-[10px] font-black">
+                                            {{ $selectedCount }}
+                                        </span>
+                                    @else
+                                        <span class="px-1.5 py-0.2 rounded-md bg-slate-100 dark:bg-slate-800 text-[10px] font-bold">
+                                            0
+                                        </span>
+                                    @endif
+                                </button>
                             </div>
 
-                            {{-- Selected Students Configuration: Mobile Card List (sm:hidden) --}}
-                            <div class="block sm:hidden space-y-3 max-h-64 overflow-y-auto">
-                                @foreach($selectedList as $selStd)
-                                    <div wire:key="selected-student-mobile-{{ $selStd['id'] }}" class="bg-white dark:bg-slate-900 border border-amber-200 dark:border-amber-900/60 rounded-2xl p-3 space-y-2.5 shadow-2xs">
-                                        <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-1.5">
-                                            <div>
-                                                <div class="font-extrabold text-slate-900 dark:text-white text-xs">{{ $selStd['name'] }}</div>
-                                                <div class="text-[9px] text-slate-400 font-mono">{{ $selStd['dormitory'] }}</div>
-                                            </div>
-                                            <button type="button" wire:click="uncheckStudent('{{ $selStd['id'] }}')"
-                                                class="px-2 py-1 rounded-lg bg-rose-500/10 text-rose-500 hover:bg-rose-500 hover:text-white font-bold text-[10px]">
-                                                ✕ Batal
+                            <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
+                                
+                                {{-- ─── KOLOM KIRI (8/12 atau 12/12): DAFTAR SANTRI UNTUK DICENTANG ─── --}}
+                                <div :class="mobileTab === 'list' ? 'flex' : 'hidden lg:flex'"
+                                     class="{{ $showSelectedPanel ? 'lg:col-span-8' : 'lg:col-span-12' }} space-y-2.5 flex-col transition-all duration-200">
+                                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 px-1">
+                                        <div class="flex items-center gap-2">
+                                            <span class="text-xs font-black text-slate-800 dark:text-slate-200 uppercase tracking-wide">
+                                                Daftar Santri
+                                            </span>
+                                            <span class="px-2 py-0.5 rounded-md bg-slate-200 dark:bg-slate-800 text-[10px] font-bold text-slate-600 dark:text-slate-300">
+                                                {{ count($bulkList) }} santri
+                                            </span>
+                                        </div>
+
+                                        <div class="flex items-center gap-1.5 flex-wrap">
+                                            <button type="button" wire:click="selectAllFilteredStudents"
+                                                class="px-2.5 py-1 bg-amber-500/10 hover:bg-amber-500/20 text-amber-700 dark:text-amber-300 border border-amber-300/40 rounded-lg text-[10px] font-extrabold transition-all flex items-center gap-1">
+                                                ✓ Centang Semua
+                                            </button>
+                                            <button type="button" wire:click="clearAllBulkSelections"
+                                                class="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 text-rose-500 rounded-lg text-[10px] font-extrabold transition-all">
+                                                ✕ Bersihkan
+                                            </button>
+                                            {{-- Toggle Panel Terpilih di Desktop --}}
+                                            <button type="button" wire:click="toggleSelectedPanel"
+                                                class="hidden lg:flex px-2.5 py-1 rounded-lg text-[10px] font-extrabold transition-all items-center gap-1 border border-slate-200/80 dark:border-slate-700 {{ $showSelectedPanel ? 'bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-300' : 'bg-amber-500 hover:bg-amber-600 text-white shadow-2xs' }}"
+                                                title="{{ $showSelectedPanel ? 'Ciutkan panel kanan agar tabel santri tampil full width' : 'Buka panel rincian santri terpilih' }}">
+                                                @if($showSelectedPanel)
+                                                    <span>◀ Ciutkan Panel</span>
+                                                @else
+                                                    <span>🧺 Buka Panel Terpilih (<strong>{{ $selectedCount }}</strong>)</span>
+                                                @endif
                                             </button>
                                         </div>
+                                    </div>
 
-                                        <div class="space-y-2 text-xs">
-                                            <div>
-                                                <label class="block text-[9px] font-extrabold uppercase text-amber-700 dark:text-amber-400 mb-1">Sesi Makan</label>
-                                                <select wire:model.live="bulkSessions.{{ $selStd['id'] }}"
-                                                    class="w-full px-2.5 py-1.5 text-xs font-bold border border-amber-300 dark:border-amber-700 bg-amber-50/50 dark:bg-slate-800 text-amber-950 dark:text-amber-100 rounded-xl outline-none">
-                                                    <option value="2x">🍽️🍽️ 2x Makan (Pagi & Sore)</option>
-                                                    <option value="pagi">🌅 Pagi Saja</option>
-                                                    <option value="sore">🌆 Sore Saja</option>
-                                                </select>
-                                            </div>
-                                            <div class="grid grid-cols-3 gap-2">
-                                                <div class="col-span-1">
-                                                    <label class="block text-[9px] font-extrabold uppercase text-slate-400 mb-1">Hari</label>
-                                                    <input type="number" min="1" max="31" wire:model.live="bulkDays.{{ $selStd['id'] }}"
-                                                        class="w-full px-2 py-1.5 text-xs font-mono font-black text-center border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white rounded-xl outline-none">
+                                    @if(empty($bulkList))
+                                        <div class="py-12 text-center text-slate-400 text-xs italic bg-slate-50/50 dark:bg-slate-950/20 rounded-2xl border border-dashed border-slate-200 dark:border-slate-800">
+                                            Tidak ada santri ditemukan sesuai filter atau seluruh santri di filter ini sudah terdaftar Majek.
+                                        </div>
+                                    @else
+                                        {{-- Desktop Table View --}}
+                                        <div class="hidden sm:block border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden shadow-xs max-h-[50vh] overflow-y-auto">
+                                            <table class="w-full text-left text-xs border-collapse">
+                                                <thead>
+                                                    <tr class="bg-slate-100 dark:bg-slate-950 text-[10px] text-slate-500 font-extrabold uppercase tracking-wider border-b border-slate-200 dark:border-slate-800 sticky top-0 z-10">
+                                                        <th class="py-2.5 px-3 text-center w-12">Pilih</th>
+                                                        <th class="py-2.5 px-3">Nama Santri</th>
+                                                        <th class="py-2.5 px-3 w-44">Komplek & Kamar</th>
+                                                        <th class="py-2.5 px-3 text-center w-28">Status Majek</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+                                                    @foreach($bulkList as $std)
+                                                        @php
+                                                            $isSelected = $bulkSelections[$std['id']] ?? false;
+                                                            $isRegistered = $std['is_registered'] ?? false;
+                                                        @endphp
+                                                        <tr wire:key="bulk-student-table-{{ $std['id'] }}"
+                                                            class="transition-colors border-b border-slate-100 dark:border-slate-800
+                                                            {{ $isRegistered ? 'bg-slate-50/50 dark:bg-slate-900/40 opacity-60' : ($isSelected ? 'bg-amber-500/10 dark:bg-amber-950/30' : 'bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800/60') }}">
+                                                            <td class="py-2 px-3 text-center">
+                                                                @if($isRegistered)
+                                                                    <span class="text-emerald-500 font-bold" title="Sudah terdaftar majek">✓</span>
+                                                                @else
+                                                                    <input type="checkbox" wire:click="toggleStudentSelection('{{ $std['id'] }}')" @checked($isSelected)
+                                                                        class="w-4 h-4 rounded text-amber-500 focus:ring-amber-500 border-slate-300 dark:border-slate-650 cursor-pointer">
+                                                                @endif
+                                                            </td>
+                                                            <td class="py-2 px-3 font-bold text-xs">
+                                                                <div class="flex items-center gap-1.5">
+                                                                    <span class="text-slate-850 dark:text-slate-100">{{ $std['name'] }}</span>
+                                                                    @if($std['gender'] === 'P')
+                                                                        <span class="px-1.5 py-0.2 rounded bg-purple-500/10 text-purple-600 dark:text-purple-400 text-[8px] font-black">Putri</span>
+                                                                    @else
+                                                                        <span class="px-1.5 py-0.2 rounded bg-amber-500/10 text-amber-600 dark:text-amber-400 text-[8px] font-black">Putra</span>
+                                                                    @endif
+                                                                </div>
+                                                            </td>
+                                                            <td class="py-2 px-3 text-[10px] text-slate-500 font-mono truncate" title="{{ $std['location'] }}">
+                                                                {{ $std['location'] }}
+                                                            </td>
+                                                            <td class="py-2 px-3 text-center">
+                                                                @if($isRegistered)
+                                                                    <span class="px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[8px] font-black uppercase">Sudah Ikut</span>
+                                                                @elseif($isSelected)
+                                                                    <span class="px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-700 dark:text-amber-300 text-[8px] font-black uppercase">✓ Dipilih</span>
+                                                                @else
+                                                                    <span class="text-slate-400 text-[9px]">—</span>
+                                                                @endif
+                                                            </td>
+                                                        </tr>
+                                                    @endforeach
+                                                </tbody>
+                                            </table>
+                                        </div>
+
+                                        {{-- Mobile Card List View --}}
+                                        <div class="block sm:hidden space-y-2 max-h-[45vh] overflow-y-auto pr-0.5">
+                                            @foreach($bulkList as $std)
+                                                @php
+                                                    $isSelected = $bulkSelections[$std['id']] ?? false;
+                                                    $isRegistered = $std['is_registered'] ?? false;
+                                                @endphp
+                                                <div wire:key="bulk-student-mobile-{{ $std['id'] }}"
+                                                    class="p-2.5 rounded-xl border flex items-center justify-between text-xs transition-colors
+                                                    {{ $isRegistered ? 'bg-slate-50/60 dark:bg-slate-950/40 border-slate-200 dark:border-slate-800 opacity-60' : ($isSelected ? 'bg-amber-500/10 border-amber-300 dark:border-amber-800' : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800') }}">
+                                                    <div class="flex items-center gap-2.5">
+                                                        @if($isRegistered)
+                                                            <span class="text-emerald-500 font-bold text-sm">✓</span>
+                                                        @else
+                                                            <input type="checkbox" wire:click="toggleStudentSelection('{{ $std['id'] }}')" @checked($isSelected)
+                                                                class="w-4 h-4 rounded text-amber-500 focus:ring-amber-500 border-slate-300 dark:border-slate-650 cursor-pointer">
+                                                        @endif
+                                                        <div>
+                                                            <div class="font-extrabold text-slate-850 dark:text-slate-100 text-xs flex items-center gap-1.5">
+                                                                <span>{{ $std['name'] }}</span>
+                                                                <span class="text-[8px] px-1 rounded font-bold {{ $std['gender'] === 'P' ? 'bg-purple-500/10 text-purple-600' : 'bg-amber-500/10 text-amber-600' }}">
+                                                                    {{ $std['gender'] === 'P' ? 'Putri' : 'Putra' }}
+                                                                </span>
+                                                            </div>
+                                                            <div class="text-[9px] text-slate-400 font-mono">{{ $std['location'] }}</div>
+                                                        </div>
+                                                    </div>
+                                                    @if($isRegistered)
+                                                        <span class="px-2 py-0.5 bg-emerald-500/10 text-emerald-600 text-[8px] font-black rounded uppercase">Terdaftar</span>
+                                                    @elseif($isSelected)
+                                                        <span class="px-2 py-0.5 bg-amber-500/20 text-amber-700 dark:text-amber-300 text-[8px] font-black rounded uppercase">✓ Dipilih</span>
+                                                    @endif
                                                 </div>
-                                                <div class="col-span-2">
-                                                    <label class="block text-[9px] font-extrabold uppercase text-slate-400 mb-1">Catatan</label>
-                                                    <input type="text" placeholder="Opsional..." wire:model.live="bulkNotes.{{ $selStd['id'] }}"
-                                                        class="w-full px-2.5 py-1.5 text-xs border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 rounded-xl outline-none">
+                                            @endforeach
+                                        </div>
+
+                                        {{-- Tombol Melayang Cepat di Layar HP saat ada santri yang dicentang --}}
+                                        <div x-show="mobileTab === 'list' && {{ $selectedCount }} > 0"
+                                             x-transition:enter="transition ease-out duration-150"
+                                             x-transition:enter-start="opacity-0 translate-y-3 scale-95"
+                                             x-transition:enter-end="opacity-100 translate-y-0 scale-100"
+                                             class="block lg:hidden sticky bottom-1 z-20 pt-2 pb-1 text-center pointer-events-none">
+                                            <button type="button" @click="mobileTab = 'selected'"
+                                                class="pointer-events-auto px-4 py-2.5 rounded-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-black text-xs shadow-lg flex items-center justify-center gap-2 mx-auto border-2 border-white dark:border-slate-800 transition-all active:scale-95">
+                                                <span>🧺 Atur Santri Terpilih</span>
+                                                <span class="px-2 py-0.5 rounded-full bg-white text-amber-600 font-black text-[11px]">
+                                                    {{ $selectedCount }}
+                                                </span>
+                                                <span class="text-xs">➔</span>
+                                            </button>
+                                        </div>
+                                    @endif
+                                </div>
+
+                                {{-- ─── KOLOM KANAN (4/12): KERANJANG SANTRI TERPILIH (COMPACT) ─── --}}
+                                <div :class="mobileTab === 'selected' ? 'flex' : 'hidden lg:flex'"
+                                     class="{{ $showSelectedPanel ? 'lg:col-span-4' : 'lg:hidden' }} bg-slate-50/70 dark:bg-slate-900/50 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-3 space-y-2.5 flex-col transition-all duration-200 shadow-xs">
+                                    {{-- Header Keranjang --}}
+                                    <div class="flex items-center justify-between border-b border-slate-200/60 dark:border-slate-800 pb-2">
+                                        <div>
+                                            <h4 class="text-xs font-black text-slate-850 dark:text-slate-100 uppercase tracking-wide flex items-center gap-1.5">
+                                                <span>🧺 Santri Terpilih</span>
+                                                <span class="px-1.5 py-0.2 rounded-md bg-amber-500/15 text-amber-600 dark:text-amber-400 font-black text-[10px]">
+                                                    {{ $selectedCount }}
+                                                </span>
+                                            </h4>
+                                            <div class="text-[10px] font-mono font-bold text-slate-500 dark:text-slate-400 mt-0.5">
+                                                Total: <span class="text-amber-600 dark:text-amber-400 font-black">Rp {{ number_format($totalEstimasi, 0, ',', '.') }}</span>
+                                            </div>
+                                        </div>
+
+                                        {{-- Tombol Mobile untuk Kembali Memilih Santri --}}
+                                        <button type="button" @click="mobileTab = 'list'"
+                                            class="lg:hidden px-2.5 py-1.5 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 text-amber-700 dark:text-amber-300 font-extrabold text-[11px] flex items-center gap-1 transition-all">
+                                            <span>📋 + Tambah Santri</span>
+                                        </button>
+
+                                        @if($selectedCount > 0)
+                                            <div class="hidden lg:flex items-center gap-1">
+                                                <span class="text-[9px] text-slate-400 font-bold hidden xl:inline">Semua:</span>
+                                                <button type="button" wire:click="setAllSelectedSessions('2x')" title="Samakan Semua Sesi ke 2x"
+                                                    class="px-1.5 py-0.5 bg-amber-500 hover:bg-amber-600 text-white rounded text-[9px] font-black shadow-2xs transition-all">
+                                                    2x
+                                                </button>
+                                                <button type="button" wire:click="setAllSelectedSessions('pagi')" title="Samakan Semua Sesi ke Pagi Saja"
+                                                    class="px-1.5 py-0.5 bg-sky-500 hover:bg-sky-600 text-white rounded text-[9px] font-black shadow-2xs transition-all">
+                                                    Pagi
+                                                </button>
+                                                <button type="button" wire:click="setAllSelectedSessions('sore')" title="Samakan Semua Sesi ke Sore Saja"
+                                                    class="px-1.5 py-0.5 bg-indigo-500 hover:bg-indigo-600 text-white rounded text-[9px] font-black shadow-2xs transition-all">
+                                                    Sore
+                                                </button>
+                                            </div>
+                                        @endif
+                                    </div>
+
+                                    @if($selectedCount > 0)
+                                        {{-- Quick Batch Session Toolbar on Mobile --}}
+                                        <div class="flex lg:hidden items-center justify-between pt-1 pb-1 border-b border-slate-200/50 dark:border-slate-800/50 text-[10px]">
+                                            <span class="text-slate-400 font-bold">Ubah Semua:</span>
+                                            <div class="flex items-center gap-1">
+                                                <button type="button" wire:click="setAllSelectedSessions('2x')" title="Samakan Semua Sesi ke 2x"
+                                                    class="px-2 py-0.5 bg-amber-500 hover:bg-amber-600 text-white rounded-md text-[9px] font-black shadow-2xs transition-all">
+                                                    2x Makan
+                                                </button>
+                                                <button type="button" wire:click="setAllSelectedSessions('pagi')" title="Samakan Semua Sesi ke Pagi Saja"
+                                                    class="px-2 py-0.5 bg-sky-500 hover:bg-sky-600 text-white rounded-md text-[9px] font-black shadow-2xs transition-all">
+                                                    Pagi
+                                                </button>
+                                                <button type="button" wire:click="setAllSelectedSessions('sore')" title="Samakan Semua Sesi ke Sore Saja"
+                                                    class="px-2 py-0.5 bg-indigo-500 hover:bg-indigo-600 text-white rounded-md text-[9px] font-black shadow-2xs transition-all">
+                                                    Sore
+                                                </button>
+                                            </div>
+                                        </div>
+                                    @endif
+
+                                    @if($selectedCount === 0)
+                                        <div class="py-10 text-center text-slate-400 text-xs italic bg-white/60 dark:bg-slate-950/40 rounded-xl border border-dashed border-slate-200 dark:border-slate-800 p-4 space-y-3">
+                                            <p>👈 Belum ada santri yang dipilih untuk pendaftaran Majek.</p>
+                                            <button type="button" @click="mobileTab = 'list'"
+                                                class="lg:hidden px-3.5 py-1.5 bg-amber-500 hover:bg-amber-600 text-white rounded-xl font-bold text-xs shadow-xs inline-flex items-center gap-1.5">
+                                                <span>📋 Buka Daftar Santri</span>
+                                            </button>
+                                        </div>
+                                    @else
+                                        {{-- Scrollable List of Selected Students (Ultra-Compact Cards) --}}
+                                        <div class="space-y-1.5 max-h-[50vh] overflow-y-auto pr-0.5">
+                                            @foreach($selectedList as $selStd)
+                                                @php
+                                                    $currentSesi = $bulkSessions[$selStd['id']] ?? $selStd['session'] ?? '2x';
+                                                @endphp
+                                                <div wire:key="selected-card-{{ $selStd['id'] }}"
+                                                    x-data="{ showNote: {{ !empty($bulkNotes[$selStd['id']] ?? '') ? 'true' : 'false' }} }"
+                                                    class="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 hover:border-amber-300 dark:hover:border-amber-700/60 rounded-xl p-2 space-y-1.5 shadow-2xs transition-all">
+                                                    
+                                                    {{-- Baris 1: Nama, Gender, Estimasi, & Tombol Hapus --}}
+                                                    <div class="flex items-center justify-between gap-1.5">
+                                                        <div class="flex items-center gap-1.5 min-w-0">
+                                                            <span class="text-xs shrink-0">{{ $selStd['gender'] === 'P' ? '👧' : '👦' }}</span>
+                                                            <span class="font-extrabold text-slate-850 dark:text-slate-100 text-xs truncate" title="{{ $selStd['name'] }}">
+                                                                {{ $selStd['name'] }}
+                                                            </span>
+                                                        </div>
+                                                        <div class="flex items-center gap-1.5 shrink-0">
+                                                            <span class="font-mono font-black text-amber-600 dark:text-amber-400 text-xs">
+                                                                Rp {{ number_format($selStd['estimated_total'], 0, ',', '.') }}
+                                                            </span>
+                                                            <button type="button" wire:click="uncheckStudent('{{ $selStd['id'] }}')"
+                                                                class="w-5 h-5 rounded-md text-slate-400 hover:text-white hover:bg-rose-500 font-bold text-xs flex items-center justify-center transition-colors"
+                                                                title="Batalkan santri ini">
+                                                                ✕
+                                                            </button>
+                                                        </div>
+                                                    </div>
+
+                                                    {{-- Baris 2: Lokasi & Inline Controls (Sesi 1-klik, Hari, Catatan) --}}
+                                                    <div class="flex items-center justify-between gap-1.5 text-[10px]">
+                                                        <div class="text-slate-400 font-mono truncate max-w-[85px] sm:max-w-[110px]" title="{{ $selStd['location'] }}">
+                                                            {{ $selStd['location'] }}
+                                                        </div>
+
+                                                        <div class="flex items-center gap-1 shrink-0">
+                                                            {{-- Sesi Segmented Pill Buttons (1-Klik Ganti) --}}
+                                                            <div class="inline-flex rounded-lg p-0.5 bg-slate-100 dark:bg-slate-800 border border-slate-200/70 dark:border-slate-700/80">
+                                                                <button type="button" wire:click="setStudentSession('{{ $selStd['id'] }}', '2x')"
+                                                                    class="px-1.5 py-0.5 rounded-md font-black text-[9px] transition-all {{ $currentSesi === '2x' ? 'bg-amber-500 text-white shadow-2xs' : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200' }}"
+                                                                    title="2x Makan (Pagi & Sore)">
+                                                                    2x
+                                                                </button>
+                                                                <button type="button" wire:click="setStudentSession('{{ $selStd['id'] }}', 'pagi')"
+                                                                    class="px-1.5 py-0.5 rounded-md font-black text-[9px] transition-all {{ $currentSesi === 'pagi' ? 'bg-sky-500 text-white shadow-2xs' : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200' }}"
+                                                                    title="1x Saja (Pagi)">
+                                                                    Pagi
+                                                                </button>
+                                                                <button type="button" wire:click="setStudentSession('{{ $selStd['id'] }}', 'sore')"
+                                                                    class="px-1.5 py-0.5 rounded-md font-black text-[9px] transition-all {{ $currentSesi === 'sore' ? 'bg-indigo-500 text-white shadow-2xs' : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200' }}"
+                                                                    title="1x Saja (Sore)">
+                                                                    Sore
+                                                                </button>
+                                                            </div>
+
+                                                            {{-- Hari Input --}}
+                                                            <div class="inline-flex items-center gap-0.5">
+                                                                <input type="number" min="1" max="31" wire:model.live.debounce.300ms="bulkDays.{{ $selStd['id'] }}"
+                                                                    class="w-10 px-1 py-0.5 text-[10px] font-mono font-black text-center border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 rounded-md outline-none focus:ring-1 focus:ring-amber-500">
+                                                                <span class="text-[9px] text-slate-400">hr</span>
+                                                            </div>
+
+                                                            {{-- Tombol Toggle Note --}}
+                                                            <button type="button" @click="showNote = !showNote"
+                                                                :class="showNote ? 'bg-amber-500/20 text-amber-600 dark:text-amber-400 font-black' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-200'"
+                                                                class="p-1 rounded-md text-[10px] transition-colors"
+                                                                title="Tambah / Ubah Catatan Santri Ini">
+                                                                📝
+                                                            </button>
+                                                        </div>
+                                                    </div>
+
+                                                    {{-- Baris 3 (Optional - Hanya tampil saat tombol 📝 diklik) --}}
+                                                    <div x-show="showNote" x-transition class="pt-0.5">
+                                                        <input type="text" placeholder="Catatan santri ini..." wire:model.live.debounce.400ms="bulkNotes.{{ $selStd['id'] }}"
+                                                            class="w-full px-2 py-0.5 text-[10px] border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-200 rounded-md outline-none focus:ring-1 focus:ring-amber-500">
+                                                    </div>
+                                                </div>
+                                            @endforeach
+                                        </div>
+                                    @endif
+                                </div>
+                            </div>
+                        </div>
+
+                    {{-- ══════════════════════════════════════════════════════════ --}}
+                    {{-- TAB 2: INPUT CEPAT 1 SANTRI (SINGLE MODE)                  --}}
+                    {{-- ══════════════════════════════════════════════════════════ --}}
+                    @elseif($addTab === 'single')
+                        <div class="max-w-xl mx-auto py-2 sm:py-4 space-y-4">
+                            
+                            {{-- Step 1: Input Cari Santri --}}
+                            <div class="space-y-1.5">
+                                <label class="block text-xs font-black text-slate-800 dark:text-slate-200 uppercase tracking-wide">
+                                    🔍 Cari Santri
+                                </label>
+                                <div class="relative">
+                                    <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-400 pointer-events-none text-sm">🔍</span>
+                                    <input type="text" wire:model.live.debounce.250ms="singleSearchQuery"
+                                        placeholder="Ketik nama lengkap, NIS, atau NIK santri..."
+                                        class="w-full pl-10 pr-10 py-2.5 text-xs font-bold border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 rounded-2xl text-slate-900 dark:text-white focus:ring-2 focus:ring-amber-500/30 outline-none transition-all">
+                                    @if($singleSelectedPersonId || $singleSearchQuery)
+                                        <button type="button" wire:click="clearSingleSelectedStudent"
+                                            class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 font-bold text-sm">
+                                            ✕
+                                        </button>
+                                    @endif
+                                </div>
+
+                                {{-- Dropdown Hasil Pencarian Single --}}
+                                @if(!empty($singleSearchResults))
+                                    <div class="border border-slate-200 dark:border-slate-800 rounded-2xl bg-white dark:bg-slate-900 shadow-xl overflow-hidden divide-y divide-slate-100 dark:divide-slate-800/80 max-h-56 overflow-y-auto">
+                                        @foreach($singleSearchResults as $sr)
+                                            <div wire:key="single-search-result-{{ $sr['id'] }}"
+                                                @if(!$sr['is_registered']) wire:click="selectSingleStudent('{{ $sr['id'] }}')" @endif
+                                                class="p-3 flex items-center justify-between transition-colors
+                                                {{ $sr['is_registered'] ? 'bg-slate-50/70 dark:bg-slate-950/40 opacity-60 cursor-not-allowed' : 'hover:bg-amber-50 dark:hover:bg-amber-950/20 cursor-pointer' }}">
+                                                <div class="flex items-center gap-2.5">
+                                                    <span class="w-8 h-8 rounded-xl {{ $sr['gender'] === 'P' ? 'bg-purple-500/10 text-purple-600' : 'bg-amber-500/10 text-amber-600' }} flex items-center justify-center font-bold text-xs">
+                                                        {{ $sr['gender'] === 'P' ? '👧' : '👦' }}
+                                                    </span>
+                                                    <div>
+                                                        <div class="font-black text-slate-900 dark:text-slate-100 text-xs">
+                                                            {{ $sr['name'] }}
+                                                        </div>
+                                                        <div class="text-[10px] text-slate-400 font-mono">
+                                                            {{ $sr['location'] }}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                @if($sr['is_registered'])
+                                                    <span class="px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-600 text-[9px] font-black uppercase">
+                                                        Sudah Terdaftar
+                                                    </span>
+                                                @else
+                                                    <span class="px-2.5 py-1 rounded-xl bg-amber-500 text-white text-[10px] font-extrabold shadow-xs">
+                                                        Pilih Santri 👉
+                                                    </span>
+                                                @endif
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                @endif
+                            </div>
+
+                            {{-- Step 2: Form Konfigurasi Santri Terpilih --}}
+                            @if($singleSelectedPerson)
+                                <div class="bg-amber-50/40 dark:bg-amber-950/20 border border-amber-200/80 dark:border-amber-900/60 rounded-3xl p-4 sm:p-5 space-y-4 shadow-sm animate-fade-in">
+                                    
+                                    {{-- Info Card Santri --}}
+                                    <div class="flex items-center justify-between pb-3 border-b border-amber-200/60 dark:border-amber-900/40">
+                                        <div class="flex items-center gap-3">
+                                            <div class="w-11 h-11 rounded-2xl {{ $singleSelectedPerson['gender'] === 'P' ? 'bg-purple-500/15 text-purple-600' : 'bg-amber-500/15 text-amber-600' }} flex items-center justify-center text-2xl shrink-0 shadow-2xs">
+                                                {{ $singleSelectedPerson['gender'] === 'P' ? '👧' : '👦' }}
+                                            </div>
+                                            <div>
+                                                <div class="flex items-center gap-2">
+                                                    <h4 class="font-black text-slate-900 dark:text-slate-100 text-sm sm:text-base">
+                                                        {{ $singleSelectedPerson['name'] }}
+                                                    </h4>
+                                                    <span class="px-1.5 py-0.5 rounded font-black text-[9px] {{ $singleSelectedPerson['gender'] === 'P' ? 'bg-purple-500/15 text-purple-600' : 'bg-amber-500/15 text-amber-600' }}">
+                                                        {{ $singleSelectedPerson['gender'] === 'P' ? 'Santri Putri' : 'Santri Putra' }}
+                                                    </span>
+                                                </div>
+                                                <div class="text-[10px] text-slate-500 dark:text-slate-400 font-mono mt-0.5">
+                                                    🏢 {{ $singleSelectedPerson['location'] }}
                                                 </div>
                                             </div>
                                         </div>
+
+                                        <button type="button" wire:click="clearSingleSelectedStudent"
+                                            class="text-[10px] font-bold text-slate-400 hover:text-rose-500 transition-colors">
+                                            Ganti Santri
+                                        </button>
                                     </div>
-                                @endforeach
-                            </div>
+
+                                    @if($singleSelectedPerson['is_registered'])
+                                        <div class="p-3 bg-rose-500/10 border border-rose-500/30 text-rose-600 dark:text-rose-300 rounded-xl text-xs font-bold flex items-center gap-2">
+                                            <span>⚠️</span>
+                                            <span>Santri ini sudah terdaftar pada periode {{ $this->monthLabel }}. Tidak dapat didaftarkan ganda.</span>
+                                        </div>
+                                    @else
+                                        {{-- Setting Sesi & Hari --}}
+                                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                            <div>
+                                                <label class="block text-[10px] font-extrabold text-slate-500 uppercase tracking-wider mb-1">
+                                                    Pilihan Sesi Makan
+                                                </label>
+                                                <select wire:model.live="singleSesi"
+                                                    class="w-full px-3 py-2 text-xs font-bold border border-amber-300 dark:border-amber-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white rounded-xl outline-none focus:ring-2 focus:ring-amber-500/30">
+                                                    <option value="2x">🍽️ 2x Makan (Pagi & Sore)</option>
+                                                    <option value="pagi">🌅 1x Pagi Saja</option>
+                                                    <option value="sore">🌆 1x Sore Saja</option>
+                                                </select>
+                                            </div>
+
+                                            <div>
+                                                <label class="block text-[10px] font-extrabold text-slate-500 uppercase tracking-wider mb-1">
+                                                    Jumlah Hari Aktif
+                                                </label>
+                                                <input type="number" min="1" max="31" wire:model.live="singleDays"
+                                                    class="w-full px-3 py-2 text-xs font-mono font-black border border-amber-300 dark:border-amber-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white rounded-xl outline-none focus:ring-2 focus:ring-amber-500/30">
+                                            </div>
+                                        </div>
+
+                                        {{-- Catatan --}}
+                                        <div>
+                                            <label class="block text-[10px] font-extrabold text-slate-500 uppercase tracking-wider mb-1">
+                                                Catatan Tambahan (Opsional)
+                                            </label>
+                                            <input type="text" placeholder="Contoh: Mulai aktif katering tgl 5..." wire:model.live="singleNotes"
+                                                class="w-full px-3 py-2 text-xs border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-amber-500/30">
+                                        </div>
+
+                                        {{-- Estimasi Biaya Box --}}
+                                        @php
+                                            $rate = $this->activePeriod ? $this->activePeriod->getTarifPerHariForGender($singleSelectedPerson['gender']) : 0;
+                                            $mult = match($singleSesi) { '2x' => 2, default => 1 };
+                                            $singleTotal = $rate * (int)$singleDays * $mult;
+                                        @endphp
+                                        <div class="p-3 bg-white dark:bg-slate-900 rounded-2xl border border-amber-200/80 dark:border-amber-900/60 flex items-center justify-between">
+                                            <div>
+                                                <span class="text-[9px] font-extrabold text-slate-400 uppercase tracking-wider block">Total Tagihan Katering:</span>
+                                                <span class="text-xs text-slate-500 font-semibold">
+                                                    Rp {{ number_format($rate, 0, ',', '.') }}/hari × {{ $singleDays }} hari × {{ $mult }} sesi
+                                                </span>
+                                            </div>
+                                            <span class="text-sm sm:text-base font-black text-amber-600 dark:text-amber-400">
+                                                Rp {{ number_format($singleTotal, 0, ',', '.') }}
+                                            </span>
+                                        </div>
+
+                                        {{-- Tombol Buka Konfirmasi Simpan --}}
+                                        <button type="button" @click="showConfirmSingleSave = true"
+                                            class="w-full py-3 bg-amber-500 hover:bg-amber-600 text-white rounded-2xl text-xs font-black uppercase tracking-wider transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer active:scale-95">
+                                            💾 Daftarkan {{ $singleSelectedPerson['name'] }}
+                                        </button>
+                                    @endif
+                                </div>
+                            @endif
                         </div>
                     @endif
 
                     @if($flashError)
-                        <p class="text-rose-500 text-xs font-bold">⚠️ {{ $flashError }}</p>
+                        <div class="p-3 bg-rose-500/10 border border-rose-500/30 text-rose-600 dark:text-rose-300 rounded-xl text-xs font-bold flex items-center gap-2">
+                            <span>⚠️</span>
+                            <span>{{ $flashError }}</span>
+                        </div>
                     @endif
                     @if($flashSuccess)
-                        <p class="text-emerald-500 text-xs font-bold">✓ {{ $flashSuccess }}</p>
+                        <div class="p-3 bg-emerald-500/10 border border-emerald-500/30 text-emerald-600 dark:text-emerald-300 rounded-xl text-xs font-bold flex items-center gap-2">
+                            <span>✓</span>
+                            <span>{{ $flashSuccess }}</span>
+                        </div>
                     @endif
                 </div>
 
-                {{-- Footer --}}
-                <div class="px-4 sm:px-6 py-4 border-t border-slate-100 dark:border-slate-800 flex justify-between items-center bg-slate-50/50 dark:bg-slate-950/20 shrink-0">
-                    <span class="text-xs text-slate-500 font-semibold">
-                        Terpilih: <strong class="text-amber-600 dark:text-amber-400 font-black text-xs sm:text-sm">{{ $selectedCount }} Santri</strong>
-                    </span>
-                    <div class="flex items-center gap-2 sm:gap-3">
-                        <button type="button" wire:click="closeAddModal"
-                            class="px-3.5 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-xl text-xs font-bold transition-all">
-                            Batal
-                        </button>
-                        <button type="button" wire:click="addPesertaBulk" @if($selectedCount === 0) disabled @endif
-                            class="px-5 sm:px-6 py-2.5 rounded-xl text-xs font-extrabold transition-all shadow-md
-                                {{ $selectedCount > 0 ? 'bg-amber-500 hover:bg-amber-600 text-white' : 'bg-slate-200 dark:bg-slate-800 text-slate-400 cursor-not-allowed' }}">
-                            💾 SIMPAN {{ $selectedCount }} PESERTA MAJEK
-                        </button>
+                {{-- Footer Modal (Khusus Tab Bulk) --}}
+                @if($addTab === 'bulk')
+                    <div class="px-4 sm:px-6 py-3.5 border-t border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-50/60 dark:bg-slate-950/30 shrink-0">
+                        <div class="flex items-center justify-between sm:justify-start gap-2 text-xs w-full sm:w-auto">
+                            <div class="flex items-center gap-2">
+                                <span class="text-slate-500 font-semibold">Total Terpilih:</span>
+                                
+                                {{-- Di mobile, badge ini bisa diklik untuk langsung beralih ke Santri Terpilih tanpa scroll --}}
+                                <button type="button" @click="mobileTab = (mobileTab === 'list' ? 'selected' : 'list')"
+                                    class="lg:pointer-events-none px-2 py-0.5 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-amber-800 dark:text-amber-300 font-black flex items-center gap-1 transition-all"
+                                    title="Klik untuk melihat/mengatur santri terpilih di HP">
+                                    <span>{{ $selectedCount }} Santri</span>
+                                    <span class="lg:hidden text-[9px] underline ml-0.5" x-text="mobileTab === 'list' ? 'Lihat ➔' : 'Daftar ➔'"></span>
+                                </button>
+
+                                @if($selectedCount > 0)
+                                    <span class="text-slate-400">|</span>
+                                    <span class="font-extrabold text-slate-700 dark:text-slate-300 text-[11px] sm:text-xs">
+                                        Total Rp {{ number_format($totalEstimasi, 0, ',', '.') }}
+                                    </span>
+                                @endif
+                            </div>
+
+                            {{-- Tombol Aksi Cepat Mobile di Footer --}}
+                            @if($selectedCount > 0)
+                                <button type="button" @click="mobileTab = (mobileTab === 'list' ? 'selected' : 'list')"
+                                    class="lg:hidden px-2.5 py-1 rounded-xl bg-amber-500/10 border border-amber-400/40 text-amber-700 dark:text-amber-300 font-black text-[11px] flex items-center gap-1 shadow-2xs">
+                                    <span x-text="mobileTab === 'list' ? '🧺 Rincian (' + '{{ $selectedCount }}' + ')' : '📋 + Pilih Lagi'"></span>
+                                </button>
+                            @endif
+                        </div>
+
+                        <div class="flex items-center justify-end gap-2.5">
+                            <button type="button" wire:click="closeAddModal"
+                                class="px-4 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-xl text-xs font-bold transition-all">
+                                Batal
+                            </button>
+                            <button type="button" @if($selectedCount > 0) @click="showConfirmSave = true" @endif @if($selectedCount === 0) disabled @endif
+                                class="px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all shadow-md flex items-center gap-2
+                                    {{ $selectedCount > 0 ? 'bg-amber-500 hover:bg-amber-600 text-white cursor-pointer active:scale-95' : 'bg-slate-200 dark:bg-slate-800 text-slate-400 cursor-not-allowed' }}">
+                                <span>💾</span>
+                                <span>SIMPAN {{ $selectedCount }} PESERTA MAJEK</span>
+                            </button>
+                        </div>
+                    </div>
+                @endif
+
+                {{-- ══════════════════════════════════════════════════════════════ --}}
+                {{-- DIALOG KONFIRMASI SIMPAN MASSAL (ALERT ELEGAN)                 --}}
+                {{-- ══════════════════════════════════════════════════════════════ --}}
+                <div x-show="showConfirmSave"
+                     x-transition:enter="transition ease-out duration-200"
+                     x-transition:enter-start="opacity-0"
+                     x-transition:enter-end="opacity-100"
+                     x-transition:leave="transition ease-in duration-150"
+                     x-transition:leave-start="opacity-100"
+                     x-transition:leave-end="opacity-0"
+                     class="fixed inset-0 z-[70] flex items-center justify-center p-3 sm:p-4 bg-slate-950/75 backdrop-blur-sm"
+                     style="display: none;"
+                     @click.self="showConfirmSave = false"
+                     @keydown.escape.window="showConfirmSave = false">
+                    
+                    <div x-show="showConfirmSave"
+                         x-transition:enter="transition ease-out duration-200"
+                         x-transition:enter-start="opacity-0 scale-95 translate-y-2"
+                         x-transition:enter-end="opacity-100 scale-100 translate-y-0"
+                         x-transition:leave="transition ease-in duration-150"
+                         x-transition:leave-start="opacity-100 scale-100"
+                         x-transition:leave-end="opacity-0 scale-95"
+                         class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-2xl w-full max-w-md overflow-hidden text-center p-5 sm:p-6 space-y-4">
+                        
+                        {{-- Icon Header --}}
+                        <div class="w-14 h-14 rounded-2xl bg-amber-500/15 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400 flex items-center justify-center mx-auto text-2xl shadow-inner border border-amber-500/20">
+                            🍱
+                        </div>
+
+                        <div>
+                            <div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-500/10 text-amber-700 dark:text-amber-300 font-extrabold text-[10px] uppercase tracking-wider mb-1.5">
+                                <span>🛡️ Konfirmasi Simpan</span>
+                                <span>•</span>
+                                <span>{{ $this->monthLabel }}</span>
+                            </div>
+                            <h3 class="text-base font-black text-slate-900 dark:text-white uppercase tracking-wide">
+                                Daftarkan Peserta Majek?
+                            </h3>
+                            <p class="text-xs text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">
+                                Pastikan santri dan sesi makan sudah sesuai sebelum pendaftaran disimpan.
+                            </p>
+                        </div>
+
+                        {{-- Ringkasan Peserta & Estimasi --}}
+                        <div class="bg-slate-50 dark:bg-slate-950/60 rounded-2xl p-3.5 border border-slate-200/80 dark:border-slate-800 text-left space-y-2 text-xs">
+                            <div class="flex items-center justify-between pb-2 border-b border-slate-200/60 dark:border-slate-800/80">
+                                <span class="text-slate-500 font-bold">Total Santri Terpilih:</span>
+                                <span class="px-2 py-0.5 rounded-lg bg-amber-500/20 text-amber-800 dark:text-amber-300 font-black">
+                                    {{ $selectedCount }} Santri
+                                </span>
+                            </div>
+                            <div class="flex items-center justify-between pb-2 border-b border-slate-200/60 dark:border-slate-800/80">
+                                <span class="text-slate-500 font-bold">Total Tagihan Katering:</span>
+                                <span class="font-mono font-black text-amber-600 dark:text-amber-400 text-sm">
+                                    Rp {{ number_format($totalEstimasi, 0, ',', '.') }}
+                                </span>
+                            </div>
+                            
+                            {{-- Rincian Sesi Makan --}}
+                            <div class="flex items-center justify-between text-[11px] text-slate-500 pt-0.5">
+                                <span class="font-bold">Rincian Sesi:</span>
+                                <div class="flex items-center gap-1 font-bold">
+                                    <span class="px-1.5 py-0.5 rounded bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 text-[10px]">
+                                        2x: {{ count(array_filter($selectedList, fn($s) => ($bulkSessions[$s['id']] ?? $s['session'] ?? '2x') === '2x')) }}
+                                    </span>
+                                    <span class="px-1.5 py-0.5 rounded bg-sky-100 dark:bg-sky-950/60 text-sky-700 dark:text-sky-300 text-[10px]">
+                                        Pagi: {{ count(array_filter($selectedList, fn($s) => ($bulkSessions[$s['id']] ?? $s['session'] ?? '2x') === 'pagi')) }}
+                                    </span>
+                                    <span class="px-1.5 py-0.5 rounded bg-indigo-100 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 text-[10px]">
+                                        Sore: {{ count(array_filter($selectedList, fn($s) => ($bulkSessions[$s['id']] ?? $s['session'] ?? '2x') === 'sore')) }}
+                                    </span>
+                                </div>
+                            </div>
+
+                            {{-- Cuplikan Nama Santri --}}
+                            <div class="pt-1 border-t border-slate-200/50 dark:border-slate-800/60">
+                                <span class="text-[9px] font-extrabold text-slate-400 uppercase tracking-wider block mb-1">Daftar Santri:</span>
+                                <div class="flex flex-wrap gap-1 max-h-20 overflow-y-auto pr-1">
+                                    @foreach(array_slice($selectedList, 0, 8) as $s)
+                                        <span class="px-2 py-0.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 text-[10px] font-bold text-slate-700 dark:text-slate-300 truncate max-w-[125px]">
+                                            {{ $s['gender'] === 'P' ? '👧' : '👦' }} {{ $s['name'] }}
+                                        </span>
+                                    @endforeach
+                                    @if($selectedCount > 8)
+                                        <span class="px-2 py-0.5 rounded-lg bg-amber-500/10 text-amber-700 dark:text-amber-300 text-[10px] font-black">
+                                            +{{ $selectedCount - 8 }} santri lainnya
+                                        </span>
+                                    @endif
+                                </div>
+                            </div>
+                        </div>
+
+                        <p class="text-[10px] text-slate-400 dark:text-slate-500 text-center">
+                            ℹ️ Tagihan katering akan langsung aktif dan muncul di rekapitulasi Majek.
+                        </p>
+
+                        {{-- Action Buttons --}}
+                        <div class="flex items-center gap-2.5 pt-1">
+                            <button type="button" @click="showConfirmSave = false"
+                                class="flex-1 py-2.5 px-4 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl text-xs font-bold transition-all">
+                                Periksa Lagi
+                            </button>
+                            <button type="button" @click="showConfirmSave = false; $wire.addPesertaBulk()" wire:loading.attr="disabled"
+                                class="flex-1 py-2.5 px-4 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white rounded-xl text-xs font-black uppercase tracking-wider transition-all shadow-md flex items-center justify-center gap-1.5 cursor-pointer active:scale-95">
+                                <span wire:loading.remove wire:target="addPesertaBulk">🚀 Ya, Daftarkan</span>
+                                <span wire:loading wire:target="addPesertaBulk" class="inline-flex items-center gap-1">
+                                    <svg class="animate-spin h-3.5 w-3.5 text-white" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg>
+                                    Menyimpan...
+                                </span>
+                            </button>
+                        </div>
                     </div>
                 </div>
+
+                {{-- ══════════════════════════════════════════════════════════════ --}}
+                {{-- DIALOG KONFIRMASI SIMPAN CEPAT 1 SANTRI (ALERT ELEGAN)         --}}
+                {{-- ══════════════════════════════════════════════════════════════ --}}
+                @if($singleSelectedPerson)
+                    <div x-show="showConfirmSingleSave"
+                         x-transition:enter="transition ease-out duration-200"
+                         x-transition:enter-start="opacity-0"
+                         x-transition:enter-end="opacity-100"
+                         x-transition:leave="transition ease-in duration-150"
+                         x-transition:leave-start="opacity-100"
+                         x-transition:leave-end="opacity-0"
+                         class="fixed inset-0 z-[70] flex items-center justify-center p-3 sm:p-4 bg-slate-950/75 backdrop-blur-sm"
+                         style="display: none;"
+                         @click.self="showConfirmSingleSave = false"
+                         @keydown.escape.window="showConfirmSingleSave = false">
+                        
+                        <div x-show="showConfirmSingleSave"
+                             x-transition:enter="transition ease-out duration-200"
+                             x-transition:enter-start="opacity-0 scale-95 translate-y-2"
+                             x-transition:enter-end="opacity-100 scale-100 translate-y-0"
+                             x-transition:leave="transition ease-in duration-150"
+                             x-transition:leave-start="opacity-100 scale-100"
+                             x-transition:leave-end="opacity-0 scale-95"
+                             class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-2xl w-full max-w-md overflow-hidden text-center p-5 sm:p-6 space-y-4">
+                            
+                            <div class="w-14 h-14 rounded-2xl bg-amber-500/15 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400 flex items-center justify-center mx-auto text-2xl shadow-inner border border-amber-500/20">
+                                ⚡
+                            </div>
+
+                            <div>
+                                <div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-500/10 text-amber-700 dark:text-amber-300 font-extrabold text-[10px] uppercase tracking-wider mb-1.5">
+                                    <span>🛡️ Konfirmasi Simpan</span>
+                                    <span>•</span>
+                                    <span>{{ $this->monthLabel }}</span>
+                                </div>
+                                <h3 class="text-base font-black text-slate-900 dark:text-white uppercase tracking-wide">
+                                    Daftarkan Santri Ini?
+                                </h3>
+                            </div>
+
+                            <div class="bg-slate-50 dark:bg-slate-950/60 rounded-2xl p-4 border border-slate-200/80 dark:border-slate-800 text-left space-y-2 text-xs">
+                                <div class="flex items-center justify-between pb-2 border-b border-slate-200/60 dark:border-slate-800">
+                                    <span class="text-slate-500 font-bold">Nama Santri:</span>
+                                    <span class="font-extrabold text-slate-900 dark:text-white flex items-center gap-1">
+                                        {{ $singleSelectedPerson['gender'] === 'P' ? '👧' : '👦' }} {{ $singleSelectedPerson['name'] }}
+                                    </span>
+                                </div>
+                                <div class="flex items-center justify-between pb-2 border-b border-slate-200/60 dark:border-slate-800">
+                                    <span class="text-slate-500 font-bold">Pilihan Sesi:</span>
+                                    <span class="px-2 py-0.5 rounded-md font-bold uppercase text-[10px]
+                                        {{ $singleSesi === '2x' ? 'bg-amber-500/15 text-amber-700 dark:text-amber-300' : ($singleSesi === 'pagi' ? 'bg-sky-500/15 text-sky-700 dark:text-sky-300' : 'bg-indigo-500/15 text-indigo-700 dark:text-indigo-300') }}">
+                                        {{ $singleSesi === '2x' ? '🍽️ 2x Makan' : ($singleSesi === 'pagi' ? '🌅 1x Pagi Saja' : '🌆 1x Sore Saja') }}
+                                    </span>
+                                </div>
+                                <div class="flex items-center justify-between pb-2 border-b border-slate-200/60 dark:border-slate-800">
+                                    <span class="text-slate-500 font-bold">Jumlah Hari:</span>
+                                    <span class="font-mono font-black text-slate-800 dark:text-slate-200">{{ $singleDays }} Hari</span>
+                                </div>
+                                <div class="flex items-center justify-between pt-0.5">
+                                    <span class="text-slate-500 font-bold">Total Tagihan:</span>
+                                    <span class="font-mono font-black text-amber-600 dark:text-amber-400 text-sm">
+                                        Rp {{ number_format($singleTotal, 0, ',', '.') }}
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div class="flex items-center gap-2.5 pt-1">
+                                <button type="button" @click="showConfirmSingleSave = false"
+                                    class="flex-1 py-2.5 px-4 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl text-xs font-bold transition-all">
+                                    Batal
+                                </button>
+                                <button type="button" @click="showConfirmSingleSave = false; $wire.addSinglePeserta()" wire:loading.attr="disabled"
+                                    class="flex-1 py-2.5 px-4 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white rounded-xl text-xs font-black uppercase tracking-wider transition-all shadow-md flex items-center justify-center gap-1.5 cursor-pointer active:scale-95">
+                                    <span wire:loading.remove wire:target="addSinglePeserta">🚀 Ya, Daftarkan</span>
+                                    <span wire:loading wire:target="addSinglePeserta" class="inline-flex items-center gap-1">
+                                        <svg class="animate-spin h-3.5 w-3.5 text-white" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg>
+                                        Menyimpan...
+                                    </span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                @endif
             </div>
         </div>
     @endif
