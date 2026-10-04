@@ -828,9 +828,9 @@
 
                             <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
                                 
-                                {{-- ─── KOLOM KIRI (8/12 atau 12/12): DAFTAR SANTRI UNTUK DICENTANG ─── --}}
+                                {{-- ─── KOLOM KIRI (8/12): DAFTAR SANTRI UNTUK DICENTANG ─── --}}
                                 <div :class="mobileTab === 'list' ? 'flex' : 'hidden lg:flex'"
-                                     class="{{ $showSelectedPanel ? 'lg:col-span-8' : 'lg:col-span-12' }} space-y-2.5 flex-col transition-all duration-200">
+                                     class="w-full lg:col-span-8 space-y-2.5 flex-col transition-all duration-200">
                                     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 px-1">
                                         <div class="flex items-center gap-2">
                                             <span class="text-xs font-black text-slate-800 dark:text-slate-200 uppercase tracking-wide">
@@ -849,16 +849,6 @@
                                             <button type="button" wire:click="clearAllBulkSelections"
                                                 class="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 text-rose-500 rounded-lg text-[10px] font-extrabold transition-all">
                                                 ✕ Bersihkan
-                                            </button>
-                                            {{-- Toggle Panel Terpilih di Desktop --}}
-                                            <button type="button" wire:click="toggleSelectedPanel"
-                                                class="hidden lg:flex px-2.5 py-1 rounded-lg text-[10px] font-extrabold transition-all items-center gap-1 border border-slate-200/80 dark:border-slate-700 {{ $showSelectedPanel ? 'bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-300' : 'bg-amber-500 hover:bg-amber-600 text-white shadow-2xs' }}"
-                                                title="{{ $showSelectedPanel ? 'Ciutkan panel kanan agar tabel santri tampil full width' : 'Buka panel rincian santri terpilih' }}">
-                                                @if($showSelectedPanel)
-                                                    <span>◀ Ciutkan Panel</span>
-                                                @else
-                                                    <span>🧺 Buka Panel Terpilih (<strong>{{ $selectedCount }}</strong>)</span>
-                                                @endif
                                             </button>
                                         </div>
                                     </div>
@@ -980,7 +970,7 @@
 
                                 {{-- ─── KOLOM KANAN (4/12): KERANJANG SANTRI TERPILIH (COMPACT) ─── --}}
                                 <div :class="mobileTab === 'selected' ? 'flex' : 'hidden lg:flex'"
-                                     class="{{ $showSelectedPanel ? 'lg:col-span-4' : 'lg:hidden' }} bg-slate-50/70 dark:bg-slate-900/50 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-3 space-y-2.5 flex-col transition-all duration-200 shadow-xs">
+                                     class="w-full lg:col-span-4 bg-slate-50/70 dark:bg-slate-900/50 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-3 space-y-2.5 flex-col transition-all duration-200 shadow-xs">
                                     {{-- Header Keranjang --}}
                                     <div class="flex items-center justify-between border-b border-slate-200/60 dark:border-slate-800 pb-2">
                                         <div>
