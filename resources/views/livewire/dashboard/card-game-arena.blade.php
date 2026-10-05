@@ -222,6 +222,12 @@
 <div x-data="{
     audioCtx: null,
     soundEnabled: true,
+    bgmEnabled: false,
+    bgmInterval: null,
+    bgmGainNode: null,
+    bgmVinylSource: null,
+    bgmStep: 0,
+    bgmBpm: 72,
     isFlipped: false,
     isPeeking: false,
     peekTimeout: null,
@@ -523,6 +529,300 @@
                 confetti.remove();
             }, 1800);
         }
+    },
+
+    toggleBgm() {
+        this.initAudio();
+        if (!this.audioCtx) return;
+
+        this.bgmEnabled = !this.bgmEnabled;
+        if (this.bgmEnabled) {
+            this.startBgm();
+        } else {
+            this.stopBgm();
+        }
+    },
+
+    startBgm() {
+        if (!this.audioCtx) return;
+        const ctx = this.audioCtx;
+
+        // Master BGM gain node with soft warm volume
+        if (!this.bgmGainNode) {
+            this.bgmGainNode = ctx.createGain();
+            this.bgmGainNode.connect(ctx.destination);
+        }
+        this.bgmGainNode.gain.cancelScheduledValues(ctx.currentTime);
+        this.bgmGainNode.gain.setValueAtTime(0, ctx.currentTime);
+        this.bgmGainNode.gain.linearRampToValueAtTime(0.24, ctx.currentTime + 1.2);
+
+        // 1. Subtle Vinyl Crackle & Tape Ambience
+        this.startVinylCrackle();
+
+        // 2. Jazz Lounge Chord Progression (Frequencies in Hz)
+        // Dm9 -> G13 -> Cmaj9 -> Am9
+        const chords = [
+            { chord: [146.83, 174.61, 220.00, 261.63, 329.63], bass: 73.42 }, // Dm9
+            { chord: [98.00, 174.61, 246.94, 329.63], bass: 49.00 },          // G13
+            { chord: [130.81, 164.81, 196.00, 246.94, 293.66], bass: 65.41 }, // Cmaj9
+            { chord: [110.00, 196.00, 261.63, 329.63], bass: 55.00 }          // Am9
+        ];
+
+        this.bgmStep = 0;
+        const beatDuration = 60 / this.bgmBpm; // ~0.833s per beat (4/4 time)
+        const stepDuration = beatDuration / 2; // 8th note ~0.416s
+
+        let nextNoteTime = ctx.currentTime + 0.1;
+        
+        const scheduleLoop = () => {
+            if (!this.bgmEnabled) return;
+
+            while (nextNoteTime < ctx.currentTime + 0.5) {
+                const currentStep = this.bgmStep % 32; // 32 8th-notes (4 bars x 8)
+                const barIndex = Math.floor(currentStep / 8);
+                const stepInBar = currentStep % 8;
+                const chordData = chords[barIndex];
+
+                // Play Rhodes Piano Chord on downbeat (step 0) and syncopated beat (step 4)
+                if (stepInBar === 0) {
+                    this.playRhodesChord(chordData.chord, nextNoteTime, beatDuration * 2.2);
+                    this.playBassNote(chordData.bass, nextNoteTime, beatDuration * 1.8);
+                } else if (stepInBar === 4) {
+                    this.playRhodesChord(chordData.chord, nextNoteTime, beatDuration * 1.6, 0.7);
+                    this.playBassNote(chordData.bass * 1.5, nextNoteTime, beatDuration * 1.4);
+                }
+
+                // Lofi Percussion:
+                // Soft Kick on step 0 and step 5
+                if (stepInBar === 0 || stepInBar === 5) {
+                    this.playLofiKick(nextNoteTime);
+                }
+                // Soft Snare / Rimshot on step 2 and step 6 (Beat 2 and 4)
+                if (stepInBar === 2 || stepInBar === 6) {
+                    this.playLofiRim(nextNoteTime);
+                }
+                // Soft Shaker on every 8th note with subtle swing
+                this.playLofiShaker(nextNoteTime, (stepInBar % 2 === 1) ? 0.08 : 0.04);
+
+                // Swing timing on odd eighth notes:
+                const swing = (stepInBar % 2 === 0) ? stepDuration * 1.08 : stepDuration * 0.92;
+                nextNoteTime += swing;
+                this.bgmStep++;
+            }
+        };
+
+        clearInterval(this.bgmInterval);
+        this.bgmInterval = setInterval(scheduleLoop, 120);
+        scheduleLoop();
+    },
+
+    stopBgm() {
+        clearInterval(this.bgmInterval);
+        this.bgmInterval = null;
+
+        if (this.bgmGainNode && this.audioCtx) {
+            const ctx = this.audioCtx;
+            this.bgmGainNode.gain.cancelScheduledValues(ctx.currentTime);
+            this.bgmGainNode.gain.linearRampToValueAtTime(0.001, ctx.currentTime + 0.6);
+            setTimeout(() => {
+                this.stopVinylCrackle();
+            }, 650);
+        }
+    },
+
+    startVinylCrackle() {
+        if (!this.audioCtx || this.bgmVinylSource) return;
+        const ctx = this.audioCtx;
+        
+        // Procedural 3-second vinyl crackle buffer
+        const bufferSize = ctx.sampleRate * 3;
+        const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+        const data = buffer.getChannelData(0);
+        
+        for (let i = 0; i < bufferSize; i++) {
+            // Pinkish noise floor
+            let noise = (Math.random() * 2 - 1) * 0.012;
+            // Random tiny vinyl dust clicks
+            if (Math.random() < 0.0006) {
+                noise += (Math.random() * 2 - 1) * 0.32;
+            }
+            data[i] = noise;
+        }
+
+        const source = ctx.createBufferSource();
+        source.buffer = buffer;
+        source.loop = true;
+
+        const filter = ctx.createBiquadFilter();
+        filter.type = 'bandpass';
+        filter.frequency.setValueAtTime(1400, ctx.currentTime);
+        filter.Q.setValueAtTime(1.2, ctx.currentTime);
+
+        const gain = ctx.createGain();
+        gain.gain.setValueAtTime(0.035, ctx.currentTime);
+
+        source.connect(filter);
+        filter.connect(gain);
+        gain.connect(this.bgmGainNode);
+
+        source.start(0);
+        this.bgmVinylSource = source;
+    },
+
+    stopVinylCrackle() {
+        if (this.bgmVinylSource) {
+            try {
+                this.bgmVinylSource.stop();
+                this.bgmVinylSource.disconnect();
+            } catch (e) {}
+            this.bgmVinylSource = null;
+        }
+    },
+
+    playRhodesChord(frequencies, time, duration, volumeScale = 1.0) {
+        if (!this.audioCtx || !this.bgmGainNode) return;
+        const ctx = this.audioCtx;
+
+        frequencies.forEach((freq, idx) => {
+            const osc = ctx.createOscillator();
+            const osc2 = ctx.createOscillator();
+            const gain = ctx.createGain();
+            const filter = ctx.createBiquadFilter();
+
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(freq, time);
+
+            osc2.type = 'triangle';
+            osc2.frequency.setValueAtTime(freq * 1.002, time); // Subtle warm detune
+
+            filter.type = 'lowpass';
+            filter.frequency.setValueAtTime(1100, time);
+            filter.frequency.exponentialRampToValueAtTime(550, time + duration);
+
+            const baseVol = 0.024 * volumeScale;
+            gain.gain.setValueAtTime(0.0001, time);
+            gain.gain.linearRampToValueAtTime(baseVol, time + 0.035);
+            gain.gain.exponentialRampToValueAtTime(baseVol * 0.3, time + duration * 0.5);
+            gain.gain.exponentialRampToValueAtTime(0.00001, time + duration);
+
+            osc.connect(gain);
+            osc2.connect(gain);
+            gain.connect(filter);
+            filter.connect(this.bgmGainNode);
+
+            osc.start(time);
+            osc2.start(time);
+            osc.stop(time + duration + 0.1);
+            osc2.stop(time + duration + 0.1);
+        });
+    },
+
+    playBassNote(freq, time, duration) {
+        if (!this.audioCtx || !this.bgmGainNode) return;
+        const ctx = this.audioCtx;
+
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        const filter = ctx.createBiquadFilter();
+
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, time);
+
+        filter.type = 'lowpass';
+        filter.frequency.setValueAtTime(180, time);
+        filter.frequency.exponentialRampToValueAtTime(70, time + duration);
+
+        gain.gain.setValueAtTime(0.0001, time);
+        gain.gain.linearRampToValueAtTime(0.065, time + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.0001, time + duration);
+
+        osc.connect(filter);
+        filter.connect(gain);
+        gain.connect(this.bgmGainNode);
+
+        osc.start(time);
+        osc.stop(time + duration + 0.05);
+    },
+
+    playLofiKick(time) {
+        if (!this.audioCtx || !this.bgmGainNode) return;
+        const ctx = this.audioCtx;
+
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(80, time);
+        osc.frequency.exponentialRampToValueAtTime(35, time + 0.09);
+
+        gain.gain.setValueAtTime(0.065, time);
+        gain.gain.exponentialRampToValueAtTime(0.0001, time + 0.11);
+
+        osc.connect(gain);
+        gain.connect(this.bgmGainNode);
+
+        osc.start(time);
+        osc.stop(time + 0.12);
+    },
+
+    playLofiRim(time) {
+        if (!this.audioCtx || !this.bgmGainNode) return;
+        const ctx = this.audioCtx;
+
+        const bufferSize = ctx.sampleRate * 0.04;
+        const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+        const data = buffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) {
+            data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (bufferSize * 0.3));
+        }
+
+        const noise = ctx.createBufferSource();
+        noise.buffer = buffer;
+
+        const filter = ctx.createBiquadFilter();
+        filter.type = 'bandpass';
+        filter.frequency.setValueAtTime(2200, time);
+
+        const gain = ctx.createGain();
+        gain.gain.setValueAtTime(0.045, time);
+        gain.gain.exponentialRampToValueAtTime(0.0001, time + 0.04);
+
+        noise.connect(filter);
+        filter.connect(gain);
+        gain.connect(this.bgmGainNode);
+
+        noise.start(time);
+        noise.stop(time + 0.05);
+    },
+
+    playLofiShaker(time, vol = 0.05) {
+        if (!this.audioCtx || !this.bgmGainNode) return;
+        const ctx = this.audioCtx;
+
+        const bufferSize = ctx.sampleRate * 0.025;
+        const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+        const data = buffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) {
+            data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (bufferSize * 0.25));
+        }
+
+        const noise = ctx.createBufferSource();
+        noise.buffer = buffer;
+
+        const filter = ctx.createBiquadFilter();
+        filter.type = 'highpass';
+        filter.frequency.setValueAtTime(5500, time);
+
+        const gain = ctx.createGain();
+        gain.gain.setValueAtTime(vol, time);
+        gain.gain.exponentialRampToValueAtTime(0.0001, time + 0.025);
+
+        noise.connect(filter);
+        filter.connect(gain);
+        gain.connect(this.bgmGainNode);
+
+        noise.start(time);
+        noise.stop(time + 0.03);
     }
 }" 
 x-init="
@@ -677,13 +977,32 @@ class="relative w-full rounded-2xl sm:rounded-3xl overflow-hidden border border-
 
         <!-- Rules & Sound Control -->
         <div class="flex items-center gap-1.5 sm:gap-2 shrink-0">
+            <!-- 1. SFX Toggle -->
             <button 
                 type="button" 
                 @click="soundEnabled = !soundEnabled"
-                class="px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-xl border border-slate-700/80 bg-slate-900/80 hover:bg-slate-800 text-[11px] sm:text-xs font-semibold text-slate-300 transition flex items-center gap-1 shadow-sm"
+                class="px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-xl border border-slate-700/80 bg-slate-900/80 hover:bg-slate-800 text-[11px] sm:text-xs font-semibold text-slate-300 transition flex items-center gap-1 shadow-sm select-none cursor-pointer"
                 :title="soundEnabled ? 'Matikan Suara SFX' : 'Aktifkan Suara SFX'"
             >
-                <span x-text="soundEnabled ? '🔊 SFX' : '🔇 Bisu'"></span>
+                <span x-text="soundEnabled ? '🔊 SFX' : '🔇 SFX'"></span>
+            </button>
+
+            <!-- 2. Synthesized Lofi Casino Jazz BGM Toggle -->
+            <button 
+                type="button" 
+                @click="toggleBgm()"
+                class="px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-xl border transition flex items-center gap-1.5 shadow-sm text-[11px] sm:text-xs font-bold select-none cursor-pointer"
+                :class="bgmEnabled ? 'border-amber-400/80 bg-gradient-to-r from-amber-500/25 via-yellow-400/20 to-amber-500/25 text-amber-300 shadow-md shadow-amber-500/25 ring-1 ring-amber-400/50' : 'border-slate-700/80 bg-slate-900/80 hover:bg-slate-800 text-slate-400'"
+                :title="bgmEnabled ? 'Matikan Musik Lofi' : 'Putar Musik Lofi Jazz Kasino Santai (Nol Kuota/MP3)'"
+            >
+                <!-- Animated Equalizer Bars when playing -->
+                <div x-show="bgmEnabled" class="flex items-end gap-0.5 h-3 w-3 pointer-events-none" x-cloak>
+                    <span class="w-0.5 bg-amber-400 rounded-full animate-pulse h-full"></span>
+                    <span class="w-0.5 bg-yellow-300 rounded-full animate-bounce h-2/3"></span>
+                    <span class="w-0.5 bg-amber-400 rounded-full animate-pulse h-4/5"></span>
+                </div>
+                <span x-show="!bgmEnabled">🎵</span>
+                <span x-text="bgmEnabled ? 'Lofi: ON' : 'Lofi: OFF'"></span>
             </button>
             <a 
                 href="#leaderboard-section" 
