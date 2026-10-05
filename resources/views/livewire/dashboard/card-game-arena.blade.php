@@ -167,6 +167,56 @@
         animation: shimmer-sweep 3.5s infinite;
         pointer-events: none;
     }
+
+    /* Futuristic X-Ray Cyber Scanning Animations */
+    @keyframes xray-scanner {
+        0% { top: 0%; opacity: 0.85; }
+        50% { top: 96%; opacity: 1; }
+        100% { top: 0%; opacity: 0.85; }
+    }
+    .xray-scan-beam {
+        position: absolute;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, transparent, #38bdf8 20%, #ffffff 50%, #38bdf8 80%, transparent);
+        box-shadow: 0 0 16px 4px #06b6d4, 0 0 32px 8px rgba(6, 182, 212, 0.6);
+        animation: xray-scanner 1.2s ease-in-out infinite;
+        z-index: 35;
+        pointer-events: none;
+    }
+    .xray-grid-overlay {
+        background: 
+            linear-gradient(rgba(6, 182, 212, 0.15) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(6, 182, 212, 0.15) 1px, transparent 1px);
+        background-size: 14px 14px;
+        pointer-events: none;
+    }
+
+    /* Dramatic Shield Shockwave & Impact Shake */
+    @keyframes shield-impact {
+        0%, 100% { transform: translate(0, 0) rotate(0deg); }
+        15% { transform: translate(-10px, -4px) rotate(-2deg); }
+        30% { transform: translate(10px, 3px) rotate(2deg); }
+        45% { transform: translate(-8px, 2px) rotate(-1.5deg); }
+        60% { transform: translate(6px, -2px) rotate(1deg); }
+        75% { transform: translate(-4px, 1px) rotate(-0.5deg); }
+        90% { transform: translate(2px, 0px) rotate(0.2deg); }
+    }
+    .animate-shield-impact {
+        animation: shield-impact 0.45s cubic-bezier(.36,.07,.19,.97) both;
+    }
+
+    /* Electric Spark Crackle on Shattered Shield */
+    @keyframes electric-crackle {
+        0%, 100% { opacity: 0.4; transform: scale(1); }
+        25% { opacity: 1; transform: scale(1.15) rotate(4deg); }
+        50% { opacity: 0.7; transform: scale(0.92) rotate(-4deg); }
+        75% { opacity: 1; transform: scale(1.1) rotate(2deg); }
+    }
+    .animate-electric {
+        animation: electric-crackle 0.25s infinite;
+    }
 </style>
 
 <div x-data="{
@@ -175,6 +225,7 @@
     isFlipped: false,
     isPeeking: false,
     peekTimeout: null,
+    isShieldShaking: false,
     revealingState: null, // 'won', 'tie', 'lost', 'shield'
     roundStatusText: '',
     animationTimeout: null,
@@ -300,30 +351,78 @@
         const ctx = this.audioCtx;
         const now = ctx.currentTime;
 
-        // Suara hantaman perisai + resonansi
+        // 1. Heavy Shield Impact Boom (Bass hit)
         const osc = ctx.createOscillator();
         const gain = ctx.createGain();
         osc.type = 'triangle';
-        osc.frequency.setValueAtTime(360, now);
-        osc.frequency.exponentialRampToValueAtTime(90, now + 0.3);
-        gain.gain.setValueAtTime(0.4, now);
-        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+        osc.frequency.setValueAtTime(240, now);
+        osc.frequency.exponentialRampToValueAtTime(45, now + 0.35);
+        gain.gain.setValueAtTime(0.55, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.35);
         osc.connect(gain);
         gain.connect(ctx.destination);
         osc.start(now);
-        osc.stop(now + 0.32);
+        osc.stop(now + 0.36);
 
-        [880, 1174, 1760].forEach((freq, idx) => {
+        // 2. Crystal / Electric Barrier Shatter (High sparkle burst)
+        [1100, 1480, 2090, 2790, 3500].forEach((freq, idx) => {
             const o = ctx.createOscillator();
             const g = ctx.createGain();
             o.type = 'sine';
-            o.frequency.setValueAtTime(freq, now + 0.05 + idx * 0.06);
-            g.gain.setValueAtTime(0.2, now + 0.05 + idx * 0.06);
-            g.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
+            o.frequency.setValueAtTime(freq, now + idx * 0.03);
+            o.frequency.exponentialRampToValueAtTime(freq * 0.5, now + idx * 0.03 + 0.18);
+            g.gain.setValueAtTime(0.22, now + idx * 0.03);
+            g.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.03 + 0.32);
             o.connect(g);
             g.connect(ctx.destination);
-            o.start(now + 0.05 + idx * 0.06);
-            o.stop(now + 0.42);
+            o.start(now + idx * 0.03);
+            o.stop(now + idx * 0.03 + 0.34);
+        });
+    },
+
+    playXRayScan() {
+        if (!this.soundEnabled) return;
+        this.initAudio();
+        if (!this.audioCtx) return;
+
+        const ctx = this.audioCtx;
+        const now = ctx.currentTime;
+
+        // Futuristic cybernetic sweep & high-pitch telemetry beeps
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(450, now);
+        osc.frequency.linearRampToValueAtTime(1500, now + 0.35);
+        osc.frequency.linearRampToValueAtTime(800, now + 0.7);
+        
+        const filter = ctx.createBiquadFilter();
+        filter.type = 'bandpass';
+        filter.frequency.setValueAtTime(1100, now);
+        filter.Q.setValueAtTime(4.5, now);
+
+        gain.gain.setValueAtTime(0.2, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.85);
+
+        osc.connect(filter);
+        filter.connect(gain);
+        gain.connect(ctx.destination);
+
+        osc.start(now);
+        osc.stop(now + 0.9);
+
+        // Rapid digital telemetry blips
+        [1760, 2349, 3135].forEach((freq, i) => {
+            const blip = ctx.createOscillator();
+            const blipGain = ctx.createGain();
+            blip.type = 'sine';
+            blip.frequency.setValueAtTime(freq, now + 0.1 + i * 0.1);
+            blipGain.gain.setValueAtTime(0.16, now + 0.1 + i * 0.1);
+            blipGain.gain.exponentialRampToValueAtTime(0.001, now + 0.1 + i * 0.1 + 0.08);
+            blip.connect(blipGain);
+            blipGain.connect(ctx.destination);
+            blip.start(now + 0.1 + i * 0.1);
+            blip.stop(now + 0.1 + i * 0.1 + 0.09);
         });
     },
 
@@ -346,6 +445,47 @@
             osc.start(now + i * 0.07);
             osc.stop(now + i * 0.07 + 0.25);
         });
+    },
+
+    launchShieldShatter() {
+        const count = 36;
+        const container = document.getElementById('card-arena-container');
+        if (!container) return;
+
+        for (let i = 0; i < count; i++) {
+            const shard = document.createElement('div');
+            shard.className = 'absolute pointer-events-none z-50';
+            const colors = ['#06b6d4', '#38bdf8', '#10b981', '#34d399', '#fef08a', '#ffffff'];
+            const color = colors[Math.floor(Math.random() * colors.length)];
+            const size = Math.floor(Math.random() * 12) + 6;
+            
+            shard.style.width = `${size}px`;
+            shard.style.height = `${size}px`;
+            shard.style.backgroundColor = color;
+            shard.style.clipPath = 'polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)'; // diamond crystal shape
+            shard.style.left = '50%';
+            shard.style.top = '48%';
+            shard.style.opacity = '1';
+            shard.style.boxShadow = `0 0 12px ${color}`;
+            shard.style.transition = 'all 1.1s cubic-bezier(0.1, 0.9, 0.2, 1)';
+            
+            container.appendChild(shard);
+
+            const angle = Math.random() * Math.PI * 2;
+            const distance = Math.random() * 240 + 70;
+            const moveX = Math.cos(angle) * distance;
+            const moveY = Math.sin(angle) * distance;
+            const rot = Math.random() * 720 - 360;
+
+            setTimeout(() => {
+                shard.style.transform = `translate(${moveX}px, ${moveY}px) rotate(${rot}deg) scale(0)`;
+                shard.style.opacity = '0';
+            }, 15);
+
+            setTimeout(() => {
+                shard.remove();
+            }, 1200);
+        }
     },
 
     launchConfetti() {
@@ -393,6 +533,7 @@ x-init="
     });
 
     $wire.on('power-up-peek-animation', () => {
+        playXRayScan();
         playPowerUp();
         triggerHaptic('success');
         
@@ -401,7 +542,7 @@ x-init="
         isFlipped = true;
         isPeeking = true;
 
-        // 2. Berikan waktu 1.5 detik agar pemain melihat kartu dengan mata kepalanya sendiri
+        // 2. Berikan waktu 1.6 detik agar pemain melihat kartu dengan mata kepalanya sendiri
         clearTimeout(peekTimeout);
         peekTimeout = setTimeout(() => {
             // 3. Putar kartu kembali ke posisi tertutup (3D Flip Close)
@@ -410,7 +551,7 @@ x-init="
             setTimeout(() => {
                 isPeeking = false;
             }, 650);
-        }, 1500);
+        }, 1600);
     });
 
     $wire.on('power-up-swapped', () => {
@@ -446,9 +587,14 @@ x-init="
             setTimeout(() => { playDing(true); }, 220);
         } else if (isShield) {
             revealingState = 'shield';
-            roundStatusText = '🛡️ PERISAI PECAH! ANDA SELAMAT!';
-            triggerHaptic('success');
-            setTimeout(() => { playShieldBreak(); }, 220);
+            roundStatusText = '🛡️ PERISAI MENYERAP SERANGAN!';
+            triggerHaptic('error');
+            
+            // Efek guncangan arena (Screen Shake) & ledakan kristal perisai (Shatter Shards)
+            isShieldShaking = true;
+            launchShieldShatter();
+            setTimeout(() => { isShieldShaking = false; }, 480);
+            setTimeout(() => { playShieldBreak(); }, 160);
         } else if (isCorrect) {
             revealingState = 'won';
             roundStatusText = '🎉 TEBAKAN TEPAT! MENANG!';
@@ -462,6 +608,7 @@ x-init="
         }
 
         // 3. Berikan waktu jeda animasi agar pemain bisa melihat kartu yang keluar dengan jelas!
+        const duration = isShield ? 1900 : 1500;
         clearTimeout(animationTimeout);
         animationTimeout = setTimeout(() => {
             if (isCorrect || isTie || isShield) {
@@ -471,7 +618,7 @@ x-init="
             } else {
                 $wire.finalizeGameOver();
             }
-        }, 1500);
+        }, duration);
     });
 
     $wire.on('show-game-over-summary', (event) => {
@@ -482,7 +629,7 @@ x-init="
 "
 @keydown.window="
     if ($event.target.tagName === 'INPUT' || $event.target.tagName === 'TEXTAREA') return;
-    if ($wire.gameState === 'playing' && !isFlipped) {
+    if ($wire.gameState === 'playing' && !isFlipped && !isPeeking) {
         if ($event.key === 'ArrowUp' || $event.key === 'w' || $event.key === 'W') {
             $event.preventDefault();
             $wire.guess('higher');
@@ -697,7 +844,10 @@ class="relative w-full rounded-2xl sm:rounded-3xl overflow-hidden border border-
 
                 @else
                     <!-- Active Gameplay: TWO CARDS SIDE-BY-SIDE (High-End Casino Look) -->
-                    <div class="relative flex flex-row items-center justify-center gap-1.5 xs:gap-3 sm:gap-6 lg:gap-10 w-full max-w-2xl px-0 sm:px-0">
+                    <div 
+                        class="relative flex flex-row items-center justify-center gap-1.5 xs:gap-3 sm:gap-6 lg:gap-10 w-full max-w-2xl px-0 sm:px-0 transition-transform"
+                        :class="{ 'animate-shield-impact': isShieldShaking }"
+                    >
                         
                         <!-- CARD 1: KARTU SAAT INI (FACE UP) -->
                         <div class="flex flex-col items-center flex-1 min-w-0 max-w-[138px] xs:max-w-[165px] sm:max-w-[220px]">
@@ -792,10 +942,11 @@ class="relative w-full rounded-2xl sm:rounded-3xl overflow-hidden border border-
                                 x-transition:leave="transition ease-in duration-200 transform"
                                 x-transition:leave-start="opacity-100 scale-100 translate-y-0"
                                 x-transition:leave-end="opacity-0 scale-75 -translate-y-2"
-                                class="absolute -top-3.5 z-40 px-2 py-0.5 rounded-full bg-gradient-to-r from-sky-400 to-cyan-400 text-slate-950 font-black text-[9px] uppercase tracking-wider shadow-lg shadow-cyan-400/50 pointer-events-none flex items-center gap-1 animate-pulse"
+                                class="absolute -top-4 z-40 px-2.5 py-0.5 rounded-full bg-gradient-to-r from-sky-400 via-cyan-300 to-sky-400 text-slate-950 font-black text-[9px] sm:text-[10px] uppercase tracking-wider shadow-lg shadow-cyan-400/60 pointer-events-none flex items-center gap-1.5 border border-cyan-100 animate-pulse"
                                 x-cloak
                             >
-                                <span>👁️ X-RAY!</span>
+                                <span class="w-1.5 h-1.5 rounded-full bg-cyan-700 animate-ping"></span>
+                                <span>👁️ X-RAY SCANNER</span>
                             </div>
 
                             <span 
@@ -841,6 +992,25 @@ class="relative w-full rounded-2xl sm:rounded-3xl overflow-hidden border border-
                                         >
                                             <!-- Classic Pinstripe Frame -->
                                             <div class="card-inner-frame"></div>
+
+                                            <!-- X-Ray Futuristic Scan Beam & HUD Overlays when Peeking -->
+                                            <template x-if="isPeeking">
+                                                <div class="absolute inset-0 pointer-events-none z-30 overflow-hidden rounded-[inherit]">
+                                                    <!-- Moving Laser Scanner Beam -->
+                                                    <div class="xray-scan-beam"></div>
+                                                    <!-- Cyber Holographic Grid -->
+                                                    <div class="absolute inset-0 xray-grid-overlay opacity-60"></div>
+                                                    <!-- 4 Corner HUD Targeting Brackets -->
+                                                    <div class="absolute top-1 left-1 w-2.5 h-2.5 sm:w-3.5 sm:h-3.5 border-t-2 border-l-2 border-cyan-400"></div>
+                                                    <div class="absolute top-1 right-1 w-2.5 h-2.5 sm:w-3.5 sm:h-3.5 border-t-2 border-r-2 border-cyan-400"></div>
+                                                    <div class="absolute bottom-1 left-1 w-2.5 h-2.5 sm:w-3.5 sm:h-3.5 border-b-2 border-l-2 border-cyan-400"></div>
+                                                    <div class="absolute bottom-1 right-1 w-2.5 h-2.5 sm:w-3.5 sm:h-3.5 border-b-2 border-r-2 border-cyan-400"></div>
+                                                    <!-- Center Radar Pulse Reticle -->
+                                                    <div class="absolute inset-0 flex items-center justify-center">
+                                                        <div class="w-14 h-14 sm:w-20 sm:h-20 rounded-full border border-cyan-400/40 animate-ping"></div>
+                                                    </div>
+                                                </div>
+                                            </template>
 
                                             <!-- Top-Left Corner Index -->
                                             <div class="relative z-10 flex flex-col items-start leading-none space-y-0.5">
@@ -915,19 +1085,44 @@ class="relative w-full rounded-2xl sm:rounded-3xl overflow-hidden border border-
                             class="absolute inset-0 z-30 flex items-center justify-center pointer-events-none p-2"
                             x-cloak
                         >
-                            <!-- 1. Shield Saved Notification -->
+                            <!-- 1. Shield Saved Notification with Epic Barrier Breakdown -->
                             <template x-if="revealingState === 'shield'">
-                                <div class="bg-gradient-to-b from-slate-950/95 via-cyan-950/95 to-slate-950/95 border-2 border-cyan-400 rounded-2xl px-5 py-3 sm:px-7 sm:py-4 shadow-[0_0_40px_rgba(6,182,212,0.9)] flex flex-col items-center text-center max-w-[260px] xs:max-w-xs sm:max-w-sm backdrop-blur-md animate-bounce">
-                                    <span class="text-3xl sm:text-4xl filter drop-shadow">🛡️</span>
-                                    <span class="mt-1 text-xs sm:text-sm font-black uppercase tracking-widest text-cyan-300 drop-shadow">
-                                        PERISAI PECAH!
-                                    </span>
-                                    <span class="text-[10px] sm:text-xs text-white font-bold leading-tight mt-0.5">
-                                        Antum Selamat Dari Game Over!
-                                    </span>
-                                    <span class="mt-1.5 px-2.5 py-0.5 rounded-full bg-cyan-500/20 text-cyan-200 text-[9px] sm:text-[10px] font-mono border border-cyan-400/40">
-                                        Streak Tetap Aman ✨
-                                    </span>
+                                <div class="relative flex flex-col items-center justify-center">
+                                    <!-- Giant Hexagonal Forcefield Bubble in Background -->
+                                    <div class="absolute -inset-10 sm:-inset-14 flex items-center justify-center pointer-events-none">
+                                        <div class="w-48 h-48 sm:w-64 sm:h-64 rounded-full border-4 border-cyan-400/60 bg-cyan-500/10 backdrop-blur-sm animate-ping"></div>
+                                    </div>
+
+                                    <!-- Dramatic Shield Shatter Modal -->
+                                    <div class="relative bg-gradient-to-b from-slate-950/95 via-sky-950/95 to-slate-950/95 border-2 border-cyan-400 rounded-2xl px-5 py-3.5 sm:px-7 sm:py-4 shadow-[0_0_50px_rgba(6,182,212,0.95)] flex flex-col items-center text-center max-w-[270px] xs:max-w-xs sm:max-w-sm backdrop-blur-md">
+                                        
+                                        <!-- Cracked Shield Animation Icon -->
+                                        <div class="relative w-12 h-12 sm:w-16 sm:h-16 flex items-center justify-center mb-1">
+                                            <span class="text-3xl sm:text-5xl filter drop-shadow">🛡️</span>
+                                            <!-- Electric Shock Crackles -->
+                                            <div class="absolute -top-1 -right-1 text-sm sm:text-base animate-electric">⚡</div>
+                                            <div class="absolute -bottom-1 -left-1 text-sm sm:text-base animate-electric">💥</div>
+                                        </div>
+
+                                        <span class="text-xs sm:text-sm font-black uppercase tracking-widest text-cyan-300 drop-shadow flex items-center gap-1">
+                                            <span>⚡</span>
+                                            <span>PERISAI MENYERAP SERANGAN!</span>
+                                            <span>⚡</span>
+                                        </span>
+
+                                        <span class="text-[10px] sm:text-xs text-white font-bold leading-tight mt-1">
+                                            Tebakan Meleset Tapi Kamu Selamat!
+                                        </span>
+
+                                        <div class="mt-2 flex items-center gap-1.5 sm:gap-2">
+                                            <span class="px-2.5 py-0.5 rounded-full bg-emerald-500/25 text-emerald-300 text-[9px] sm:text-[10px] font-black font-mono border border-emerald-400/40 shadow-sm">
+                                                ✨ Streak Aman ({{ $streak }}x)
+                                            </span>
+                                            <span class="px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-200 text-[8px] sm:text-[9px] font-mono border border-cyan-400/40">
+                                                Defended 100%
+                                            </span>
+                                        </div>
+                                    </div>
                                 </div>
                             </template>
 
@@ -988,20 +1183,20 @@ class="relative w-full rounded-2xl sm:rounded-3xl overflow-hidden border border-
                             type="button" 
                             wire:click="usePowerUpPeek" 
                             :disabled="isFlipped || isPeeking || {{ $powerUpPeekUsed ? 'true' : 'false' }}"
-                            class="flex-1 py-1.5 px-2 rounded-xl text-[10px] sm:text-xs font-bold transition flex items-center justify-center gap-1 border select-none touch-manipulation {{ $powerUpPeekUsed ? 'bg-slate-900/60 text-slate-500 border-slate-800 cursor-not-allowed opacity-50' : 'bg-gradient-to-r from-sky-600 to-cyan-500 hover:from-sky-500 hover:to-cyan-400 active:scale-95 text-white border-cyan-300/40 shadow-md shadow-cyan-500/25 cursor-pointer' }}"
+                            class="flex-1 py-1.5 px-2 rounded-xl text-[10px] sm:text-xs font-bold transition flex items-center justify-center gap-1 border select-none touch-manipulation {{ $powerUpPeekUsed ? 'bg-slate-900/60 text-slate-500 border-slate-800 cursor-not-allowed opacity-50' : 'bg-gradient-to-r from-sky-600 via-cyan-500 to-sky-600 hover:from-sky-500 hover:to-cyan-400 active:scale-95 text-white border-cyan-300/40 shadow-md shadow-cyan-500/25 cursor-pointer hover:shadow-cyan-400/40' }}"
                             title="Intip nilai kartu berikutnya sebelum menebak (1x)"
                         >
-                            <span class="text-xs sm:text-sm">👁️</span>
+                            <span class="text-xs sm:text-sm {{ !$powerUpPeekUsed ? 'animate-pulse' : '' }}">👁️</span>
                             <span class="truncate">{{ $powerUpPeekUsed ? 'Intip (Habis)' : 'Intip (X-Ray)' }}</span>
                         </button>
 
                         <!-- 2. Power-Up: Perisai Nyawa (Shield Status Indicator) -->
                         <div 
-                            class="flex-1 py-1.5 px-2 rounded-xl text-[10px] sm:text-xs font-bold flex items-center justify-center gap-1 border select-none {{ $powerUpShieldActive ? 'bg-emerald-950/90 text-emerald-300 border-emerald-400/50 shadow-md shadow-emerald-500/25' : 'bg-slate-900/60 text-slate-500 border-slate-800 opacity-50' }}"
+                            class="flex-1 py-1.5 px-2 rounded-xl text-[10px] sm:text-xs font-bold flex items-center justify-center gap-1 border select-none transition-all {{ $powerUpShieldActive ? 'bg-gradient-to-r from-emerald-950 via-teal-900 to-emerald-950 text-emerald-300 border-emerald-400/60 shadow-lg shadow-emerald-500/30 ring-1 ring-emerald-400/50' : 'bg-slate-900/60 text-slate-500 border-slate-800 opacity-50' }}"
                             title="Melindungi 1x dari Game Over jika salah menebak (Otomatis)"
                         >
-                            <span class="text-xs sm:text-sm">🛡️</span>
-                            <span class="truncate">{{ $powerUpShieldActive ? 'Perisai Siap' : 'Perisai Pecah' }}</span>
+                            <span class="text-xs sm:text-sm {{ $powerUpShieldActive ? 'animate-bounce' : '' }}">🛡️</span>
+                            <span class="truncate">{{ $powerUpShieldActive ? 'Perisai Aktif' : 'Perisai Pecah' }}</span>
                         </div>
 
                         <!-- 3. Power-Up: Tukar Kartu (Swap Deck) -->
