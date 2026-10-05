@@ -220,10 +220,11 @@ class CardGameArena extends Component
 
         // Kartu yang diintip adalah kartu teratas di dek yang akan ditarik berikutnya
         $peekCard = end($this->deck);
+        $this->nextCard = $peekCard; // Di-set agar sisi belakang kartu di-render oleh Blade untuk diintip
         $this->powerUpPeekUsed = true;
         $this->peekedHint = "X-RAY PEEK: Kartu berikutnya adalah {$peekCard['title']} (Nilai {$peekCard['rank']})";
 
-        $this->dispatch('power-up-peeked', [
+        $this->dispatch('power-up-peek-animation', [
             'card' => $peekCard
         ]);
     }

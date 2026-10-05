@@ -173,7 +173,9 @@
     audioCtx: null,
     soundEnabled: true,
     isFlipped: false,
-    revealingState: null, // 'won', 'tie', 'lost'
+    isPeeking: false,
+    peekTimeout: null,
+    revealingState: null, // 'won', 'tie', 'lost', 'shield'
     roundStatusText: '',
     animationTimeout: null,
     
@@ -390,9 +392,25 @@ x-init="
         playCardFlip(); 
     });
 
-    $wire.on('power-up-peeked', () => {
+    $wire.on('power-up-peek-animation', () => {
         playPowerUp();
         triggerHaptic('success');
+        
+        // 1. Putar kartu misteri untuk membukanya secara fisik (3D Flip Open)
+        playCardFlip();
+        isFlipped = true;
+        isPeeking = true;
+
+        // 2. Berikan waktu 1.5 detik agar pemain melihat kartu dengan mata kepalanya sendiri
+        clearTimeout(peekTimeout);
+        peekTimeout = setTimeout(() => {
+            // 3. Putar kartu kembali ke posisi tertutup (3D Flip Close)
+            playCardFlip();
+            isFlipped = false;
+            setTimeout(() => {
+                isPeeking = false;
+            }, 650);
+        }, 1500);
     });
 
     $wire.on('power-up-swapped', () => {
@@ -764,10 +782,28 @@ class="relative w-full rounded-2xl sm:rounded-3xl overflow-hidden border border-
                         </div>
 
                         <!-- CARD 2: KARTU BERIKUTNYA DENGAN EFEK 3D FLIP ANIMATION -->
-                        <div class="flex flex-col items-center flex-1 min-w-0 max-w-[138px] xs:max-w-[165px] sm:max-w-[220px]">
-                            <span class="text-[9px] sm:text-[11px] font-bold uppercase tracking-wider text-amber-300 mb-1 sm:mb-2 font-mono flex items-center gap-1 truncate drop-shadow">
-                                <span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-ping shrink-0"></span>
-                                <span class="truncate">Berikutnya</span>
+                        <div class="relative flex flex-col items-center flex-1 min-w-0 max-w-[138px] xs:max-w-[165px] sm:max-w-[220px]">
+                            <!-- Floating X-Ray Peek Badge over Card 2 -->
+                            <div 
+                                x-show="isPeeking"
+                                x-transition:enter="transition ease-out duration-200 transform"
+                                x-transition:enter-start="opacity-0 scale-75 -translate-y-2"
+                                x-transition:enter-end="opacity-100 scale-100 translate-y-0"
+                                x-transition:leave="transition ease-in duration-200 transform"
+                                x-transition:leave-start="opacity-100 scale-100 translate-y-0"
+                                x-transition:leave-end="opacity-0 scale-75 -translate-y-2"
+                                class="absolute -top-3.5 z-40 px-2 py-0.5 rounded-full bg-gradient-to-r from-sky-400 to-cyan-400 text-slate-950 font-black text-[9px] uppercase tracking-wider shadow-lg shadow-cyan-400/50 pointer-events-none flex items-center gap-1 animate-pulse"
+                                x-cloak
+                            >
+                                <span>👁️ X-RAY!</span>
+                            </div>
+
+                            <span 
+                                class="text-[9px] sm:text-[11px] font-bold uppercase tracking-wider mb-1 sm:mb-2 font-mono flex items-center gap-1 truncate drop-shadow transition-colors"
+                                :class="isPeeking ? 'text-cyan-300' : 'text-amber-300'"
+                            >
+                                <span class="w-1.5 h-1.5 rounded-full shrink-0" :class="isPeeking ? 'bg-cyan-400 animate-ping' : 'bg-amber-400 animate-ping'"></span>
+                                <span class="truncate" x-text="isPeeking ? 'Mengintip...' : 'Berikutnya'"></span>
                             </span>
 
                             <!-- 3D Card Container with Perspective -->
@@ -796,10 +832,11 @@ class="relative w-full rounded-2xl sm:rounded-3xl overflow-hidden border border-
                                         <div 
                                             class="elvith-card-face elvith-card-back card-luxury-surface p-1.5 xs:p-2.5 sm:p-4 flex flex-col justify-between select-none text-{{ $nextCard['color'] === 'red' ? 'rose-600' : 'slate-900' }}"
                                             :class="{
+                                                'ring-4 ring-cyan-400 shadow-[0_0_35px_rgba(6,182,212,0.9)]': isPeeking,
                                                 'ring-4 ring-emerald-400 shadow-[0_0_35px_rgba(16,185,129,0.7)]': revealingState === 'won',
                                                 'ring-4 ring-amber-400 shadow-[0_0_35px_rgba(251,191,36,0.7)]': revealingState === 'tie',
                                                 'ring-4 ring-rose-500 shadow-[0_0_35px_rgba(244,63,94,0.7)]': revealingState === 'lost',
-                                                'border-slate-300': !revealingState
+                                                'border-slate-300': !revealingState && !isPeeking
                                             }"
                                         >
                                             <!-- Classic Pinstripe Frame -->
@@ -859,7 +896,11 @@ class="relative w-full rounded-2xl sm:rounded-3xl overflow-hidden border border-
                                 </div>
                             </div>
 
-                            <span class="text-[9px] xs:text-[10px] sm:text-xs font-mono text-amber-200 mt-1 sm:mt-2 font-bold truncate max-w-full text-center drop-shadow" x-text="isFlipped ? '{{ $nextCard['title'] ?? '' }}' : 'Tertutup 🔒'"></span>
+                            <span 
+                                class="text-[9px] xs:text-[10px] sm:text-xs font-mono mt-1 sm:mt-2 font-bold truncate max-w-full text-center drop-shadow transition-colors" 
+                                :class="isPeeking ? 'text-cyan-300 font-black animate-pulse' : 'text-amber-200'"
+                                x-text="isFlipped ? '{{ $nextCard['title'] ?? '' }}' : 'Tertutup 🔒'"
+                            ></span>
                         </div>
 
                         <!-- Dramatic Floating Result Overlay in Front of Cards -->
@@ -946,7 +987,7 @@ class="relative w-full rounded-2xl sm:rounded-3xl overflow-hidden border border-
                         <button 
                             type="button" 
                             wire:click="usePowerUpPeek" 
-                            :disabled="isFlipped || {{ $powerUpPeekUsed ? 'true' : 'false' }}"
+                            :disabled="isFlipped || isPeeking || {{ $powerUpPeekUsed ? 'true' : 'false' }}"
                             class="flex-1 py-1.5 px-2 rounded-xl text-[10px] sm:text-xs font-bold transition flex items-center justify-center gap-1 border select-none touch-manipulation {{ $powerUpPeekUsed ? 'bg-slate-900/60 text-slate-500 border-slate-800 cursor-not-allowed opacity-50' : 'bg-gradient-to-r from-sky-600 to-cyan-500 hover:from-sky-500 hover:to-cyan-400 active:scale-95 text-white border-cyan-300/40 shadow-md shadow-cyan-500/25 cursor-pointer' }}"
                             title="Intip nilai kartu berikutnya sebelum menebak (1x)"
                         >
@@ -967,7 +1008,7 @@ class="relative w-full rounded-2xl sm:rounded-3xl overflow-hidden border border-
                         <button 
                             type="button" 
                             wire:click="usePowerUpSwap" 
-                            :disabled="isFlipped || {{ $powerUpSwapUsed ? 'true' : 'false' }}"
+                            :disabled="isFlipped || isPeeking || {{ $powerUpSwapUsed ? 'true' : 'false' }}"
                             class="flex-1 py-1.5 px-2 rounded-xl text-[10px] sm:text-xs font-black transition flex items-center justify-center gap-1 border select-none touch-manipulation {{ $powerUpSwapUsed ? 'bg-slate-900/60 text-slate-500 border-slate-800 cursor-not-allowed opacity-50' : 'bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-500 hover:from-amber-400 hover:to-yellow-300 active:scale-95 text-slate-950 border-amber-300/60 shadow-md shadow-amber-500/25 cursor-pointer' }}"
                             title="Tukar kartu saat ini jika posisinya nanggung (1x)"
                         >
@@ -983,7 +1024,7 @@ class="relative w-full rounded-2xl sm:rounded-3xl overflow-hidden border border-
                         <button 
                             type="button" 
                             wire:click="guess('higher')" 
-                            :disabled="isFlipped"
+                            :disabled="isFlipped || isPeeking"
                             class="btn-3d-green flex-1 w-full py-3.5 sm:py-4 px-3 sm:px-6 rounded-xl sm:rounded-2xl text-white font-black text-xs sm:text-sm uppercase tracking-wider flex items-center justify-center sm:justify-between gap-1.5 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed select-none touch-manipulation"
                         >
                             <span class="flex items-center gap-1.5 sm:gap-2">
@@ -997,7 +1038,7 @@ class="relative w-full rounded-2xl sm:rounded-3xl overflow-hidden border border-
                         <button 
                             type="button" 
                             wire:click="guess('lower')" 
-                            :disabled="isFlipped"
+                            :disabled="isFlipped || isPeeking"
                             class="btn-3d-red flex-1 w-full py-3.5 sm:py-4 px-3 sm:px-6 rounded-xl sm:rounded-2xl text-white font-black text-xs sm:text-sm uppercase tracking-wider flex items-center justify-center sm:justify-between gap-1.5 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed select-none touch-manipulation"
                         >
                             <span class="flex items-center gap-1.5 sm:gap-2">
