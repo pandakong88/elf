@@ -679,7 +679,7 @@ class="relative w-full rounded-2xl sm:rounded-3xl overflow-hidden border border-
 
                 @else
                     <!-- Active Gameplay: TWO CARDS SIDE-BY-SIDE (High-End Casino Look) -->
-                    <div class="flex flex-row items-center justify-center gap-1.5 xs:gap-3 sm:gap-6 lg:gap-10 w-full max-w-2xl px-0 sm:px-0">
+                    <div class="relative flex flex-row items-center justify-center gap-1.5 xs:gap-3 sm:gap-6 lg:gap-10 w-full max-w-2xl px-0 sm:px-0">
                         
                         <!-- CARD 1: KARTU SAAT INI (FACE UP) -->
                         <div class="flex flex-col items-center flex-1 min-w-0 max-w-[138px] xs:max-w-[165px] sm:max-w-[220px]">
@@ -860,6 +860,74 @@ class="relative w-full rounded-2xl sm:rounded-3xl overflow-hidden border border-
                             </div>
 
                             <span class="text-[9px] xs:text-[10px] sm:text-xs font-mono text-amber-200 mt-1 sm:mt-2 font-bold truncate max-w-full text-center drop-shadow" x-text="isFlipped ? '{{ $nextCard['title'] ?? '' }}' : 'Tertutup 🔒'"></span>
+                        </div>
+
+                        <!-- Dramatic Floating Result Overlay in Front of Cards -->
+                        <div 
+                            x-show="revealingState"
+                            x-transition:enter="transition ease-out duration-300 transform"
+                            x-transition:enter-start="opacity-0 scale-50 -translate-y-4"
+                            x-transition:enter-end="opacity-100 scale-100 translate-y-0"
+                            x-transition:leave="transition ease-in duration-200 transform"
+                            x-transition:leave-start="opacity-100 scale-100 translate-y-0"
+                            x-transition:leave-end="opacity-0 scale-75 translate-y-2"
+                            class="absolute inset-0 z-30 flex items-center justify-center pointer-events-none p-2"
+                            x-cloak
+                        >
+                            <!-- 1. Shield Saved Notification -->
+                            <template x-if="revealingState === 'shield'">
+                                <div class="bg-gradient-to-b from-slate-950/95 via-cyan-950/95 to-slate-950/95 border-2 border-cyan-400 rounded-2xl px-5 py-3 sm:px-7 sm:py-4 shadow-[0_0_40px_rgba(6,182,212,0.9)] flex flex-col items-center text-center max-w-[260px] xs:max-w-xs sm:max-w-sm backdrop-blur-md animate-bounce">
+                                    <span class="text-3xl sm:text-4xl filter drop-shadow">🛡️</span>
+                                    <span class="mt-1 text-xs sm:text-sm font-black uppercase tracking-widest text-cyan-300 drop-shadow">
+                                        PERISAI PECAH!
+                                    </span>
+                                    <span class="text-[10px] sm:text-xs text-white font-bold leading-tight mt-0.5">
+                                        Antum Selamat Dari Game Over!
+                                    </span>
+                                    <span class="mt-1.5 px-2.5 py-0.5 rounded-full bg-cyan-500/20 text-cyan-200 text-[9px] sm:text-[10px] font-mono border border-cyan-400/40">
+                                        Streak Tetap Aman ✨
+                                    </span>
+                                </div>
+                            </template>
+
+                            <!-- 2. Won Notification -->
+                            <template x-if="revealingState === 'won'">
+                                <div class="bg-gradient-to-b from-slate-950/95 via-emerald-950/95 to-slate-950/95 border-2 border-emerald-400 rounded-2xl px-5 py-2.5 sm:px-7 sm:py-3.5 shadow-[0_0_35px_rgba(16,185,129,0.85)] flex flex-col items-center text-center max-w-[240px] xs:max-w-xs sm:max-w-sm backdrop-blur-md">
+                                    <span class="text-2xl sm:text-3xl filter drop-shadow">✨</span>
+                                    <span class="mt-0.5 text-xs sm:text-sm font-black uppercase tracking-widest text-emerald-300 drop-shadow">
+                                        TEBAKAN TEPAT!
+                                    </span>
+                                    <span class="text-[10px] sm:text-xs text-emerald-100 font-mono mt-0.5">
+                                        Combo Streak Lanjut!
+                                    </span>
+                                </div>
+                            </template>
+
+                            <!-- 3. Tie Notification -->
+                            <template x-if="revealingState === 'tie'">
+                                <div class="bg-gradient-to-b from-slate-950/95 via-amber-950/95 to-slate-950/95 border-2 border-amber-400 rounded-2xl px-5 py-2.5 sm:px-7 sm:py-3.5 shadow-[0_0_35px_rgba(251,191,36,0.85)] flex flex-col items-center text-center max-w-[240px] xs:max-w-xs sm:max-w-sm backdrop-blur-md">
+                                    <span class="text-2xl sm:text-3xl filter drop-shadow">🤝</span>
+                                    <span class="mt-0.5 text-xs sm:text-sm font-black uppercase tracking-widest text-amber-300 drop-shadow">
+                                        HASIL SERI!
+                                    </span>
+                                    <span class="text-[10px] sm:text-xs text-amber-100 font-mono mt-0.5">
+                                        Kartu Kembar • Streak Aman
+                                    </span>
+                                </div>
+                            </template>
+
+                            <!-- 4. Lost Notification -->
+                            <template x-if="revealingState === 'lost'">
+                                <div class="bg-gradient-to-b from-slate-950/95 via-rose-950/95 to-slate-950/95 border-2 border-rose-500 rounded-2xl px-5 py-2.5 sm:px-7 sm:py-3.5 shadow-[0_0_35px_rgba(244,63,94,0.85)] flex flex-col items-center text-center max-w-[240px] xs:max-w-xs sm:max-w-sm backdrop-blur-md">
+                                    <span class="text-2xl sm:text-3xl filter drop-shadow">💀</span>
+                                    <span class="mt-0.5 text-xs sm:text-sm font-black uppercase tracking-widest text-rose-300 drop-shadow">
+                                        TEBAKAN SALAH!
+                                    </span>
+                                    <span class="text-[10px] sm:text-xs text-rose-200/90 font-mono mt-0.5">
+                                        Permainan Berakhir
+                                    </span>
+                                </div>
+                            </template>
                         </div>
 
                     </div>
