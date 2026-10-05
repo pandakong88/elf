@@ -32,6 +32,19 @@ class CardGameArena extends Component
     public bool $isNewHighScore = false;
     public bool $isNewMaxStreak = false;
 
+    // Dek & Tumpukan Kartu Terbuang (Card Counting)
+    public array $deck = [];
+    public array $discardPile = [];
+    public int $totalInitialCards = 52;
+
+    // Power-Up System (1x pakai per game)
+    public bool $powerUpPeekUsed = false;
+    public bool $powerUpShieldActive = true;
+    public bool $powerUpShieldUsed = false;
+    public bool $powerUpSwapUsed = false;
+    public ?string $peekedHint = null;
+    public bool $shieldTriggeredThisRound = false;
+
     // Leaderboard & Personal Best
     public $leaderboard = [];
     public ?array $userStats = null;
@@ -157,7 +170,7 @@ class CardGameArena extends Component
     }
 
     /**
-     * Mulai Permainan Baru
+     * Mulai Permainan Baru dengan Dek 52 Kartu Terbatas
      */
     public function startGame()
     {
@@ -174,11 +187,67 @@ class CardGameArena extends Component
         $this->isNewMaxStreak = false;
         $this->resultMessage = 'Pilih apakah kartu berikutnya LEBIH BESAR (▲) atau LEBIH KECIL (▼)!';
 
-        $this->currentCard = $this->drawRandomCard();
+        // 1. Inisialisasi Dek 52 Kartu Lengkap & Acak
+        $this->deck = $this->generateFullDeck();
+        $this->discardPile = [];
+
+        // 2. Tarik kartu pertama dari dek (tidak akan muncul lagi)
+        $this->currentCard = array_pop($this->deck);
         $this->nextCard = null;
+
+        // 3. Reset Status 3 Power-Ups (1x pakai per sesi)
+        $this->powerUpPeekUsed = false;
+        $this->powerUpShieldActive = true;
+        $this->powerUpShieldUsed = false;
+        $this->powerUpSwapUsed = false;
+        $this->peekedHint = null;
+        $this->shieldTriggeredThisRound = false;
+
         $this->gameState = 'playing';
 
         $this->dispatch('game-started');
+    }
+
+    /**
+     * Power-Up 1: Kartu Intip (X-Ray Peek)
+     * Mengintip nilai kartu berikutnya sebelum menebak (1x per game).
+     */
+    public function usePowerUpPeek()
+    {
+        if ($this->powerUpPeekUsed || $this->gameState !== 'playing' || empty($this->deck)) {
+            return;
+        }
+
+        // Kartu yang diintip adalah kartu teratas di dek yang akan ditarik berikutnya
+        $peekCard = end($this->deck);
+        $this->powerUpPeekUsed = true;
+        $this->peekedHint = "X-RAY PEEK: Kartu berikutnya adalah {$peekCard['title']} (Nilai {$peekCard['rank']})";
+
+        $this->dispatch('power-up-peeked', [
+            'card' => $peekCard
+        ]);
+    }
+
+    /**
+     * Power-Up 3: Tukar Kartu (Swap Deck)
+     * Menukar kartu saat ini jika posisinya nanggung (1x per game).
+     */
+    public function usePowerUpSwap()
+    {
+        if ($this->powerUpSwapUsed || $this->gameState !== 'playing' || empty($this->deck)) {
+            return;
+        }
+
+        $oldCard = $this->currentCard;
+        $this->discardPile[] = $oldCard;
+        $this->currentCard = array_pop($this->deck);
+        $this->powerUpSwapUsed = true;
+        $this->peekedHint = null;
+        $this->resultMessage = "🔄 KARTU DITUKAR! {$oldCard['title']} diganti dengan {$this->currentCard['title']}.";
+
+        $this->dispatch('power-up-swapped', [
+            'newCard' => $this->currentCard
+        ]);
     }
 
     /**
@@ -196,8 +265,24 @@ class CardGameArena extends Component
 
         $this->lastGuess = $choice;
 
-        // Ambil kartu baru acak murni dari server
-        $newCard = $this->drawRandomCard($this->currentCard);
+        // Ambil kartu berikutnya dari sisa dek 52 kartu (Anti-Duplikat)
+        if (empty($this->deck)) {
+            // Jika dek 52 kartu habis (streak sangat tinggi), kocok ulang kartu terbuang
+            if (!empty($this->discardPile)) {
+                $this->deck = $this->discardPile;
+                $this->discardPile = [];
+                for ($i = count($this->deck) - 1; $i > 0; $i--) {
+                    $j = random_int(0, $i);
+                    $tmp = $this->deck[$i];
+                    $this->deck[$i] = $this->deck[$j];
+                    $this->deck[$j] = $tmp;
+                }
+            } else {
+                $this->deck = $this->generateFullDeck();
+            }
+        }
+
+        $newCard = array_pop($this->deck);
         $this->nextCard = $newCard;
 
         $currentRank = (int) $this->currentCard['rank'];
@@ -208,6 +293,7 @@ class CardGameArena extends Component
 
         $isTie = ($nextRank === $currentRank);
         $isCorrect = false;
+        $this->shieldTriggeredThisRound = false;
 
         if ($isTie) {
             // SERI: Nilai kartu sama persis! Pemain TIDAK kalah (Push/Safe bonus)
@@ -248,12 +334,27 @@ class CardGameArena extends Component
                 ];
                 $this->resultMessage = $quotes[array_rand($quotes)];
             } else {
-                $this->isRoundWon = false;
-                $this->roundResult = 'lost';
-                $this->lastResult = 'wrong';
-                $this->lastPointsEarned = 0;
-                $comparisonText = $choice === 'higher' ? 'tidak lebih besar dari' : 'tidak lebih kecil dari';
-                $this->resultMessage = "Meleset! {$newCard['title']} (Nilai {$nextRank}) {$comparisonText} {$this->currentCard['title']} (Nilai {$currentRank}).";
+                // Periksa apakah Perisai Nyawa masih aktif!
+                if ($this->powerUpShieldActive && !$this->powerUpShieldUsed) {
+                    $this->powerUpShieldActive = false;
+                    $this->powerUpShieldUsed = true;
+                    $this->shieldTriggeredThisRound = true;
+
+                    $this->isRoundWon = true; // Selamat dari eliminasi
+                    $this->roundResult = 'shield';
+                    $this->lastResult = 'shield';
+                    $this->lastPointsEarned = 0;
+
+                    $comparisonText = $choice === 'higher' ? 'tidak lebih besar dari' : 'tidak lebih kecil dari';
+                    $this->resultMessage = "🛡️ PERISAI PECAH! Tebakan {$choice} meleset ({$newCard['title']} {$comparisonText} {$this->currentCard['title']}), tapi Perisai melindungimu dari Game Over! Streak {$this->streak}x tetap aman!";
+                } else {
+                    $this->isRoundWon = false;
+                    $this->roundResult = 'lost';
+                    $this->lastResult = 'wrong';
+                    $this->lastPointsEarned = 0;
+                    $comparisonText = $choice === 'higher' ? 'tidak lebih besar dari' : 'tidak lebih kecil dari';
+                    $this->resultMessage = "Meleset! {$newCard['title']} (Nilai {$nextRank}) {$comparisonText} {$this->currentCard['title']} (Nilai {$currentRank}).";
+                }
             }
         }
 
@@ -262,6 +363,7 @@ class CardGameArena extends Component
             'choice'      => $choice,
             'isCorrect'   => $isCorrect,
             'isTie'       => $isTie,
+            'isShield'    => $this->shieldTriggeredThisRound,
             'currentRank' => $currentRank,
             'nextRank'    => $nextRank,
             'score'       => $this->score,
@@ -270,7 +372,7 @@ class CardGameArena extends Component
     }
 
     /**
-     * Dipanggil oleh frontend setelah animasi reveal selesai dan pemain MENANG.
+     * Dipanggil oleh frontend setelah animasi reveal selesai dan pemain MENANG / DILINDUNGI PERISAI.
      * Kartu berikutnya bergeser menjadi kartu saat ini, lalu kartu misteri kembali ditutup.
      */
     public function advanceRound()
@@ -279,11 +381,15 @@ class CardGameArena extends Component
             return;
         }
 
+        // Kartu lama masuk ke tumpukan kartu terbuang (Discard Pile)
+        $this->discardPile[] = $this->currentCard;
         $this->currentCard = $this->nextCard;
         $this->nextCard = null;
         $this->gameState = 'playing';
         $this->roundResult = '';
         $this->isRoundWon = false;
+        $this->peekedHint = null;
+        $this->shieldTriggeredThisRound = false;
     }
 
     /**
@@ -325,6 +431,39 @@ class CardGameArena extends Component
     }
 
     /**
+     * Hitung statistik kartu yang tersisa di dek (Card Counting).
+     */
+    public function getDeckStatsProperty(): array
+    {
+        $cardsLeft = count($this->deck);
+        $discarded = count($this->discardPile);
+        
+        $highLeft = 0; // J, Q, K, A (11 - 14)
+        $lowLeft = 0;  // 2 - 6
+        $midLeft = 0;  // 7 - 10
+
+        foreach ($this->deck as $c) {
+            $r = (int) $c['rank'];
+            if ($r >= 11) {
+                $highLeft++;
+            } elseif ($r <= 6) {
+                $lowLeft++;
+            } else {
+                $midLeft++;
+            }
+        }
+
+        return [
+            'cards_left' => $cardsLeft,
+            'discarded'  => $discarded,
+            'total'      => $this->totalInitialCards,
+            'high_left'  => $highLeft,
+            'low_left'   => $lowLeft,
+            'mid_left'   => $midLeft,
+        ];
+    }
+
+    /**
      * Reset Permainan kembali ke awal
      */
     public function resetGame()
@@ -342,6 +481,14 @@ class CardGameArena extends Component
         $this->isNewHighScore = false;
         $this->isNewMaxStreak = false;
         $this->resultMessage = '';
+        $this->deck = [];
+        $this->discardPile = [];
+        $this->powerUpPeekUsed = false;
+        $this->powerUpShieldActive = true;
+        $this->powerUpShieldUsed = false;
+        $this->powerUpSwapUsed = false;
+        $this->peekedHint = null;
+        $this->shieldTriggeredThisRound = false;
         $this->loadLeaderboardData();
     }
 

@@ -290,6 +290,62 @@
         });
     },
 
+    playShieldBreak() {
+        if (!this.soundEnabled) return;
+        this.initAudio();
+        if (!this.audioCtx) return;
+
+        const ctx = this.audioCtx;
+        const now = ctx.currentTime;
+
+        // Suara hantaman perisai + resonansi
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(360, now);
+        osc.frequency.exponentialRampToValueAtTime(90, now + 0.3);
+        gain.gain.setValueAtTime(0.4, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.32);
+
+        [880, 1174, 1760].forEach((freq, idx) => {
+            const o = ctx.createOscillator();
+            const g = ctx.createGain();
+            o.type = 'sine';
+            o.frequency.setValueAtTime(freq, now + 0.05 + idx * 0.06);
+            g.gain.setValueAtTime(0.2, now + 0.05 + idx * 0.06);
+            g.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
+            o.connect(g);
+            g.connect(ctx.destination);
+            o.start(now + 0.05 + idx * 0.06);
+            o.stop(now + 0.42);
+        });
+    },
+
+    playPowerUp() {
+        if (!this.soundEnabled) return;
+        this.initAudio();
+        if (!this.audioCtx) return;
+
+        const ctx = this.audioCtx;
+        const now = ctx.currentTime;
+        [587.33, 880, 1174.66].forEach((freq, i) => {
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(freq, now + i * 0.07);
+            gain.gain.setValueAtTime(0.22, now + i * 0.07);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.07 + 0.22);
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.start(now + i * 0.07);
+            osc.stop(now + i * 0.07 + 0.25);
+        });
+    },
+
     launchConfetti() {
         const count = 50;
         const container = document.getElementById('card-arena-container');
@@ -334,6 +390,17 @@ x-init="
         playCardFlip(); 
     });
 
+    $wire.on('power-up-peeked', () => {
+        playPowerUp();
+        triggerHaptic('success');
+    });
+
+    $wire.on('power-up-swapped', () => {
+        playCardFlip();
+        playPowerUp();
+        triggerHaptic('success');
+    });
+
     $wire.on('start-reveal-animation', (...args) => {
         let data = {};
         if (args && args.length > 0) {
@@ -345,6 +412,7 @@ x-init="
         }
 
         const isTie = (data.isTie === true) || ($wire.roundResult === 'tie');
+        const isShield = (data.isShield === true) || ($wire.roundResult === 'shield');
         const isCorrect = (data.isCorrect === true) || ($wire.isRoundWon === true);
 
         // 1. Bunyikan efek suara kartu berputar
@@ -358,6 +426,11 @@ x-init="
             roundStatusText = '🤝 HASIL SERI! AMAN!';
             triggerHaptic('success');
             setTimeout(() => { playDing(true); }, 220);
+        } else if (isShield) {
+            revealingState = 'shield';
+            roundStatusText = '🛡️ PERISAI PECAH! ANDA SELAMAT!';
+            triggerHaptic('success');
+            setTimeout(() => { playShieldBreak(); }, 220);
         } else if (isCorrect) {
             revealingState = 'won';
             roundStatusText = '🎉 TEBAKAN TEPAT! MENANG!';
@@ -373,14 +446,14 @@ x-init="
         // 3. Berikan waktu jeda animasi agar pemain bisa melihat kartu yang keluar dengan jelas!
         clearTimeout(animationTimeout);
         animationTimeout = setTimeout(() => {
-            if (isCorrect || isTie) {
+            if (isCorrect || isTie || isShield) {
                 isFlipped = false;
                 revealingState = null;
                 $wire.advanceRound();
             } else {
                 $wire.finalizeGameOver();
             }
-        }, 1400);
+        }, 1500);
     });
 
     $wire.on('show-game-over-summary', (event) => {
@@ -524,6 +597,45 @@ class="relative w-full rounded-2xl sm:rounded-3xl overflow-hidden border border-
                     </div>
                 </div>
             </div>
+
+            <!-- Card Counting & Deck Status Tracker (Live Remaining Probability) -->
+            @if($gameState === 'playing' || $gameState === 'revealing')
+                <div class="w-full z-10 flex flex-wrap items-center justify-between gap-1.5 px-3 py-1.5 mb-2 bg-slate-950/75 backdrop-blur-md rounded-xl sm:rounded-2xl border border-amber-500/25 shadow-md text-[10px] sm:text-xs font-mono">
+                    <div class="flex items-center gap-2">
+                        <span class="text-amber-400 font-bold flex items-center gap-1">
+                            <span>🂠</span>
+                            <span>Dek:</span>
+                        </span>
+                        <span class="font-black text-white bg-slate-900 px-1.5 py-0.5 rounded border border-slate-800">
+                            {{ $this->deckStats['cards_left'] }} / {{ $this->deckStats['total'] }}
+                        </span>
+                        <span class="text-slate-400 text-[9px] sm:text-[10px]">
+                            (Keluar: {{ $this->deckStats['discarded'] }})
+                        </span>
+                    </div>
+
+                    <!-- Live Remaining Odds / Card Counting Hints -->
+                    <div class="flex items-center gap-2 text-[9px] sm:text-[11px] font-bold">
+                        <span class="text-emerald-400 bg-emerald-950/60 px-1.5 py-0.5 rounded border border-emerald-500/30" title="Kartu 2-6 yang tersisa di dek">
+                            ▼ 2-6: {{ $this->deckStats['low_left'] }}
+                        </span>
+                        <span class="text-slate-300 bg-slate-900/80 px-1.5 py-0.5 rounded border border-slate-700/50" title="Kartu 7-10 yang tersisa di dek">
+                            • 7-10: {{ $this->deckStats['mid_left'] }}
+                        </span>
+                        <span class="text-amber-300 bg-amber-950/60 px-1.5 py-0.5 rounded border border-amber-500/30" title="Kartu J, Q, K, A yang tersisa di dek">
+                            ▲ J-A: {{ $this->deckStats['high_left'] }}
+                        </span>
+                    </div>
+                </div>
+
+                <!-- X-Ray Peek Clue Banner (Muncul saat Power-Up Intip Digunakan) -->
+                @if($peekedHint)
+                    <div class="w-full z-10 mb-2 px-3 py-1.5 bg-gradient-to-r from-sky-950 via-cyan-900 to-indigo-950 border border-cyan-400/70 rounded-xl shadow-[0_0_20px_rgba(6,182,212,0.45)] flex items-center justify-center gap-2 text-cyan-200 text-xs sm:text-sm font-black animate-pulse">
+                        <span class="text-base sm:text-lg">👁️</span>
+                        <span>{{ $peekedHint }}</span>
+                    </div>
+                @endif
+            @endif
 
             <!-- Card Playing Area: LUXURY CASINO CARDS SIDE-BY-SIDE -->
             <div class="relative z-10 flex flex-col items-center justify-center my-auto py-2 sm:py-4 w-full">
@@ -755,9 +867,48 @@ class="relative w-full rounded-2xl sm:rounded-3xl overflow-hidden border border-
 
             </div>
 
-            <!-- Bottom Controller Action Bar: 3D ARCADE BUTTONS -->
-            <div class="w-full z-10 pt-3 sm:pt-4 border-t border-emerald-800/40">
+            <!-- Bottom Controller Action Bar: POWER-UPS & 3D ARCADE BUTTONS -->
+            <div class="w-full z-10 pt-2.5 sm:pt-4 border-t border-emerald-800/40 space-y-2 sm:space-y-3">
                 @if($gameState === 'playing' || $gameState === 'revealing')
+                    
+                    <!-- 3 Power-Up Dock (1x Pakai per Permainan) -->
+                    <div class="flex items-center justify-center gap-1.5 xs:gap-2 max-w-lg mx-auto w-full px-0.5">
+                        
+                        <!-- 1. Power-Up: Intip Kartu (X-Ray Peek) -->
+                        <button 
+                            type="button" 
+                            wire:click="usePowerUpPeek" 
+                            :disabled="isFlipped || {{ $powerUpPeekUsed ? 'true' : 'false' }}"
+                            class="flex-1 py-1.5 px-2 rounded-xl text-[10px] sm:text-xs font-bold transition flex items-center justify-center gap-1 border select-none touch-manipulation {{ $powerUpPeekUsed ? 'bg-slate-900/60 text-slate-500 border-slate-800 cursor-not-allowed opacity-50' : 'bg-gradient-to-r from-sky-600 to-cyan-500 hover:from-sky-500 hover:to-cyan-400 active:scale-95 text-white border-cyan-300/40 shadow-md shadow-cyan-500/25 cursor-pointer' }}"
+                            title="Intip nilai kartu berikutnya sebelum menebak (1x)"
+                        >
+                            <span class="text-xs sm:text-sm">👁️</span>
+                            <span class="truncate">{{ $powerUpPeekUsed ? 'Intip (Habis)' : 'Intip (X-Ray)' }}</span>
+                        </button>
+
+                        <!-- 2. Power-Up: Perisai Nyawa (Shield Status Indicator) -->
+                        <div 
+                            class="flex-1 py-1.5 px-2 rounded-xl text-[10px] sm:text-xs font-bold flex items-center justify-center gap-1 border select-none {{ $powerUpShieldActive ? 'bg-emerald-950/90 text-emerald-300 border-emerald-400/50 shadow-md shadow-emerald-500/25' : 'bg-slate-900/60 text-slate-500 border-slate-800 opacity-50' }}"
+                            title="Melindungi 1x dari Game Over jika salah menebak (Otomatis)"
+                        >
+                            <span class="text-xs sm:text-sm">🛡️</span>
+                            <span class="truncate">{{ $powerUpShieldActive ? 'Perisai Siap' : 'Perisai Pecah' }}</span>
+                        </div>
+
+                        <!-- 3. Power-Up: Tukar Kartu (Swap Deck) -->
+                        <button 
+                            type="button" 
+                            wire:click="usePowerUpSwap" 
+                            :disabled="isFlipped || {{ $powerUpSwapUsed ? 'true' : 'false' }}"
+                            class="flex-1 py-1.5 px-2 rounded-xl text-[10px] sm:text-xs font-black transition flex items-center justify-center gap-1 border select-none touch-manipulation {{ $powerUpSwapUsed ? 'bg-slate-900/60 text-slate-500 border-slate-800 cursor-not-allowed opacity-50' : 'bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-500 hover:from-amber-400 hover:to-yellow-300 active:scale-95 text-slate-950 border-amber-300/60 shadow-md shadow-amber-500/25 cursor-pointer' }}"
+                            title="Tukar kartu saat ini jika posisinya nanggung (1x)"
+                        >
+                            <span class="text-xs sm:text-sm">🔄</span>
+                            <span class="truncate">{{ $powerUpSwapUsed ? 'Tukar (Habis)' : 'Tukar Kartu' }}</span>
+                        </button>
+
+                    </div>
+
                     <div class="flex flex-row items-center justify-center gap-2.5 sm:gap-4 max-w-xl mx-auto w-full px-0.5 sm:px-0">
                         
                         <!-- Button LEBIH BESAR (3D Arcade Green) -->
