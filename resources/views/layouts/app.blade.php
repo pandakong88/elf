@@ -241,7 +241,7 @@
                     </a>
                 @endcan
 
-                @if(auth()->user()->hasRole('super-admin') || auth()->user()->hasRole('bendahara-pondok') || auth()->user()->hasRole('bendahara-unit') || auth()->user()->hasRole('bendahara-putra') || auth()->user()->hasRole('bendahara-putri') || auth()->user()->hasRole('manajemen') || auth()->user()->can('view-tagihan') || auth()->user()->can('record-pembayaran') || auth()->user()->can('manage-billing-config'))
+                @if(auth()->user()->hasRole('super-admin') || auth()->user()->hasRole('bendahara-pondok') || auth()->user()->hasRole('bendahara-unit') || auth()->user()->hasRole('bendahara-putra') || auth()->user()->hasRole('bendahara-putri') || auth()->user()->hasRole('manajemen') || auth()->user()->can('view-tagihan') || auth()->user()->can('record-pembayaran') || auth()->user()->can('manage-billing-config') || auth()->user()->can('view-pinjaman-santri') || auth()->user()->can('manage-pinjaman-santri'))
                     <div class="pt-4 pb-2 px-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Modul Keuangan</div>
                     
                     <a href="{{ route('keuangan.billing') }}" class="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-slate-800 hover:text-white transition-all {{ request()->routeIs('keuangan.billing*') ? 'bg-slate-800 text-white font-medium' : '' }}">
@@ -260,7 +260,7 @@
                             <span>🍽️ Majek (Katering)</span>
                         </a>
                     @endif
-                    @if(auth()->user()->hasRole('super-admin') || auth()->user()->hasRole('bendahara-pondok') || auth()->user()->hasRole('bendahara-putra') || auth()->user()->hasRole('bendahara-putri') || auth()->user()->hasRole('manajemen') || auth()->user()->can('view-pinjaman-santri'))
+                    @if(auth()->user()->hasRole('super-admin') || auth()->user()->can('view-pinjaman-santri') || auth()->user()->can('manage-pinjaman-santri'))
                         <a href="{{ route('keuangan.pinjaman-santri') }}" class="flex items-center justify-between px-4 py-3 rounded-xl hover:bg-slate-800 hover:text-white transition-all {{ request()->routeIs('keuangan.pinjaman-santri*') ? 'bg-slate-800 text-white font-medium' : '' }}">
                             <div class="flex items-center gap-3">
                                 <svg class="w-5 h-5 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
