@@ -43,6 +43,42 @@ class SantriLoanService
     }
 
     /**
+     * Update an existing Santri Loan.
+     */
+    public function updateLoan(SantriLoan $loan, array $data): SantriLoan
+    {
+        return DB::transaction(function () use ($loan, $data) {
+            $newAmount = isset($data['amount']) ? (float) $data['amount'] : (float) $loan->amount;
+
+            if ($newAmount < (float) $loan->amount_paid) {
+                throw new \Exception("Nominal pinjaman tidak boleh lebih kecil dari yang sudah dibayar (Rp " . number_format($loan->amount_paid, 0, ',', '.') . ").");
+            }
+
+            $loan->amount = $newAmount;
+            if (isset($data['borrowed_at'])) {
+                $loan->borrowed_at = $data['borrowed_at'];
+            }
+            $loan->due_date = !empty($data['due_date']) ? $data['due_date'] : null;
+            if (isset($data['reason'])) {
+                $loan->reason = $data['reason'];
+            }
+            if (isset($data['notes'])) {
+                $loan->notes = $data['notes'];
+            }
+            if (isset($data['is_visible_to_guardian'])) {
+                $loan->is_visible_to_guardian = (bool) $data['is_visible_to_guardian'];
+            }
+
+            $loan->recalculateStatus();
+            $loan->save();
+
+            $this->syncBillForLoan($loan);
+
+            return $loan;
+        });
+    }
+
+    /**
      * Toggle visibility to guardian and sync the bill.
      */
     public function toggleGuardianVisibility(SantriLoan $loan): bool

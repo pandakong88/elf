@@ -46,6 +46,17 @@ class PinjamanSantriManager extends Component
     public string $payReceiptNo = '';
     public string $payNotes = '';
 
+    // Modal Edit Loan
+    public bool $showEditModal = false;
+    public ?string $editLoanId = null;
+    public ?SantriLoan $editingLoan = null;
+    public string $editAmount = '';
+    public string $editBorrowedAt = '';
+    public string $editDueDate = '';
+    public string $editReason = '';
+    public string $editNotes = '';
+    public bool $editIsVisibleToGuardian = false;
+
     // Success Notification Banner
     public ?string $successNotification = null;
 
@@ -390,6 +401,89 @@ class PinjamanSantriManager extends Component
         }
 
         $this->toastSuccess("Pinjaman [{$loan->loan_code}] berhasil dibatalkan.");
+    }
+
+    // ─── Modal Edit Loan ────────────────────────────────────────────────────
+
+    public function openEditModal(string $loanId): void
+    {
+        if (!auth()->user()->hasRole('super-admin') && !auth()->user()->can('manage-pinjaman-santri')) {
+            $this->toastError('Anda tidak memiliki wewenang untuk mengedit pinjaman.');
+            return;
+        }
+
+        $loan = SantriLoan::with('person')->findOrFail($loanId);
+
+        $scope = $this->genderScope();
+        if ($scope && $loan->gender !== $scope) {
+            $this->toastError('Anda tidak diizinkan mengedit pinjaman santri lintas gender.');
+            return;
+        }
+
+        $this->editLoanId = $loan->id;
+        $this->editingLoan = $loan;
+        $this->editAmount = (string) (int)$loan->amount;
+        $this->editBorrowedAt = $loan->borrowed_at ? $loan->borrowed_at->format('Y-m-d') : now()->toDateString();
+        $this->editDueDate = $loan->due_date ? $loan->due_date->format('Y-m-d') : '';
+        $this->editReason = $loan->reason ?? '';
+        $this->editNotes = $loan->notes ?? '';
+        $this->editIsVisibleToGuardian = (bool)$loan->is_visible_to_guardian;
+
+        $this->showEditModal = true;
+    }
+
+    public function closeEditModal(): void
+    {
+        $this->showEditModal = false;
+        $this->editLoanId = null;
+        $this->editingLoan = null;
+        $this->editAmount = '';
+        $this->editBorrowedAt = '';
+        $this->editDueDate = '';
+        $this->editReason = '';
+        $this->editNotes = '';
+    }
+
+    public function saveEditLoan(SantriLoanService $service): void
+    {
+        if (!auth()->user()->hasRole('super-admin') && !auth()->user()->can('manage-pinjaman-santri')) {
+            $this->toastError('Anda tidak memiliki wewenang untuk mengedit pinjaman.');
+            return;
+        }
+
+        $loan = SantriLoan::findOrFail($this->editLoanId);
+
+        $minAllowed = (float)$loan->amount_paid > 0 ? (float)$loan->amount_paid : 1000;
+        $this->validate([
+            'editAmount'     => "required|numeric|min:{$minAllowed}",
+            'editBorrowedAt' => 'required|date',
+            'editDueDate'    => 'nullable|date|after_or_equal:editBorrowedAt',
+            'editReason'     => 'nullable|string|max:255',
+            'editNotes'      => 'nullable|string|max:500',
+        ], [
+            'editAmount.required'        => 'Nominal pinjaman wajib diisi.',
+            'editAmount.numeric'         => 'Nominal harus berupa angka.',
+            'editAmount.min'             => "Nominal pinjaman minimal Rp " . number_format($minAllowed, 0, ',', '.') . " (sesuai pembayaran yang sudah masuk).",
+            'editBorrowedAt.required'    => 'Tanggal pinjam wajib diisi.',
+            'editDueDate.after_or_equal' => 'Tenggat waktu harus sama atau setelah tanggal pinjam.',
+        ]);
+
+        try {
+            $updated = $service->updateLoan($loan, [
+                'amount'                 => (float)$this->editAmount,
+                'borrowed_at'            => $this->editBorrowedAt,
+                'due_date'               => $this->editDueDate ?: null,
+                'reason'                 => $this->editReason ?: 'Kiriman orang tua telat',
+                'notes'                  => $this->editNotes ?: null,
+                'is_visible_to_guardian' => $this->editIsVisibleToGuardian,
+            ]);
+
+            $this->closeEditModal();
+            $this->toastSuccess("Perubahan pinjaman [{$updated->loan_code}] berhasil disimpan.");
+            $this->successNotification = "Perubahan data pinjaman [{$updated->loan_code}] berhasil disimpan.";
+        } catch (\Exception $e) {
+            $this->toastError($e->getMessage());
+        }
     }
 
     // ─── Render ─────────────────────────────────────────────────────────────
