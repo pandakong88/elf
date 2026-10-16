@@ -418,7 +418,7 @@
                                     <div class="absolute left-0 right-0 mt-1 max-h-56 overflow-y-auto bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-xl z-20 divide-y divide-slate-100 dark:divide-slate-800">
                                         @foreach($personSearchResults as $res)
                                             <button type="button" 
-                                                    wire:click="selectPerson('{{ $res->id }}', '{{ addslashes($res->name) }}', '{{ $res->nis }}', '{{ $res->gender }}')"
+                                                    wire:click="selectPerson('{{ $res->id }}')"
                                                     class="w-full text-left p-3 hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center justify-between transition-colors">
                                                 <div>
                                                     <span class="text-sm font-bold text-slate-800 dark:text-slate-200 block">{{ $res->name }}</span>

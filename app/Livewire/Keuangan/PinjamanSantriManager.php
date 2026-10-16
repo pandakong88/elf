@@ -160,12 +160,13 @@ class PinjamanSantriManager extends Component
         $this->resetValidation();
     }
 
-    public function selectPerson(string $id, string $name, ?string $nis = null, ?string $gender = null): void
+    public function selectPerson(string $id): void
     {
-        $this->selectedPersonId = $id;
-        $this->selectedPersonName = $name;
-        $this->selectedPersonNIS = $nis;
-        $this->selectedPersonGender = $gender;
+        $person = Person::findOrFail($id);
+        $this->selectedPersonId = $person->id;
+        $this->selectedPersonName = $person->name;
+        $this->selectedPersonNIS = $person->nis;
+        $this->selectedPersonGender = $person->gender;
         $this->personSearch = '';
     }
 
@@ -523,7 +524,9 @@ class PinjamanSantriManager extends Component
                         ->orWhere('reason', 'like', "%{$search}%")
                         ->orWhereHas('person', function ($pq) use ($search) {
                             $pq->where('name', 'like', "%{$search}%")
-                               ->orWhere('nis', 'like', "%{$search}%");
+                               ->orWhereHas('santriProfile', function ($sq) use ($search) {
+                                   $sq->where('additional_info->nis', 'like', "%{$search}%");
+                               });
                         });
                 });
             })
@@ -537,12 +540,15 @@ class PinjamanSantriManager extends Component
         // 3. Search Results for Create Modal
         $personSearchResults = collect();
         if ($this->showCreateModal && strlen(trim($this->personSearch)) >= 2) {
+            $search = trim($this->personSearch);
             $personSearchResults = Person::query()
                 ->whereHas('roles', fn($q) => $q->where('role_type', 'santri')->where('enrollment_status', 'aktif'))
                 ->when($activeGender, fn($q, $g) => $q->where('gender', $g))
-                ->where(function ($q) {
-                    $q->where('name', 'like', "%{$this->personSearch}%")
-                      ->orWhere('nis', 'like', "%{$this->personSearch}%");
+                ->where(function ($q) use ($search) {
+                    $q->where('name', 'like', "%{$search}%")
+                      ->orWhereHas('santriProfile', function ($sq) use ($search) {
+                          $sq->where('additional_info->nis', 'like', "%{$search}%");
+                      });
                 })
                 ->limit(10)
                 ->get();
