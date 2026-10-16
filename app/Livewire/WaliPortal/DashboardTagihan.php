@@ -191,7 +191,7 @@ class DashboardTagihan extends Component
 
         foreach ($allBills as $bill) {
             $interval = $bill->config?->interval;
-            $isEvent = in_array($interval, ['once', 'insidental', 'event', 'sekali']) || in_array($bill->bill_type, ['kitab', 'pendaftaran', 'event_iuran']);
+            $isEvent = in_array($interval, ['once', 'insidental', 'event', 'sekali']) || in_array($bill->bill_type, ['kitab', 'pendaftaran', 'event_iuran', 'pinjaman']);
 
             if ($isEvent) {
                 if ($bill->due_date && $bill->due_date->lt(now()->startOfDay())) {
@@ -780,6 +780,7 @@ class DashboardTagihan extends Component
             'pendaftaran'       => 'Biaya Pendaftaran',
             'event_iuran'       => 'Iuran Acara / Event',
             'insidental'        => 'Iuran Acara / Event',
+            'pinjaman'          => 'Dana Talangan Santri',
         ];
 
         return $labels[$type] ?? ucwords(str_replace('_', ' ', $type));
@@ -895,6 +896,9 @@ class DashboardTagihan extends Component
 
     public function getBillDisplayName(Bill $bill): string
     {
+        if ($bill->bill_type === 'pinjaman') {
+            return $bill->notes ?: 'Dana Talangan Santri';
+        }
         if ($bill->config && $bill->config->label) {
             return $bill->config->label;
         }

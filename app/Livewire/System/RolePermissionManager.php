@@ -898,6 +898,8 @@ class RolePermissionManager extends Component
                 'view-laporan-keuangan' => ['label' => 'Melihat Laporan Keuangan', 'desc' => 'Mengakses kas masuk syahriah & laporan tunggakan.'],
                 'manage-adjustment' => ['label' => 'Keringanan Biaya (Diskon)', 'desc' => 'Memberikan dispensasi / diskon khusus yatim piatu.'],
                 'manage-majek' => ['label' => 'Kelola Majek (Katering)', 'desc' => 'Mengatur pendaftaran, absensi, dan billing katering santri.'],
+                'view-pinjaman-santri' => ['label' => 'Melihat Pinjaman Santri', 'desc' => 'Melihat buku catatan piutang dan pinjaman talangan santri.'],
+                'manage-pinjaman-santri' => ['label' => 'Mengelola Pinjaman Santri', 'desc' => 'Mencatat pinjaman baru, mengedit, dan memproses pelunasan pinjaman santri.'],
             ],
             'Koperasi & Toko' => [
                 'view-produk' => ['label' => 'Melihat Daftar Produk', 'desc' => 'Melihat daftar stok barang di koperasi.'],

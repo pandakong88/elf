@@ -260,6 +260,26 @@
                             <span>🍽️ Majek (Katering)</span>
                         </a>
                     @endif
+                    @if(auth()->user()->hasRole('super-admin') || auth()->user()->hasRole('bendahara-pondok') || auth()->user()->hasRole('bendahara-putra') || auth()->user()->hasRole('bendahara-putri') || auth()->user()->hasRole('manajemen') || auth()->user()->can('view-pinjaman-santri'))
+                        <a href="{{ route('keuangan.pinjaman-santri') }}" class="flex items-center justify-between px-4 py-3 rounded-xl hover:bg-slate-800 hover:text-white transition-all {{ request()->routeIs('keuangan.pinjaman-santri*') ? 'bg-slate-800 text-white font-medium' : '' }}">
+                            <div class="flex items-center gap-3">
+                                <svg class="w-5 h-5 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                <span>Pinjaman Santri</span>
+                            </div>
+                            @php
+                                $genderScope = auth()->user()->person?->gender;
+                                if (auth()->user()->hasRole(['bendahara-putra', 'lurah-putra'])) $genderScope = 'L';
+                                if (auth()->user()->hasRole(['bendahara-putri', 'lurah-putri'])) $genderScope = 'P';
+                                if (auth()->user()->hasRole(['super-admin', 'admin', 'manajemen', 'bendahara', 'bendahara-pondok'])) $genderScope = null;
+                                $unpaidLoansCount = \App\Modules\Keuangan\Models\SantriLoan::when($genderScope, fn($q, $g) => $q->where('gender', $g))->whereIn('status', ['unpaid', 'partial'])->count();
+                            @endphp
+                            @if($unpaidLoansCount > 0)
+                                <span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-rose-500 text-white shadow-xs">
+                                    {{ $unpaidLoansCount }}
+                                </span>
+                            @endif
+                        </a>
+                    @endif
                 @endif
 
 
