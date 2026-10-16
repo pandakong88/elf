@@ -44,10 +44,20 @@ class Bill extends Model
         'deleted_at' => 'datetime',
     ];
 
+    public function getNotesAttribute($value): ?string
+    {
+        if ($this->bill_type === 'pinjaman' && !empty($value)) {
+            if (str_starts_with($value, 'Dana Talangan: ')) {
+                return 'Keperluan: ' . substr($value, 15);
+            }
+        }
+        return $value;
+    }
+
     public function getPeriodFormattedAttribute(): string
     {
         if ($this->bill_type === 'pinjaman') {
-            return 'Dana Talangan';
+            return 'Dana Darurat Santri';
         }
 
         $interval = $this->config?->interval ?? '';

@@ -67,6 +67,9 @@ class SantriLoanService
             $month = $loan->borrowed_at ? (int) \Carbon\Carbon::parse($loan->borrowed_at)->format('m') : (int) now()->format('m');
             $year  = $loan->borrowed_at ? (int) \Carbon\Carbon::parse($loan->borrowed_at)->format('Y') : (int) now()->format('Y');
 
+            $reasonText = !empty($loan->reason) ? $loan->reason : 'Kebutuhan Mendesak Santri';
+            $billNote   = 'Keperluan: ' . $reasonText . ' (Ref: ' . $loan->loan_code . ')';
+
             if (!$bill) {
                 $bill = Bill::create([
                     'person_id'    => $loan->person_id,
@@ -78,7 +81,7 @@ class SantriLoanService
                     'amount_paid'  => $loan->amount_paid,
                     'status'       => $loan->status,
                     'due_date'     => $loan->due_date ?: \Carbon\Carbon::parse($loan->borrowed_at)->addDays(30)->toDateString(),
-                    'notes'        => 'Dana Talangan: ' . ($loan->reason ?: 'Pinjaman Santri (' . $loan->loan_code . ')'),
+                    'notes'        => $billNote,
                     'created_by'   => $loan->created_by ?: auth()->id() ?: \App\Models\User::first()?->id,
                 ]);
 
@@ -89,7 +92,7 @@ class SantriLoanService
                     'amount'      => $loan->amount,
                     'amount_paid' => $loan->amount_paid,
                     'status'      => $loan->status,
-                    'notes'       => 'Dana Talangan: ' . ($loan->reason ?: 'Pinjaman Santri (' . $loan->loan_code . ')'),
+                    'notes'       => $billNote,
                 ]);
             }
 

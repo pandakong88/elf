@@ -780,7 +780,7 @@ class DashboardTagihan extends Component
             'pendaftaran'       => 'Biaya Pendaftaran',
             'event_iuran'       => 'Iuran Acara / Event',
             'insidental'        => 'Iuran Acara / Event',
-            'pinjaman'          => 'Dana Talangan Santri',
+            'pinjaman'          => 'Dana Darurat Santri',
         ];
 
         return $labels[$type] ?? ucwords(str_replace('_', ' ', $type));
@@ -897,7 +897,7 @@ class DashboardTagihan extends Component
     public function getBillDisplayName(Bill $bill): string
     {
         if ($bill->bill_type === 'pinjaman') {
-            return $bill->notes ?: 'Dana Talangan Santri';
+            return 'Dana Darurat Santri';
         }
         if ($bill->config && $bill->config->label) {
             return $bill->config->label;
