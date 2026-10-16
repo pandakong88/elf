@@ -44,8 +44,22 @@ class Bill extends Model
         'deleted_at' => 'datetime',
     ];
 
+    public function getNotesAttribute($value): ?string
+    {
+        if ($this->bill_type === 'pinjaman' && !empty($value)) {
+            if (str_starts_with($value, 'Dana Talangan: ')) {
+                return 'Keperluan: ' . substr($value, 15);
+            }
+        }
+        return $value;
+    }
+
     public function getPeriodFormattedAttribute(): string
     {
+        if ($this->bill_type === 'pinjaman') {
+            return 'Dana Darurat Santri';
+        }
+
         $interval = $this->config?->interval ?? '';
 
         if (in_array($interval, ['semester', '2x_yearly']) || in_array($this->bill_type, ['syahriah_madrasah', 'kebersihan'])) {
@@ -134,6 +148,11 @@ class Bill extends Model
         return $this->hasMany(Bill::class, 'parent_bill_id');
     }
 
+    public function loan(): BelongsTo
+    {
+        return $this->belongsTo(SantriLoan::class, 'reference_id');
+    }
+
     public function recalculateStatus(): void
     {
         if ($this->installments()->exists()) {
@@ -168,6 +187,13 @@ class Bill extends Model
         }
 
         $this->save();
+
+        if ($this->bill_type === 'pinjaman' && $this->reference_id) {
+            $loan = SantriLoan::find($this->reference_id);
+            if ($loan) {
+                $loan->recalculateStatus();
+            }
+        }
 
         if ($this->parent_bill_id) {
             $parent = $this->parent;

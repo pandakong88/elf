@@ -140,6 +140,7 @@ class StatusPembayaran extends Component
             'pendaftaran'       => 'Biaya Pendaftaran',
             'event_iuran'       => 'Iuran Acara / Event',
             'insidental'        => 'Iuran Acara / Event',
+            'pinjaman'          => 'Dana Darurat Santri',
         ];
 
         return $labels[$type] ?? ucwords(str_replace('_', ' ', $type));

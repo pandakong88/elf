@@ -191,7 +191,7 @@ class DashboardTagihan extends Component
 
         foreach ($allBills as $bill) {
             $interval = $bill->config?->interval;
-            $isEvent = in_array($interval, ['once', 'insidental', 'event', 'sekali']) || in_array($bill->bill_type, ['kitab', 'pendaftaran', 'event_iuran']);
+            $isEvent = in_array($interval, ['once', 'insidental', 'event', 'sekali']) || in_array($bill->bill_type, ['kitab', 'pendaftaran', 'event_iuran', 'pinjaman']);
 
             if ($isEvent) {
                 if ($bill->due_date && $bill->due_date->lt(now()->startOfDay())) {
@@ -780,6 +780,7 @@ class DashboardTagihan extends Component
             'pendaftaran'       => 'Biaya Pendaftaran',
             'event_iuran'       => 'Iuran Acara / Event',
             'insidental'        => 'Iuran Acara / Event',
+            'pinjaman'          => 'Dana Darurat Santri',
         ];
 
         return $labels[$type] ?? ucwords(str_replace('_', ' ', $type));
@@ -801,6 +802,12 @@ class DashboardTagihan extends Component
     {
         $interval = $bill->config?->interval ?? '';
         $dueStr = $bill->due_date ? ' • Tenggat: ' . $bill->due_date->translatedFormat('d M Y') : '';
+
+        if ($bill->bill_type === 'pinjaman') {
+            $monthName = $this->getMonthName($bill->period_month);
+            $base = $monthName ? "{$monthName} {$bill->period_year}" : "Insidental";
+            return $bill->due_date ? "{$base}{$dueStr}" : $base;
+        }
 
         if (in_array($interval, ['semester', '2x_yearly']) || in_array($bill->bill_type, ['kebersihan', 'syahriah_madrasah'])) {
             $pm = (int)$bill->period_month;
@@ -895,6 +902,9 @@ class DashboardTagihan extends Component
 
     public function getBillDisplayName(Bill $bill): string
     {
+        if ($bill->bill_type === 'pinjaman') {
+            return 'Dana Darurat Santri';
+        }
         if ($bill->config && $bill->config->label) {
             return $bill->config->label;
         }

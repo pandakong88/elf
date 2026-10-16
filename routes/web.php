@@ -128,6 +128,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/keuangan/lembar-setoran', \App\Livewire\Keuangan\LembarSetoranKolektif::class)->name('keuangan.lembar-setoran');
     Route::get('/keuangan/majek', \App\Livewire\Keuangan\MajekManager::class)->name('keuangan.majek');
     Route::get('/keuangan/tarif-pendaftaran', \App\Livewire\Keuangan\RegistrationTariffManager::class)->name('keuangan.tarif-pendaftaran');
+    Route::get('/keuangan/pinjaman-santri', \App\Livewire\Keuangan\PinjamanSantriManager::class)->name('keuangan.pinjaman-santri');
 
     // Rekonsiliasi & Settlement Reports (PDF & Excel)
     Route::get('/keuangan/settlement/pdf', [\App\Http\Controllers\SettlementReportController::class, 'downloadSettlementPdf'])->name('keuangan.settlement.pdf');

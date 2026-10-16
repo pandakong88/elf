@@ -36,11 +36,37 @@ class BillPayment extends Model
     protected static function booted()
     {
         static::saved(function ($payment) {
-            $payment->bill->recalculateStatus();
+            $bill = $payment->bill;
+            if ($bill) {
+                $bill->recalculateStatus();
+
+                if ($bill->bill_type === 'pinjaman' && $bill->reference_id) {
+                    $loan = SantriLoan::find($bill->reference_id);
+                    if ($loan) {
+                        $receipt = $payment->receipt_no ?: ('PORTAL-' . $payment->id);
+                        $exists = SantriLoanPayment::where('loan_id', $loan->id)
+                            ->where('receipt_no', $receipt)
+                            ->exists();
+                        if (!$exists) {
+                            SantriLoanPayment::create([
+                                'loan_id'        => $loan->id,
+                                'payment_code'   => SantriLoanPayment::generatePaymentCode(),
+                                'amount'         => $payment->amount_paid,
+                                'payment_method' => 'portal_wali',
+                                'payment_date'   => $payment->payment_date ?: now()->toDateString(),
+                                'received_by'    => $payment->logged_by,
+                                'receipt_no'     => $receipt,
+                                'notes'          => 'Pembayaran via Portal Wali (' . $receipt . ')',
+                            ]);
+                            $loan->recalculateStatus();
+                        }
+                    }
+                }
+            }
         });
 
         static::deleted(function ($payment) {
-            $payment->bill->recalculateStatus();
+            $payment->bill?->recalculateStatus();
         });
     }
 
