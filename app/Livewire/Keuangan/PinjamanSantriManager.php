@@ -72,7 +72,7 @@ class PinjamanSantriManager extends Component
 
     public function mount(): void
     {
-        if (!auth()->check() || (!auth()->user()->hasRole('super-admin') && !auth()->user()->can('view-pinjaman-santri'))) {
+        if (!auth()->check() || (!auth()->user()->hasRole('super-admin') && !auth()->user()->can('view-pinjaman-santri') && !auth()->user()->can('manage-pinjaman-santri'))) {
             abort(403, 'Anda tidak memiliki hak akses untuk membuka Buku Pinjaman Santri.');
         }
 
