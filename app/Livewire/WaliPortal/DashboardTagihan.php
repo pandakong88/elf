@@ -803,6 +803,12 @@ class DashboardTagihan extends Component
         $interval = $bill->config?->interval ?? '';
         $dueStr = $bill->due_date ? ' • Tenggat: ' . $bill->due_date->translatedFormat('d M Y') : '';
 
+        if ($bill->bill_type === 'pinjaman') {
+            $monthName = $this->getMonthName($bill->period_month);
+            $base = $monthName ? "{$monthName} {$bill->period_year}" : "Insidental";
+            return $bill->due_date ? "{$base}{$dueStr}" : $base;
+        }
+
         if (in_array($interval, ['semester', '2x_yearly']) || in_array($bill->bill_type, ['kebersihan', 'syahriah_madrasah'])) {
             $pm = (int)$bill->period_month;
             $s = $bill->period_sub ?? (($pm === 2 || $pm >= 7) ? 2 : 1);

@@ -80,7 +80,7 @@ class SantriLoanService
                     'amount'       => $loan->amount,
                     'amount_paid'  => $loan->amount_paid,
                     'status'       => $loan->status,
-                    'due_date'     => $loan->due_date ?: \Carbon\Carbon::parse($loan->borrowed_at)->addDays(30)->toDateString(),
+                    'due_date'     => $loan->due_date ?: null,
                     'notes'        => $billNote,
                     'created_by'   => $loan->created_by ?: auth()->id() ?: \App\Models\User::first()?->id,
                 ]);
@@ -92,6 +92,7 @@ class SantriLoanService
                     'amount'      => $loan->amount,
                     'amount_paid' => $loan->amount_paid,
                     'status'      => $loan->status,
+                    'due_date'    => $loan->due_date ?: null,
                     'notes'       => $billNote,
                 ]);
             }
