@@ -31,6 +31,37 @@
         </div>
     </div>
 
+    <!-- Alert Notifikasi Berhasil (Unmissable Banner) -->
+    @if($successNotification)
+        <div x-data="{ show: true }" 
+             x-show="show" 
+             x-transition:enter="transition ease-out duration-300" 
+             x-transition:enter-start="opacity-0 -translate-y-2 scale-95" 
+             x-transition:enter-end="opacity-100 translate-y-0 scale-100" 
+             class="p-4 sm:p-5 rounded-3xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 text-white shadow-xl shadow-emerald-600/20 flex items-center justify-between gap-3 border border-emerald-400/30">
+            <div class="flex items-center gap-3.5">
+                <div class="w-11 h-11 rounded-2xl bg-white/20 backdrop-blur-xs flex items-center justify-center shrink-0 border border-white/30">
+                    <svg class="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
+                    </svg>
+                </div>
+                <div>
+                    <h4 class="text-sm font-black tracking-wide flex items-center gap-2">
+                        <span>BERHASIL DISIMPAN!</span>
+                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-300 animate-ping"></span>
+                    </h4>
+                    <p class="text-xs text-emerald-100 font-medium mt-0.5 leading-relaxed">{{ $successNotification }}</p>
+                </div>
+            </div>
+            <button type="button" 
+                    @click="show = false; $wire.set('successNotification', null)" 
+                    class="p-2 text-white/80 hover:text-white rounded-xl hover:bg-white/10 transition-colors shrink-0" 
+                    title="Tutup Notifikasi">
+                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+        </div>
+    @endif
+
     <!-- KPI Summary Cards -->
     <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <!-- Total Piutang Aktif -->
@@ -396,20 +427,28 @@
                         @error('selectedPersonId') <span class="text-xs text-rose-500 block">{{ $message }}</span> @enderror
                     </div>
 
-                    <!-- Nominal Pinjaman -->
+                    <!-- Nominal Pinjaman (Fixed Input Group - Anti Tumpang Tindih) -->
                     <div class="space-y-1.5">
                         <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
-                            Nominal Pinjaman (Rp) <span class="text-rose-500">*</span>
+                            Nominal Pinjaman <span class="text-rose-500">*</span>
                         </label>
-                        <div class="relative">
-                            <span class="absolute left-3.5 top-2.5 text-sm font-bold text-slate-400">Rp</span>
+                        <div class="flex rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden bg-slate-50 dark:bg-slate-950 focus-within:ring-2 focus-within:ring-emerald-500 focus-within:border-emerald-500">
+                            <span class="inline-flex items-center px-4 bg-slate-200/70 dark:bg-slate-800 text-slate-700 dark:text-slate-200 font-black text-sm border-r border-slate-200 dark:border-slate-700 select-none">
+                                Rp
+                            </span>
                             <input type="number" 
-                                   wire:model="amount" 
-                                   placeholder="Contoh: 50000"
+                                   wire:model.live="amount" 
+                                   placeholder="0"
                                    min="1000"
                                    step="1000"
-                                   class="w-full pl-11 pr-4 py-2.5 rounded-2xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-emerald-500 text-slate-800 dark:text-slate-200">
+                                   class="w-full px-4 py-2.5 bg-transparent border-0 text-base font-black focus:outline-none focus:ring-0 text-slate-900 dark:text-white">
                         </div>
+                        @if($amount && is_numeric($amount) && (float)$amount > 0)
+                            <div class="flex items-center gap-1.5 text-xs font-extrabold text-emerald-600 dark:text-emerald-400 pt-0.5">
+                                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+                                <span>Terbilang: Rp {{ number_format((float)$amount, 0, ',', '.') }}</span>
+                            </div>
+                        @endif
                         @error('amount') <span class="text-xs text-rose-500 block">{{ $message }}</span> @enderror
                     </div>
 
@@ -446,16 +485,34 @@
                                class="w-full px-4 py-2.5 rounded-2xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 text-slate-800 dark:text-slate-200">
                     </div>
 
-                    <!-- Toggle Tampilkan ke Portal Wali -->
-                    <div class="p-4 rounded-2xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 flex items-center justify-between gap-3">
-                        <div>
-                            <span class="text-sm font-bold text-slate-800 dark:text-slate-200 block">Tampilkan di Dashboard Orang Tua?</span>
-                            <span class="text-xs text-slate-500 block">Jika aktif, tagihan talangan ini muncul di Portal Wali sehingga orang tua bisa melunasi via transfer/gateway.</span>
+                    <!-- Toggle Tampilkan ke Portal Wali (Interaktif Jelas & Responsif) -->
+                    <div wire:click="$toggle('isVisibleToGuardian')"
+                         class="cursor-pointer p-4 rounded-2xl border transition-all duration-200 flex items-center justify-between gap-3 select-none {{ $isVisibleToGuardian ? 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-300 dark:border-emerald-700 shadow-xs ring-1 ring-emerald-400/40' : 'bg-slate-50 dark:bg-slate-950 border-slate-200 dark:border-slate-800' }}">
+                        <div class="space-y-1 flex-1">
+                            <div class="flex items-center gap-2 flex-wrap">
+                                <span class="text-sm font-black {{ $isVisibleToGuardian ? 'text-emerald-900 dark:text-emerald-200' : 'text-slate-800 dark:text-slate-200' }}">
+                                    Tampilkan di Dashboard Orang Tua?
+                                </span>
+                                @if($isVisibleToGuardian)
+                                    <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-600 text-white shadow-xs">
+                                        <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+                                        Aktif (Tayang ke Wali)
+                                    </span>
+                                @else
+                                    <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400">
+                                        Off (Internal Saja)
+                                    </span>
+                                @endif
+                            </div>
+                            <p class="text-xs {{ $isVisibleToGuardian ? 'text-emerald-700 dark:text-emerald-300 font-medium' : 'text-slate-500' }}">
+                                {{ $isVisibleToGuardian ? '✓ Tagihan talangan ini AKAN MUNCUL di Portal Wali sehingga orang tua bisa melihat rinciannya dan melunasi via transfer/gateway.' : 'Hanya dicatat di pembukuan internal pengurus pondok, tidak ditampilkan di Portal Wali.' }}
+                            </p>
                         </div>
-                        <label class="relative inline-flex items-center cursor-pointer shrink-0">
-                            <input type="checkbox" wire:model="isVisibleToGuardian" class="sr-only peer">
-                            <div class="w-11 h-6 bg-slate-300 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-600"></div>
-                        </label>
+
+                        <!-- Modern Pill Toggle Knob -->
+                        <div class="relative inline-flex h-7 w-12 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out {{ $isVisibleToGuardian ? 'bg-emerald-600' : 'bg-slate-300 dark:bg-slate-700' }}">
+                            <span class="pointer-events-none inline-block h-6 w-6 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out {{ $isVisibleToGuardian ? 'translate-x-5' : 'translate-x-0' }}"></span>
+                        </div>
                     </div>
 
                     <!-- Tombol Submit -->
@@ -468,6 +525,64 @@
                         </button>
                     </div>
                 </form>
+            </div>
+        </div>
+    @endif
+
+    <!-- ─── MODAL KONFIRMASI SEBELUM SIMPAN PINJAMAN ──────────────────────────── -->
+    @if($showConfirmCreateModal)
+        <div class="fixed inset-0 z-60 overflow-y-auto bg-slate-900/70 backdrop-blur-xs flex items-center justify-center p-4">
+            <div class="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-2xl w-full max-w-md overflow-hidden p-6 space-y-4 animate-in fade-in scale-95 duration-150">
+                <div class="flex items-center gap-3.5">
+                    <div class="w-12 h-12 rounded-2xl bg-amber-50 dark:bg-amber-950/50 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0 border border-amber-200 dark:border-amber-800">
+                        <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <h3 class="text-base font-black text-slate-900 dark:text-white">Konfirmasi Simpan Pinjaman</h3>
+                        <p class="text-xs text-slate-500">Pastikan data berikut sudah benar sebelum dicatat.</p>
+                    </div>
+                </div>
+
+                <div class="p-4 rounded-2xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 space-y-2.5 text-xs">
+                    <div class="flex justify-between items-center py-1 border-b border-slate-100 dark:border-slate-800">
+                        <span class="text-slate-500 font-medium">Santri Peminjam:</span>
+                        <strong class="text-slate-900 dark:text-white font-bold">{{ $selectedPersonName }}</strong>
+                    </div>
+                    <div class="flex justify-between items-center py-1 border-b border-slate-100 dark:border-slate-800">
+                        <span class="text-slate-500 font-medium">Nominal Pinjaman:</span>
+                        <strong class="text-rose-600 dark:text-rose-400 font-mono text-sm font-black">Rp {{ number_format((float)$amount, 0, ',', '.') }}</strong>
+                    </div>
+                    <div class="flex justify-between items-center py-1 border-b border-slate-100 dark:border-slate-800">
+                        <span class="text-slate-500 font-medium">Tanggal Pinjam:</span>
+                        <span class="font-bold text-slate-800 dark:text-slate-200">{{ \Carbon\Carbon::parse($borrowedAt)->translatedFormat('d F Y') }}</span>
+                    </div>
+                    <div class="flex justify-between items-center py-1 border-b border-slate-100 dark:border-slate-800">
+                        <span class="text-slate-500 font-medium">Keperluan:</span>
+                        <span class="font-medium text-slate-800 dark:text-slate-200 truncate max-w-[200px]">{{ $reason ?: 'Kiriman orang tua telat' }}</span>
+                    </div>
+                    <div class="flex justify-between items-center py-1">
+                        <span class="text-slate-500 font-medium">Tampil di Portal Wali:</span>
+                        <span class="font-black {{ $isVisibleToGuardian ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-500' }}">
+                            {{ $isVisibleToGuardian ? '✓ Ya (Ditampilkan)' : '✕ Tidak (Internal Saja)' }}
+                        </span>
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-end gap-2 pt-2">
+                    <button type="button" 
+                            wire:click="$set('showConfirmCreateModal', false)" 
+                            class="px-4 py-2.5 rounded-2xl text-slate-600 dark:text-slate-400 font-bold text-xs hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+                        Periksa Kembali
+                    </button>
+                    <button type="button" 
+                            wire:click="executeSaveLoan" 
+                            class="px-5 py-2.5 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-md shadow-emerald-600/20 active:scale-95 transition-all flex items-center gap-1.5">
+                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                        <span>Ya, Simpan Pinjaman</span>
+                    </button>
+                </div>
             </div>
         </div>
     @endif
@@ -499,30 +614,38 @@
                         </div>
                         <div class="flex justify-between border-t border-slate-200 dark:border-slate-800 pt-1">
                             <span class="text-slate-500 font-bold">Sisa yang Harus Dibayar:</span>
-                            <strong class="text-rose-600 dark:text-rose-400 font-mono text-sm">Rp {{ number_format($selectedLoan->remaining_amount, 0, ',', '.') }}</strong>
+                            <strong class="text-rose-600 dark:text-rose-400 font-mono text-sm font-black">Rp {{ number_format($selectedLoan->remaining_amount, 0, ',', '.') }}</strong>
                         </div>
                     </div>
 
-                    <!-- Input Nominal Pembayaran -->
+                    <!-- Input Nominal Pembayaran (Fixed Input Group - Anti Tumpang Tindih) -->
                     <div class="space-y-1.5">
                         <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
                             Nominal Bayar / Cicil (Rp) <span class="text-rose-500">*</span>
                         </label>
-                        <div class="relative">
-                            <span class="absolute left-3.5 top-2.5 text-sm font-bold text-slate-400">Rp</span>
+                        <div class="flex rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden bg-slate-50 dark:bg-slate-950 focus-within:ring-2 focus-within:ring-emerald-500 focus-within:border-emerald-500">
+                            <span class="inline-flex items-center px-4 bg-slate-200/70 dark:bg-slate-800 text-slate-700 dark:text-slate-200 font-black text-sm border-r border-slate-200 dark:border-slate-700 select-none">
+                                Rp
+                            </span>
                             <input type="number" 
-                                   wire:model="payAmount" 
+                                   wire:model.live="payAmount" 
                                    min="1"
                                    max="{{ $selectedLoan->remaining_amount }}"
                                    step="1"
-                                   class="w-full pl-11 pr-4 py-2.5 rounded-2xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-emerald-500 text-slate-800 dark:text-slate-200">
+                                   class="w-full px-4 py-2.5 bg-transparent border-0 text-base font-black focus:outline-none focus:ring-0 text-slate-900 dark:text-white">
                         </div>
-                        <div class="flex items-center justify-between text-[11px] text-slate-500">
+                        <div class="flex items-center justify-between text-[11px] text-slate-500 pt-0.5">
                             <span>Bisa bayar penuh atau dicicil.</span>
                             <button type="button" wire:click="$set('payAmount', '{{ $selectedLoan->remaining_amount }}')" class="font-bold text-emerald-600 hover:underline">
                                 Bayar Lunas Penuh
                             </button>
                         </div>
+                        @if($payAmount && is_numeric($payAmount) && (float)$payAmount > 0)
+                            <div class="flex items-center gap-1.5 text-xs font-extrabold text-emerald-600 dark:text-emerald-400 pt-0.5">
+                                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+                                <span>Terbilang: Rp {{ number_format((float)$payAmount, 0, ',', '.') }}</span>
+                            </div>
+                        @endif
                         @error('payAmount') <span class="text-xs text-rose-500 block">{{ $message }}</span> @enderror
                     </div>
 
@@ -547,6 +670,52 @@
                         </button>
                     </div>
                 </form>
+            </div>
+        </div>
+    @endif
+
+    <!-- ─── MODAL KONFIRMASI SEBELUM PROSES PELUNASAN TUNAI ──────────────────── -->
+    @if($showConfirmPaymentModal && $selectedLoan)
+        <div class="fixed inset-0 z-60 overflow-y-auto bg-slate-900/70 backdrop-blur-xs flex items-center justify-center p-4">
+            <div class="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-2xl w-full max-w-md overflow-hidden p-6 space-y-4 animate-in fade-in scale-95 duration-150">
+                <div class="flex items-center gap-3.5">
+                    <div class="w-12 h-12 rounded-2xl bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 border border-emerald-200 dark:border-emerald-800">
+                        <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <h3 class="text-base font-black text-slate-900 dark:text-white">Konfirmasi Pelunasan Tunai</h3>
+                        <p class="text-xs text-slate-500 font-mono">{{ $selectedLoan->loan_code }} • {{ $selectedLoan->person?->name }}</p>
+                    </div>
+                </div>
+
+                <div class="p-4 rounded-2xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 space-y-2 text-xs">
+                    <div class="flex justify-between items-center py-1 border-b border-slate-100 dark:border-slate-800">
+                        <span class="text-slate-500 font-medium">Nominal Disetorkan:</span>
+                        <strong class="text-emerald-600 dark:text-emerald-400 font-mono text-sm font-black">Rp {{ number_format((float)$payAmount, 0, ',', '.') }}</strong>
+                    </div>
+                    <div class="flex justify-between items-center py-1">
+                        <span class="text-slate-500 font-medium">Sisa Setelah Pembayaran:</span>
+                        <strong class="text-slate-800 dark:text-slate-200 font-mono">
+                            Rp {{ number_format(max(0, $selectedLoan->remaining_amount - (float)$payAmount), 0, ',', '.') }}
+                        </strong>
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-end gap-2 pt-2">
+                    <button type="button" 
+                            wire:click="$set('showConfirmPaymentModal', false)" 
+                            class="px-4 py-2.5 rounded-2xl text-slate-600 dark:text-slate-400 font-bold text-xs hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+                        Periksa Kembali
+                    </button>
+                    <button type="button" 
+                            wire:click="executeSavePayment" 
+                            class="px-5 py-2.5 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-md shadow-emerald-600/20 active:scale-95 transition-all flex items-center gap-1.5">
+                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                        <span>Ya, Proses Pembayaran</span>
+                    </button>
+                </div>
             </div>
         </div>
     @endif

@@ -35,14 +35,19 @@ class PinjamanSantriManager extends Component
     public string $reason = '';
     public string $notes = '';
     public bool $isVisibleToGuardian = false;
+    public bool $showConfirmCreateModal = false;
 
     // Modal Cash Payment
     public bool $showPaymentModal = false;
+    public bool $showConfirmPaymentModal = false;
     public ?string $selectedLoanId = null;
     public ?SantriLoan $selectedLoan = null;
     public string $payAmount = '';
     public string $payReceiptNo = '';
     public string $payNotes = '';
+
+    // Success Notification Banner
+    public ?string $successNotification = null;
 
     // Modal History
     public bool $showHistoryModal = false;
@@ -140,6 +145,7 @@ class PinjamanSantriManager extends Component
         $this->reason = '';
         $this->notes = '';
         $this->isVisibleToGuardian = false;
+        $this->showConfirmCreateModal = false;
         $this->resetValidation();
     }
 
@@ -152,7 +158,7 @@ class PinjamanSantriManager extends Component
         $this->personSearch = '';
     }
 
-    public function saveLoan(SantriLoanService $service): void
+    public function saveLoan(): void
     {
         if (!auth()->user()->hasRole('super-admin') && !auth()->user()->can('manage-pinjaman-santri')) {
             $this->toastError('Anda tidak memiliki wewenang untuk mencatat pinjaman baru.');
@@ -183,7 +189,19 @@ class PinjamanSantriManager extends Component
             return;
         }
 
+        // Buka modal konfirmasi sebelum menyimpan
+        $this->showConfirmCreateModal = true;
+    }
+
+    public function executeSaveLoan(SantriLoanService $service): void
+    {
+        if (!auth()->user()->hasRole('super-admin') && !auth()->user()->can('manage-pinjaman-santri')) {
+            $this->toastError('Anda tidak memiliki wewenang untuk mencatat pinjaman baru.');
+            return;
+        }
+
         try {
+            $person = Person::findOrFail($this->selectedPersonId);
             $loan = $service->createLoan([
                 'person_id'              => $this->selectedPersonId,
                 'amount'                 => (float) $this->amount,
@@ -194,10 +212,17 @@ class PinjamanSantriManager extends Component
                 'is_visible_to_guardian' => $this->isVisibleToGuardian,
             ], auth()->id());
 
-            $this->toastSuccess("Pinjaman sebesar Rp " . number_format($loan->amount, 0, ',', '.') . " untuk {$person->name} berhasil dicatat.");
+            $amountFmt = number_format($loan->amount, 0, ',', '.');
+            $successMsg = "Pinjaman dana talangan sebesar Rp {$amountFmt} untuk {$person->name} berhasil dicatat dengan kode [{$loan->loan_code}].";
+            
+            $this->successNotification = $successMsg;
+            $this->toastSuccess($successMsg, 'Berhasil Disimpan');
+
+            $this->showConfirmCreateModal = false;
             $this->closeCreateModal();
         } catch (\Exception $e) {
-            $this->toastError('Terjadi kesalahan: ' . $e->getMessage());
+            $this->toastError('Terjadi kesalahan saat menyimpan: ' . $e->getMessage());
+            $this->showConfirmCreateModal = false;
         }
     }
 
@@ -224,6 +249,7 @@ class PinjamanSantriManager extends Component
         $this->payAmount = (string) $loan->remaining_amount;
         $this->payReceiptNo = '';
         $this->payNotes = '';
+        $this->showConfirmPaymentModal = false;
         $this->resetValidation();
         $this->showPaymentModal = true;
     }
@@ -231,6 +257,7 @@ class PinjamanSantriManager extends Component
     public function closePaymentModal(): void
     {
         $this->showPaymentModal = false;
+        $this->showConfirmPaymentModal = false;
         $this->selectedLoanId = null;
         $this->selectedLoan = null;
         $this->payAmount = '';
@@ -238,7 +265,7 @@ class PinjamanSantriManager extends Component
         $this->payNotes = '';
     }
 
-    public function savePayment(SantriLoanService $service): void
+    public function savePayment(): void
     {
         if (!auth()->user()->hasRole('super-admin') && !auth()->user()->can('manage-pinjaman-santri')) {
             $this->toastError('Anda tidak memiliki wewenang untuk mencatat pelunasan.');
@@ -260,7 +287,22 @@ class PinjamanSantriManager extends Component
             'payAmount.max'      => 'Nominal melebihi sisa pinjaman (Maks: Rp ' . number_format($maxPayable, 0, ',', '.') . ').',
         ]);
 
+        $this->showConfirmPaymentModal = true;
+    }
+
+    public function executeSavePayment(SantriLoanService $service): void
+    {
+        if (!auth()->user()->hasRole('super-admin') && !auth()->user()->can('manage-pinjaman-santri')) {
+            $this->toastError('Anda tidak memiliki wewenang untuk mencatat pelunasan.');
+            return;
+        }
+
+        if (!$this->selectedLoan) {
+            return;
+        }
+
         try {
+            $payAmountFmt = number_format((float)$this->payAmount, 0, ',', '.');
             $service->recordPayment(
                 $this->selectedLoan,
                 (float) $this->payAmount,
@@ -270,10 +312,15 @@ class PinjamanSantriManager extends Component
                 $this->payNotes ?: 'Pelunasan tunai kasir'
             );
 
-            $this->toastSuccess("Pembayaran sebesar Rp " . number_format((float)$this->payAmount, 0, ',', '.') . " berhasil dicatat.");
+            $successMsg = "Pembayaran sebesar Rp {$payAmountFmt} untuk pinjaman [{$this->selectedLoan->loan_code}] berhasil dicatat.";
+            $this->successNotification = $successMsg;
+            $this->toastSuccess($successMsg, 'Pembayaran Berhasil');
+
+            $this->showConfirmPaymentModal = false;
             $this->closePaymentModal();
         } catch (\Exception $e) {
             $this->toastError('Gagal memproses pembayaran: ' . $e->getMessage());
+            $this->showConfirmPaymentModal = false;
         }
     }
 
