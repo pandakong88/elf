@@ -179,7 +179,7 @@ class PinjamanSantriManager extends Component
 
         $this->validate([
             'selectedPersonId' => 'required|exists:persons,id',
-            'amount'           => 'required|numeric|min:1000',
+            'amount'           => 'required|numeric|min:1',
             'borrowedAt'       => 'required|date',
             'dueDate'          => 'nullable|date|after_or_equal:borrowedAt',
             'reason'           => 'nullable|string|max:255',
@@ -188,7 +188,7 @@ class PinjamanSantriManager extends Component
             'selectedPersonId.required' => 'Pilih santri peminjam terlebih dahulu.',
             'amount.required'          => 'Nominal pinjaman wajib diisi.',
             'amount.numeric'           => 'Nominal harus berupa angka.',
-            'amount.min'               => 'Nominal pinjaman minimal Rp 1.000.',
+            'amount.min'               => 'Nominal pinjaman minimal Rp 1.',
             'borrowedAt.required'      => 'Tanggal pinjam wajib diisi.',
             'dueDate.after_or_equal'   => 'Tenggat waktu harus sama atau setelah tanggal pinjam.',
         ]);
@@ -454,7 +454,7 @@ class PinjamanSantriManager extends Component
 
         $loan = SantriLoan::findOrFail($this->editLoanId);
 
-        $minAllowed = (float)$loan->amount_paid > 0 ? (float)$loan->amount_paid : 1000;
+        $minAllowed = (float)$loan->amount_paid > 0 ? (float)$loan->amount_paid : 1;
         $this->validate([
             'editAmount'     => "required|numeric|min:{$minAllowed}",
             'editBorrowedAt' => 'required|date',

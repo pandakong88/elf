@@ -452,8 +452,8 @@
                             <input type="number" 
                                    wire:model.live="amount" 
                                    placeholder="0"
-                                   min="1000"
-                                   step="1000"
+                                   min="1"
+                                   step="any"
                                    class="w-full px-4 py-2.5 bg-transparent border-0 text-base font-black focus:outline-none focus:ring-0 text-slate-900 dark:text-white">
                         </div>
                         @if($amount && is_numeric($amount) && (float)$amount > 0)
@@ -644,7 +644,7 @@
                                    wire:model.live="payAmount" 
                                    min="1"
                                    max="{{ $selectedLoan->remaining_amount }}"
-                                   step="1"
+                                   step="any"
                                    class="w-full px-4 py-2.5 bg-transparent border-0 text-base font-black focus:outline-none focus:ring-0 text-slate-900 dark:text-white">
                         </div>
                         <div class="flex items-center justify-between text-[11px] text-slate-500 pt-0.5">
@@ -854,8 +854,8 @@
                             <input type="number" 
                                    wire:model.live="editAmount" 
                                    placeholder="0"
-                                   min="{{ $editingLoan->amount_paid > 0 ? $editingLoan->amount_paid : 1000 }}"
-                                   step="1000"
+                                   min="{{ $editingLoan->amount_paid > 0 ? $editingLoan->amount_paid : 1 }}"
+                                   step="any"
                                    class="w-full px-4 py-2.5 bg-transparent border-0 text-base font-black focus:outline-none focus:ring-0 text-slate-900 dark:text-white">
                         </div>
                         @if($editAmount && is_numeric($editAmount) && (float)$editAmount > 0)
