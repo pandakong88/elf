@@ -11,7 +11,7 @@
 
     .tripeaks-card {
         position: absolute;
-        width: 9.1%;
+        width: 9.4%;
         aspect-ratio: 5 / 7.2;
         border-radius: 0.45rem;
         transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.2s ease, filter 0.2s ease;
@@ -29,7 +29,7 @@
     .tripeaks-card::before {
         content: '';
         position: absolute;
-        inset: -4px;
+        inset: -6px;
         border-radius: inherit;
         pointer-events: auto;
     }
@@ -222,20 +222,21 @@
 
     /* Floating +2s Time Pill on Header */
     @keyframes float-time-surge {
-        0% { transform: translateY(0) scale(0.6); opacity: 0; }
-        30% { transform: translateY(-10px) scale(1.15); opacity: 1; }
-        100% { transform: translateY(-26px) scale(0.9); opacity: 0; }
+        0% { transform: translate(-50%, 4px) scale(0.7); opacity: 0; }
+        25% { transform: translate(-50%, -10px) scale(1.18); opacity: 1; }
+        70% { transform: translate(-50%, -20px) scale(1.05); opacity: 1; }
+        100% { transform: translate(-50%, -36px) scale(0.9); opacity: 0; }
     }
     .floating-time-pill {
         position: absolute;
-        top: -6px;
-        right: 4px;
-        z-index: 60;
+        top: -12px;
+        left: 50%;
+        z-index: 100;
         pointer-events: none;
-        animation: float-time-surge 0.7s ease-out forwards;
+        animation: float-time-surge 0.85s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         font-family: ui-monospace, monospace;
         font-weight: 900;
-        text-shadow: 0 2px 8px rgba(0,0,0,0.9), 0 0 10px rgba(16, 185, 129, 0.8);
+        white-space: nowrap;
     }
 
     /* Score Deduction Shake & Flash (-150 Penalty) */
@@ -301,58 +302,52 @@
     <canvas id="tripeaks-fx-canvas" class="absolute inset-0 w-full h-full pointer-events-none z-50"></canvas>
 
     <!-- HEADER / STATS BAR -->
-    <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-3 pb-3 sm:pb-5 border-b border-slate-800">
+    <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-2.5 sm:gap-3 pb-2.5 sm:pb-5 border-b border-slate-800">
         
         <!-- Left: Title & Peaks Progress -->
-        <div class="flex items-center justify-between md:justify-start gap-2.5 sm:gap-3">
-            <div class="flex items-center gap-2.5 sm:gap-3">
-                <div class="w-9 h-9 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl bg-gradient-to-tr from-amber-500 via-yellow-400 to-amber-600 flex items-center justify-center text-lg sm:text-xl shadow-lg border border-amber-300/40 shrink-0">
+        <div class="flex items-center justify-between md:justify-start gap-2 sm:gap-3 w-full md:w-auto">
+            <div class="flex items-center gap-2 sm:gap-3 min-w-0">
+                <div class="w-8 h-8 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl bg-gradient-to-tr from-amber-500 via-yellow-400 to-amber-600 flex items-center justify-center text-base sm:text-xl shadow-lg border border-amber-300/40 shrink-0">
                     🏔️
                 </div>
-                <div>
-                    <div class="flex items-center gap-1.5 sm:gap-2">
-                        <h2 class="text-base sm:text-xl font-black text-white font-serif-display uppercase tracking-wide">
+                <div class="min-w-0">
+                    <div class="flex items-center gap-1.5 flex-wrap">
+                        <h2 class="text-sm sm:text-xl font-black text-white font-serif-display uppercase tracking-wide truncate">
                             Tri-Peaks
                         </h2>
-                        <span class="px-1.5 sm:px-2 py-0.5 rounded-full text-[9px] sm:text-[10px] font-black uppercase tracking-wider bg-amber-500/20 text-amber-300 border border-amber-500/30">
-                            Arcade
-                        </span>
-                        @if($gameState === 'playing')
-                            @if($showGlowHelp)
-                                <span class="px-2 py-0.5 rounded-full text-[9px] sm:text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30 flex items-center gap-1 animate-pulse" title="Cahaya bantuan menyala di 3 langkah pertama">
-                                    <span>💡</span> <span>Bantuan ({{ $movesCount + 1 }}/3)</span>
-                                </span>
-                            @else
-                                <span class="px-2 py-0.5 rounded-full text-[9px] sm:text-[10px] font-bold bg-emerald-500/15 text-emerald-300 border border-emerald-500/25 flex items-center gap-1" title="Cahaya bantuan nonaktif - asah matamu mencari kartu sendiri!">
-                                    <span>⚔️</span> <span>Mode Mandiri</span>
-                                </span>
-                            @endif
-                        @endif
-                    </div>
-                    <!-- 3 Peaks Conquered Indicators -->
-                    <div class="flex items-center gap-1.5 mt-0.5 sm:mt-1 text-xs">
-                        <span class="text-slate-400 text-[10px] sm:text-[11px] font-medium hidden sm:inline">Puncak:</span>
-                        <div class="flex items-center gap-1 font-bold">
-                            <span class="px-1.5 py-0.5 rounded text-[10px] transition-all {{ $peaksCleared[0] ? 'bg-amber-400 text-slate-950 shadow-md peak-cleared-glow font-black' : 'bg-slate-800/80 text-slate-500' }}" title="Puncak Kiri">
-                                ⭐ P1
+                        <!-- 3 Peaks Conquered Indicators -->
+                        <div class="flex items-center gap-0.5 text-xs">
+                            <span class="px-1.5 py-0.5 rounded text-[9px] font-black transition-all {{ $peaksCleared[0] ? 'bg-amber-400 text-slate-950 shadow-sm peak-cleared-glow font-black' : 'bg-slate-800/80 text-slate-500' }}" title="Puncak Kiri">
+                                ⭐P1
                             </span>
-                            <span class="px-1.5 py-0.5 rounded text-[10px] transition-all {{ $peaksCleared[1] ? 'bg-amber-400 text-slate-950 shadow-md peak-cleared-glow font-black' : 'bg-slate-800/80 text-slate-500' }}" title="Puncak Tengah">
-                                ⭐ P2
+                            <span class="px-1.5 py-0.5 rounded text-[9px] font-black transition-all {{ $peaksCleared[1] ? 'bg-amber-400 text-slate-950 shadow-sm peak-cleared-glow font-black' : 'bg-slate-800/80 text-slate-500' }}" title="Puncak Tengah">
+                                ⭐P2
                             </span>
-                            <span class="px-1.5 py-0.5 rounded text-[10px] transition-all {{ $peaksCleared[2] ? 'bg-amber-400 text-slate-950 shadow-md peak-cleared-glow font-black' : 'bg-slate-800/80 text-slate-500' }}" title="Puncak Kanan">
-                                ⭐ P3
+                            <span class="px-1.5 py-0.5 rounded text-[9px] font-black transition-all {{ $peaksCleared[2] ? 'bg-amber-400 text-slate-950 shadow-sm peak-cleared-glow font-black' : 'bg-slate-800/80 text-slate-500' }}" title="Puncak Kanan">
+                                ⭐P3
                             </span>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Mobile Quick Actions -->
-            <div class="flex items-center gap-1 md:hidden">
+            <!-- Mobile Quick Actions & Glow Help status -->
+            <div class="flex items-center gap-1 shrink-0">
+                @if($gameState === 'playing')
+                    @if($showGlowHelp)
+                        <span class="px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30 flex items-center gap-0.5 animate-pulse" title="Bantuan Langkah Awal">
+                            <span>💡</span> <span>{{ $movesCount + 1 }}/3</span>
+                        </span>
+                    @else
+                        <span class="hidden xs:inline-flex px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-emerald-500/15 text-emerald-300 border border-emerald-500/25 items-center gap-0.5">
+                            <span>⚔️</span>
+                        </span>
+                    @endif
+                @endif
                 <button 
                     type="button" 
                     @click="toggleSound()"
-                    class="p-2 rounded-xl border border-slate-800 bg-slate-900/80 text-xs font-bold text-slate-300"
+                    class="p-1.5 sm:p-2 rounded-xl border border-slate-800 bg-slate-900/80 text-xs font-bold text-slate-300 md:hidden"
                     :title="soundEnabled ? 'Matikan Suara FX' : 'Aktifkan Suara FX'"
                 >
                     <span x-text="soundEnabled ? '🔊' : '🔇'"></span>
@@ -360,7 +355,7 @@
                 <button 
                     type="button" 
                     @click="showRules = !showRules"
-                    class="p-2 rounded-xl border border-slate-800 bg-slate-900/80 text-xs font-bold text-amber-300"
+                    class="p-1.5 sm:p-2 rounded-xl border border-slate-800 bg-slate-900/80 text-xs font-bold text-amber-300 md:hidden"
                     title="Panduan Cara Main"
                 >
                     ℹ️
@@ -371,21 +366,21 @@
         <!-- Right: Scores, Real-time Combo Meter & Controls -->
         <div class="flex items-center justify-between md:justify-end gap-1.5 sm:gap-3 w-full md:w-auto">
             
-            <!-- Time Attack Countdown Clock (80s Initial + 2s/Card) -->
+            <!-- Time Attack Countdown Clock (80s Initial + 2s/Card) - Note: NO overflow-hidden so +2s pill floats freely -->
             <div 
                 id="tripeaks-timer-badge"
-                class="relative flex-1 md:flex-initial px-2.5 py-1.5 sm:px-4 sm:py-2 rounded-xl sm:rounded-2xl border flex items-center gap-1.5 sm:gap-2 transition-all duration-300 select-none overflow-hidden"
+                class="relative flex-1 md:flex-initial px-2 py-1.5 sm:px-4 sm:py-2 rounded-xl sm:rounded-2xl border flex items-center gap-1.5 sm:gap-2 transition-all duration-300 select-none"
                 :class="$wire.gameState === 'playing' ? (timeLeft <= 15 ? 'timer-danger-pulse bg-red-950/50 border-red-500 shadow-[0_0_18px_rgba(239,68,68,0.6)]' : (timeLeft <= 30 ? 'bg-amber-950/30 border-amber-500/50 shadow-[0_0_12px_rgba(245,158,11,0.25)]' : 'bg-slate-900/90 border-slate-800')) : 'bg-slate-900/60 border-slate-800/80 opacity-80'"
             >
                 <span class="text-xs sm:text-sm shrink-0" :class="$wire.gameState === 'playing' && timeLeft <= 15 ? 'animate-bounce' : ''">⏱️</span>
-                <div class="min-w-[42px] sm:min-w-[54px]">
-                    <span class="text-[8px] sm:text-[9px] uppercase tracking-wider block font-bold leading-tight" :class="$wire.gameState === 'playing' ? (timeLeft <= 15 ? 'text-red-400 font-extrabold' : (timeLeft <= 30 ? 'text-amber-400' : 'text-slate-400')) : 'text-slate-500'">Waktu</span>
-                    <span class="text-xs sm:text-base font-black font-mono tabular-nums leading-tight block" :class="$wire.gameState === 'playing' ? (timeLeft <= 15 ? 'text-red-300 font-extrabold' : (timeLeft <= 30 ? 'text-amber-300' : 'text-emerald-300')) : 'text-slate-400'" x-text="$wire.gameState === 'playing' ? formatTime(timeLeft) : '01:20'">01:20</span>
+                <div class="min-w-[38px] sm:min-w-[54px]">
+                    <span class="text-[7px] sm:text-[9px] uppercase tracking-wider block font-bold leading-tight" :class="$wire.gameState === 'playing' ? (timeLeft <= 15 ? 'text-red-400 font-extrabold' : (timeLeft <= 30 ? 'text-amber-400' : 'text-slate-400')) : 'text-slate-500'">Waktu</span>
+                    <span id="tripeaks-timer-clock-text" class="text-xs sm:text-base font-black font-mono tabular-nums leading-tight block transition-all" :class="$wire.gameState === 'playing' ? (timeLeft <= 15 ? 'text-red-300 font-extrabold' : (timeLeft <= 30 ? 'text-amber-300' : 'text-emerald-300')) : 'text-slate-400'" x-text="$wire.gameState === 'playing' ? formatTime(timeLeft) : '01:20'">01:20</span>
                 </div>
 
-                <!-- Visual Battery Bar at bottom of timer badge -->
+                <!-- Visual Battery Bar at bottom of timer badge with dedicated overflow-hidden container -->
                 @if($gameState === 'playing')
-                    <div class="absolute bottom-0 left-0 right-0 h-1 bg-slate-950/60 overflow-hidden pointer-events-none">
+                    <div class="absolute bottom-0 left-0 right-0 h-1 bg-slate-950/60 overflow-hidden pointer-events-none rounded-b-xl">
                         <div 
                             class="h-full transition-all duration-1000 ease-linear"
                             :class="timeLeft <= 15 ? 'bg-red-500 shadow-[0_0_8px_#ef4444]' : (timeLeft <= 30 ? 'bg-amber-400 shadow-[0_0_8px_#f59e0b]' : 'bg-emerald-400 shadow-[0_0_8px_#10b981]')"
@@ -521,12 +516,18 @@
                     </div>
                 @else
                     <!-- Active 28 Cards Pyramid Tableau -->
-                    <div class="relative w-full h-[220px] sm:h-[290px] md:h-[340px] mx-auto select-none">
+                    <div class="relative w-full h-[200px] sm:h-[260px] md:h-[300px] mx-auto select-none">
                         @foreach($tableau as $index => $node)
                             @php
                                 $coord = $cardCoordinates[$index] ?? ['x' => 0, 'row' => 0];
                                 $leftPercent = $coord['x'] * 10.0888;
-                                $topPercent = $coord['row'] * 24.5;
+                                $topPercent = match($coord['row']) {
+                                    0 => 2,
+                                    1 => 20,
+                                    2 => 38,
+                                    3 => 56,
+                                    default => 0,
+                                };
                                 $zIndex = ($coord['row'] + 1) * 10;
                                 $isPlayable = in_array($index, $playableIndices);
                                 $isGlowing = $isPlayable && $showGlowHelp;
@@ -539,7 +540,7 @@
                             >
                                 @if(!$node['is_removed'])
                                     @if($node['is_face_up'])
-                                        <!-- Face-Up Card -->
+                                        <!-- Face-Up Card with enhanced mobile readability -->
                                         <div 
                                             @if($isPlayable)
                                                 @click="$wire.pickCard({{ $index }}, timeLeft)"
@@ -549,25 +550,25 @@
                                             class="tripeaks-card-face {{ $isGlowing ? 'tripeaks-card-playable' : ($isPlayable ? 'cursor-pointer hover:border-amber-300 hover:scale-105 active:scale-95 transition-all' : 'cursor-pointer active:scale-95') }}"
                                             title="{{ $isPlayable ? 'Klik untuk ambil (+Poin Combo & +2s)' : $node['card']['title'] }}"
                                         >
-                                            <!-- Top Rank & Suit -->
-                                            <div class="flex flex-col items-center leading-none {{ $node['card']['color'] === 'red' ? 'text-red-600' : 'text-slate-900' }}">
-                                                <span class="text-[10px] sm:text-xs md:text-sm font-black font-mono leading-tight">{{ $node['card']['rank_label'] }}</span>
-                                                <span class="text-[9px] sm:text-[11px] md:text-xs leading-none">{!! $node['card']['symbol_html'] !!}</span>
+                                            <!-- Top Bold Rank & Suit (Crisp & High-Contrast on Mobile) -->
+                                            <div class="flex flex-col items-center leading-none {{ $node['card']['color'] === 'red' ? 'text-red-600' : 'text-slate-950' }}">
+                                                <span class="text-xs sm:text-sm md:text-base font-black font-mono leading-tight tracking-tighter">{{ $node['card']['rank_label'] }}</span>
+                                                <span class="text-[11px] sm:text-xs md:text-sm leading-none mt-0.5">{!! $node['card']['symbol_html'] !!}</span>
                                             </div>
 
-                                            <!-- Center Large Suit Watermark -->
-                                            <div class="absolute inset-0 flex items-center justify-center pointer-events-none opacity-85 {{ $node['card']['color'] === 'red' ? 'text-red-500' : 'text-slate-800' }}">
-                                                <span class="text-sm sm:text-xl md:text-2xl font-bold leading-none">{!! $node['card']['symbol_html'] !!}</span>
+                                            <!-- Center Large Suit Watermark (Desktop only) -->
+                                            <div class="hidden sm:flex absolute inset-0 items-center justify-center pointer-events-none opacity-20 {{ $node['card']['color'] === 'red' ? 'text-red-500' : 'text-slate-800' }}">
+                                                <span class="text-xl md:text-2xl font-bold leading-none">{!! $node['card']['symbol_html'] !!}</span>
                                             </div>
 
-                                            <!-- Bottom Inverted Rank & Suit -->
-                                            <div class="flex flex-col items-center leading-none rotate-180 {{ $node['card']['color'] === 'red' ? 'text-red-600' : 'text-slate-900' }}">
+                                            <!-- Bottom Inverted Rank & Suit (Desktop only) -->
+                                            <div class="hidden sm:flex flex-col items-center leading-none rotate-180 {{ $node['card']['color'] === 'red' ? 'text-red-600' : 'text-slate-950' }}">
                                                 <span class="text-[10px] sm:text-xs md:text-sm font-black font-mono leading-tight">{{ $node['card']['rank_label'] }}</span>
                                                 <span class="text-[9px] sm:text-[11px] md:text-xs leading-none">{!! $node['card']['symbol_html'] !!}</span>
                                             </div>
                                         </div>
                                     @else
-                                        <!-- Face-Down Card (Covered) -->
+                                        <!-- Face-Down Card (Covered Shingle) -->
                                         <div 
                                             @click="triggerCoveredShake({{ $index }})"
                                             class="tripeaks-card-back cursor-pointer active:scale-95"
@@ -582,115 +583,85 @@
                         @endforeach
                     </div>
 
-                    <!-- BOTTOM DOCK: STOCK PILE, TARGET INDICATOR & CURRENT WASTE CARD -->
-                    <div class="mt-3 sm:mt-4 pt-2.5 sm:pt-3 border-t border-emerald-600/30 flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4 z-20">
+                    <!-- BOTTOM DOCK: UNIFIED HIGH-ROLLER CASINO CONTROL DOCK -->
+                    <div class="mt-2 pt-2 border-t border-emerald-600/30 flex items-center justify-between gap-1.5 sm:gap-4 z-20">
                         
-                        <!-- Mobile Target Match Indicator (Top on Mobile) -->
+                        <!-- Left: Stock Pile (Cadangan) -->
+                        <div class="flex items-center gap-1.5 sm:gap-3">
+                            <div 
+                                @if($stockCount > 0 && $gameState === 'playing')
+                                    wire:click="drawFromStock"
+                                    class="cursor-pointer hover:scale-105 active:scale-95 transition"
+                                @endif
+                                class="relative w-10 h-14 sm:w-14 sm:h-20 rounded-lg sm:rounded-xl select-none shrink-0"
+                                title="{{ $stockCount > 0 ? 'Klik untuk membuka kartu cadangan (Penalti -150 Skor & Reset Combo)' : 'Tumpukan cadangan kosong' }}"
+                            >
+                                @if($stockCount > 0)
+                                    <!-- 3D Card Stack Layer -->
+                                    <div class="absolute inset-0 bg-blue-950 rounded-lg sm:rounded-xl border border-blue-600 translate-x-0.5 translate-y-0.5 opacity-70"></div>
+                                    <div class="tripeaks-card-back w-full h-full flex flex-col items-center justify-center shadow-md">
+                                        <span class="text-white text-xs sm:text-sm font-black font-mono z-10">{{ $stockCount }}</span>
+                                        <span class="text-[6px] sm:text-[8px] text-sky-300 font-bold uppercase tracking-wider z-10">Sisa</span>
+                                    </div>
+                                @else
+                                    <div class="w-full h-full rounded-lg sm:rounded-xl border border-dashed border-emerald-500/40 flex items-center justify-center text-center p-0.5 text-[9px] text-emerald-300 font-bold">
+                                        Habis
+                                    </div>
+                                @endif
+                            </div>
+
+                            <div>
+                                <span class="text-[8px] sm:text-[10px] uppercase font-bold text-emerald-300/80 block leading-tight">Cadangan</span>
+                                @if($stockCount > 0 && $gameState === 'playing')
+                                    <button 
+                                        type="button" 
+                                        wire:click="drawFromStock"
+                                        class="mt-0.5 px-2 py-0.5 sm:px-3 sm:py-1 rounded-lg bg-emerald-800/90 hover:bg-emerald-700 active:scale-95 text-emerald-100 border border-emerald-500/40 text-[10px] sm:text-xs font-bold transition cursor-pointer flex items-center gap-1 shadow-sm whitespace-nowrap"
+                                        title="Tarik kartu cadangan (Penalti -150 Skor & Reset Combo)"
+                                    >
+                                        <span>🃏 Tarik</span>
+                                        <span class="text-[8px] sm:text-[9px] text-amber-300 font-mono font-bold bg-black/40 px-1 rounded">(-150)</span>
+                                    </button>
+                                @else
+                                    <span class="text-[10px] text-slate-400 font-mono">0</span>
+                                @endif
+                            </div>
+                        </div>
+
+                        <!-- Center: Target Match Indicator (Unified Mobile & Desktop) -->
                         @if($currentWaste && $gameState === 'playing')
-                            <div class="w-full sm:hidden bg-slate-950/85 border border-amber-400/50 py-1.5 px-3 rounded-xl flex items-center justify-between shadow-md">
-                                <span class="text-xs font-bold text-amber-300 flex items-center gap-1.5">
-                                    <span>🎯</span> Cari Selisih ±1:
+                            <div class="bg-slate-950/90 border border-amber-400/50 px-2 sm:px-4 py-1 sm:py-1.5 rounded-xl sm:rounded-2xl flex flex-col sm:flex-row items-center gap-0.5 sm:gap-2 shadow-md">
+                                <span class="text-[8px] sm:text-[10px] uppercase tracking-wider text-amber-300 font-bold flex items-center gap-1 leading-none">
+                                    <span>🎯</span> <span class="hidden xs:inline">Cari</span> ±1:
                                 </span>
-                                <div class="flex items-center gap-1.5 font-mono font-black text-xs">
-                                    <span class="px-2 py-0.5 rounded-lg bg-amber-400 text-slate-950 shadow-sm">{{ $targetRanks[0] ?? '-' }}</span>
-                                    <span class="text-slate-400 font-normal">atau</span>
-                                    <span class="px-2 py-0.5 rounded-lg bg-amber-400 text-slate-950 shadow-sm">{{ $targetRanks[1] ?? '-' }}</span>
+                                <div class="flex items-center gap-1 font-mono font-black text-xs sm:text-sm">
+                                    <span class="px-1.5 sm:px-2 py-0.5 rounded-md sm:rounded-lg bg-amber-400 text-slate-950 shadow-sm">{{ $targetRanks[0] ?? '-' }}</span>
+                                    <span class="text-slate-400 font-normal text-[10px]">atau</span>
+                                    <span class="px-1.5 sm:px-2 py-0.5 rounded-md sm:rounded-lg bg-amber-400 text-slate-950 shadow-sm">{{ $targetRanks[1] ?? '-' }}</span>
                                 </div>
                             </div>
                         @endif
 
-                        <div class="w-full flex items-center justify-between sm:justify-start gap-3 sm:gap-4">
-                            
-                            <!-- Left: Stock Pile (Cadangan) -->
-                            <div class="flex items-center gap-2.5 sm:gap-3">
-                                <div 
-                                    @if($stockCount > 0 && $gameState === 'playing')
-                                        wire:click="drawFromStock"
-                                        class="cursor-pointer hover:scale-105 active:scale-95 transition"
-                                    @endif
-                                    class="relative w-13 h-18 sm:w-16 sm:h-22 rounded-xl select-none"
-                                    title="{{ $stockCount > 0 ? 'Klik untuk membuka kartu cadangan (Penalti -150 Skor & Reset Combo)' : 'Tumpukan cadangan kosong' }}"
-                                >
-                                    @if($stockCount > 0)
-                                        <!-- 3D Card Stack Layer -->
-                                        <div class="absolute inset-0 bg-blue-950 rounded-xl border border-blue-600 translate-x-1 translate-y-1 opacity-70"></div>
-                                        <div class="tripeaks-card-back w-full h-full flex flex-col items-center justify-center shadow-lg">
-                                            <span class="text-white text-xs sm:text-sm font-black font-mono z-10">{{ $stockCount }}</span>
-                                            <span class="text-[7px] sm:text-[8px] text-sky-300 font-bold uppercase tracking-wider z-10">Sisa</span>
-                                        </div>
-                                    @else
-                                        <div class="w-full h-full rounded-xl border-2 border-dashed border-emerald-500/40 flex items-center justify-center text-center p-1 text-[10px] text-emerald-300 font-bold">
-                                            Habis
-                                        </div>
-                                    @endif
-                                </div>
-
-                                <div>
-                                    <span class="text-[9px] sm:text-[10px] uppercase font-bold text-emerald-300/80 block">Cadangan</span>
-                                    @if($stockCount > 0 && $gameState === 'playing')
-                                        <button 
-                                            type="button" 
-                                            wire:click="drawFromStock"
-                                            class="mt-1 px-2.5 sm:px-3 py-1 rounded-lg bg-emerald-800/90 hover:bg-emerald-700 active:scale-95 text-emerald-100 border border-emerald-500/40 text-[11px] sm:text-xs font-bold transition cursor-pointer flex items-center gap-1.5 shadow-sm"
-                                            title="Tarik kartu cadangan (Penalti -150 Skor & Reset Combo)"
-                                        >
-                                            <span>🃏 Tarik</span>
-                                            <span class="text-[9px] text-amber-300 font-mono font-bold bg-black/40 px-1 py-0.5 rounded">(-150)</span>
-                                        </button>
-                                    @else
-                                        <span class="text-xs text-slate-400 font-mono">0 Kartu</span>
-                                    @endif
-                                </div>
+                        <!-- Right: Active Waste Pile (Kartu Umpan) -->
+                        <div class="flex items-center gap-1.5 sm:gap-3">
+                            <div class="text-right hidden xs:block">
+                                <span class="text-[8px] sm:text-[10px] uppercase font-bold text-amber-300/80 block leading-tight">Umpan</span>
+                                <span class="text-[10px] sm:text-xs text-slate-200 font-bold truncate max-w-[70px] sm:max-w-none block">{{ $currentWaste['title'] ?? '-' }}</span>
                             </div>
 
-                            <!-- Desktop Target Match Indicator (Center on Desktop) -->
-                            @if($currentWaste && $gameState === 'playing')
-                                <div class="hidden sm:flex bg-slate-950/85 border border-amber-400/40 px-4 py-2 rounded-2xl items-center gap-2.5 shadow-md">
-                                    <span class="text-amber-400 text-sm">🎯</span>
-                                    <div>
-                                        <span class="text-[9px] uppercase tracking-wider text-slate-400 block font-bold">Cari Selisih ±1:</span>
-                                        <div class="flex items-center gap-1.5 font-mono font-black text-sm">
-                                            <span class="px-2 py-0.5 rounded-lg bg-amber-400 text-slate-950 shadow-sm">{{ $targetRanks[0] ?? '-' }}</span>
-                                            <span class="text-slate-400 font-normal text-xs">atau</span>
-                                            <span class="px-2 py-0.5 rounded-lg bg-amber-400 text-slate-950 shadow-sm">{{ $targetRanks[1] ?? '-' }}</span>
+                            <div id="tripeaks-waste-target" class="relative w-10 h-14 sm:w-14 sm:h-20 rounded-lg sm:rounded-xl select-none shrink-0">
+                                @if($currentWaste)
+                                    <div class="tripeaks-card-face w-full h-full shadow-lg border-2 border-amber-400/80">
+                                        <!-- Top Rank & Suit -->
+                                        <div class="flex flex-col items-center leading-none {{ $currentWaste['color'] === 'red' ? 'text-red-600' : 'text-slate-950' }}">
+                                            <span class="text-xs sm:text-sm font-black font-mono leading-tight">{{ $currentWaste['rank_label'] }}</span>
+                                            <span class="text-[11px] sm:text-xs leading-none mt-0.5">{!! $currentWaste['symbol_html'] !!}</span>
                                         </div>
                                     </div>
-                                </div>
-                            @endif
-
-                            <!-- Right: Active Waste Pile (Kartu Umpan) -->
-                            <div class="flex items-center gap-2.5 sm:gap-3 ml-auto">
-                                <div class="text-right">
-                                    <span class="text-[9px] sm:text-[10px] uppercase font-bold text-amber-300/80 block">Kartu Umpan</span>
-                                    <span class="text-xs text-slate-200 font-bold truncate max-w-[90px] sm:max-w-none block">{{ $currentWaste['title'] ?? 'Kosong' }}</span>
-                                </div>
-
-                                <div id="tripeaks-waste-target" class="relative w-13 h-18 sm:w-16 sm:h-22 rounded-xl select-none">
-                                    @if($currentWaste)
-                                        <div class="tripeaks-card-face w-full h-full shadow-xl">
-                                            <!-- Top Rank -->
-                                            <div class="flex flex-col items-center leading-none {{ $currentWaste['color'] === 'red' ? 'text-red-600' : 'text-slate-900' }}">
-                                                <span class="text-xs sm:text-sm font-black font-mono">{{ $currentWaste['rank_label'] }}</span>
-                                                <span class="text-[9px] sm:text-xs leading-none">{!! $currentWaste['symbol_html'] !!}</span>
-                                            </div>
-
-                                            <!-- Center Large Suit -->
-                                            <div class="absolute inset-0 flex items-center justify-center pointer-events-none opacity-90 {{ $currentWaste['color'] === 'red' ? 'text-red-500' : 'text-slate-800' }}">
-                                                <span class="text-lg sm:text-2xl font-bold">{!! $currentWaste['symbol_html'] !!}</span>
-                                            </div>
-
-                                            <!-- Bottom Rank -->
-                                            <div class="flex flex-col items-center leading-none rotate-180 {{ $currentWaste['color'] === 'red' ? 'text-red-600' : 'text-slate-900' }}">
-                                                <span class="text-xs sm:text-sm font-black font-mono">{{ $currentWaste['rank_label'] }}</span>
-                                                <span class="text-[9px] sm:text-xs leading-none">{!! $currentWaste['symbol_html'] !!}</span>
-                                            </div>
-                                        </div>
-                                    @else
-                                        <div class="w-full h-full rounded-xl border border-slate-700 bg-slate-900/50"></div>
-                                    @endif
-                                </div>
+                                @else
+                                    <div class="w-full h-full rounded-lg sm:rounded-xl border border-slate-700 bg-slate-900/50"></div>
+                                @endif
                             </div>
-
                         </div>
 
                     </div>
@@ -1117,10 +1088,10 @@
                 const boardRect = board.getBoundingClientRect();
 
                 const toast = document.createElement('div');
-                toast.className = 'floating-toast text-amber-300 text-xs sm:text-sm font-black pointer-events-none flex items-center gap-1';
+                toast.className = 'floating-toast text-amber-300 text-xs sm:text-sm font-black pointer-events-none flex items-center gap-1.5 z-50';
                 toast.innerHTML = combo > 1 
-                    ? `<span>+${combo * 100}</span> <span class="text-amber-400 font-extrabold">🔥x${combo}</span> <span class="text-[10px] text-sky-300 font-mono bg-sky-950/80 px-1 rounded border border-sky-400/40">+2s</span>` 
-                    : `<span>+100</span> <span class="text-[10px] text-sky-300 font-mono bg-sky-950/80 px-1 rounded border border-sky-400/40">+2s</span>`;
+                    ? `<span>+${combo * 100}</span> <span class="text-amber-400 font-extrabold text-xs">🔥x${combo}</span> <span class="text-xs font-mono font-black text-slate-950 bg-emerald-400 px-2 py-0.5 rounded-full shadow-[0_0_12px_#10b981] border border-white flex items-center gap-0.5 leading-none ml-1">+2s ⏱️</span>` 
+                    : `<span>+100</span> <span class="text-xs font-mono font-black text-slate-950 bg-emerald-400 px-2 py-0.5 rounded-full shadow-[0_0_12px_#10b981] border border-white flex items-center gap-0.5 leading-none ml-1">+2s ⏱️</span>`;
 
                 const left = nodeRect.left - boardRect.left + (nodeRect.width / 2);
                 const top = nodeRect.top - boardRect.top;
@@ -1134,18 +1105,29 @@
 
             pulseTimerBonus() {
                 const timerBadge = document.getElementById('tripeaks-timer-badge');
+                const clockText = document.getElementById('tripeaks-timer-clock-text');
                 if (timerBadge) {
                     timerBadge.classList.remove('timer-bonus-surge');
                     void timerBadge.offsetWidth;
                     timerBadge.classList.add('timer-bonus-surge');
                     setTimeout(() => timerBadge.classList.remove('timer-bonus-surge'), 500);
 
-                    // Spawn mini +2s floating pill right above timer badge
+                    // Flash clock text in bright emerald
+                    if (clockText) {
+                        clockText.style.color = '#34d399';
+                        clockText.style.transform = 'scale(1.2)';
+                        setTimeout(() => {
+                            clockText.style.color = '';
+                            clockText.style.transform = '';
+                        }, 400);
+                    }
+
+                    // Spawn prominent +2s floating pill above timer badge (z-index 100, unclipped)
                     const pill = document.createElement('div');
-                    pill.className = 'floating-time-pill text-[10px] sm:text-xs text-emerald-300 bg-emerald-950/95 border border-emerald-400/80 px-2 py-0.5 rounded-full shadow-lg';
-                    pill.innerHTML = '+2s';
+                    pill.className = 'floating-time-pill text-xs text-slate-950 bg-emerald-400 border border-white font-black px-2.5 py-0.5 rounded-full shadow-[0_0_15px_#10b981] flex items-center gap-1';
+                    pill.innerHTML = `+2s ⏱️`;
                     timerBadge.appendChild(pill);
-                    setTimeout(() => pill.remove(), 700);
+                    setTimeout(() => pill.remove(), 800);
                 }
                 this.playTimeBonusSound();
             },
