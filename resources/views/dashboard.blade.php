@@ -1,7 +1,69 @@
 <x-app-layout>
     <div class="space-y-8">
-        <!-- 1. HERO STAGE: ELVITH ROYALE ARENA KARTU HI-LO & LEADERBOARD (PALING ATAS) -->
-        @livewire('dashboard.card-game-arena')
+        <!-- 1. HERO STAGE: ARCADE GAME HUB (TRI-PEAKS SOLITAIRE & ELVITH ROYALE HI-LO) -->
+        <div x-data="{ 
+            activeArcade: localStorage.getItem('elf_active_arcade') || 'tripeaks',
+            setGame(game) {
+                this.activeArcade = game;
+                localStorage.setItem('elf_active_arcade', game);
+            }
+        }" class="space-y-4">
+            
+            <!-- Game Switcher Tab Selector -->
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-950/80 border border-slate-800 p-2 sm:p-2.5 rounded-2xl sm:rounded-3xl shadow-xl backdrop-blur-xl">
+                <div class="flex items-center gap-2 px-2">
+                    <span class="text-xl">🎮</span>
+                    <div>
+                        <h3 class="text-xs sm:text-sm font-black text-white uppercase tracking-wider font-serif-display">
+                            Arcade Hub Admin
+                        </h3>
+                        <p class="text-[10px] text-slate-400">Pilih mini-game kartu santai &amp; kompetitif untuk pengisi waktu istirahat</p>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-1.5 p-1 bg-slate-900/90 rounded-xl sm:rounded-2xl border border-slate-800 self-stretch sm:self-auto">
+                    <!-- Tab 1: Tri-Peaks Pyramid -->
+                    <button 
+                        type="button" 
+                        @click="setGame('tripeaks')"
+                        :class="activeArcade === 'tripeaks' 
+                            ? 'bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-950 shadow-md font-black' 
+                            : 'text-slate-400 hover:text-white font-bold hover:bg-slate-800/60'"
+                        class="flex-1 sm:flex-initial px-3.5 sm:px-5 py-2 rounded-lg sm:rounded-xl text-xs uppercase tracking-wider transition-all flex items-center justify-center gap-2 cursor-pointer"
+                    >
+                        <span>🏔️ Tri-Peaks Solitaire</span>
+                        <span class="px-1.5 py-0.2 rounded-md text-[9px] font-black uppercase tracking-wider bg-red-600 text-white animate-pulse">
+                            BARU 🔥
+                        </span>
+                    </button>
+
+                    <!-- Tab 2: Hi-Lo Royale -->
+                    <button 
+                        type="button" 
+                        @click="setGame('hilo')"
+                        :class="activeArcade === 'hilo' 
+                            ? 'bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-950 shadow-md font-black' 
+                            : 'text-slate-400 hover:text-white font-bold hover:bg-slate-800/60'"
+                        class="flex-1 sm:flex-initial px-3.5 sm:px-5 py-2 rounded-lg sm:rounded-xl text-xs uppercase tracking-wider transition-all flex items-center justify-center gap-2 cursor-pointer"
+                    >
+                        <span>👑 Elvith Royale Hi-Lo</span>
+                        <span class="px-1.5 py-0.2 rounded-md text-[9px] font-black uppercase tracking-wider bg-slate-800 text-slate-300">
+                            KLASIK
+                        </span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Active Game Display -->
+            <div x-show="activeArcade === 'tripeaks'" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-2" x-transition:enter-end="opacity-100 translate-y-0">
+                @livewire('dashboard.tripeaks-arena')
+            </div>
+
+            <div x-show="activeArcade === 'hilo'" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-2" x-transition:enter-end="opacity-100 translate-y-0" x-cloak>
+                @livewire('dashboard.card-game-arena')
+            </div>
+
+        </div>
 
         <!-- 2. Executive Welcome Banner -->
         <div class="bg-slate-950 bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800 text-white rounded-3xl p-6 sm:p-8 border border-slate-700/60 shadow-xl relative overflow-hidden" style="background-color: #020617;">
@@ -50,391 +112,6 @@
                     </span>
                 </div>
             </div>
-        </div>
-
-        <!-- 3. Dev Corner Arcade Box (Multi-Game Randomizer) -->
-        <div x-data="{
-            showDevCorner: false,
-            activeGame: 'dice',
-            games: ['dice', 'khodam', 'slot', 'reflex'],
-            
-            // Game 1: Dice & Anti-Judi
-            rollingDice: false,
-            diceResult: 1,
-            rollCount: 0,
-            copiedDawah: false,
-            dawahList: @js($dawahList),
-            currentDawah: null,
-
-            // Game 2: Khodam Santri
-            khodamList: @js($khodamList),
-            khodamName: '{{ addslashes($user->name) }}',
-            scanningKhodam: false,
-            currentKhodam: null,
-
-            // Game 3: Slot Barokah
-            spinningSlot: false,
-            slotReels: ['🌙', '📚', '☕'],
-            slotSymbols: ['🌙', '📚', '☕', '💰', '🌟', '🕌', '🕊️'],
-            slotSpinCount: 0,
-            slotSatireQuotes: @js($slotSatireQuotes),
-            currentSlotSatire: null,
-
-            // Game 4: Reflex Test
-            reflexState: 'idle',
-            reflexStartTime: 0,
-            reflexTime: 0,
-            reflexRank: '',
-            reflexTimeoutId: null,
-
-            init() {
-                this.switchRandomGame();
-                if (this.dawahList && this.dawahList.length > 0) {
-                    this.currentDawah = this.dawahList[0];
-                }
-                if (this.khodamList && this.khodamList.length > 0) {
-                    this.currentKhodam = this.khodamList[0];
-                }
-                if (this.slotSatireQuotes && this.slotSatireQuotes.length > 0) {
-                    this.currentSlotSatire = this.slotSatireQuotes[0];
-                }
-            },
-
-            switchRandomGame() {
-                const available = this.games.filter(g => g !== this.activeGame);
-                this.activeGame = available[Math.floor(Math.random() * available.length)];
-            },
-
-            // Dice Game logic
-            rollDice() {
-                if (this.rollingDice) return;
-                this.rollingDice = true;
-                let count = 0;
-                const interval = setInterval(() => {
-                    this.diceResult = Math.floor(Math.random() * 6) + 1;
-                    count++;
-                    if (count > 12) {
-                        clearInterval(interval);
-                        this.rollingDice = false;
-                        this.rollCount++;
-                        this.currentDawah = this.dawahList[this.diceResult - 1];
-                    }
-                }, 70);
-            },
-
-            // Khodam logic
-            scanKhodam() {
-                if (this.scanningKhodam) return;
-                this.scanningKhodam = true;
-                setTimeout(() => {
-                    this.scanningKhodam = false;
-                    const idx = Math.floor(Math.random() * this.khodamList.length);
-                    this.currentKhodam = this.khodamList[idx];
-                }, 1200);
-            },
-
-            // Slot Machine logic
-            spinSlot() {
-                if (this.spinningSlot) return;
-                this.spinningSlot = true;
-                let count = 0;
-                const interval = setInterval(() => {
-                    this.slotReels = [
-                        this.slotSymbols[Math.floor(Math.random() * this.slotSymbols.length)],
-                        this.slotSymbols[Math.floor(Math.random() * this.slotSymbols.length)],
-                        this.slotSymbols[Math.floor(Math.random() * this.slotSymbols.length)]
-                    ];
-                    count++;
-                    if (count > 15) {
-                        clearInterval(interval);
-                        this.spinningSlot = false;
-                        this.slotSpinCount++;
-                        if (this.slotSatireQuotes && this.slotSatireQuotes.length > 0) {
-                            const idx = Math.floor(Math.random() * this.slotSatireQuotes.length);
-                            this.currentSlotSatire = this.slotSatireQuotes[idx];
-                        }
-                    }
-                }, 80);
-            },
-
-            // Reflex Test logic
-            startReflex() {
-                this.reflexState = 'waiting';
-                const delay = Math.floor(Math.random() * 2500) + 1500;
-                this.reflexTimeoutId = setTimeout(() => {
-                    this.reflexState = 'ready';
-                    this.reflexStartTime = Date.now();
-                }, delay);
-            },
-
-            clickReflex() {
-                if (this.reflexState === 'waiting') {
-                    clearTimeout(this.reflexTimeoutId);
-                    this.reflexState = 'idle';
-                    alert('⚠️ Terlalu cepat! Tunggu kotak berubah hijau baru diklik.');
-                    return;
-                }
-                if (this.reflexState === 'ready') {
-                    this.reflexTime = Date.now() - this.reflexStartTime;
-                    this.reflexState = 'result';
-                    if (this.reflexTime < 220) {
-                        this.reflexRank = '⚡ Kecepatan Musyrif Bangunin Santri Subuh! (Refleks Dewa)';
-                    } else if (this.reflexTime < 320) {
-                        this.reflexRank = '🏃 Kecepatan Santri Lari Ke Katering Pas Bel Makan!';
-                    } else if (this.reflexTime < 450) {
-                        this.reflexRank = '☕ Kecepatan Normal Setelah Minum Kopi Diniyyah';
-                    } else {
-                        this.reflexRank = '😴 Status: Mengantuk Berat Pas Sorogan Kitab (Butuh Wudhu)';
-                    }
-                }
-            }
-        }">
-            <!-- Compact Banner saat Dev Corner disembunyikan -->
-            <div x-show="!showDevCorner" class="bg-slate-950 bg-gradient-to-r from-slate-950 via-slate-900 to-slate-950 text-white border border-slate-800/80 p-4 sm:p-5 rounded-3xl shadow-lg flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4" style="background-color: #020617;">
-                <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold text-xl shrink-0">
-                        🎮
-                    </div>
-                    <div>
-                        <h3 class="text-xs font-black uppercase tracking-wider text-emerald-400 font-mono flex items-center gap-2">
-                            <span>DEV CORNER ARCADE</span>
-                            <span class="px-2 py-0.5 rounded-full bg-slate-800 text-slate-400 text-[10px] font-mono">Disembunyikan 🔒</span>
-                        </h3>
-                        <p class="text-xs text-slate-400 mt-0.5">Mini game interaktif acak (Dadu Nasihat, Khodam, Slot Barokah, &amp; Tes Refleks Santri).</p>
-                    </div>
-                </div>
-
-                <button type="button" @click="showDevCorner = true" class="w-full sm:w-auto px-4 py-2 bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 border border-emerald-500/30 text-xs font-mono font-bold rounded-xl transition-all flex items-center justify-center gap-2 shrink-0">
-                    <span>🎮 Buka Dev Corner Arcade</span>
-                </button>
-            </div>
-
-            <!-- Full Dev Corner Box (tampil jika showDevCorner = true) -->
-            <div x-show="showDevCorner" x-cloak class="bg-slate-950 bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-white border border-slate-800 p-5 sm:p-7 rounded-3xl shadow-xl relative overflow-hidden space-y-5" style="background-color: #020617;">
-                <!-- Control Header Bar -->
-                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-4">
-                    <div class="flex items-center gap-2">
-                        <span class="text-xl">🚀</span>
-                        <div>
-                            <h3 class="text-sm font-black uppercase tracking-wider text-emerald-400 font-serif-display flex items-center gap-2">
-                                <span>DEV CORNER ARCADE</span>
-                                <span class="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-[10px] font-mono">Hiburan Santri 🎮</span>
-                            </h3>
-                            <p class="text-xs text-slate-400 mt-0.5">Mini game interaktif acak pengisi waktu luang pengurus &amp; ustadz.</p>
-                        </div>
-                    </div>
-
-                    <div class="flex flex-wrap items-center gap-2 shrink-0">
-                        <!-- Game Switcher Button -->
-                        <button type="button" @click="switchRandomGame()" class="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white text-xs font-mono font-bold rounded-xl shadow-md transition-all flex items-center gap-1.5">
-                            <span>🔀 Putar Game Random</span>
-                        </button>
-                        <!-- Hide Button -->
-                        <button type="button" @click="showDevCorner = false" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-mono font-bold rounded-xl transition-all flex items-center gap-1.5">
-                            <span>🙈 Sembunyikan</span>
-                        </button>
-                    </div>
-                </div>
-
-            <!-- Mini Game Navigation Tabs -->
-            <div class="flex flex-wrap gap-2 border-b border-slate-800/80 pb-3">
-                <button type="button" @click="activeGame = 'dice'" :class="activeGame === 'dice' ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40' : 'bg-slate-900 text-slate-400 border-slate-800 hover:text-slate-200'" class="px-3 py-1.5 text-xs font-bold font-mono rounded-xl border transition-all flex items-center gap-1.5">
-                    <span>🎲 Dadu Anti-Judi</span>
-                </button>
-                <button type="button" @click="activeGame = 'khodam'" :class="activeGame === 'khodam' ? 'bg-purple-500/20 text-purple-300 border-purple-500/40' : 'bg-slate-900 text-slate-400 border-slate-800 hover:text-slate-200'" class="px-3 py-1.5 text-xs font-bold font-mono rounded-xl border transition-all flex items-center gap-1.5">
-                    <span>🔮 Cek Khodam Santri</span>
-                </button>
-                <button type="button" @click="activeGame = 'slot'" :class="activeGame === 'slot' ? 'bg-amber-500/20 text-amber-300 border-amber-500/40' : 'bg-slate-900 text-slate-400 border-slate-800 hover:text-slate-200'" class="px-3 py-1.5 text-xs font-bold font-mono rounded-xl border transition-all flex items-center gap-1.5">
-                    <span>🎰 Slot Barokah</span>
-                </button>
-                <button type="button" @click="activeGame = 'reflex'" :class="activeGame === 'reflex' ? 'bg-blue-500/20 text-blue-300 border-blue-500/40' : 'bg-slate-900 text-slate-400 border-slate-800 hover:text-slate-200'" class="px-3 py-1.5 text-xs font-bold font-mono rounded-xl border transition-all flex items-center gap-1.5">
-                    <span>⚡ Tes Refleks Santri</span>
-                </button>
-            </div>
-
-            <!-- GAME 1: DADU ANTI-JUDI ONLINE -->
-            <div x-show="activeGame === 'dice'" class="space-y-4">
-                <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
-                    <div class="lg:col-span-4 bg-slate-900/90 border border-slate-800 p-6 rounded-2xl flex flex-col items-center justify-center text-center space-y-4 shadow-inner">
-                        <span class="text-[10px] font-mono text-slate-400 uppercase tracking-widest">Kocok Dadu Gratis &amp; Berpahala</span>
-                        <div @click="rollDice()" class="w-24 h-24 bg-gradient-to-br from-emerald-500 to-teal-700 hover:from-emerald-400 hover:to-teal-600 rounded-3xl border-2 border-emerald-300/40 shadow-xl flex items-center justify-center cursor-pointer transition-all duration-300 transform active:scale-90 hover:scale-105 relative" :class="{ 'animate-spin': rollingDice }">
-                            <span class="text-4xl">🎲 <span x-text="diceResult">1</span></span>
-                        </div>
-                        <button type="button" @click="rollDice()" :disabled="rollingDice" class="w-full py-2.5 px-4 bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white font-bold text-xs rounded-xl transition-all shadow-md font-mono">
-                            <span x-show="!rollingDice">🎲 Kocok Dadu Nasihat</span>
-                            <span x-show="rollingDice" class="text-amber-200">⏳ Mengocok Dadu...</span>
-                        </button>
-                    </div>
-
-                    <div class="lg:col-span-8 bg-slate-950/80 border border-slate-800 p-5 rounded-2xl space-y-3 shadow-inner">
-                        <div class="p-3.5 bg-rose-950/40 border border-rose-500/30 rounded-xl space-y-1">
-                            <span class="text-[10px] font-black uppercase tracking-wider text-rose-400 flex items-center gap-1.5">
-                                🛑 PERINGATAN ANTI-JUDI ONLINE (JUDOL):
-                            </span>
-                            <p class="text-xs text-rose-200 font-medium leading-relaxed">
-                                "Wahai kawan! Mengocok dadu di Dev Corner ini 100% gratis &amp; berpahala nasihat. Tapi ingat, <strong>JANGAN SEKALI-KALI MENDEKATI JUDI ONLINE (JUDOL)!</strong> Judol itu merusak dompet, membatalkan ketenangan, dan merugikan dunia akhirat!"
-                            </p>
-                        </div>
-
-                        <div class="pt-2 text-right">
-                            <h4 class="text-lg font-extrabold text-amber-300 font-serif leading-loose" dir="rtl" x-text="currentDawah ? currentDawah.arab : ''"></h4>
-                        </div>
-                        <p class="text-xs text-slate-400 italic leading-relaxed border-l-2 border-slate-700 pl-3" x-text="currentDawah ? '« ' + currentDawah.translation + ' »' : ''"></p>
-                        <div class="p-3 bg-emerald-950/30 border border-emerald-500/20 rounded-xl">
-                            <p class="text-xs text-emerald-300 font-medium leading-relaxed" x-text="currentDawah ? currentDawah.hikmah : ''"></p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- GAME 2: CEK KHODAM SANTRI & USTADZ -->
-            <div x-show="activeGame === 'khodam'" class="space-y-4">
-                <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
-                    <div class="lg:col-span-5 bg-slate-900/90 border border-slate-800 p-6 rounded-2xl space-y-4 shadow-inner">
-                        <span class="text-[10px] font-mono text-purple-400 uppercase tracking-widest block font-bold">🔮 Aura Scanner Santri</span>
-                        
-                        <div class="space-y-2">
-                            <label for="khodamNameInput" class="text-xs font-bold text-slate-300 block">Nama Santri / Pengurus:</label>
-                            <input type="text" id="khodamNameInput" x-model="khodamName" class="w-full bg-slate-950 border border-slate-800 text-white rounded-xl px-3.5 py-2.5 text-xs font-mono focus:border-purple-500 focus:ring-1 focus:ring-purple-500" placeholder="Masukkan nama...">
-                        </div>
-
-                        <button type="button" @click="scanKhodam()" :disabled="scanningKhodam" class="w-full py-2.5 px-4 bg-purple-600 hover:bg-purple-500 active:scale-95 text-white font-bold text-xs rounded-xl transition-all shadow-md font-mono flex items-center justify-center gap-2">
-                            <span x-show="!scanningKhodam">🔮 Cek Khodam Saya Hari Ini</span>
-                            <span x-show="scanningKhodam" class="text-purple-200 animate-pulse">✨ Memindai Aura Santri...</span>
-                        </button>
-                    </div>
-
-                    <div class="lg:col-span-7 bg-slate-950/90 border border-purple-500/30 p-6 rounded-2xl space-y-3 relative overflow-hidden shadow-inner">
-                        <div class="flex items-center justify-between border-b border-slate-800 pb-3">
-                            <span class="text-xs font-bold text-slate-400 font-mono">Hasil Terawang Aura Khodam:</span>
-                            <span class="px-2.5 py-0.5 rounded-full bg-purple-500/20 text-purple-300 text-[10px] font-mono font-bold" x-text="currentKhodam ? currentKhodam.badge : ''"></span>
-                        </div>
-
-                        <div class="flex items-center gap-4 pt-1">
-                            <span class="text-5xl shrink-0 p-3 bg-purple-950/60 border border-purple-500/30 rounded-2xl" x-text="currentKhodam ? currentKhodam.icon : '🔮'"></span>
-                            <div class="space-y-1">
-                                <h4 class="text-base font-black text-purple-300 font-serif-display" x-text="currentKhodam ? currentKhodam.title : ''"></h4>
-                                <p class="text-xs text-slate-300 leading-relaxed font-medium" x-text="currentKhodam ? currentKhodam.description : ''"></p>
-                            </div>
-                        </div>
-
-                        <div class="pt-2 border-t border-slate-800/80 text-[10px] text-slate-400 italic">
-                            💡 *Khodam ini hanya hiburan lucu-lucuan khas santri &amp; pengurus pesantren.*
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- GAME 3: MESIN SLOT BAROKAH (ANTI-JUDI SIMULATION) -->
-            <div x-show="activeGame === 'slot'" class="space-y-4">
-                <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
-                    <div class="lg:col-span-5 bg-gradient-to-br from-amber-950/40 via-slate-900 to-amber-950/40 border border-amber-500/40 p-6 rounded-2xl flex flex-col items-center justify-center text-center space-y-4 shadow-xl relative overflow-hidden">
-                        <div class="flex items-center justify-between w-full border-b border-amber-500/20 pb-2">
-                            <span class="text-[10px] font-mono text-amber-400 font-bold uppercase tracking-widest">🎰 SIMULASI SLOT BAROKAH (MODAL RP 0,-)</span>
-                            <span class="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 text-[9px] font-mono font-bold">RTP: 1000% BERKAH</span>
-                        </div>
-
-                        <!-- 3 Reels Display -->
-                        <div class="flex items-center justify-center gap-3 bg-slate-950/90 p-4 rounded-2xl border-2 border-amber-500/50 w-full shadow-2xl ring-2 ring-amber-500/20">
-                            <div class="w-16 h-20 bg-slate-900 border border-amber-500/40 rounded-2xl flex items-center justify-center text-4xl shadow-inner transition-transform" :class="{ 'animate-bounce': spinningSlot }">
-                                <span x-text="slotReels[0]">🌙</span>
-                            </div>
-                            <div class="w-16 h-20 bg-slate-900 border border-amber-500/40 rounded-2xl flex items-center justify-center text-4xl shadow-inner transition-transform" :class="{ 'animate-bounce': spinningSlot }">
-                                <span x-text="slotReels[1]">📚</span>
-                            </div>
-                            <div class="w-16 h-20 bg-slate-900 border border-amber-500/40 rounded-2xl flex items-center justify-center text-4xl shadow-inner transition-transform" :class="{ 'animate-bounce': spinningSlot }">
-                                <span x-text="slotReels[2]">☕</span>
-                            </div>
-                        </div>
-
-                        <div class="w-full flex gap-2">
-                            <button type="button" @click="spinSlot()" :disabled="spinningSlot" class="flex-1 py-2.5 px-4 bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 hover:to-amber-400 active:scale-95 text-slate-950 font-black text-xs rounded-xl transition-all shadow-lg font-mono tracking-wider">
-                                <span x-show="!spinningSlot">🎰 PUTAR SLOT GACOR</span>
-                                <span x-show="spinningSlot" class="text-slate-950 animate-pulse">⏳ MEMUTAR REEL...</span>
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- Side Satire Quote Display -->
-                    <div class="lg:col-span-7 bg-slate-950/95 border border-amber-500/30 p-6 rounded-2xl space-y-4 shadow-inner">
-                        <div class="flex items-center justify-between border-b border-slate-800 pb-2.5">
-                            <span class="text-xs font-bold text-amber-400 font-mono flex items-center gap-1.5">
-                                💡 NASIHAT ANTI-JUDI ONLINE &amp; HUMOR DEVS
-                            </span>
-                            <span class="px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 text-[10px] font-mono font-bold">
-                                Total Spin: <strong x-text="slotSpinCount">0</strong>x
-                            </span>
-                        </div>
-
-                        <div class="p-4 bg-amber-950/40 border border-amber-500/30 rounded-xl space-y-2">
-                            <h4 class="text-xs font-black uppercase tracking-wider text-amber-400 font-mono flex items-center gap-2" x-text="currentSlotSatire ? currentSlotSatire.title : 'Cara Mengubah Dosa Menjadi Saldo DANA'">
-                            </h4>
-                            <p class="text-xs text-amber-100 font-medium leading-relaxed" x-text="currentSlotSatire ? currentSlotSatire.quote : ''">
-                            </p>
-                        </div>
-
-                        <div class="p-3 bg-rose-950/40 border border-rose-500/30 rounded-xl space-y-1">
-                            <span class="text-[10px] font-black uppercase tracking-wider text-rose-400 flex items-center gap-1.5">
-                                🛑 PERINGATAN RESMI:
-                            </span>
-                            <p class="text-xs text-rose-200 font-medium leading-relaxed">
-                                "Di Dev Corner main slot 100% gratis, aman, &amp; berpahala. Kalau di situs judi online asli, yang dapet jackpot cuma bandarnya, pemainnya auto-rungkad! 😂 Jangan pernah tergiur judi online!"
-                            </p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- GAME 4: TES REFLEKS KILAT SANTRI -->
-            <div x-show="activeGame === 'reflex'" class="space-y-4">
-                <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
-                    <div class="lg:col-span-5 bg-slate-900/90 border border-slate-800 p-6 rounded-2xl flex flex-col items-center justify-center text-center space-y-4 shadow-inner">
-                        <span class="text-[10px] font-mono text-blue-400 uppercase tracking-widest font-bold">⚡ Tes Refleks Kecepatan Santri</span>
-
-                        <!-- Reflex Click Box -->
-                        <div @click="if (reflexState === 'idle') startReflex(); else if (reflexState === 'ready' || reflexState === 'waiting') clickReflex();"
-                             class="w-full h-32 rounded-2xl border-2 transition-all flex flex-col items-center justify-center cursor-pointer p-4 text-center select-none shadow-md"
-                             :class="{
-                                'bg-slate-950 border-slate-800 hover:border-blue-500/50': reflexState === 'idle' || reflexState === 'result',
-                                'bg-rose-600 border-rose-400 text-white animate-pulse': reflexState === 'waiting',
-                                'bg-emerald-500 border-emerald-300 text-white scale-105 shadow-xl': reflexState === 'ready'
-                             }">
-                            <template x-if="reflexState === 'idle'">
-                                <span class="text-xs font-bold text-slate-300 font-mono">Klik Tombol Di Bawah Untuk Mulai Tes</span>
-                            </template>
-                            <template x-if="reflexState === 'waiting'">
-                                <span class="text-sm font-black tracking-wider text-amber-200">TUNGGU WAKTU... KOTAK BERUBAH HIJAU BARU DIKLIK!</span>
-                            </template>
-                            <template x-if="reflexState === 'ready'">
-                                <span class="text-base font-black tracking-wider text-white">KLIK SEKARANG JUGA! ⚡</span>
-                            </template>
-                            <template x-if="reflexState === 'result'">
-                                <div>
-                                    <span class="text-2xl font-black text-emerald-400 font-mono" x-text="reflexTime + ' ms'"></span>
-                                    <span class="text-[10px] text-slate-400 block mt-1">Klik untuk tes ulang</span>
-                                </div>
-                            </template>
-                        </div>
-
-                        <button type="button" @click="startReflex()" class="w-full py-2.5 px-4 bg-blue-600 hover:bg-blue-500 active:scale-95 text-white font-bold text-xs rounded-xl transition-all shadow-md font-mono">
-                            ⚡ Mulai Uji Kecepatan Refleks
-                        </button>
-                    </div>
-
-                    <div class="lg:col-span-7 bg-slate-950/90 border border-blue-500/30 p-6 rounded-2xl space-y-3 shadow-inner">
-                        <div class="flex items-center justify-between border-b border-slate-800 pb-2">
-                            <span class="text-xs font-bold text-blue-400 font-mono">Hasil Skor Refleks:</span>
-                            <span class="px-2.5 py-0.5 rounded-full bg-blue-500/20 text-blue-300 text-[10px] font-mono font-bold" x-text="reflexTime > 0 ? reflexTime + ' ms' : 'Belum Ada Test'"></span>
-                        </div>
-
-                        <div class="p-4 bg-blue-950/40 border border-blue-500/20 rounded-xl space-y-2">
-                            <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider">Peringkat Kecepatan Santri:</h4>
-                            <p class="text-sm font-black text-blue-300 font-serif-display leading-relaxed" x-text="reflexRank ? reflexRank : 'Silakan klik tombol Mulai Uji Kecepatan Refleks...'"></p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
         </div>
 
         <!-- 3. Interactive Widget Kalender Masehi & Hijriah -->

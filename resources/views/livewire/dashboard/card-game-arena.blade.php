@@ -1641,7 +1641,7 @@ class="relative w-full rounded-2xl sm:rounded-3xl overflow-hidden border border-
                             <h3 class="text-xs sm:text-sm font-black text-white font-serif-display uppercase tracking-wide">
                                 Dewan Jawara Kartu
                             </h3>
-                            <p class="text-[9px] sm:text-[10px] text-slate-400">Peringkat skor pemain se-Pesantren</p>
+                            <p class="text-[9px] sm:text-[10px] text-slate-400">Peringkat master kartu &amp; skor tertinggi</p>
                         </div>
                     </div>
                     <button 
