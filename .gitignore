@@ -20,6 +20,7 @@
 /storage/*.key
 /storage/app/firebase-service-account.json
 /storage/pail
+/storage/fonts/
 /vendor
 _ide_helper.php
 Homestead.json
