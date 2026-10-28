@@ -1923,10 +1923,21 @@
                                                                     <span class="text-[8px] font-extrabold text-amber-600 dark:text-amber-400 whitespace-nowrap scale-90 leading-none">Sisa {{ number_format(($bill->amount - $bill->amount_paid)/1000, 0) }}k</span>
                                                                 </label>
                                                             @else
-                                                                <label class="cursor-pointer flex items-center justify-center" title="Belum Bayar — Rp {{ number_format($bill->amount, 0, ',', '.') }}">
-                                                                    <input type="checkbox" wire:model.live="selectedBillIds" value="{{ $bill->id }}"
-                                                                        class="rounded text-emerald-600 accent-emerald-600 focus:ring-emerald-500 w-4 h-4">
-                                                                </label>
+                                                                @php
+                                                                    $pendingTrf = $this->isBillPendingTransfer($bill->id);
+                                                                @endphp
+                                                                @if($pendingTrf)
+                                                                    <label class="cursor-pointer flex flex-col items-center justify-center gap-0.5" title="Ada Bukti Transfer di Portal [{{ $pendingTrf->submission_code }}] — Konfirmasi sebelum input tunai">
+                                                                        <input type="checkbox" wire:model.live="selectedBillIds" value="{{ $bill->id }}"
+                                                                            class="rounded text-amber-500 accent-amber-500 focus:ring-amber-400 w-4 h-4 border-amber-400">
+                                                                        <span class="inline-flex items-center text-[7px] font-black bg-amber-500/20 text-amber-700 dark:text-amber-300 px-1 rounded scale-90 whitespace-nowrap">⏳ TF Portal</span>
+                                                                    </label>
+                                                                @else
+                                                                    <label class="cursor-pointer flex items-center justify-center" title="Belum Bayar — Rp {{ number_format($bill->amount, 0, ',', '.') }}">
+                                                                        <input type="checkbox" wire:model.live="selectedBillIds" value="{{ $bill->id }}"
+                                                                            class="rounded text-emerald-600 accent-emerald-600 focus:ring-emerald-500 w-4 h-4">
+                                                                    </label>
+                                                                @endif
                                                             @endif
                                                         </td>
                                                     @endforeach
@@ -2043,13 +2054,28 @@
                                                                 </span>
                                                             </label>
                                                         @else
-                                                            <label class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl border cursor-pointer transition-all
-                                                                {{ in_array($sBill->id, $selectedBillIds) ? 'bg-emerald-50 border-emerald-400 dark:bg-emerald-950/20' : 'bg-slate-50 border-slate-200 dark:bg-slate-950 dark:border-slate-700 hover:border-emerald-300' }}">
-                                                                <input type="checkbox" wire:model.live="selectedBillIds" value="{{ $sBill->id }}" class="rounded text-emerald-600 accent-emerald-600 focus:ring-emerald-500 w-3.5 h-3.5">
-                                                                <span class="text-[10px] font-bold text-slate-700 dark:text-slate-300">
-                                                                    Rp {{ number_format($sBill->amount - $sBill->amount_paid, 0, ',', '.') }}
-                                                                </span>
-                                                            </label>
+                                                            @php
+                                                                $pendingTrf = $this->isBillPendingTransfer($sBill->id);
+                                                            @endphp
+                                                            @if($pendingTrf)
+                                                                <label class="inline-flex flex-col items-center gap-1 px-2.5 py-1 rounded-xl border border-amber-300 dark:border-amber-700 bg-amber-50/50 dark:bg-amber-950/20 cursor-pointer transition-all" title="Ada Bukti Transfer di Portal [{{ $pendingTrf->submission_code }}] — Konfirmasi sebelum input tunai">
+                                                                    <div class="flex items-center gap-1.5">
+                                                                        <input type="checkbox" wire:model.live="selectedBillIds" value="{{ $sBill->id }}" class="rounded text-amber-500 accent-amber-500 focus:ring-amber-400 w-3.5 h-3.5">
+                                                                        <span class="text-[10px] font-bold text-amber-700 dark:text-amber-300">
+                                                                            Rp {{ number_format($sBill->amount - $sBill->amount_paid, 0, ',', '.') }}
+                                                                        </span>
+                                                                    </div>
+                                                                    <span class="text-[7px] font-black uppercase bg-amber-500/20 text-amber-700 dark:text-amber-300 px-1 rounded whitespace-nowrap">⏳ TF Portal</span>
+                                                                </label>
+                                                            @else
+                                                                <label class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl border cursor-pointer transition-all
+                                                                    {{ in_array($sBill->id, $selectedBillIds) ? 'bg-emerald-50 border-emerald-400 dark:bg-emerald-950/20' : 'bg-slate-50 border-slate-200 dark:bg-slate-950 dark:border-slate-700 hover:border-emerald-300' }}">
+                                                                    <input type="checkbox" wire:model.live="selectedBillIds" value="{{ $sBill->id }}" class="rounded text-emerald-600 accent-emerald-600 focus:ring-emerald-500 w-3.5 h-3.5">
+                                                                    <span class="text-[10px] font-bold text-slate-700 dark:text-slate-300">
+                                                                        Rp {{ number_format($sBill->amount - $sBill->amount_paid, 0, ',', '.') }}
+                                                                    </span>
+                                                                </label>
+                                                            @endif
                                                         @endif
                                                     </div>
                                                 @endfor

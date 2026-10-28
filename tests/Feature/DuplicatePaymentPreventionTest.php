@@ -300,4 +300,19 @@ class DuplicatePaymentPreventionTest extends TestCase
         // Dan daftar duplikat di scanner sekarang menjadi 0
         $this->assertCount(0, $component->get('settlementDuplicates'));
     }
+
+    public function test_service_level_lock_and_guard_prevents_duplicate_payment_on_already_paid_bill(): void
+    {
+        $service = new \App\Modules\Keuangan\Services\BillingService();
+
+        // 1. Bayar tagihan sampai lunas
+        $service->recordPayment($this->bill->id, 2000.00, 'CASH', 'Bayar Lunas Pertama', $this->admin->id);
+        $this->assertEquals('paid', $this->bill->fresh()->status);
+
+        // 2. Coba bayar lagi tagihan yang sudah lunas tersebut
+        $this->expectException(\DomainException::class);
+        $this->expectExceptionMessage("sudah LUNAS sebelumnya");
+
+        $service->recordPayment($this->bill->id, 2000.00, 'TRANSFER', 'Bayar Ganda Dilarang', $this->admin->id);
+    }
 }

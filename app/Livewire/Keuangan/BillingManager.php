@@ -2500,13 +2500,21 @@ class BillingManager extends Component
         DB::transaction(function () use ($billsToPay, $billingService, $receiptNo, $paymentGroupId, $months, &$totalActuallyPaid, &$itemsPaidCount, &$paidSummaryItems) {
             $remainingAmount = $this->payAmount;
 
-            foreach ($billsToPay as $bill) {
+            foreach ($billsToPay as $billItem) {
                 if ($remainingAmount <= 0) {
                     break;
                 }
 
-                $unpaidAmount = $bill->amount - $bill->amount_paid;
+                $bill = Bill::lockForUpdate()->find($billItem->id);
+                if (!$bill) continue;
+
+                $unpaidAmount = max(0, (float)$bill->amount - (float)$bill->amount_paid);
+                if ($bill->status === 'paid' || $unpaidAmount <= 0) {
+                    continue; // Lewati tagihan yang sudah lunas (misal baru dibayar via transfer portal)
+                }
+
                 $paymentForThisBill = min($remainingAmount, $unpaidAmount);
+                if ($paymentForThisBill <= 0) continue;
 
                 $billingService->recordPayment(
                     $bill->id,
@@ -2863,8 +2871,16 @@ class BillingManager extends Component
                        7=>'Juli',8=>'Agustus',9=>'September',10=>'Oktober',11=>'November',12=>'Desember'];
 
             foreach ($billsToProcess as $proc) {
-                $bill = $proc['bill'];
-                $payPortion = $proc['payPortion'];
+                $bill = Bill::lockForUpdate()->find($proc['bill']->id);
+                if (!$bill) continue;
+
+                $remaining = max(0, (float)$bill->amount - (float)$bill->amount_paid);
+                if ($bill->status === 'paid' || $remaining <= 0) {
+                    $billLabel = !empty($bill->config?->label) ? $bill->config->label : (!empty($bill->bill_type) ? ucwords(str_replace('_', ' ', $bill->bill_type)) : 'Tagihan');
+                    throw new \DomainException("Tagihan '{$billLabel}' baru saja dilunasi di kasir saat proses verifikasi berlangsung. Persetujuan transfer dibatalkan untuk mencegah pencatatan ganda.");
+                }
+
+                $payPortion = min((float)$proc['payPortion'], $remaining);
                 if ($payPortion <= 0) continue;
 
                 $interval = $bill->config?->interval ?? '';

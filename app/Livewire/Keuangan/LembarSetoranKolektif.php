@@ -1050,8 +1050,17 @@ class LembarSetoranKolektif extends Component
                 $amountPaid = (float)$amount;
                 if ($amountPaid <= 0) continue;
 
-                $service->recordPayment($billId, $amountPaid, $this->payMethod, $notes, auth()->id());
-                $totalAmountProcessed += $amountPaid;
+                $bill = Bill::lockForUpdate()->find($billId);
+                if (!$bill) continue;
+
+                $remaining = max(0, (float)$bill->amount - (float)$bill->amount_paid);
+                if ($bill->status === 'paid' || $remaining <= 0) {
+                    continue; // Lewati tagihan yang sudah lunas (misal baru dibayar via transfer portal)
+                }
+
+                $actualPaid = min($amountPaid, $remaining);
+                $service->recordPayment($billId, $actualPaid, $this->payMethod, $notes, auth()->id());
+                $totalAmountProcessed += $actualPaid;
                 $billsProcessedCount++;
             }
 

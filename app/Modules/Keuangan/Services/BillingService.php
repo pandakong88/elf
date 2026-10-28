@@ -250,7 +250,21 @@ class BillingService
         $paymentGroupId = $paymentGroupId ?: (string) Str::uuid();
 
         $payment = DB::transaction(function () use ($billId, $amount, $method, $notes, $loggedByUserId, $receiptNo, $paymentGroupId, $tenderedAmount, $changeAmount) {
-            $bill = Bill::findOrFail($billId);
+            $bill = Bill::lockForUpdate()->findOrFail($billId);
+
+            // Mendukung nilai negatif untuk proses refund/pengembalian
+            if ($amount > 0) {
+                $remaining = max(0, (float)$bill->amount - (float)$bill->amount_paid);
+
+                // HARD GUARD: Cegah pencatatan ganda pada tagihan yang sudah lunas
+                if ($bill->status === 'paid' || $remaining <= 0) {
+                    $billName = $bill->title ?: ($bill->config?->label ?? $bill->bill_type);
+                    throw new \DomainException("Tagihan '{$billName}' sudah LUNAS sebelumnya. Pembayaran baru tidak dapat dicatat untuk mencegah duplikasi.");
+                }
+
+                // Batasi pembayaran maksimal sebesar sisa tagihan untuk mencegah overpayment
+                $amount = min($amount, $remaining);
+            }
 
             $payment = BillPayment::create([
                 'id'               => Str::uuid()->toString(),
