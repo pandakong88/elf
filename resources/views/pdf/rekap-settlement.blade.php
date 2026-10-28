@@ -296,6 +296,16 @@
                 </tr>
                 @endif
             @endforeach
+            @if($oIdx === 1)
+            <tr>
+                <td style="text-align: center; color: #94a3b8;">1</td>
+                <td colspan="2">
+                    <strong>Total Fisik Kasir (Metode Input Cepat / Mesin Hitung)</strong>
+                    <div style="font-size: 8px; color: #64748b;">Dihitung secara borongan langsung tanpa pemilahan lembaran pecahan.</div>
+                </td>
+                <td class="right"><strong>Rp {{ number_format($cash_opname['total'] ?? 0, 0, ',', '.') }}</strong></td>
+            </tr>
+            @endif
             <tr class="total-row">
                 <td colspan="3" style="text-align: right;">TOTAL UANG FISIK TERHITUNG:</td>
                 <td class="right"><strong>Rp {{ number_format($cash_opname['total'] ?? 0, 0, ',', '.') }}</strong></td>
