@@ -185,6 +185,11 @@ class SettlementOpnameAndCategoryFilterTest extends TestCase
         $this->assertEquals(25000, $reportKomplek['total_net']);
         $this->assertEquals(25000, $reportKomplek['cash_amount']);
         $this->assertNotEmpty($reportKomplek['dormitory_breakdown']);
+
+        // Filter: custom pos iuran (misal kebersihan) - memastikan query totalBilledQuery tidak error kolom 'name'
+        $lw->set('settlementCategoryFilter', 'kebersihan');
+        $reportKebersihan = $lw->get('settlementReport');
+        $this->assertEquals(0, $reportKebersihan['total_net']);
     }
 
     public function test_save_snapshot_includes_cash_opname_and_category_filter(): void
