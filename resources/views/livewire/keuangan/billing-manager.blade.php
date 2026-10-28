@@ -4806,16 +4806,31 @@
                                             </div>
                                         </div>
 
-                                        {{-- Input Nominal Besar --}}
+                                        {{-- Input Nominal Besar (Flex Group Anti-Overlap) --}}
                                         <div class="space-y-2">
-                                            <div class="relative">
-                                                <span class="absolute left-4 top-1/2 -translate-y-1/2 text-lg font-black text-slate-400">Rp</span>
+                                            <div class="flex items-stretch rounded-2xl border-2 border-amber-400 dark:border-amber-600 bg-white dark:bg-slate-900 overflow-hidden shadow-inner focus-within:ring-4 focus-within:ring-amber-500/20 transition-all">
+                                                <div class="flex items-center justify-center px-4 bg-amber-500/10 dark:bg-amber-400/10 border-r-2 border-amber-200 dark:border-amber-800/80 text-amber-700 dark:text-amber-400 font-black text-xl font-mono select-none">
+                                                    Rp
+                                                </div>
                                                 <input type="number" 
                                                        min="0"
-                                                       step="1000"
+                                                       step="1"
                                                        wire:model.live.debounce.250ms="cashOpnameQuickTotal"
                                                        placeholder="0"
-                                                       class="w-full pl-14 pr-4 py-3 text-2xl font-black font-mono text-slate-900 dark:text-white bg-white dark:bg-slate-900 rounded-2xl border-2 border-amber-300 dark:border-amber-700 focus:border-amber-500 focus:ring-4 focus:ring-amber-500/20 shadow-inner">
+                                                       class="block w-full px-4 py-3 text-2xl font-black font-mono text-slate-900 dark:text-white bg-transparent border-0 ring-0 focus:ring-0 focus:outline-hidden"
+                                                       style="outline: none !important; box-shadow: none !important;">
+                                            </div>
+
+                                            {{-- Live Terbilang Format Rupiah --}}
+                                            <div class="flex items-center justify-between px-1">
+                                                <span class="text-xs font-bold text-slate-500 dark:text-slate-400">
+                                                    Terbaca: <strong class="font-mono text-amber-600 dark:text-amber-400 font-black text-sm">Rp {{ number_format((float)round((float)$cashOpnameQuickTotal), 0, ',', '.') }}</strong>
+                                                </span>
+                                                @if((float)$cashOpnameQuickTotal > 0)
+                                                    <span class="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+                                                        <span>✔</span> Angka Terinput
+                                                    </span>
+                                                @endif
                                             </div>
 
                                             {{-- Quick Add Shortcuts --}}

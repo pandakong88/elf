@@ -61,7 +61,7 @@ class BillingManager extends Component
     // Kas Opname Fisik (Cash Drawer)
     public bool $showCashOpnameModal = false;
     public string $cashOpnameMode = 'quick'; // 'quick' (nominal langsung) | 'breakdown' (pecahan lembaran)
-    public float|string $cashOpnameQuickTotal = 0;
+    public float $cashOpnameQuickTotal = 0.0;
     public array $cashOpnameCounts = [
         '100000' => 0,
         '50000'  => 0,
@@ -3391,19 +3391,29 @@ class BillingManager extends Component
         }
     }
 
+    public function updatedCashOpnameQuickTotal($value): void
+    {
+        if (is_numeric($value)) {
+            $this->cashOpnameQuickTotal = (float) round((float) $value);
+        } else {
+            $clean = preg_replace('/[^0-9]/', '', (string) $value);
+            $this->cashOpnameQuickTotal = (float) ($clean ?: 0);
+        }
+    }
+
     public function autoMatchCashOpname(): void
     {
         $sysCash = (float) ($this->settlementReport['cash_amount'] ?? 0);
         $this->cashOpnameMode = 'quick';
-        $this->cashOpnameQuickTotal = $sysCash;
-        $this->toastSuccess('⚡ Kas Fisik disamakan dengan sistem: Klop Rp ' . number_format($sysCash, 0, ',', '.'));
+        $this->cashOpnameQuickTotal = (float) round($sysCash);
+        $this->toastSuccess('⚡ Kas Fisik disamakan dengan sistem: Klop Rp ' . number_format($this->cashOpnameQuickTotal, 0, ',', '.'));
     }
 
     public function addQuickOpnameAmount(float $nominal): void
     {
         $this->cashOpnameMode = 'quick';
         $current = (float) $this->cashOpnameQuickTotal;
-        $this->cashOpnameQuickTotal = max(0.0, $current + $nominal);
+        $this->cashOpnameQuickTotal = (float) round(max(0.0, $current + $nominal));
     }
 
     public function incrementOpnameCount(string $denom, int $step = 1): void
@@ -3425,7 +3435,7 @@ class BillingManager extends Component
             '1000'   => 0,
             'koin'   => 0,
         ];
-        $this->cashOpnameQuickTotal = 0;
+        $this->cashOpnameQuickTotal = 0.0;
         $this->cashOpnameNotes = '';
         $this->hasSavedOpname = false;
         $this->toastInfo('Perhitungan kas opname fisik telah direset.');
@@ -3448,7 +3458,7 @@ class BillingManager extends Component
     public function getCashOpnameTotalProperty(): float
     {
         if ($this->cashOpnameMode === 'quick') {
-            return max(0.0, (float) $this->cashOpnameQuickTotal);
+            return max(0.0, (float) round((float) $this->cashOpnameQuickTotal));
         }
 
         $total = 0.0;
@@ -3457,7 +3467,7 @@ class BillingManager extends Component
             $total += ((float) $denom) * $count;
         }
         $total += (float) ($this->cashOpnameCounts['koin'] ?? 0);
-        return $total;
+        return (float) round($total);
     }
 
     public function getCashOpnameDifferenceProperty(): float
