@@ -94,25 +94,38 @@ class SettlementOpnameAndCategoryFilterTest extends TestCase
         ]);
 
         // Uji Livewire component
-        Livewire::actingAs($this->admin)
+        $lw = Livewire::actingAs($this->admin)
             ->test(BillingManager::class)
             ->call('openCashOpnameModal')
             ->assertSet('showCashOpnameModal', true)
+            // 1. Test Solusi 3: Tombol 1-Click Auto Match Klop
+            ->call('autoMatchCashOpname')
+            ->assertSet('cashOpnameMode', 'quick')
+            ->assertSet('cashOpnameQuickTotal', 180000)
+            ->assertSet('cashOpnameTotal', 180000)
+            ->assertSet('cashOpnameDifference', 0)
+            // 2. Test Solusi 1: Mode Cepat (Input Nominal Langsung + Shortcut Tambah)
+            ->call('resetCashOpname')
+            ->assertSet('cashOpnameTotal', 0)
+            ->assertSet('cashOpnameDifference', -180000)
+            ->call('setCashOpnameMode', 'quick')
+            ->set('cashOpnameQuickTotal', 100000)
+            ->call('addQuickOpnameAmount', 80000) // 100k + 80k = 180k
+            ->assertSet('cashOpnameTotal', 180000)
+            ->assertSet('cashOpnameDifference', 0)
+            // 3. Test Mode Rinci (Pecahan Lembaran)
+            ->call('setCashOpnameMode', 'breakdown')
             ->call('incrementOpnameCount', 100000, 1) // 100k x 1 = 100k
             ->call('incrementOpnameCount', 50000, 1)  // 50k x 1 = 50k
             ->call('incrementOpnameCount', 20000, 1)  // 20k x 1 = 20k
             ->call('incrementOpnameCount', 10000, 1)  // 10k x 1 = 10k -> Total 180k
             ->assertSet('cashOpnameTotal', 180000)
             ->assertSet('cashOpnameDifference', 0)
+            // 4. Simpan Kas Opname
             ->set('cashOpnameNotes', 'Fisik kasir klop 100% pas')
             ->call('saveCashOpname')
             ->assertSet('showCashOpnameModal', false)
-            ->assertSet('hasSavedOpname', true)
-            // Test reset
-            ->call('openCashOpnameModal')
-            ->call('resetCashOpname')
-            ->assertSet('cashOpnameTotal', 0)
-            ->assertSet('cashOpnameDifference', -180000);
+            ->assertSet('hasSavedOpname', true);
     }
 
     public function test_settlement_category_filter_isolates_pos(): void

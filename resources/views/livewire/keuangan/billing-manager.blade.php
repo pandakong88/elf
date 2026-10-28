@@ -4715,8 +4715,33 @@
                                 </button>
                             </div>
 
-                            {{-- Body: Denominations List --}}
+                            {{-- Body: Mode Selector & Inputs --}}
                             <div class="overflow-y-auto flex-1 p-6 space-y-4">
+                                {{-- Mode Selector + Quick Auto Match --}}
+                                <div class="flex flex-wrap items-center justify-between gap-2 p-1.5 bg-slate-100 dark:bg-slate-800/60 rounded-2xl">
+                                    <div class="inline-flex items-center gap-1">
+                                        <button type="button" 
+                                                wire:click="setCashOpnameMode('quick')"
+                                                class="px-3.5 py-1.5 text-xs font-black rounded-xl transition-all cursor-pointer {{ $cashOpnameMode === 'quick' ? 'bg-white dark:bg-slate-900 text-amber-600 dark:text-amber-400 shadow-sm border border-slate-200/60 dark:border-slate-700' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white' }}">
+                                            ⚡ Mode Cepat (Total Nominal)
+                                        </button>
+                                        <button type="button" 
+                                                wire:click="setCashOpnameMode('breakdown')"
+                                                class="px-3.5 py-1.5 text-xs font-black rounded-xl transition-all cursor-pointer {{ $cashOpnameMode === 'breakdown' ? 'bg-white dark:bg-slate-900 text-amber-600 dark:text-amber-400 shadow-sm border border-slate-200/60 dark:border-slate-700' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white' }}">
+                                            📋 Mode Rinci (Pecahan Uang)
+                                        </button>
+                                    </div>
+
+                                    {{-- Tombol Solusi 3: Auto Match Klop --}}
+                                    <button type="button" 
+                                            wire:click="autoMatchCashOpname"
+                                            title="Langsung samakan kas fisik dengan kasir sistem jika yakin uang klop"
+                                            class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-black text-emerald-700 dark:text-emerald-300 bg-emerald-100/80 dark:bg-emerald-950/60 hover:bg-emerald-200 dark:hover:bg-emerald-900/80 rounded-xl transition active:scale-95 cursor-pointer border border-emerald-300 dark:border-emerald-800 shadow-xs">
+                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                                        <span>⚡ Samakan Kasir (Klop Pas)</span>
+                                    </button>
+                                </div>
+
                                 {{-- Live Comparison Card --}}
                                 @php
                                     $sysCash = (float) ($settlementReport['cash_amount'] ?? 0);
@@ -4747,7 +4772,9 @@
 
                                     <div class="text-center pt-1">
                                         @if($totPhys == 0)
-                                            <span class="text-xs font-semibold text-slate-500">Silakan masukkan jumlah lembar uang fisik di bawah.</span>
+                                            <span class="text-xs font-semibold text-slate-500">
+                                                {{ $cashOpnameMode === 'quick' ? 'Masukkan total uang fisik langsung di bawah, atau tekan tombol Samakan Kasir.' : 'Silakan masukkan jumlah lembar uang fisik di bawah.' }}
+                                            </span>
                                         @elseif(abs($diff) < 0.01)
                                             <span class="text-xs font-extrabold text-emerald-700 dark:text-emerald-300">
                                                 🎉 ALHAMDULILLAH KLOP PAS 100%! Tidak ada selisih kas fisik dengan pembukuan.
@@ -4764,92 +4791,133 @@
                                     </div>
                                 </div>
 
-                                {{-- Denominations Input Table --}}
-                                <div class="overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-800">
-                                    <table class="w-full text-xs text-left">
-                                        <thead class="bg-slate-100 dark:bg-slate-800/80 text-slate-500 uppercase font-black text-[10px]">
-                                            <tr>
-                                                <th class="py-2.5 px-3">Pecahan Uang</th>
-                                                <th class="py-2.5 px-3 text-center">Shortcut</th>
-                                                <th class="py-2.5 px-3 text-center" style="width: 130px;">Jumlah (Lembar)</th>
-                                                <th class="py-2.5 px-3 text-right">Subtotal</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
-                                            @php
-                                                $denoms = [
-                                                    ['key' => '100000', 'label' => 'Rp 100.000', 'color' => 'rose'],
-                                                    ['key' => '50000',  'label' => 'Rp 50.000',  'color' => 'sky'],
-                                                    ['key' => '20000',  'label' => 'Rp 20.000',  'color' => 'emerald'],
-                                                    ['key' => '10000',  'label' => 'Rp 10.000',  'color' => 'purple'],
-                                                    ['key' => '5000',   'label' => 'Rp 5.000',   'color' => 'amber'],
-                                                    ['key' => '2000',   'label' => 'Rp 2.000',   'color' => 'slate'],
-                                                    ['key' => '1000',   'label' => 'Rp 1.000',   'color' => 'slate'],
-                                                ];
-                                            @endphp
-                                            @foreach($denoms as $d)
+                                {{-- MODE QUICK: Input Nominal Langsung --}}
+                                @if($cashOpnameMode === 'quick')
+                                    <div class="p-5 rounded-2xl bg-amber-50/50 dark:bg-amber-950/20 border border-amber-200/60 dark:border-amber-900/40 space-y-4">
+                                        <div class="flex items-start gap-3">
+                                            <div class="w-10 h-10 rounded-2xl bg-amber-500/10 dark:bg-amber-400/10 flex items-center justify-center text-amber-600 dark:text-amber-400 shrink-0 text-xl font-black">
+                                                💰
+                                            </div>
+                                            <div class="flex-1">
+                                                <h4 class="text-xs font-black text-slate-800 dark:text-slate-200 uppercase tracking-wider">Input Total Uang Fisik Hasil Hitungan</h4>
+                                                <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                                                    Tidak perlu memilah pecahan! Masukkan total uang tunai yang dihitung secara borongan (misal lewat mesin hitung atau hitungan gepokan di tangan).
+                                                </p>
+                                            </div>
+                                        </div>
+
+                                        {{-- Input Nominal Besar --}}
+                                        <div class="space-y-2">
+                                            <div class="relative">
+                                                <span class="absolute left-4 top-1/2 -translate-y-1/2 text-lg font-black text-slate-400">Rp</span>
+                                                <input type="number" 
+                                                       min="0"
+                                                       step="1000"
+                                                       wire:model.live.debounce.250ms="cashOpnameQuickTotal"
+                                                       placeholder="0"
+                                                       class="w-full pl-14 pr-4 py-3 text-2xl font-black font-mono text-slate-900 dark:text-white bg-white dark:bg-slate-900 rounded-2xl border-2 border-amber-300 dark:border-amber-700 focus:border-amber-500 focus:ring-4 focus:ring-amber-500/20 shadow-inner">
+                                            </div>
+
+                                            {{-- Quick Add Shortcuts --}}
+                                            <div class="flex flex-wrap items-center gap-1.5 pt-1">
+                                                <span class="text-[10px] font-bold text-slate-400 uppercase mr-1">Shortcut Tambah:</span>
+                                                <button type="button" wire:click="addQuickOpnameAmount(50000)" class="px-2.5 py-1 bg-white dark:bg-slate-900 hover:bg-amber-100 dark:hover:bg-amber-950/60 text-slate-700 dark:text-slate-300 text-xs font-bold rounded-lg border border-slate-200 dark:border-slate-800 transition shadow-xs cursor-pointer">+50rb</button>
+                                                <button type="button" wire:click="addQuickOpnameAmount(100000)" class="px-2.5 py-1 bg-white dark:bg-slate-900 hover:bg-amber-100 dark:hover:bg-amber-950/60 text-slate-700 dark:text-slate-300 text-xs font-bold rounded-lg border border-slate-200 dark:border-slate-800 transition shadow-xs cursor-pointer">+100rb</button>
+                                                <button type="button" wire:click="addQuickOpnameAmount(500000)" class="px-2.5 py-1 bg-white dark:bg-slate-900 hover:bg-amber-100 dark:hover:bg-amber-950/60 text-slate-700 dark:text-slate-300 text-xs font-bold rounded-lg border border-slate-200 dark:border-slate-800 transition shadow-xs cursor-pointer">+500rb</button>
+                                                <button type="button" wire:click="addQuickOpnameAmount(1000000)" class="px-2.5 py-1 bg-white dark:bg-slate-900 hover:bg-amber-100 dark:hover:bg-amber-950/60 text-slate-700 dark:text-slate-300 text-xs font-bold rounded-lg border border-slate-200 dark:border-slate-800 transition shadow-xs cursor-pointer">+1 Jt</button>
+                                                <button type="button" wire:click="addQuickOpnameAmount(5000000)" class="px-2.5 py-1 bg-white dark:bg-slate-900 hover:bg-amber-100 dark:hover:bg-amber-950/60 text-slate-700 dark:text-slate-300 text-xs font-bold rounded-lg border border-slate-200 dark:border-slate-800 transition shadow-xs cursor-pointer">+5 Jt</button>
+                                                <button type="button" wire:click="$set('cashOpnameQuickTotal', 0)" class="px-2.5 py-1 bg-rose-50 dark:bg-rose-950/40 hover:bg-rose-100 text-rose-600 dark:text-rose-400 text-xs font-bold rounded-lg border border-rose-200 dark:border-rose-900 transition shadow-xs cursor-pointer">Nolkan</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                @else
+                                    {{-- MODE BREAKDOWN: Denominations Input Table --}}
+                                    <div class="overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-800">
+                                        <table class="w-full text-xs text-left">
+                                            <thead class="bg-slate-100 dark:bg-slate-800/80 text-slate-500 uppercase font-black text-[10px]">
+                                                <tr>
+                                                    <th class="py-2.5 px-3">Pecahan Uang</th>
+                                                    <th class="py-2.5 px-3 text-center">Shortcut</th>
+                                                    <th class="py-2.5 px-3 text-center" style="width: 130px;">Jumlah (Lembar)</th>
+                                                    <th class="py-2.5 px-3 text-right">Subtotal</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
                                                 @php
-                                                    $cnt = (int) ($cashOpnameCounts[$d['key']] ?? 0);
-                                                    $sub = ((float)$d['key']) * $cnt;
+                                                    $denoms = [
+                                                        ['key' => '100000', 'label' => 'Rp 100.000', 'color' => 'rose'],
+                                                        ['key' => '50000',  'label' => 'Rp 50.000',  'color' => 'sky'],
+                                                        ['key' => '20000',  'label' => 'Rp 20.000',  'color' => 'emerald'],
+                                                        ['key' => '10000',  'label' => 'Rp 10.000',  'color' => 'purple'],
+                                                        ['key' => '5000',   'label' => 'Rp 5.000',   'color' => 'amber'],
+                                                        ['key' => '2000',   'label' => 'Rp 2.000',   'color' => 'slate'],
+                                                        ['key' => '1000',   'label' => 'Rp 1.000',   'color' => 'slate'],
+                                                    ];
                                                 @endphp
-                                                <tr class="hover:bg-slate-50/60 dark:hover:bg-slate-800/40">
+                                                @foreach($denoms as $d)
+                                                    @php
+                                                        $cnt = (int) ($cashOpnameCounts[$d['key']] ?? 0);
+                                                        $sub = ((float)$d['key']) * $cnt;
+                                                    @endphp
+                                                    <tr class="hover:bg-slate-50/60 dark:hover:bg-slate-800/40">
+                                                        <td class="py-2 px-3 font-bold text-slate-800 dark:text-slate-200">
+                                                            <span class="inline-block w-2.5 h-2.5 rounded-full mr-1.5 bg-{{ $d['color'] }}-500"></span>
+                                                            {{ $d['label'] }}
+                                                        </td>
+                                                        <td class="py-2 px-3 text-center">
+                                                            <div class="inline-flex items-center gap-1">
+                                                                <button type="button" 
+                                                                        wire:click="incrementOpnameCount('{{ $d['key'] }}', 1)" 
+                                                                        class="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-[10px] font-bold text-slate-600 dark:text-slate-300">
+                                                                    +1
+                                                                </button>
+                                                                <button type="button" 
+                                                                        wire:click="incrementOpnameCount('{{ $d['key'] }}', 5)" 
+                                                                        class="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-[10px] font-bold text-slate-600 dark:text-slate-300">
+                                                                    +5
+                                                                </button>
+                                                                <button type="button" 
+                                                                        wire:click="incrementOpnameCount('{{ $d['key'] }}', 10)" 
+                                                                        class="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-[10px] font-bold text-slate-600 dark:text-slate-300">
+                                                                    +10
+                                                                </button>
+                                                            </div>
+                                                        </td>
+                                                        <td class="py-2 px-3 text-center">
+                                                            <input type="number" 
+                                                                   min="0"
+                                                                   wire:model.live.debounce.250ms="cashOpnameCounts.{{ $d['key'] }}"
+                                                                   class="w-24 text-center py-1 px-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 font-mono font-bold text-slate-900 dark:text-white focus:ring-2 focus:ring-amber-500">
+                                                        </td>
+                                                        <td class="py-2 px-3 text-right font-mono font-bold text-slate-800 dark:text-slate-200">
+                                                            Rp {{ number_format($sub, 0, ',', '.') }}
+                                                        </td>
+                                                    </tr>
+                                                @endforeach
+                                                {{-- Uang Koin / Logam / Lainnya --}}
+                                                <tr class="hover:bg-slate-50/60 dark:hover:bg-slate-800/40 bg-amber-50/30 dark:bg-amber-950/20">
                                                     <td class="py-2 px-3 font-bold text-slate-800 dark:text-slate-200">
-                                                        <span class="inline-block w-2.5 h-2.5 rounded-full mr-1.5 bg-{{ $d['color'] }}-500"></span>
-                                                        {{ $d['label'] }}
+                                                        🪙 Uang Logam / Koin (Total Rp)
                                                     </td>
-                                                    <td class="py-2 px-3 text-center">
-                                                        <div class="inline-flex items-center gap-1">
-                                                            <button type="button" 
-                                                                    wire:click="incrementOpnameCount('{{ $d['key'] }}', 1)" 
-                                                                    class="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-[10px] font-bold text-slate-600 dark:text-slate-300">
-                                                                +1
-                                                            </button>
-                                                            <button type="button" 
-                                                                    wire:click="incrementOpnameCount('{{ $d['key'] }}', 5)" 
-                                                                    class="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-[10px] font-bold text-slate-600 dark:text-slate-300">
-                                                                +5
-                                                            </button>
-                                                            <button type="button" 
-                                                                    wire:click="incrementOpnameCount('{{ $d['key'] }}', 10)" 
-                                                                    class="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-[10px] font-bold text-slate-600 dark:text-slate-300">
-                                                                +10
-                                                            </button>
-                                                        </div>
+                                                    <td class="py-2 px-3 text-center text-[10px] text-slate-400">
+                                                        Input nominal langsung
                                                     </td>
                                                     <td class="py-2 px-3 text-center">
                                                         <input type="number" 
                                                                min="0"
-                                                               wire:model.live.debounce.250ms="cashOpnameCounts.{{ $d['key'] }}"
+                                                               step="100"
+                                                               wire:model.live.debounce.250ms="cashOpnameCounts.koin"
+                                                               placeholder="Rp 0"
                                                                class="w-24 text-center py-1 px-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 font-mono font-bold text-slate-900 dark:text-white focus:ring-2 focus:ring-amber-500">
                                                     </td>
                                                     <td class="py-2 px-3 text-right font-mono font-bold text-slate-800 dark:text-slate-200">
-                                                        Rp {{ number_format($sub, 0, ',', '.') }}
+                                                        Rp {{ number_format((float)($cashOpnameCounts['koin'] ?? 0), 0, ',', '.') }}
                                                     </td>
                                                 </tr>
-                                            @endforeach
-                                            {{-- Uang Koin / Logam / Lainnya --}}
-                                            <tr class="hover:bg-slate-50/60 dark:hover:bg-slate-800/40 bg-amber-50/30 dark:bg-amber-950/20">
-                                                <td class="py-2 px-3 font-bold text-slate-800 dark:text-slate-200">
-                                                    🪙 Uang Logam / Koin (Total Rp)
-                                                </td>
-                                                <td class="py-2 px-3 text-center text-[10px] text-slate-400">
-                                                    Input nominal langsung
-                                                </td>
-                                                <td class="py-2 px-3 text-center">
-                                                    <input type="number" 
-                                                           min="0"
-                                                           step="100"
-                                                           wire:model.live.debounce.250ms="cashOpnameCounts.koin"
-                                                           placeholder="Rp 0"
-                                                           class="w-24 text-center py-1 px-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 font-mono font-bold text-slate-900 dark:text-white focus:ring-2 focus:ring-amber-500">
-                                                </td>
-                                                <td class="py-2 px-3 text-right font-mono font-bold text-slate-800 dark:text-slate-200">
-                                                    Rp {{ number_format((float)($cashOpnameCounts['koin'] ?? 0), 0, ',', '.') }}
-                                                </td>
-                                            </tr>
-                                        </tbody>
-                                    </table>
-                                </div>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                @endif
 
                                 {{-- Catatan Opname / Alasan Selisih --}}
                                 <div class="space-y-1">
