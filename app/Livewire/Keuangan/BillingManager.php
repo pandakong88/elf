@@ -3908,13 +3908,15 @@ class BillingManager extends Component
         if (!empty($this->settlementCategoryFilter)) {
             $catFilter = $this->settlementCategoryFilter;
             if ($catFilter === 'syahriah_pondok') {
-                $totalBilledQuery->where('bill_type', 'syahriah_pondok');
+                $totalBilledQuery->whereIn('bill_type', ['syahriah_pondok', 'syahriah_putra', 'syahriah_putri']);
             } elseif ($catFilter === 'madrasah') {
-                $totalBilledQuery->where('bill_type', 'syahriah_madrasah');
+                $totalBilledQuery->whereIn('bill_type', ['syahriah_madrasah', 'madrasah']);
+            } elseif ($catFilter === 'majek') {
+                $totalBilledQuery->whereIn('bill_type', ['majek_pagi', 'majek_sore']);
             } else {
                 $totalBilledQuery->where(function ($q) use ($catFilter) {
                     $q->where('bill_type', $catFilter)
-                      ->orWhereHas('config', fn($cq) => $cq->where('name', $catFilter));
+                      ->orWhereHas('config', fn($cq) => $cq->where('type', $catFilter)->orWhere('label', $catFilter));
                 });
             }
         }
