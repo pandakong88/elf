@@ -3692,118 +3692,139 @@
         @if ($activeTab === 'settlement')
             <div class="space-y-6">
                 {{-- 1. Header Banner & Actions --}}
-                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-gradient-to-r from-sky-900/10 via-indigo-900/5 to-slate-900/0 dark:from-sky-950/40 dark:via-indigo-950/20 dark:to-slate-900 border border-sky-200/80 dark:border-sky-800/40 p-6 rounded-3xl shadow-sm backdrop-blur-xs">
-                    <div>
-                        <div class="flex items-center gap-2 mb-1">
-                            <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-sky-500/10 text-sky-600 dark:text-sky-400 border border-sky-500/20">
-                                🏦 Rekonsiliasi &amp; Pembagian Dana
-                            </span>
-                            <span class="text-xs text-slate-400 font-semibold">• Periode: <strong class="text-slate-700 dark:text-slate-200">{{ $settlementReport['period_label'] }}</strong></span>
+                <div class="bg-white/80 dark:bg-slate-900/90 border border-slate-200/80 dark:border-slate-800 p-6 rounded-3xl shadow-xs backdrop-blur-sm space-y-5">
+                    {{-- Baris Atas: Informasi & Tombol Kunci Utama --}}
+                    <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                        <div class="space-y-2">
+                            <div class="flex flex-wrap items-center gap-2">
+                                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-black uppercase tracking-wider bg-sky-500/10 text-sky-600 dark:text-sky-400 border border-sky-500/20 whitespace-nowrap">
+                                    🏦 Rekonsiliasi &amp; Pembagian Kas
+                                </span>
+                                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200/80 dark:border-slate-700/60 whitespace-nowrap">
+                                    <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                                    <span>Periode:</span>
+                                    <strong class="text-slate-900 dark:text-white">{{ $settlementReport['period_label'] }}</strong>
+                                </span>
+                            </div>
+
+                            <h2 class="font-black text-2xl text-slate-900 dark:text-white tracking-tight">
+                                Rekonsiliasi &amp; Pembagian Dana Kas
+                            </h2>
+
+                            <p class="text-xs text-slate-500 dark:text-slate-400 max-w-3xl leading-relaxed">
+                                Pusat kendali rekonsiliasi 3 sumber dana (Payment Gateway DOKU, Transfer Bank Manual, dan Setoran Tunai Kasir/Komplek) serta pembagian porsi peruntukan kas per unit.
+                            </p>
                         </div>
-                        <h2 class="font-black text-xl text-slate-900 dark:text-slate-100 tracking-tight">Rekonsiliasi &amp; Pembagian Dana Kas</h2>
-                        <p class="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-2xl">
-                            Pusat kendali rekonsiliasi 3 sumber dana (Payment Gateway DOKU, Transfer Bank Manual, dan Setoran Tunai Kasir/Komplek) serta pembagian porsi peruntukan kas per unit.
-                        </p>
-                    </div>
-
-                    <div class="flex flex-wrap items-center gap-2 shrink-0">
-                        {{-- Tombol Salin Format WhatsApp --}}
-                        <div x-data="{
-                            copied: false,
-                            copyText() {
-                                let unitLabel = '{{ $this->genderScope() === 'L' ? 'Putra (Banin)' : ($this->genderScope() === 'P' ? 'Putri (Banat)' : ($settlementGender === 'L' ? 'Putra (Banin)' : ($settlementGender === 'P' ? 'Putri (Banat)' : 'Semua Unit (Konsolidasi)'))) }}';
-                                let sourceLabel = '{{ $settlementSource === 'gateway' ? 'Khusus Online (DOKU)' : ($settlementSource === 'kasir' ? 'Khusus Kasir & Transfer' : 'Semua Sumber (Gabungan)') }}';
-                                let text = `*📊 LAPORAN REKONSILIASI & PEMBAGIAN DANA KAS*\n` +
-                                           `*Periode:* {{ addslashes($settlementReport['period_label'] ?? '') }}\n` +
-                                           `*Unit:* ` + unitLabel + `\n` +
-                                           `*Sumber Dana:* ` + sourceLabel + `\n` +
-                                           `*Pesantren:* {{ addslashes(config('app.name', 'Pondok Pesantren Al-Fithroh')) }}\n\n` +
-                                           `*💰 1. RINGKASAN SUMBER UANG MASUK (BERSIH):*\n` +
-                                           `• ⚡ Gateway Online (DOKU): Rp {{ number_format($settlementReport['gateway_net'], 0, ',', '.') }}\n` +
-                                           `• 🏦 Transfer Bank Manual: Rp {{ number_format($settlementReport['transfer_amount'], 0, ',', '.') }}\n` +
-                                           `• 💵 Setoran Tunai / Kasir: Rp {{ number_format($settlementReport['cash_amount'], 0, ',', '.') }}\n` +
-                                           `👉 *TOTAL UANG MASUK BERSIH: Rp {{ number_format($settlementReport['total_net'], 0, ',', '.') }}*\n` +
-                                           `_(Gross: Rp {{ number_format($settlementReport['total_gross'], 0, ',', '.') }} | MDR: -Rp {{ number_format($settlementReport['total_mdr'], 0, ',', '.') }})_\n\n` +
-                                           `*📌 2. DISTRIBUSI ALOKASI POS DANA:*\n` +
-                                           @foreach($settlementReport['category_breakdown'] as $cat)
-                                           `• {{ $cat['icon'] ?? '•' }} {{ addslashes($cat['label']) }}: Rp {{ number_format($cat['amount'], 0, ',', '.') }} ({{ $cat['count'] }} item)\n` +
-                                           @endforeach
-                                           `\n_Laporan dibuat otomatis melalui Sistem Keuangan Pesantren._`;
-
-                                if (navigator.clipboard && window.isSecureContext) {
-                                    navigator.clipboard.writeText(text).then(() => {
-                                        this.copied = true;
-                                        setTimeout(() => this.copied = false, 2500);
-                                    }).catch(() => {
-                                        this.fallbackCopy(text);
-                                    });
-                                } else {
-                                    this.fallbackCopy(text);
-                                }
-                            },
-                            fallbackCopy(text) {
-                                let textArea = document.createElement('textarea');
-                                textArea.value = text;
-                                textArea.style.position = 'fixed';
-                                textArea.style.left = '-999999px';
-                                textArea.style.top = '-999999px';
-                                document.body.appendChild(textArea);
-                                textArea.focus();
-                                textArea.select();
-                                try {
-                                    document.execCommand('copy');
-                                    this.copied = true;
-                                    setTimeout(() => this.copied = false, 2500);
-                                } catch (err) {
-                                    console.error('Gagal menyalin:', err);
-                                }
-                                document.body.removeChild(textArea);
-                            }
-                        }">
-                            <button type="button" 
-                                    @click="copyText()"
-                                    class="inline-flex items-center gap-2 px-4 py-2.5 bg-emerald-50 dark:bg-emerald-950/40 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 text-emerald-700 dark:text-emerald-300 font-extrabold text-xs rounded-2xl border border-emerald-300 dark:border-emerald-700 shadow-xs transition-all active:scale-95">
-                                <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
-                                <span x-text="copied ? 'Tersalin ke WA!' : 'Salin Format WA'"></span>
-                            </button>
-                        </div>
-
-                        {{-- Tombol Cetak Semua Slip (Batch PDF) --}}
-                        <a href="{{ route('keuangan.settlement.batch-slips', ['date_from' => $settlementDateFrom, 'date_to' => $settlementDateTo, 'source' => $settlementSource, 'gender' => $this->genderScope() ?: $settlementGender]) }}" 
-                           target="_blank"
-                           class="inline-flex items-center gap-2 px-4 py-2.5 bg-indigo-50 dark:bg-indigo-950/40 hover:bg-indigo-100 dark:hover:bg-indigo-900/60 text-indigo-700 dark:text-indigo-300 font-extrabold text-xs rounded-2xl border border-indigo-300 dark:border-indigo-700 shadow-xs transition-all active:scale-95"
-                           title="Cetak Seluruh Slip Serah Terima (1 File PDF)">
-                            <svg class="w-4 h-4 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
-                            <span>Cetak Semua Slip (Batch PDF)</span>
-                        </a>
-
-                        {{-- Tombol Cetak PDF Rekap --}}
-                        <a href="{{ route('keuangan.settlement.pdf', ['date_from' => $settlementDateFrom, 'date_to' => $settlementDateTo, 'source' => $settlementSource, 'gender' => $this->genderScope() ?: $settlementGender]) }}" 
-                           target="_blank"
-                           class="inline-flex items-center gap-2 px-4 py-2.5 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-extrabold text-xs rounded-2xl border border-slate-200 dark:border-slate-700 shadow-xs transition-all active:scale-95">
-                            <svg class="w-4 h-4 text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-                            <span>Cetak Rekap PDF</span>
-                        </a>
-
-                        {{-- Tombol Export Excel Multi-Sheet --}}
-                        <a href="{{ route('keuangan.settlement.export-excel', ['date_from' => $settlementDateFrom, 'date_to' => $settlementDateTo, 'source' => $settlementSource, 'bank' => $settlementBankFilter, 'gender' => $this->genderScope() ?: $settlementGender]) }}" 
-                           target="_blank"
-                           class="inline-flex items-center gap-2 px-4 py-2.5 bg-emerald-50 dark:bg-emerald-950/40 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 text-emerald-700 dark:text-emerald-300 font-extrabold text-xs rounded-2xl border border-emerald-300 dark:border-emerald-700 shadow-xs transition-all active:scale-95"
-                           title="Download Laporan Rekonsiliasi Excel Multi-Sheet (Ringkasan & Rincian Santri)">
-                            <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-                            <span>Export Excel (.xlsx)</span>
-                        </a>
 
                         {{-- Tombol Kunci & Simpan Distribusi (Khusus Pusat / Admin) --}}
                         @if($this->canLockSettlement())
-                            <button type="button" 
-                                    wire:click="saveSettlementSnapshot"
-                                    wire:confirm="Apakah Anda yakin ingin menyimpan dan mengunci snapshot distribusi dana periode ini ke audit log pembukuan?"
-                                    class="inline-flex items-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-xs rounded-2xl shadow-sm transition-all active:scale-95">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"/></svg>
-                                <span>Kunci &amp; Simpan Rekap</span>
-                            </button>
+                            <div class="shrink-0 flex items-center">
+                                <button type="button" 
+                                        wire:click="saveSettlementSnapshot"
+                                        wire:confirm="Apakah Anda yakin ingin menyimpan dan mengunci snapshot distribusi dana periode ini ke audit log pembukuan?"
+                                        class="inline-flex items-center gap-2 px-5 py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs rounded-2xl shadow-md shadow-emerald-600/20 transition-all active:scale-95 cursor-pointer whitespace-nowrap">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"/></svg>
+                                    <span>Kunci &amp; Simpan Rekap</span>
+                                </button>
+                            </div>
                         @endif
+                    </div>
+
+                    {{-- Baris Bawah: Action Toolbar Ekspor & Dokumen --}}
+                    <div class="pt-4 border-t border-slate-100 dark:border-slate-800/80 flex flex-wrap items-center justify-between gap-3">
+                        <div class="flex items-center gap-2 text-xs font-bold text-slate-400">
+                            <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                            <span class="text-[11px] font-extrabold uppercase tracking-wider">Aksi &amp; Unduh Laporan:</span>
+                        </div>
+
+                        <div class="flex flex-wrap items-center gap-2">
+                            {{-- Tombol Salin Format WhatsApp --}}
+                            <div x-data="{
+                                copied: false,
+                                copyText() {
+                                    let unitLabel = '{{ $this->genderScope() === 'L' ? 'Putra (Banin)' : ($this->genderScope() === 'P' ? 'Putri (Banat)' : ($settlementGender === 'L' ? 'Putra (Banin)' : ($settlementGender === 'P' ? 'Putri (Banat)' : 'Semua Unit (Konsolidasi)'))) }}';
+                                    let sourceLabel = '{{ $settlementSource === 'gateway' ? 'Khusus Online (DOKU)' : ($settlementSource === 'kasir' ? 'Khusus Kasir & Transfer' : 'Semua Sumber (Gabungan)') }}';
+                                    let text = `*📊 LAPORAN REKONSILIASI & PEMBAGIAN DANA KAS*\n` +
+                                               `*Periode:* {{ addslashes($settlementReport['period_label'] ?? '') }}\n` +
+                                               `*Unit:* ` + unitLabel + `\n` +
+                                               `*Sumber Dana:* ` + sourceLabel + `\n` +
+                                               `*Pesantren:* {{ addslashes(config('app.name', 'Pondok Pesantren Al-Fithroh')) }}\n\n` +
+                                               `*💰 1. RINGKASAN SUMBER UANG MASUK (BERSIH):*\n` +
+                                               `• ⚡ Gateway Online (DOKU): Rp {{ number_format($settlementReport['gateway_net'], 0, ',', '.') }}\n` +
+                                               `• 🏦 Transfer Bank Manual: Rp {{ number_format($settlementReport['transfer_amount'], 0, ',', '.') }}\n` +
+                                               `• 💵 Setoran Tunai / Kasir: Rp {{ number_format($settlementReport['cash_amount'], 0, ',', '.') }}\n` +
+                                               `👉 *TOTAL UANG MASUK BERSIH: Rp {{ number_format($settlementReport['total_net'], 0, ',', '.') }}*\n` +
+                                               `_(Gross: Rp {{ number_format($settlementReport['total_gross'], 0, ',', '.') }} | MDR: -Rp {{ number_format($settlementReport['total_mdr'], 0, ',', '.') }})_\n\n` +
+                                               `*📌 2. DISTRIBUSI ALOKASI POS DANA:*\n` +
+                                               @foreach($settlementReport['category_breakdown'] as $cat)
+                                               `• {{ $cat['icon'] ?? '•' }} {{ addslashes($cat['label']) }}: Rp {{ number_format($cat['amount'], 0, ',', '.') }} ({{ $cat['count'] }} item)\n` +
+                                               @endforeach
+                                               `\n_Laporan dibuat otomatis melalui Sistem Keuangan Pesantren._`;
+
+                                    if (navigator.clipboard && window.isSecureContext) {
+                                        navigator.clipboard.writeText(text).then(() => {
+                                            this.copied = true;
+                                            setTimeout(() => this.copied = false, 2500);
+                                        }).catch(() => {
+                                            this.fallbackCopy(text);
+                                        });
+                                    } else {
+                                        this.fallbackCopy(text);
+                                    }
+                                },
+                                fallbackCopy(text) {
+                                    let textArea = document.createElement('textarea');
+                                    textArea.value = text;
+                                    textArea.style.position = 'fixed';
+                                    textArea.style.left = '-999999px';
+                                    textArea.style.top = '-999999px';
+                                    document.body.appendChild(textArea);
+                                    textArea.focus();
+                                    textArea.select();
+                                    try {
+                                        document.execCommand('copy');
+                                        this.copied = true;
+                                        setTimeout(() => this.copied = false, 2500);
+                                    } catch (err) {
+                                        console.error('Gagal menyalin:', err);
+                                    }
+                                    document.body.removeChild(textArea);
+                                }
+                            }">
+                                <button type="button" 
+                                        @click="copyText()"
+                                        class="inline-flex items-center gap-2 px-3.5 py-2 bg-emerald-50 dark:bg-emerald-950/40 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 text-emerald-700 dark:text-emerald-300 font-bold text-xs rounded-xl border border-emerald-300 dark:border-emerald-700/70 shadow-2xs transition-all active:scale-95 cursor-pointer whitespace-nowrap">
+                                    <svg class="w-4 h-4 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                                    <span x-text="copied ? 'Tersalin ke WA!' : 'Salin Format WA'"></span>
+                                </button>
+                            </div>
+
+                            {{-- Tombol Cetak Semua Slip (Batch PDF) --}}
+                            <a href="{{ route('keuangan.settlement.batch-slips', ['date_from' => $settlementDateFrom, 'date_to' => $settlementDateTo, 'source' => $settlementSource, 'gender' => $this->genderScope() ?: $settlementGender]) }}" 
+                               target="_blank"
+                               class="inline-flex items-center gap-2 px-3.5 py-2 bg-indigo-50 dark:bg-indigo-950/40 hover:bg-indigo-100 dark:hover:bg-indigo-900/60 text-indigo-700 dark:text-indigo-300 font-bold text-xs rounded-xl border border-indigo-300 dark:border-indigo-700/70 shadow-2xs transition-all active:scale-95 whitespace-nowrap"
+                               title="Cetak Seluruh Slip Serah Terima (1 File PDF)">
+                                <svg class="w-4 h-4 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+                                <span>Cetak Semua Slip (Batch PDF)</span>
+                            </a>
+
+                            {{-- Tombol Cetak PDF Rekap --}}
+                            <a href="{{ route('keuangan.settlement.pdf', ['date_from' => $settlementDateFrom, 'date_to' => $settlementDateTo, 'source' => $settlementSource, 'gender' => $this->genderScope() ?: $settlementGender]) }}" 
+                               target="_blank"
+                               class="inline-flex items-center gap-2 px-3.5 py-2 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700/80 text-slate-700 dark:text-slate-200 font-bold text-xs rounded-xl border border-slate-200 dark:border-slate-700 shadow-2xs transition-all active:scale-95 whitespace-nowrap">
+                                <svg class="w-4 h-4 text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                                <span>Cetak Rekap PDF</span>
+                            </a>
+
+                            {{-- Tombol Export Excel Multi-Sheet --}}
+                            <a href="{{ route('keuangan.settlement.export-excel', ['date_from' => $settlementDateFrom, 'date_to' => $settlementDateTo, 'source' => $settlementSource, 'bank' => $settlementBankFilter, 'gender' => $this->genderScope() ?: $settlementGender]) }}" 
+                               target="_blank"
+                               class="inline-flex items-center gap-2 px-3.5 py-2 bg-emerald-50 dark:bg-emerald-950/40 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 text-emerald-700 dark:text-emerald-300 font-bold text-xs rounded-xl border border-emerald-300 dark:border-emerald-700/70 shadow-2xs transition-all active:scale-95 whitespace-nowrap"
+                               title="Download Laporan Rekonsiliasi Excel Multi-Sheet (Ringkasan & Rincian Santri)">
+                                <svg class="w-4 h-4 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                                <span>Export Excel (.xlsx)</span>
+                            </a>
+                        </div>
                     </div>
                 </div>
 
