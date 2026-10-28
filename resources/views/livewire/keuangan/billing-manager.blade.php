@@ -3770,8 +3770,10 @@
                                 copyText() {
                                     let unitLabel = '{{ $this->genderScope() === 'L' ? 'Putra (Banin)' : ($this->genderScope() === 'P' ? 'Putri (Banat)' : ($settlementGender === 'L' ? 'Putra (Banin)' : ($settlementGender === 'P' ? 'Putri (Banat)' : 'Semua Unit (Konsolidasi)'))) }}';
                                     let sourceLabel = '{{ $settlementSource === 'gateway' ? 'Khusus Online (DOKU)' : ($settlementSource === 'kasir' ? 'Khusus Kasir & Transfer' : 'Semua Sumber (Gabungan)') }}';
+                                    let posLabel = '{{ !empty($settlementCategoryFilter) ? ($this->settlementCategoryOptions[$settlementCategoryFilter] ?? $settlementCategoryFilter) : 'Semua Pos Anggaran (Konsolidasi)' }}';
                                     let text = `*📊 LAPORAN REKONSILIASI & PEMBAGIAN DANA KAS*\n` +
                                                `*Periode:* {{ addslashes($settlementReport['period_label'] ?? '') }}\n` +
+                                               `*Pos Iuran:* ` + posLabel + `\n` +
                                                `*Unit:* ` + unitLabel + `\n` +
                                                `*Sumber Dana:* ` + sourceLabel + `\n` +
                                                `*Pesantren:* {{ addslashes(config('app.name', 'Pondok Pesantren Al-Fithroh')) }}\n\n` +
@@ -3826,27 +3828,27 @@
                             </div>
 
                             {{-- Tombol Cetak Semua Slip (Batch PDF) --}}
-                            <a href="{{ route('keuangan.settlement.batch-slips', ['date_from' => $settlementDateFrom, 'date_to' => $settlementDateTo, 'source' => $settlementSource, 'gender' => $this->genderScope() ?: $settlementGender]) }}" 
-                               target="_blank"
-                               class="inline-flex items-center gap-2 px-3.5 py-2 bg-indigo-50 dark:bg-indigo-950/40 hover:bg-indigo-100 dark:hover:bg-indigo-900/60 text-indigo-700 dark:text-indigo-300 font-bold text-xs rounded-xl border border-indigo-300 dark:border-indigo-700/70 shadow-2xs transition-all active:scale-95 whitespace-nowrap"
-                               title="Cetak Seluruh Slip Serah Terima (1 File PDF)">
+                            <a href="{{ route('keuangan.settlement.batch-slips', ['date_from' => $settlementDateFrom, 'date_to' => $settlementDateTo, 'source' => $settlementSource, 'gender' => $this->genderScope() ?: $settlementGender, 'category' => $settlementCategoryFilter]) }}" 
+                                target="_blank"
+                                class="inline-flex items-center gap-2 px-3.5 py-2 bg-indigo-50 dark:bg-indigo-950/40 hover:bg-indigo-100 dark:hover:bg-indigo-900/60 text-indigo-700 dark:text-indigo-300 font-bold text-xs rounded-xl border border-indigo-300 dark:border-indigo-700/70 shadow-2xs transition-all active:scale-95 whitespace-nowrap"
+                                title="Cetak Seluruh Slip Serah Terima (1 File PDF)">
                                 <svg class="w-4 h-4 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
                                 <span>Cetak Semua Slip (Batch PDF)</span>
                             </a>
 
                             {{-- Tombol Cetak PDF Rekap --}}
-                            <a href="{{ route('keuangan.settlement.pdf', ['date_from' => $settlementDateFrom, 'date_to' => $settlementDateTo, 'source' => $settlementSource, 'gender' => $this->genderScope() ?: $settlementGender]) }}" 
-                               target="_blank"
-                               class="inline-flex items-center gap-2 px-3.5 py-2 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700/80 text-slate-700 dark:text-slate-200 font-bold text-xs rounded-xl border border-slate-200 dark:border-slate-700 shadow-2xs transition-all active:scale-95 whitespace-nowrap">
+                            <a href="{{ route('keuangan.settlement.pdf', ['date_from' => $settlementDateFrom, 'date_to' => $settlementDateTo, 'source' => $settlementSource, 'gender' => $this->genderScope() ?: $settlementGender, 'category' => $settlementCategoryFilter]) }}" 
+                                target="_blank"
+                                class="inline-flex items-center gap-2 px-3.5 py-2 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700/80 text-slate-700 dark:text-slate-200 font-bold text-xs rounded-xl border border-slate-200 dark:border-slate-700 shadow-2xs transition-all active:scale-95 whitespace-nowrap">
                                 <svg class="w-4 h-4 text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
                                 <span>Cetak Rekap PDF</span>
                             </a>
 
                             {{-- Tombol Export Excel Multi-Sheet --}}
-                            <a href="{{ route('keuangan.settlement.export-excel', ['date_from' => $settlementDateFrom, 'date_to' => $settlementDateTo, 'source' => $settlementSource, 'bank' => $settlementBankFilter, 'gender' => $this->genderScope() ?: $settlementGender]) }}" 
-                               target="_blank"
-                               class="inline-flex items-center gap-2 px-3.5 py-2 bg-emerald-50 dark:bg-emerald-950/40 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 text-emerald-700 dark:text-emerald-300 font-bold text-xs rounded-xl border border-emerald-300 dark:border-emerald-700/70 shadow-2xs transition-all active:scale-95 whitespace-nowrap"
-                               title="Download Laporan Rekonsiliasi Excel Multi-Sheet (Ringkasan & Rincian Santri)">
+                            <a href="{{ route('keuangan.settlement.export-excel', ['date_from' => $settlementDateFrom, 'date_to' => $settlementDateTo, 'source' => $settlementSource, 'bank' => $settlementBankFilter, 'gender' => $this->genderScope() ?: $settlementGender, 'category' => $settlementCategoryFilter]) }}" 
+                                target="_blank"
+                                class="inline-flex items-center gap-2 px-3.5 py-2 bg-emerald-50 dark:bg-emerald-950/40 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 text-emerald-700 dark:text-emerald-300 font-bold text-xs rounded-xl border border-emerald-300 dark:border-emerald-700/70 shadow-2xs transition-all active:scale-95 whitespace-nowrap"
+                                title="Download Laporan Rekonsiliasi Excel Multi-Sheet (Ringkasan & Rincian Santri)">
                                 <svg class="w-4 h-4 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
                                 <span>Export Excel (.xlsx)</span>
                             </a>
@@ -4056,6 +4058,17 @@
                                 </select>
                             </div>
 
+                            {{-- Pos Tagihan / Pos Anggaran Filter --}}
+                            <div class="flex items-center gap-1.5">
+                                <span class="text-[11px] font-bold text-slate-400">Pos Iuran:</span>
+                                <select wire:model.live="settlementCategoryFilter" 
+                                        class="text-xs font-bold rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white px-2.5 py-1.5 focus:ring-2 focus:ring-sky-500">
+                                    @foreach($this->settlementCategoryOptions as $catVal => $catLabel)
+                                        <option value="{{ $catVal }}">{{ $catLabel }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+
                             {{-- Bank Destination Filter --}}
                             @if(count($this->transferBankOptions) > 0)
                                 <div class="flex items-center gap-1.5">
@@ -4124,7 +4137,7 @@
                     </div>
 
                     {{-- Card 3: Kasir Tunai / Setoran Fisik --}}
-                    <div class="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-xs space-y-1">
+                    <div class="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-xs space-y-2">
                         <div class="flex items-center justify-between text-amber-600">
                             <span class="text-[11px] font-extrabold uppercase tracking-wider">💵 3. Kasir Tunai Fisik</span>
                             <span class="p-1.5 bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 rounded-xl font-mono text-[10px] font-bold">
@@ -4136,6 +4149,38 @@
                         </div>
                         <div class="text-[11px] text-slate-400">
                             Uang Tunai Fisik Meja Kasir / Brankas
+                        </div>
+
+                        {{-- Kas Opname Status Pill & Trigger Button --}}
+                        <div class="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-1">
+                            @if($hasSavedOpname)
+                                @php $diff = $this->cashOpnameDifference; @endphp
+                                @if(abs($diff) < 0.01)
+                                    <span class="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-extrabold bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700" title="Uang fisik pas sesuai catatan sistem">
+                                        <svg class="w-3 h-3 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+                                        <span>Klop Pas 100%</span>
+                                    </span>
+                                @elseif($diff < 0)
+                                    <span class="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-extrabold bg-rose-100 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300 border border-rose-300 dark:border-rose-700" title="Uang fisik kurang dari catatan sistem">
+                                        <span>Kurang: -Rp {{ number_format(abs($diff), 0, ',', '.') }}</span>
+                                    </span>
+                                @else
+                                    <span class="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-extrabold bg-sky-100 dark:bg-sky-950/60 text-sky-700 dark:text-sky-300 border border-sky-300 dark:border-sky-700" title="Uang fisik lebih dari catatan sistem">
+                                        <span>Lebih: +Rp {{ number_format($diff, 0, ',', '.') }}</span>
+                                    </span>
+                                @endif
+                            @else
+                                <span class="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-medium bg-slate-100 dark:bg-slate-800 text-slate-500 border border-slate-200 dark:border-slate-700">
+                                    <span>Belum Opname</span>
+                                </span>
+                            @endif
+
+                            <button type="button" 
+                                    wire:click="openCashOpnameModal"
+                                    class="inline-flex items-center gap-1 px-2.5 py-1 bg-amber-500 hover:bg-amber-600 text-white rounded-lg text-[10px] font-extrabold transition shadow-2xs cursor-pointer">
+                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+                                <span>Hitung Fisik</span>
+                            </button>
                         </div>
                     </div>
 
@@ -4641,6 +4686,204 @@
                                 <button type="button" wire:click="closeCategoryDetailModal" class="px-4 py-1.5 bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold rounded-xl text-xs transition">
                                     Tutup
                                 </button>
+                            </div>
+                        </div>
+                    </div>
+                @endif
+
+                {{-- 9. MODAL 3: Kalkulator Kas Opname Fisik (Cash Drawer) --}}
+                @if($showCashOpnameModal)
+                    <div class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+                        <div class="fixed inset-0" wire:click="closeCashOpnameModal"></div>
+
+                        <div class="relative z-10 bg-white dark:bg-slate-900 rounded-3xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col border border-slate-200 dark:border-slate-800 overflow-hidden">
+                            {{-- Header Modal --}}
+                            <div class="px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-amber-500/10 dark:bg-amber-950/30">
+                                <div>
+                                    <div class="flex items-center gap-2">
+                                        <span class="text-xl">💵</span>
+                                        <h3 class="font-black text-base text-slate-900 dark:text-white">Kalkulator Kas Opname Fisik</h3>
+                                    </div>
+                                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                                        Hitung lembar pecahan uang di laci/brankas kasir untuk verifikasi tutup buku
+                                    </p>
+                                </div>
+                                <button type="button" 
+                                        wire:click="closeCashOpnameModal"
+                                        class="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                                </button>
+                            </div>
+
+                            {{-- Body: Denominations List --}}
+                            <div class="overflow-y-auto flex-1 p-6 space-y-4">
+                                {{-- Live Comparison Card --}}
+                                @php
+                                    $sysCash = (float) ($settlementReport['cash_amount'] ?? 0);
+                                    $totPhys = $this->cashOpnameTotal;
+                                    $diff    = $this->cashOpnameDifference;
+                                @endphp
+                                <div class="p-4 rounded-2xl border-2 {{ abs($diff) < 0.01 && $totPhys > 0 ? 'bg-emerald-50/80 dark:bg-emerald-950/40 border-emerald-400 dark:border-emerald-600' : ($diff < 0 ? 'bg-rose-50/80 dark:bg-rose-950/40 border-rose-400 dark:border-rose-600' : 'bg-slate-50 dark:bg-slate-950 border-slate-200 dark:border-slate-800') }} space-y-2">
+                                    <div class="grid grid-cols-3 gap-2 text-center">
+                                        <div class="p-2 bg-white/80 dark:bg-slate-900/80 rounded-xl">
+                                            <span class="text-[10px] font-bold text-slate-400 block uppercase">Kas Sistem</span>
+                                            <span class="text-sm font-black font-mono text-slate-800 dark:text-slate-200">
+                                                Rp {{ number_format($sysCash, 0, ',', '.') }}
+                                            </span>
+                                        </div>
+                                        <div class="p-2 bg-white/80 dark:bg-slate-900/80 rounded-xl">
+                                            <span class="text-[10px] font-bold text-slate-400 block uppercase">Fisik Terhitung</span>
+                                            <span class="text-sm font-black font-mono text-amber-600 dark:text-amber-400">
+                                                Rp {{ number_format($totPhys, 0, ',', '.') }}
+                                            </span>
+                                        </div>
+                                        <div class="p-2 bg-white/80 dark:bg-slate-900/80 rounded-xl">
+                                            <span class="text-[10px] font-bold text-slate-400 block uppercase">Selisih Kas</span>
+                                            <span class="text-sm font-black font-mono {{ abs($diff) < 0.01 ? 'text-emerald-600 dark:text-emerald-400' : ($diff < 0 ? 'text-rose-600 dark:text-rose-400' : 'text-sky-600 dark:text-sky-400') }}">
+                                                {{ $diff > 0 ? '+' : '' }}Rp {{ number_format($diff, 0, ',', '.') }}
+                                            </span>
+                                        </div>
+                                    </div>
+
+                                    <div class="text-center pt-1">
+                                        @if($totPhys == 0)
+                                            <span class="text-xs font-semibold text-slate-500">Silakan masukkan jumlah lembar uang fisik di bawah.</span>
+                                        @elseif(abs($diff) < 0.01)
+                                            <span class="text-xs font-extrabold text-emerald-700 dark:text-emerald-300">
+                                                🎉 ALHAMDULILLAH KLOP PAS 100%! Tidak ada selisih kas fisik dengan pembukuan.
+                                            </span>
+                                        @elseif($diff < 0)
+                                            <span class="text-xs font-extrabold text-rose-700 dark:text-rose-300">
+                                                ⚠️ SELISIH KURANG: Fisik kurang Rp {{ number_format(abs($diff), 0, ',', '.') }} dari pembukuan kasir.
+                                            </span>
+                                        @else
+                                            <span class="text-xs font-extrabold text-sky-700 dark:text-sky-300">
+                                                ℹ️ SELISIH LEBIH: Fisik berlebih Rp {{ number_format($diff, 0, ',', '.') }} dari pembukuan kasir.
+                                            </span>
+                                        @endif
+                                    </div>
+                                </div>
+
+                                {{-- Denominations Input Table --}}
+                                <div class="overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-800">
+                                    <table class="w-full text-xs text-left">
+                                        <thead class="bg-slate-100 dark:bg-slate-800/80 text-slate-500 uppercase font-black text-[10px]">
+                                            <tr>
+                                                <th class="py-2.5 px-3">Pecahan Uang</th>
+                                                <th class="py-2.5 px-3 text-center">Shortcut</th>
+                                                <th class="py-2.5 px-3 text-center" style="width: 130px;">Jumlah (Lembar)</th>
+                                                <th class="py-2.5 px-3 text-right">Subtotal</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+                                            @php
+                                                $denoms = [
+                                                    ['key' => '100000', 'label' => 'Rp 100.000', 'color' => 'rose'],
+                                                    ['key' => '50000',  'label' => 'Rp 50.000',  'color' => 'sky'],
+                                                    ['key' => '20000',  'label' => 'Rp 20.000',  'color' => 'emerald'],
+                                                    ['key' => '10000',  'label' => 'Rp 10.000',  'color' => 'purple'],
+                                                    ['key' => '5000',   'label' => 'Rp 5.000',   'color' => 'amber'],
+                                                    ['key' => '2000',   'label' => 'Rp 2.000',   'color' => 'slate'],
+                                                    ['key' => '1000',   'label' => 'Rp 1.000',   'color' => 'slate'],
+                                                ];
+                                            @endphp
+                                            @foreach($denoms as $d)
+                                                @php
+                                                    $cnt = (int) ($cashOpnameCounts[$d['key']] ?? 0);
+                                                    $sub = ((float)$d['key']) * $cnt;
+                                                @endphp
+                                                <tr class="hover:bg-slate-50/60 dark:hover:bg-slate-800/40">
+                                                    <td class="py-2 px-3 font-bold text-slate-800 dark:text-slate-200">
+                                                        <span class="inline-block w-2.5 h-2.5 rounded-full mr-1.5 bg-{{ $d['color'] }}-500"></span>
+                                                        {{ $d['label'] }}
+                                                    </td>
+                                                    <td class="py-2 px-3 text-center">
+                                                        <div class="inline-flex items-center gap-1">
+                                                            <button type="button" 
+                                                                    wire:click="incrementOpnameCount('{{ $d['key'] }}', 1)" 
+                                                                    class="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-[10px] font-bold text-slate-600 dark:text-slate-300">
+                                                                +1
+                                                            </button>
+                                                            <button type="button" 
+                                                                    wire:click="incrementOpnameCount('{{ $d['key'] }}', 5)" 
+                                                                    class="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-[10px] font-bold text-slate-600 dark:text-slate-300">
+                                                                +5
+                                                            </button>
+                                                            <button type="button" 
+                                                                    wire:click="incrementOpnameCount('{{ $d['key'] }}', 10)" 
+                                                                    class="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-[10px] font-bold text-slate-600 dark:text-slate-300">
+                                                                +10
+                                                            </button>
+                                                        </div>
+                                                    </td>
+                                                    <td class="py-2 px-3 text-center">
+                                                        <input type="number" 
+                                                               min="0"
+                                                               wire:model.live.debounce.250ms="cashOpnameCounts.{{ $d['key'] }}"
+                                                               class="w-24 text-center py-1 px-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 font-mono font-bold text-slate-900 dark:text-white focus:ring-2 focus:ring-amber-500">
+                                                    </td>
+                                                    <td class="py-2 px-3 text-right font-mono font-bold text-slate-800 dark:text-slate-200">
+                                                        Rp {{ number_format($sub, 0, ',', '.') }}
+                                                    </td>
+                                                </tr>
+                                            @endforeach
+                                            {{-- Uang Koin / Logam / Lainnya --}}
+                                            <tr class="hover:bg-slate-50/60 dark:hover:bg-slate-800/40 bg-amber-50/30 dark:bg-amber-950/20">
+                                                <td class="py-2 px-3 font-bold text-slate-800 dark:text-slate-200">
+                                                    🪙 Uang Logam / Koin (Total Rp)
+                                                </td>
+                                                <td class="py-2 px-3 text-center text-[10px] text-slate-400">
+                                                    Input nominal langsung
+                                                </td>
+                                                <td class="py-2 px-3 text-center">
+                                                    <input type="number" 
+                                                           min="0"
+                                                           step="100"
+                                                           wire:model.live.debounce.250ms="cashOpnameCounts.koin"
+                                                           placeholder="Rp 0"
+                                                           class="w-24 text-center py-1 px-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 font-mono font-bold text-slate-900 dark:text-white focus:ring-2 focus:ring-amber-500">
+                                                </td>
+                                                <td class="py-2 px-3 text-right font-mono font-bold text-slate-800 dark:text-slate-200">
+                                                    Rp {{ number_format((float)($cashOpnameCounts['koin'] ?? 0), 0, ',', '.') }}
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+
+                                {{-- Catatan Opname / Alasan Selisih --}}
+                                <div class="space-y-1">
+                                    <label class="text-xs font-bold text-slate-700 dark:text-slate-300">
+                                        Catatan / Keterangan Selisih Kasir (Opsional):
+                                    </label>
+                                    <textarea wire:model="cashOpnameNotes"
+                                              rows="2"
+                                              placeholder="Contoh: Sisa kembalian receh belum disetorkan / pembulatan kasir..."
+                                              class="w-full text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white p-2.5 focus:ring-2 focus:ring-amber-500"></textarea>
+                                </div>
+                            </div>
+
+                            {{-- Footer Modal --}}
+                            <div class="px-6 py-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-950/40">
+                                <button type="button" 
+                                        wire:click="resetCashOpname"
+                                        wire:confirm="Reset seluruh hitungan kas opname fisik kembali ke nol?"
+                                        class="px-3 py-1.5 text-xs font-bold text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-xl transition">
+                                    Reset Nol
+                                </button>
+
+                                <div class="flex items-center gap-2">
+                                    <button type="button" 
+                                            wire:click="closeCashOpnameModal"
+                                            class="px-4 py-2 bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold rounded-xl text-xs transition">
+                                        Batal
+                                    </button>
+                                    <button type="button" 
+                                            wire:click="saveCashOpname"
+                                            class="px-5 py-2 bg-amber-600 hover:bg-amber-500 text-white font-black rounded-xl text-xs shadow-md transition-all active:scale-95 cursor-pointer">
+                                        Simpan &amp; Terapkan Opname
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>

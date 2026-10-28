@@ -124,7 +124,9 @@
                 </td>
                 <td>
                     <div class="doc-title">
-                        @if(($gender_label ?? '') === 'Unit Putra')
+                        @if(!empty($category_filter))
+                            REKAP REKONSILIASI: {{ strtoupper(str_replace('_', ' ', $category_filter)) }}
+                        @elseif(($gender_label ?? '') === 'Unit Putra')
                             REKAP REKONSILIASI KAS (UNIT PUTRA)
                         @elseif(($gender_label ?? '') === 'Unit Putri')
                             REKAP REKONSILIASI KAS (UNIT PUTRI)
@@ -253,6 +255,79 @@
             @endif
         </tbody>
     </table>
+
+    {{-- 3. KAS OPNAME FISIK (JIKA ADA) --}}
+    @if(!empty($cash_opname['has_opname']))
+    <div class="sec-title" style="border-left-color: #d97706;">3. Berita Acara Kas Opname Fisik (Cash Drawer Kasir)</div>
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th style="width: 5%;">#</th>
+                <th>Pecahan Rupiah</th>
+                <th class="center" style="width: 25%;">Jumlah Lembar / Keping</th>
+                <th class="right" style="width: 30%;">Subtotal Fisik</th>
+            </tr>
+        </thead>
+        <tbody>
+            @php 
+                $denomLabels = [
+                    '100000' => 'Rp 100.000 (Kertas)',
+                    '50000'  => 'Rp 50.000 (Kertas)',
+                    '20000'  => 'Rp 20.000 (Kertas)',
+                    '10000'  => 'Rp 10.000 (Kertas)',
+                    '5000'   => 'Rp 5.000 (Kertas)',
+                    '2000'   => 'Rp 2.000 (Kertas)',
+                    '1000'   => 'Rp 1.000 (Kertas)',
+                    'koin'   => 'Uang Logam / Koin / Lainnya',
+                ];
+                $oIdx = 1;
+            @endphp
+            @foreach($denomLabels as $dKey => $dLbl)
+                @php
+                    $cnt = (int) ($cash_opname['counts'][$dKey] ?? 0);
+                    $sub = ($dKey === 'koin') ? (float) $cnt : ((float)$dKey * $cnt);
+                @endphp
+                @if($cnt > 0)
+                <tr>
+                    <td style="text-align: center; color: #94a3b8;">{{ $oIdx++ }}</td>
+                    <td><strong>{{ $dLbl }}</strong></td>
+                    <td class="center">{{ number_format($cnt, 0, ',', '.') }} {{ $dKey === 'koin' ? 'nominal' : 'lembar' }}</td>
+                    <td class="right"><strong>Rp {{ number_format($sub, 0, ',', '.') }}</strong></td>
+                </tr>
+                @endif
+            @endforeach
+            <tr class="total-row">
+                <td colspan="3" style="text-align: right;">TOTAL UANG FISIK TERHITUNG:</td>
+                <td class="right"><strong>Rp {{ number_format($cash_opname['total'] ?? 0, 0, ',', '.') }}</strong></td>
+            </tr>
+            <tr>
+                <td colspan="3" style="text-align: right; color: #64748b;">Kas Tunai Kasir Tercatat di Sistem:</td>
+                <td class="right" style="color: #64748b;">Rp {{ number_format($cash_opname['system_cash'] ?? 0, 0, ',', '.') }}</td>
+            </tr>
+            <tr>
+                <td colspan="3" style="text-align: right; font-weight: bold;">
+                    STATUS SELISIH OPNAME:
+                </td>
+                <td class="right" style="font-weight: bold; color: {{ abs($cash_opname['difference'] ?? 0) < 0.01 ? '#059669' : (($cash_opname['difference'] ?? 0) < 0 ? '#dc2626' : '#2563eb') }};">
+                    @if(abs($cash_opname['difference'] ?? 0) < 0.01)
+                        KLOP PAS 100% (Rp 0)
+                    @elseif(($cash_opname['difference'] ?? 0) < 0)
+                        SELISIH KURANG: -Rp {{ number_format(abs($cash_opname['difference']), 0, ',', '.') }}
+                    @else
+                        SELISIH LEBIH: +Rp {{ number_format($cash_opname['difference'], 0, ',', '.') }}
+                    @endif
+                </td>
+            </tr>
+            @if(!empty($cash_opname['notes']))
+            <tr>
+                <td colspan="4" style="background: #fffbeb; color: #92400e; padding: 6px 8px; font-style: italic;">
+                    <strong>Catatan Kasir / Keterangan Selisih:</strong> {{ $cash_opname['notes'] }}
+                </td>
+            </tr>
+            @endif
+        </tbody>
+    </table>
+    @endif
 
     {{-- TANDA TANGAN VERIFIKASI --}}
     <table class="sig-table">

@@ -252,9 +252,85 @@
         </tbody>
     </table>
 
+    {{-- KAS OPNAME FISIK (JIKA ADA PADA SNAPSHOT) --}}
+    @php
+        $cashOpname = $breakdown['cash_opname'] ?? null;
+    @endphp
+    @if(!empty($cashOpname['has_opname']))
+    <div class="section-title">3. Berita Acara Kas Opname Fisik (Cash Drawer)</div>
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th style="width: 5%;">#</th>
+                <th>Pecahan Rupiah</th>
+                <th class="center" style="width: 25%;">Jumlah Lembar / Keping</th>
+                <th class="right" style="width: 30%;">Subtotal Fisik</th>
+            </tr>
+        </thead>
+        <tbody>
+            @php 
+                $denomLabels = [
+                    '100000' => 'Rp 100.000 (Kertas)',
+                    '50000'  => 'Rp 50.000 (Kertas)',
+                    '20000'  => 'Rp 20.000 (Kertas)',
+                    '10000'  => 'Rp 10.000 (Kertas)',
+                    '5000'   => 'Rp 5.000 (Kertas)',
+                    '2000'   => 'Rp 2.000 (Kertas)',
+                    '1000'   => 'Rp 1.000 (Kertas)',
+                    'koin'   => 'Uang Logam / Koin / Lainnya',
+                ];
+                $oIdx = 1;
+            @endphp
+            @foreach($denomLabels as $dKey => $dLbl)
+                @php
+                    $cnt = (int) ($cashOpname['counts'][$dKey] ?? 0);
+                    $sub = ($dKey === 'koin') ? (float) $cnt : ((float)$dKey * $cnt);
+                @endphp
+                @if($cnt > 0)
+                <tr>
+                    <td style="text-align: center; color: #94a3b8;">{{ $oIdx++ }}</td>
+                    <td><strong>{{ $dLbl }}</strong></td>
+                    <td class="center">{{ number_format($cnt, 0, ',', '.') }} {{ $dKey === 'koin' ? 'nominal' : 'lembar' }}</td>
+                    <td class="right"><strong>Rp {{ number_format($sub, 0, ',', '.') }}</strong></td>
+                </tr>
+                @endif
+            @endforeach
+            <tr class="total-row">
+                <td colspan="3" style="text-align: right;">TOTAL UANG FISIK TERHITUNG:</td>
+                <td class="right"><strong>Rp {{ number_format($cashOpname['total'] ?? 0, 0, ',', '.') }}</strong></td>
+            </tr>
+            <tr>
+                <td colspan="3" style="text-align: right; color: #64748b;">Kas Tunai Kasir Tercatat di Sistem:</td>
+                <td class="right" style="color: #64748b;">Rp {{ number_format($cashOpname['system_cash'] ?? 0, 0, ',', '.') }}</td>
+            </tr>
+            <tr>
+                <td colspan="3" style="text-align: right; font-weight: bold;">
+                    STATUS SELISIH OPNAME:
+                </td>
+                <td class="right" style="font-weight: bold; color: {{ abs($cashOpname['difference'] ?? 0) < 0.01 ? '#047857' : (($cashOpname['difference'] ?? 0) < 0 ? '#dc2626' : '#2563eb') }};">
+                    @if(abs($cashOpname['difference'] ?? 0) < 0.01)
+                        KLOP PAS 100% (Rp 0)
+                    @elseif(($cashOpname['difference'] ?? 0) < 0)
+                        SELISIH KURANG: -Rp {{ number_format(abs($cashOpname['difference']), 0, ',', '.') }}
+                    @else
+                        SELISIH LEBIH: +Rp {{ number_format($cashOpname['difference'], 0, ',', '.') }}
+                    @endif
+                </td>
+            </tr>
+            @if(!empty($cashOpname['notes']))
+            <tr>
+                <td colspan="4" style="background: #fffbeb; color: #92400e; padding: 6px 8px; font-style: italic;">
+                    <strong>Catatan Kasir / Keterangan Selisih:</strong> {{ $cashOpname['notes'] }}
+                </td>
+            </tr>
+            @endif
+        </tbody>
+    </table>
+    @endif
+
     {{-- CATATAN PENUTUPAN KAS --}}
     @if(!empty($snapshot->notes))
-    <div class="section-title">3. Catatan Bendahara & Pengasuhan</div>
+    <div class="section-title">{{ !empty($cashOpname['has_opname']) ? '4' : '3' }}. Catatan Bendahara & Pengasuhan</div>
     <div class="notes-box">
         <strong>Catatan Rekonsiliasi:</strong> {{ $snapshot->notes }}
     </div>

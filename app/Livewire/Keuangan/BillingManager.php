@@ -56,6 +56,22 @@ class BillingManager extends Component
         'destination_bank' => '',
         'notes'            => '',
     ];
+    public string $settlementCategoryFilter = ''; // '' (semua pos) | 'syahriah_pondok' | 'madrasah' | 'kas_komplek' | 'kitab' | 'majek_pagi' | 'majek_sore' | 'pocket_money' | etc.
+
+    // Kas Opname Fisik (Cash Drawer)
+    public bool $showCashOpnameModal = false;
+    public array $cashOpnameCounts = [
+        '100000' => 0,
+        '50000'  => 0,
+        '20000'  => 0,
+        '10000'  => 0,
+        '5000'   => 0,
+        '2000'   => 0,
+        '1000'   => 0,
+        'koin'   => 0,
+    ];
+    public string $cashOpnameNotes = '';
+    public bool $hasSavedOpname = false;
 
     // Tab: Dynamic Billing Generator
     public ?string $genConfigId = null;
@@ -3356,6 +3372,118 @@ class BillingManager extends Component
         $this->toastSuccess('Kunci buku rekonsiliasi berhasil dibuka & snapshot dihapus.');
     }
 
+    public function openCashOpnameModal(): void
+    {
+        $this->showCashOpnameModal = true;
+    }
+
+    public function closeCashOpnameModal(): void
+    {
+        $this->showCashOpnameModal = false;
+    }
+
+    public function incrementOpnameCount(string $denom, int $step = 1): void
+    {
+        $current = (int) ($this->cashOpnameCounts[$denom] ?? 0);
+        $this->cashOpnameCounts[$denom] = max(0, $current + $step);
+    }
+
+    public function resetCashOpname(): void
+    {
+        $this->cashOpnameCounts = [
+            '100000' => 0,
+            '50000'  => 0,
+            '20000'  => 0,
+            '10000'  => 0,
+            '5000'   => 0,
+            '2000'   => 0,
+            '1000'   => 0,
+            'koin'   => 0,
+        ];
+        $this->cashOpnameNotes = '';
+        $this->hasSavedOpname = false;
+        $this->toastInfo('Perhitungan kas opname fisik telah direset.');
+    }
+
+    public function saveCashOpname(): void
+    {
+        $this->hasSavedOpname = true;
+        $diff = $this->cashOpnameDifference;
+        if (abs($diff) < 0.01) {
+            $this->toastSuccess('Kas Opname Fisik Klop Pas 100%! Tidak ada selisih.');
+        } elseif ($diff < 0) {
+            $this->toastWarning('Kas Opname Fisik tersimpan dengan Selisih Kurang: Rp ' . number_format(abs($diff), 0, ',', '.'));
+        } else {
+            $this->toastInfo('Kas Opname Fisik tersimpan dengan Selisih Lebih: Rp ' . number_format($diff, 0, ',', '.'));
+        }
+        $this->showCashOpnameModal = false;
+    }
+
+    public function getCashOpnameTotalProperty(): float
+    {
+        $total = 0.0;
+        foreach (['100000', '50000', '20000', '10000', '5000', '2000', '1000'] as $denom) {
+            $count = (int) ($this->cashOpnameCounts[$denom] ?? 0);
+            $total += ((float) $denom) * $count;
+        }
+        $total += (float) ($this->cashOpnameCounts['koin'] ?? 0);
+        return $total;
+    }
+
+    public function getCashOpnameDifferenceProperty(): float
+    {
+        $systemCash = (float) ($this->settlementReport['cash_amount'] ?? 0);
+        return $this->cashOpnameTotal - $systemCash;
+    }
+
+    public function getSettlementCategoryOptionsProperty(): array
+    {
+        $base = [
+            ''                 => '🌐 Semua Pos Anggaran (Konsolidasi)',
+            'syahriah_pondok'  => '🕌 Syahriah / SPP Pondok',
+            'madrasah'         => '🏫 Syahriah Madrasah',
+            'kas_komplek'      => '🏠 Kas Komplek / Asrama',
+            'majek_pagi'       => '🍲 Katering Majek (Pagi)',
+            'majek_sore'       => '🍲 Katering Majek (Sore)',
+            'kitab'            => '📚 Biaya Kitab / Buku',
+            'pocket_money'     => '💰 Titipan Uang Saku Santri',
+        ];
+
+        $configs = BillingConfiguration::where('is_active', true)->whereNotNull('label')->pluck('label', 'type')->toArray();
+        foreach ($configs as $k => $lbl) {
+            if (!isset($base[$k])) {
+                $base[$k] = '🏷️ ' . $lbl;
+            }
+        }
+
+        return $base;
+    }
+
+    public function matchesCategoryFilter(?string $selected, string $targetKey, string $type): bool
+    {
+        if (empty($selected)) {
+            return true;
+        }
+
+        if ($selected === $targetKey || $selected === $type) {
+            return true;
+        }
+
+        if ($selected === 'syahriah_pondok' && in_array($targetKey, ['syahriah_putra', 'syahriah_putri', 'syahriah_pondok'])) {
+            return true;
+        }
+
+        if ($selected === 'madrasah' && in_array($targetKey, ['madrasah', 'syahriah_madrasah'])) {
+            return true;
+        }
+
+        if ($selected === 'majek' && in_array($targetKey, ['majek_pagi', 'majek_sore'])) {
+            return true;
+        }
+
+        return false;
+    }
+
     public function saveSettlementSnapshot(): void
     {
         if (!$this->canLockSettlement()) {
@@ -3389,13 +3517,22 @@ class BillingManager extends Component
                     'cash_amount'     => $report['cash_amount'],
                     'cash_trx'        => $report['cash_trx'],
                 ],
-                'categories'     => $report['category_breakdown'],
-                'dormitories'    => $report['dormitory_breakdown'],
-                'checklist'      => $this->distributionChecklist,
-                'doku_payout'    => $this->dokuPayoutStatus,
-                'bank_filter'    => $this->settlementBankFilter,
-                'period_label'   => $report['period_label'],
-                'target_metrics' => [
+                'categories'      => $report['category_breakdown'],
+                'dormitories'     => $report['dormitory_breakdown'],
+                'checklist'       => $this->distributionChecklist,
+                'doku_payout'     => $this->dokuPayoutStatus,
+                'bank_filter'     => $this->settlementBankFilter,
+                'category_filter' => $this->settlementCategoryFilter,
+                'period_label'    => $report['period_label'],
+                'cash_opname'     => [
+                    'has_opname'   => $this->hasSavedOpname,
+                    'counts'       => $this->cashOpnameCounts,
+                    'total'        => $this->cashOpnameTotal,
+                    'system_cash'  => $report['cash_amount'],
+                    'difference'   => $this->cashOpnameDifference,
+                    'notes'        => $this->cashOpnameNotes,
+                ],
+                'target_metrics'  => [
                     'total_billed'        => $report['total_billed'] ?? 0,
                     'realization_percent' => $report['realization_percent'] ?? 0,
                 ],
@@ -3486,27 +3623,37 @@ class BillingManager extends Component
                 ->with(['person.roomAssignments' => fn($q) => $q->active()->with('room.dormitory')]);
 
             $gatewayTrx = $gatewayQuery->get();
-            $totalTrx += $gatewayTrx->count();
-            $gatewayTrxCount += $gatewayTrx->count();
 
             foreach ($gatewayTrx as $trx) {
-                $netTrx = (float) ($trx->net_amount > 0 ? $trx->net_amount : ((float)$trx->bill_amount + (float)($trx->pocket_money_amount ?? 0)));
-                $totalGross += (float) $trx->total_amount;
-                $totalMdr   += (float) $trx->mdr_amount;
-                $totalNet   += $netTrx;
-
-                $gatewayGross += (float) $trx->total_amount;
-                $gatewayMdr   += (float) $trx->mdr_amount;
-                $gatewayNet   += $netTrx;
-
                 $person = $trx->person;
                 $activeAssignment = $person?->roomAssignments?->first();
                 $dormId = $activeAssignment?->room?->dormitory_id;
                 $roomName = $activeAssignment?->room?->name ?? '-';
 
+                $trxHasMatchedItems = false;
+                $trxMatchedAmt = 0.0;
+
                 foreach ($trx->bill_breakdown ?? [] as $item) {
                     $amt = (float) ($item['pay_portion'] ?? $item['net_amount'] ?? 0);
                     $type = $item['bill_type'] ?? '';
+                    $targetKey = match ($type) {
+                        'pocket_money'      => 'pocket_money',
+                        'syahriah_pondok'   => ($person?->gender === 'P' ? 'syahriah_putri' : 'syahriah_putra'),
+                        'syahriah_madrasah' => 'madrasah',
+                        'kitab'             => 'kitab',
+                        'majek_pagi'        => 'majek_pagi',
+                        'majek_sore'        => 'majek_sore',
+                        'kas_komplek'       => 'kas_komplek',
+                        default             => (!empty($item['config_label']) ? Str::slug($item['config_label'], '_') : (!empty($type) ? $type : 'lainnya')),
+                    };
+
+                    if (!$this->matchesCategoryFilter($this->settlementCategoryFilter, $targetKey, $type)) {
+                        continue;
+                    }
+
+                    $trxHasMatchedItems = true;
+                    $trxMatchedAmt += $amt;
+
                     $periodItemLabel = $item['period_label'] ?? $item['config_label'] ?? ucwords(str_replace('_', ' ', $type));
 
                     $santriItem = [
@@ -3541,8 +3688,10 @@ class BillingManager extends Component
                     }
                 }
 
-                if ((float)($trx->pocket_money_amount ?? 0) > 0) {
+                if ((float)($trx->pocket_money_amount ?? 0) > 0 && $this->matchesCategoryFilter($this->settlementCategoryFilter, 'pocket_money', 'pocket_money')) {
                     $amtPm = (float) $trx->pocket_money_amount;
+                    $trxHasMatchedItems = true;
+                    $trxMatchedAmt += $amtPm;
                     $santriPmItem = [
                         'nis'          => $person->nis ?? '-',
                         'name'         => $person->name ?? '—',
@@ -3554,6 +3703,27 @@ class BillingManager extends Component
                         'amount'       => $amtPm,
                     ];
                     $this->allocateCategory($categories, 'pocket_money', $amtPm, $person?->gender, 'Titipan Uang Saku Santri', $santriPmItem);
+                }
+
+                if ($trxHasMatchedItems) {
+                    $totalTrx++;
+                    $gatewayTrxCount++;
+
+                    if (!empty($this->settlementCategoryFilter)) {
+                        $totalGross += $trxMatchedAmt;
+                        $totalNet   += $trxMatchedAmt;
+                        $gatewayGross += $trxMatchedAmt;
+                        $gatewayNet   += $trxMatchedAmt;
+                    } else {
+                        $netTrx = (float) ($trx->net_amount > 0 ? $trx->net_amount : ((float)$trx->bill_amount + (float)($trx->pocket_money_amount ?? 0)));
+                        $totalGross += (float) $trx->total_amount;
+                        $totalMdr   += (float) $trx->mdr_amount;
+                        $totalNet   += $netTrx;
+
+                        $gatewayGross += (float) $trx->total_amount;
+                        $gatewayMdr   += (float) $trx->mdr_amount;
+                        $gatewayNet   += $netTrx;
+                    }
                 }
             }
         }
@@ -3581,12 +3751,34 @@ class BillingManager extends Component
                 ->with(['bill.person.roomAssignments' => fn($q) => $q->active()->with('room.dormitory'), 'bill.config']);
 
             $kasirPayments = $kasirQuery->get();
-            $totalTrx += $kasirPayments->count();
 
             foreach ($kasirPayments as $pay) {
+                $bill = $pay->bill;
+                $person = $bill?->person;
+                $activeAssignment = $person?->roomAssignments?->first();
+                $dormId = $activeAssignment?->room?->dormitory_id;
+                $roomName = $activeAssignment?->room?->name ?? '-';
+                $type = $bill?->bill_type ?? '';
+
+                $targetKey = match ($type) {
+                    'pocket_money'      => 'pocket_money',
+                    'syahriah_pondok'   => ($person?->gender === 'P' ? 'syahriah_putri' : 'syahriah_putra'),
+                    'syahriah_madrasah' => 'madrasah',
+                    'kitab'             => 'kitab',
+                    'majek_pagi'        => 'majek_pagi',
+                    'majek_sore'        => 'majek_sore',
+                    'kas_komplek'       => 'kas_komplek',
+                    default             => (!empty($bill?->config?->label) ? Str::slug($bill->config->label, '_') : (!empty($type) ? $type : 'lainnya')),
+                };
+
+                if (!$this->matchesCategoryFilter($this->settlementCategoryFilter, $targetKey, $type)) {
+                    continue;
+                }
+
                 $amt = (float) $pay->amount_paid;
                 $totalGross += $amt;
                 $totalNet   += $amt;
+                $totalTrx++;
 
                 $method = strtolower($pay->payment_method ?? 'cash');
                 if (str_contains($method, 'transfer') || str_contains($method, 'tf')) {
@@ -3597,12 +3789,6 @@ class BillingManager extends Component
                     $cashTrxCount++;
                 }
 
-                $bill = $pay->bill;
-                $person = $bill?->person;
-                $activeAssignment = $person?->roomAssignments?->first();
-                $dormId = $activeAssignment?->room?->dormitory_id;
-                $roomName = $activeAssignment?->room?->name ?? '-';
-                $type = $bill?->bill_type ?? '';
                 $periodItemLabel = $bill?->period_formatted ?: ($bill?->config?->label ?: ucwords(str_replace('_', ' ', $type)));
 
                 $santriItem = [
@@ -3638,50 +3824,70 @@ class BillingManager extends Component
             }
 
             // Hitung titipan uang saku dari transfer manual yang disetujui kasir
-            $manualSubsWithPocket = ManualTransferSubmission::where('status', 'approved')
-                ->where('pocket_money_amount', '>', 0)
-                ->where(function ($q) use ($dateFrom, $dateTo, $fromCarbon, $toCarbon) {
-                    $q->whereBetween('verified_at', [$fromCarbon, $toCarbon])
-                      ->orWhere(function ($oq) use ($fromCarbon, $toCarbon) {
-                          $oq->whereNull('verified_at')
-                             ->whereBetween('created_at', [$fromCarbon, $toCarbon]);
-                      });
-                })
-                ->when($targetGender, fn($q, $g) => $q->whereHas('person', fn($pq) => $pq->where('gender', $g)))
-                ->when($this->settlementBankFilter, fn($q, $bank) => $q->where('bank_destination', $bank))
-                ->with(['person.roomAssignments' => fn($q) => $q->active()->with('room')])
-                ->get();
+            if ($this->matchesCategoryFilter($this->settlementCategoryFilter, 'pocket_money', 'pocket_money')) {
+                $manualSubsWithPocket = ManualTransferSubmission::where('status', 'approved')
+                    ->where('pocket_money_amount', '>', 0)
+                    ->where(function ($q) use ($dateFrom, $dateTo, $fromCarbon, $toCarbon) {
+                        $q->whereBetween('verified_at', [$fromCarbon, $toCarbon])
+                          ->orWhere(function ($oq) use ($fromCarbon, $toCarbon) {
+                              $oq->whereNull('verified_at')
+                                 ->whereBetween('created_at', [$fromCarbon, $toCarbon]);
+                          });
+                    })
+                    ->when($targetGender, fn($q, $g) => $q->whereHas('person', fn($pq) => $pq->where('gender', $g)))
+                    ->when($this->settlementBankFilter, fn($q, $bank) => $q->where('bank_destination', $bank))
+                    ->with(['person.roomAssignments' => fn($q) => $q->active()->with('room')])
+                    ->get();
 
-            foreach ($manualSubsWithPocket as $mSub) {
-                $amtPm = (float) $mSub->pocket_money_amount;
-                $totalGross += $amtPm;
-                $totalNet   += $amtPm;
-                $transferAmount += $amtPm;
-                $transferTrxCount++;
+                foreach ($manualSubsWithPocket as $mSub) {
+                    $amtPm = (float) $mSub->pocket_money_amount;
+                    $totalGross += $amtPm;
+                    $totalNet   += $amtPm;
+                    if ($this->settlementCategoryFilter === 'pocket_money') {
+                        $totalTrx++;
+                    }
+                    $transferAmount += $amtPm;
+                    $transferTrxCount++;
 
-                $person = $mSub->person;
-                $roomName = $person?->roomAssignments?->first()?->room?->name ?? '-';
+                    $person = $mSub->person;
+                    $roomName = $person?->roomAssignments?->first()?->room?->name ?? '-';
 
-                $santriPmItem = [
-                    'nis'          => $person?->nis ?? '-',
-                    'name'         => $person?->name ?? '—',
-                    'gender'       => $person?->gender ?? '-',
-                    'unit_info'    => $roomName,
-                    'period_label' => 'Titipan Uang Saku Santri',
-                    'paid_date'    => $mSub->verified_at ? \Carbon\Carbon::parse($mSub->verified_at)->locale('id')->translatedFormat('d M Y, H:i') : '-',
-                    'method'       => 'Transfer Bank (Manual)',
-                    'amount'       => $amtPm,
-                ];
+                    $santriPmItem = [
+                        'nis'          => $person?->nis ?? '-',
+                        'name'         => $person?->name ?? '—',
+                        'gender'       => $person?->gender ?? '-',
+                        'unit_info'    => $roomName,
+                        'period_label' => 'Titipan Uang Saku Santri',
+                        'paid_date'    => $mSub->verified_at ? \Carbon\Carbon::parse($mSub->verified_at)->locale('id')->translatedFormat('d M Y, H:i') : '-',
+                        'method'       => 'Transfer Bank (Manual)',
+                        'amount'       => $amtPm,
+                    ];
 
-                $this->allocateCategory($categories, 'pocket_money', $amtPm, $mSub->person?->gender, 'Titipan Uang Saku Santri', $santriPmItem);
+                    $this->allocateCategory($categories, 'pocket_money', $amtPm, $mSub->person?->gender, 'Titipan Uang Saku Santri', $santriPmItem);
+                }
             }
         }
 
         $periodLabel = \Carbon\Carbon::parse($dateFrom)->locale('id')->translatedFormat('d M Y') . ' s/d ' . \Carbon\Carbon::parse($dateTo)->locale('id')->translatedFormat('d M Y');
 
-        $totalBilled = (float) Bill::whereBetween('created_at', [$fromCarbon, $toCarbon])
-            ->when($targetGender, fn($q, $g) => $q->whereHas('person', fn($pq) => $pq->where('gender', $g)))
-            ->sum('amount');
+        $totalBilledQuery = Bill::whereBetween('created_at', [$fromCarbon, $toCarbon])
+            ->when($targetGender, fn($q, $g) => $q->whereHas('person', fn($pq) => $pq->where('gender', $g)));
+
+        if (!empty($this->settlementCategoryFilter)) {
+            $catFilter = $this->settlementCategoryFilter;
+            if ($catFilter === 'syahriah_pondok') {
+                $totalBilledQuery->where('bill_type', 'syahriah_pondok');
+            } elseif ($catFilter === 'madrasah') {
+                $totalBilledQuery->where('bill_type', 'syahriah_madrasah');
+            } else {
+                $totalBilledQuery->where(function ($q) use ($catFilter) {
+                    $q->where('bill_type', $catFilter)
+                      ->orWhereHas('config', fn($cq) => $cq->where('name', $catFilter));
+                });
+            }
+        }
+
+        $totalBilled = (float) $totalBilledQuery->sum('amount');
         $realizationPercent = $totalBilled > 0 ? min(100.0, round(($totalNet / $totalBilled) * 100, 1)) : 0.0;
 
         return [

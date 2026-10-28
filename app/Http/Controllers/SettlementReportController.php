@@ -97,6 +97,7 @@ class SettlementReportController extends Controller
             $dateFrom = $request->query('date_from', now()->startOfMonth()->toDateString());
             $dateTo   = $request->query('date_to', now()->toDateString());
             $source   = $request->query('source', 'all'); // 'gateway' | 'kasir' | 'all'
+            $categoryFilter = $request->query('category', '');
             $targetGender = $genderScope ?: ($request->filled('gender') ? $request->query('gender') : null);
 
             $fromCarbon = Carbon::parse($dateFrom)->startOfDay();
@@ -154,21 +155,35 @@ class SettlementReportController extends Controller
                     ->with(['person.roomAssignments' => fn($q) => $q->active()->with('room.dormitory')]);
 
                 $gatewayTrx = $gatewayQuery->get();
-                $totalTrx += $gatewayTrx->count();
 
                 foreach ($gatewayTrx as $trx) {
-                    $netTrx = (float) ($trx->net_amount > 0 ? $trx->net_amount : ((float)$trx->bill_amount + (float)($trx->pocket_money_amount ?? 0)));
-                    $totalGross += (float) $trx->total_amount;
-                    $totalMdr   += (float) $trx->mdr_amount;
-                    $totalNet   += $netTrx;
-
                     $person = $trx->person;
                     $activeAssignment = $person?->roomAssignments?->first();
                     $dormId = $activeAssignment?->room?->dormitory_id;
 
+                    $trxHasMatchedItems = false;
+                    $trxMatchedAmt = 0.0;
+
                     foreach ($trx->bill_breakdown ?? [] as $item) {
                         $amt = (float) ($item['pay_portion'] ?? $item['net_amount'] ?? 0);
                         $type = $item['bill_type'] ?? '';
+                        $targetKey = match ($type) {
+                            'pocket_money'      => 'pocket_money',
+                            'syahriah_pondok'   => ($person?->gender === 'P' ? 'syahriah_putri' : 'syahriah_putra'),
+                            'syahriah_madrasah' => 'madrasah',
+                            'kitab'             => 'kitab',
+                            'majek_pagi'        => 'majek_pagi',
+                            'majek_sore'        => 'majek_sore',
+                            'kas_komplek'       => 'kas_komplek',
+                            default             => (!empty($item['config_label']) ? \Illuminate\Support\Str::slug($item['config_label'], '_') : (!empty($type) ? $type : 'lainnya')),
+                        };
+
+                        if (!$this->matchesCategoryFilter($categoryFilter, $targetKey, $type)) {
+                            continue;
+                        }
+
+                        $trxHasMatchedItems = true;
+                        $trxMatchedAmt += $amt;
 
                         $this->allocateToCategory($categories, $type, $amt, $person?->gender, $item['config_label'] ?? null);
 
@@ -182,8 +197,24 @@ class SettlementReportController extends Controller
                         }
                     }
 
-                    if ((float)($trx->pocket_money_amount ?? 0) > 0) {
-                        $this->allocateToCategory($categories, 'pocket_money', (float)$trx->pocket_money_amount, $person?->gender, 'Titipan Uang Saku Santri');
+                    if ((float)($trx->pocket_money_amount ?? 0) > 0 && $this->matchesCategoryFilter($categoryFilter, 'pocket_money', 'pocket_money')) {
+                        $amtPm = (float) $trx->pocket_money_amount;
+                        $trxHasMatchedItems = true;
+                        $trxMatchedAmt += $amtPm;
+                        $this->allocateToCategory($categories, 'pocket_money', $amtPm, $person?->gender, 'Titipan Uang Saku Santri');
+                    }
+
+                    if ($trxHasMatchedItems) {
+                        $totalTrx++;
+                        if (!empty($categoryFilter)) {
+                            $totalGross += $trxMatchedAmt;
+                            $totalNet   += $trxMatchedAmt;
+                        } else {
+                            $netTrx = (float) ($trx->net_amount > 0 ? $trx->net_amount : ((float)$trx->bill_amount + (float)($trx->pocket_money_amount ?? 0)));
+                            $totalGross += (float) $trx->total_amount;
+                            $totalMdr   += (float) $trx->mdr_amount;
+                            $totalNet   += $netTrx;
+                        }
                     }
                 }
             }
@@ -202,18 +233,33 @@ class SettlementReportController extends Controller
                     ->with(['bill.person.roomAssignments' => fn($q) => $q->active()->with('room.dormitory'), 'bill.config']);
 
                 $kasirPayments = $kasirQuery->get();
-                $totalTrx += $kasirPayments->count();
 
                 foreach ($kasirPayments as $pay) {
-                    $amt = (float) $pay->amount_paid;
-                    $totalGross += $amt;
-                    $totalNet   += $amt;
-
                     $bill = $pay->bill;
                     $person = $bill?->person;
                     $activeAssignment = $person?->roomAssignments?->first();
                     $dormId = $activeAssignment?->room?->dormitory_id;
                     $type = $bill?->bill_type ?? '';
+
+                    $targetKey = match ($type) {
+                        'pocket_money'      => 'pocket_money',
+                        'syahriah_pondok'   => ($person?->gender === 'P' ? 'syahriah_putri' : 'syahriah_putra'),
+                        'syahriah_madrasah' => 'madrasah',
+                        'kitab'             => 'kitab',
+                        'majek_pagi'        => 'majek_pagi',
+                        'majek_sore'        => 'majek_sore',
+                        'kas_komplek'       => 'kas_komplek',
+                        default             => (!empty($bill?->config?->label) ? \Illuminate\Support\Str::slug($bill->config->label, '_') : (!empty($type) ? $type : 'lainnya')),
+                    };
+
+                    if (!$this->matchesCategoryFilter($categoryFilter, $targetKey, $type)) {
+                        continue;
+                    }
+
+                    $amt = (float) $pay->amount_paid;
+                    $totalGross += $amt;
+                    $totalNet   += $amt;
+                    $totalTrx++;
 
                     $this->allocateToCategory($categories, $type, $amt, $person?->gender, $bill?->config?->label ?? null);
 
@@ -228,24 +274,29 @@ class SettlementReportController extends Controller
                 }
 
                 // Hitung titipan uang saku dari transfer manual yang disetujui kasir
-                $manualSubsWithPocket = ManualTransferSubmission::where('status', 'approved')
-                    ->where('pocket_money_amount', '>', 0)
-                    ->where(function ($q) use ($dateFrom, $dateTo, $fromCarbon, $toCarbon) {
-                        $q->whereBetween('verified_at', [$fromCarbon, $toCarbon])
-                          ->orWhere(function ($oq) use ($fromCarbon, $toCarbon) {
-                              $oq->whereNull('verified_at')
-                                 ->whereBetween('created_at', [$fromCarbon, $toCarbon]);
-                          });
-                    })
-                    ->when($targetGender, fn($q, $g) => $q->whereHas('person', fn($pq) => $pq->where('gender', $g)))
-                    ->with('person')
-                    ->get();
+                if ($this->matchesCategoryFilter($categoryFilter, 'pocket_money', 'pocket_money')) {
+                    $manualSubsWithPocket = ManualTransferSubmission::where('status', 'approved')
+                        ->where('pocket_money_amount', '>', 0)
+                        ->where(function ($q) use ($dateFrom, $dateTo, $fromCarbon, $toCarbon) {
+                            $q->whereBetween('verified_at', [$fromCarbon, $toCarbon])
+                              ->orWhere(function ($oq) use ($fromCarbon, $toCarbon) {
+                                  $oq->whereNull('verified_at')
+                                     ->whereBetween('created_at', [$fromCarbon, $toCarbon]);
+                              });
+                        })
+                        ->when($targetGender, fn($q, $g) => $q->whereHas('person', fn($pq) => $pq->where('gender', $g)))
+                        ->with('person')
+                        ->get();
 
-                foreach ($manualSubsWithPocket as $mSub) {
-                    $amtPm = (float) $mSub->pocket_money_amount;
-                    $totalGross += $amtPm;
-                    $totalNet   += $amtPm;
-                    $this->allocateToCategory($categories, 'pocket_money', $amtPm, $mSub->person?->gender, 'Titipan Uang Saku Santri');
+                    foreach ($manualSubsWithPocket as $mSub) {
+                        $amtPm = (float) $mSub->pocket_money_amount;
+                        $totalGross += $amtPm;
+                        $totalNet   += $amtPm;
+                        if ($categoryFilter === 'pocket_money') {
+                            $totalTrx++;
+                        }
+                        $this->allocateToCategory($categories, 'pocket_money', $amtPm, $mSub->person?->gender, 'Titipan Uang Saku Santri');
+                    }
                 }
             }
 
@@ -269,6 +320,8 @@ class SettlementReportController extends Controller
                 default => '-Konsolidasi',
             };
 
+            $catSuffix = !empty($categoryFilter) ? '-' . \Illuminate\Support\Str::slug($categoryFilter) : '';
+
             $activeDormBreakdown = array_values(array_filter($dormBreakdown, fn($d) => $d['total_amount'] > 0));
 
             $data = [
@@ -276,6 +329,7 @@ class SettlementReportController extends Controller
                 'period_label'        => $periodLabel,
                 'source_label'        => $sourceLabel,
                 'gender_label'        => $genderLabel,
+                'category_filter'     => $categoryFilter,
                 'total_gross'         => $totalGross,
                 'total_mdr'           => $totalMdr,
                 'total_net'           => $totalNet,
@@ -288,7 +342,7 @@ class SettlementReportController extends Controller
 
             $pdf = $this->renderPdfView('pdf.rekap-settlement', $data, 'portrait');
 
-            return $pdf->stream('Rekap-Settlement' . $genderSuffix . '-' . Carbon::parse($dateFrom)->format('Ymd') . '-' . Carbon::parse($dateTo)->format('Ymd') . '.pdf');
+            return $pdf->stream('Rekap-Settlement' . $genderSuffix . $catSuffix . '-' . Carbon::parse($dateFrom)->format('Ymd') . '-' . Carbon::parse($dateTo)->format('Ymd') . '.pdf');
         } catch (\Throwable $e) {
             \Illuminate\Support\Facades\Log::error('Settlement Rekap PDF Error: ' . $e->getMessage(), [
                 'file' => $e->getFile(),
@@ -319,11 +373,23 @@ class SettlementReportController extends Controller
         $source   = $request->query('source', 'all');
         $appName  = config('app.name', 'Pondok Pesantren Al-Fithroh');
 
+        $categoryFilter = $request->query('category', '');
+
         $categoryKeys = match ($targetGender) {
             'L' => ['syahriah_putra', 'madrasah', 'kitab', 'majek_pagi', 'majek_sore', 'pocket_money'],
             'P' => ['syahriah_putri', 'madrasah', 'kitab', 'majek_pagi', 'majek_sore', 'pocket_money'],
             default => ['syahriah_putra', 'syahriah_putri', 'madrasah', 'kitab', 'majek_pagi', 'majek_sore', 'pocket_money'],
         };
+
+        if (!empty($categoryFilter)) {
+            if ($categoryFilter === 'kas_komplek') {
+                $categoryKeys = [];
+            } elseif ($categoryFilter === 'syahriah_pondok') {
+                $categoryKeys = array_values(array_filter($categoryKeys, fn($k) => str_contains($k, 'syahriah')));
+            } else {
+                $categoryKeys = array_values(array_filter($categoryKeys, fn($k) => $k === $categoryFilter));
+            }
+        }
 
         $categoriesReport = [];
         $allSantriList = [];
@@ -366,21 +432,27 @@ class SettlementReportController extends Controller
         }
 
         // Dormitories
-        $dormitories = Dormitory::active()
-            ->when($targetGender, fn($q, $g) => $q->where('gender', $g))
-            ->orderByRaw("gender ASC, name ASC")->get();
-
         $dormReport = [];
-        foreach ($dormitories as $dorm) {
-            $dormData = $this->getDormitorySlipData($request, $dorm->id);
-            if ($dormData['total_amount'] > 0) {
-                $dormReport[] = [
-                    'dormitory_id'   => $dorm->id,
-                    'dormitory_name' => $dorm->name,
-                    'gender'         => $dorm->gender,
-                    'count_santri'   => count($dormData['santri_list']),
-                    'total_amount'   => $dormData['total_amount'],
-                ];
+        if (empty($categoryFilter) || $categoryFilter === 'kas_komplek') {
+            $dormitories = Dormitory::active()
+                ->when($targetGender, fn($q, $g) => $q->where('gender', $g))
+                ->orderByRaw("gender ASC, name ASC")->get();
+
+            foreach ($dormitories as $dorm) {
+                $dormData = $this->getDormitorySlipData($request, $dorm->id);
+                if ($dormData['total_amount'] > 0) {
+                    $dormReport[] = [
+                        'dormitory_id'   => $dorm->id,
+                        'dormitory_name' => $dorm->name,
+                        'gender'         => $dorm->gender,
+                        'count_santri'   => count($dormData['santri_list']),
+                        'total_amount'   => $dormData['total_amount'],
+                    ];
+                    foreach ($dormData['santri_list'] as $s) {
+                        $s['category_label'] = 'Kas Komplek ' . $dorm->name;
+                        $allSantriList[] = $s;
+                    }
+                }
             }
         }
 
@@ -414,9 +486,11 @@ class SettlementReportController extends Controller
             default => '-Konsolidasi',
         };
 
+        $catSuffix = !empty($categoryFilter) ? '-' . \Illuminate\Support\Str::slug($categoryFilter) : '';
+
         return Excel::download(
             new SettlementReportExport($reportData, $allSantriList, [], $appName, $targetGender),
-            'Rekap-Settlement' . $genderSuffix . '-' . Carbon::parse($dateFrom)->format('Ymd') . '-' . Carbon::parse($dateTo)->format('Ymd') . '.xlsx'
+            'Rekap-Settlement' . $genderSuffix . $catSuffix . '-' . Carbon::parse($dateFrom)->format('Ymd') . '-' . Carbon::parse($dateTo)->format('Ymd') . '.xlsx'
         );
     }
 
@@ -905,11 +979,24 @@ class SettlementReportController extends Controller
             $appName    = config('app.name', 'Pondok Pesantren Al-Fithroh');
             $periodLabel = Carbon::parse($dateFrom)->locale('id')->translatedFormat('d M Y') . ' s/d ' . Carbon::parse($dateTo)->locale('id')->translatedFormat('d M Y');
 
+            $categoryFilter = $request->query('category', '');
+
             $categoryKeys = match ($targetGender) {
                 'L' => ['syahriah_putra', 'madrasah', 'kitab', 'majek_pagi', 'majek_sore', 'pocket_money'],
                 'P' => ['syahriah_putri', 'madrasah', 'kitab', 'majek_pagi', 'majek_sore', 'pocket_money'],
                 default => ['syahriah_putra', 'syahriah_putri', 'madrasah', 'kitab', 'majek_pagi', 'majek_sore', 'pocket_money'],
             };
+
+            if (!empty($categoryFilter)) {
+                if ($categoryFilter === 'kas_komplek') {
+                    $categoryKeys = [];
+                } elseif ($categoryFilter === 'syahriah_pondok') {
+                    $categoryKeys = array_values(array_filter($categoryKeys, fn($k) => str_contains($k, 'syahriah')));
+                } else {
+                    $categoryKeys = array_values(array_filter($categoryKeys, fn($k) => $k === $categoryFilter));
+                }
+            }
+
             $slips = [];
 
             foreach ($categoryKeys as $catKey) {
@@ -924,24 +1011,26 @@ class SettlementReportController extends Controller
                 }
             }
 
-            $dormitories = Dormitory::active()
-                ->when($targetGender, fn($q, $g) => $q->where('gender', $g))
-                ->orderByRaw("gender ASC, name ASC")->get();
+            if (empty($categoryFilter) || $categoryFilter === 'kas_komplek') {
+                $dormitories = Dormitory::active()
+                    ->when($targetGender, fn($q, $g) => $q->where('gender', $g))
+                    ->orderByRaw("gender ASC, name ASC")->get();
 
-            foreach ($dormitories as $dorm) {
-                $dormData = $this->getDormitorySlipData($request, $dorm->id);
-                if ($dormData['total_amount'] > 0) {
-                    $slips[] = [
-                        'type'         => 'komplek',
-                        'meta'         => [
-                            'title'          => 'Kas Komplek ' . $dorm->name,
-                            'recipient_role' => 'Bendahara ' . $dorm->name,
-                            'unit_label'     => 'Asrama ' . ($dorm->gender === 'P' ? 'Putri' : 'Putra'),
-                        ],
-                        'dormitory'    => $dorm,
-                        'total_amount' => $dormData['total_amount'],
-                        'santri_list'  => $dormData['santri_list'],
-                    ];
+                foreach ($dormitories as $dorm) {
+                    $dormData = $this->getDormitorySlipData($request, $dorm->id);
+                    if ($dormData['total_amount'] > 0) {
+                        $slips[] = [
+                            'type'         => 'komplek',
+                            'meta'         => [
+                                'title'          => 'Kas Komplek ' . $dorm->name,
+                                'recipient_role' => 'Bendahara ' . $dorm->name,
+                                'unit_label'     => 'Asrama ' . ($dorm->gender === 'P' ? 'Putri' : 'Putra'),
+                            ],
+                            'dormitory'    => $dorm,
+                            'total_amount' => $dormData['total_amount'],
+                            'santri_list'  => $dormData['santri_list'],
+                        ];
+                    }
                 }
             }
 
@@ -955,7 +1044,9 @@ class SettlementReportController extends Controller
 
             $pdf = $this->renderPdfView('pdf.slip-batch-all', $data, 'portrait');
 
-            return $pdf->stream('Batch-Slip-Serah-Terima-' . Carbon::parse($dateFrom)->format('Ymd') . '.pdf');
+            $catSuffix = !empty($categoryFilter) ? '-' . \Illuminate\Support\Str::slug($categoryFilter) : '';
+
+            return $pdf->stream('Batch-Slip-Serah-Terima' . $catSuffix . '-' . Carbon::parse($dateFrom)->format('Ymd') . '.pdf');
         } catch (\Throwable $e) {
             \Illuminate\Support\Facades\Log::error('Settlement Batch Slips Error: ' . $e->getMessage(), [
                 'file' => $e->getFile(),
@@ -1000,6 +1091,31 @@ class SettlementReportController extends Controller
         $pdf = $this->renderPdfView('pdf.berita-acara-settlement', $data, 'portrait');
 
         return $pdf->stream('Berita-Acara-Rekonsiliasi-Kas-' . $snapshot->period_from->format('Ymd') . '.pdf');
+    }
+
+    private function matchesCategoryFilter(?string $selected, string $targetKey, string $type): bool
+    {
+        if (empty($selected)) {
+            return true;
+        }
+
+        if ($selected === $targetKey || $selected === $type) {
+            return true;
+        }
+
+        if ($selected === 'syahriah_pondok' && in_array($targetKey, ['syahriah_putra', 'syahriah_putri', 'syahriah_pondok'])) {
+            return true;
+        }
+
+        if ($selected === 'madrasah' && in_array($targetKey, ['madrasah', 'syahriah_madrasah'])) {
+            return true;
+        }
+
+        if ($selected === 'majek' && in_array($targetKey, ['majek_pagi', 'majek_sore'])) {
+            return true;
+        }
+
+        return false;
     }
 
     private function allocateToCategory(array &$categories, string $type, float $amt, ?string $gender = null, ?string $customLabel = null): void

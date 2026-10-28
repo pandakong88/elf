@@ -58,4 +58,9 @@ class BillingConfiguration extends Model
     {
         return $this->hasMany(BillingException::class, 'billing_config_id');
     }
+
+    public function scopeActive($query)
+    {
+        return $query->where('is_active', true);
+    }
 }
