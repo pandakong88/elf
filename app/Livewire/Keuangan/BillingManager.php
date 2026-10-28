@@ -89,6 +89,7 @@ class BillingManager extends Component
     public bool    $showTransferVerifyModal     = false;
     public ?string $selectedTransferId          = null;
     public ?ManualTransferSubmission $selectedTransferData = null;
+    public array   $selectedTransferBillsStatus = [];
     public string  $transferRejectionReason     = '';
 
     public function updatedTransferSearch(): void
@@ -2754,6 +2755,35 @@ class BillingManager extends Component
         $this->selectedTransferId = $id;
         $this->selectedTransferData = $sub;
         $this->transferRejectionReason = '';
+
+        // Muat status terkini dan riwayat pembayaran untuk setiap tagihan dalam breakdown
+        $this->selectedTransferBillsStatus = [];
+        foreach (($sub->bill_breakdown ?? []) as $item) {
+            $billId = $item['bill_id'] ?? null;
+            if (!$billId) continue;
+            $bill = Bill::with(['config', 'payments.logger'])->find($billId);
+            if (!$bill) continue;
+
+            $remaining = max(0, (float)$bill->amount - (float)$bill->amount_paid);
+            $isPaid = ($bill->status === 'paid' || $remaining <= 0);
+            $this->selectedTransferBillsStatus[$billId] = [
+                'bill_id'     => $billId,
+                'status'      => $bill->status,
+                'is_paid'     => $isPaid,
+                'amount'      => (float) $bill->amount,
+                'amount_paid' => (float) $bill->amount_paid,
+                'remaining'   => $remaining,
+                'payments'    => $bill->payments->map(fn($p) => [
+                    'id'           => $p->id,
+                    'method'       => strtoupper($p->payment_method ?? 'KASIR'),
+                    'amount'       => (float) $p->amount_paid,
+                    'payment_date' => $p->payment_date ? \Carbon\Carbon::parse($p->payment_date)->locale('id')->translatedFormat('d M Y') : '-',
+                    'logger_name'  => $p->logger?->name ?? 'Kasir',
+                    'notes'        => $p->notes,
+                ])->toArray(),
+            ];
+        }
+
         $this->showTransferVerifyModal = true;
     }
 
@@ -2762,6 +2792,7 @@ class BillingManager extends Component
         $this->showTransferVerifyModal = false;
         $this->selectedTransferId = null;
         $this->selectedTransferData = null;
+        $this->selectedTransferBillsStatus = [];
         $this->transferRejectionReason = '';
     }
 
@@ -2781,6 +2812,45 @@ class BillingManager extends Component
             return;
         }
 
+        // 1. Validasi Pencegahan Pencatatan Ganda (Double Recording Guard)
+        $billsToProcess = [];
+        $alreadyPaidConflicts = [];
+
+        foreach (($sub->bill_breakdown ?? []) as $item) {
+            if (empty($item['bill_id'])) continue;
+            $bill = Bill::with(['config', 'payments.logger'])->find($item['bill_id']);
+            if (!$bill) continue;
+
+            $remaining = max(0, (float)$bill->amount - (float)$bill->amount_paid);
+            $payPortion = (float) ($item['amount'] ?? 0);
+
+            if ($bill->status === 'paid' || $remaining <= 0) {
+                $billLabel = !empty($bill->config?->label) ? $bill->config->label : (!empty($bill->bill_type) ? ucwords(str_replace('_', ' ', $bill->bill_type)) : 'Tagihan');
+                $lastPayment = $bill->payments->last();
+                $payInfo = $lastPayment ? " (Rp " . number_format($lastPayment->amount_paid, 0, ',', '.') . " via " . strtoupper($lastPayment->payment_method ?? 'KASIR') . " tgl " . ($lastPayment->payment_date ? \Carbon\Carbon::parse($lastPayment->payment_date)->format('d/m/Y') : '-') . ")" : "";
+                $alreadyPaidConflicts[] = "{$billLabel}{$payInfo}";
+            } else {
+                // Hanya bayar maksimal sebesar sisa tagihan untuk mencegah overpayment
+                $actualPay = min($payPortion, $remaining);
+                $billsToProcess[] = [
+                    'bill'       => $bill,
+                    'payPortion' => $actualPay,
+                    'remaining'  => $remaining,
+                ];
+            }
+        }
+
+        if (!empty($alreadyPaidConflicts)) {
+            $conflictList = implode(', ', $alreadyPaidConflicts);
+            $this->toastError("Gagal menyetujui: Tagihan berikut sudah tercatat LUNAS di kasir sebelumnya: [{$conflictList}]. Untuk mencegah pencatatan ganda di pendapatan, silakan batalkan pembayaran kasir terlebih dahulu jika transfer ini yang sah, atau tolak bukti transfer ini jika santri telah membayar tunai.");
+            return;
+        }
+
+        if (empty($billsToProcess) && (float)$sub->pocket_money_amount <= 0) {
+            $this->toastError('Tidak ada tagihan yang dapat diproses atau seluruh tagihan sudah lunas.');
+            return;
+        }
+
         try {
             DB::beginTransaction();
 
@@ -2791,12 +2861,9 @@ class BillingManager extends Component
             $months = [1=>'Januari',2=>'Februari',3=>'Maret',4=>'April',5=>'Mei',6=>'Juni',
                        7=>'Juli',8=>'Agustus',9=>'September',10=>'Oktober',11=>'November',12=>'Desember'];
 
-            foreach (($sub->bill_breakdown ?? []) as $item) {
-                if (empty($item['bill_id'])) continue;
-                $bill = Bill::with('config')->find($item['bill_id']);
-                if (!$bill) continue;
-
-                $payPortion = (float) ($item['amount'] ?? 0);
+            foreach ($billsToProcess as $proc) {
+                $bill = $proc['bill'];
+                $payPortion = $proc['payPortion'];
                 if ($payPortion <= 0) continue;
 
                 $interval = $bill->config?->interval ?? '';
@@ -3654,6 +3721,106 @@ class BillingManager extends Component
         if ($santriItem) {
             $categories[$targetKey]['santri_list'][] = $santriItem;
         }
+    }
+
+    public function getSettlementDuplicatesProperty(): array
+    {
+        $dateFrom = $this->settlementDateFrom ?: now()->startOfMonth()->toDateString();
+        $dateTo   = $this->settlementDateTo ?: now()->toDateString();
+        $fromCarbon = \Carbon\Carbon::parse($dateFrom)->startOfDay();
+        $toCarbon   = \Carbon\Carbon::parse($dateTo)->endOfDay();
+        $targetGender = $this->genderScope() ?: $this->settlementGender;
+
+        $billIdsInPeriod = BillPayment::where(function ($q) use ($dateFrom, $dateTo, $fromCarbon, $toCarbon) {
+                $q->whereBetween('payment_date', [$dateFrom, $dateTo])
+                  ->orWhereBetween('created_at', [$fromCarbon, $toCarbon]);
+            })
+            ->pluck('bill_id')
+            ->filter()
+            ->unique();
+
+        if ($billIdsInPeriod->isEmpty()) {
+            return [];
+        }
+
+        $duplicates = [];
+        $bills = Bill::whereIn('id', $billIdsInPeriod)
+            ->when($targetGender, fn($q, $g) => $q->whereHas('person', fn($pq) => $pq->where('gender', $g)))
+            ->with(['person.roomAssignments' => fn($q) => $q->active()->with('room.dormitory'), 'config', 'payments.logger'])
+            ->get();
+
+        foreach ($bills as $bill) {
+            $payments = $bill->payments;
+            if ($payments->count() <= 1) {
+                continue;
+            }
+
+            $totalPaid = (float) $payments->sum('amount_paid');
+            $hasCash = $payments->contains(fn($p) => in_array(strtolower($p->payment_method ?? ''), ['cash', 'tunai']));
+            $hasTransfer = $payments->contains(fn($p) => str_contains(strtolower($p->payment_method ?? ''), 'transfer') || str_contains(strtolower($p->payment_method ?? ''), 'tf'));
+
+            // Indikasi anomali: total pembayaran melebihi nominal tagihan ATAU ada kombinasi cash dan transfer pada tagihan yang sama
+            if ($totalPaid > (float)$bill->amount || ($hasCash && $hasTransfer)) {
+                $person = $bill->person;
+                $activeAssignment = $person?->roomAssignments?->first();
+
+                $duplicates[] = [
+                    'bill_id'       => $bill->id,
+                    'nis'           => $person?->nis ?? '-',
+                    'name'          => $person?->name ?? '—',
+                    'room'          => $activeAssignment?->room?->name ?? '-',
+                    'dormitory'     => $activeAssignment?->room?->dormitory?->name ?? '-',
+                    'bill_type'     => $bill->bill_type,
+                    'bill_label'    => $bill->config?->label ?? ucwords(str_replace('_', ' ', $bill->bill_type)),
+                    'period'        => $bill->period_formatted ?: ($bill->period_month ? ($bill->period_month . '/' . $bill->period_year) : ($bill->period_year ?? '-')),
+                    'bill_amount'   => (float) $bill->amount,
+                    'total_paid'    => $totalPaid,
+                    'overpaid'      => max(0, $totalPaid - (float)$bill->amount),
+                    'payments'      => $payments->map(fn($p) => [
+                        'id'             => $p->id,
+                        'receipt_no'     => $p->receipt_no,
+                        'method'         => strtoupper($p->payment_method ?? 'KASIR'),
+                        'amount'         => (float) $p->amount_paid,
+                        'payment_date'   => $p->payment_date ? \Carbon\Carbon::parse($p->payment_date)->locale('id')->translatedFormat('d M Y') : '-',
+                        'logged_by'      => $p->logger?->name ?? 'Petugas',
+                        'notes'          => $p->notes,
+                        'is_gateway'     => str_starts_with(strtolower($p->payment_method ?? ''), 'gateway'),
+                    ])->toArray(),
+                ];
+            }
+        }
+
+        return $duplicates;
+    }
+
+    public function voidDuplicatePayment(string $paymentId): void
+    {
+        $this->paymentToVoidId = $paymentId;
+        $this->executeVoidPayment();
+    }
+
+    public function getPendingTransferSubmissionsForSelectedSantriProperty()
+    {
+        if (!$this->selectedSantriId) return collect();
+        return ManualTransferSubmission::where('person_id', $this->selectedSantriId)
+            ->where('status', 'pending')
+            ->get();
+    }
+
+    public function isBillPendingTransfer(string $billId): ?ManualTransferSubmission
+    {
+        $subs = $this->pendingTransferSubmissionsForSelectedSantri;
+        foreach ($subs as $sub) {
+            if (in_array($billId, $sub->bill_ids ?? [])) {
+                return $sub;
+            }
+            foreach ($sub->bill_breakdown ?? [] as $b) {
+                if (($b['bill_id'] ?? null) === $billId) {
+                    return $sub;
+                }
+            }
+        }
+        return null;
     }
 
     public function render()

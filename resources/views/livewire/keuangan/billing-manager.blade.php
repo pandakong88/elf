@@ -2209,6 +2209,11 @@
                                                 <tr>
                                                     <td class="py-2 px-3 font-semibold text-slate-700 dark:text-slate-300">
                                                         <div>{{ $cb->config?->label ?? str_replace('_', ' ', $cb->bill_type) }}</div>
+                                                        @if($pendingSub = $this->isBillPendingTransfer($cb->id))
+                                                            <div class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300 border border-amber-300 dark:border-amber-700">
+                                                                ⏳ Ada Bukti Transfer di Portal [{{ $pendingSub->submission_code }}]
+                                                            </div>
+                                                        @endif
                                                         @if(!empty($cb->notes))
                                                             <div class="text-[9px] text-amber-600 dark:text-amber-400 font-normal">📌 {{ $cb->notes }}</div>
                                                         @endif
@@ -2225,6 +2230,20 @@
                                     </table>
                                 </div>
                             </div>
+
+                            @php
+                                $hasPendingTransferConflict = $this->confirmBills->contains(fn($b) => (bool)$this->isBillPendingTransfer($b->id));
+                            @endphp
+                            @if($hasPendingTransferConflict)
+                                <div class="p-3 bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-800 rounded-xl text-xs text-amber-800 dark:text-amber-200 space-y-1">
+                                    <div class="flex items-center gap-1.5 font-bold">
+                                        <span>⚠️</span> <span>Perhatian: Ada Bukti Transfer Menunggu Verifikasi!</span>
+                                    </div>
+                                    <p class="text-[11px] text-amber-700 dark:text-amber-300">
+                                        Tagihan terpilih memiliki pengajuan transfer portal yang belum diverifikasi. Jika santri ini membayar tunai langsung di kasir, pastikan tolak pengajuan bukti transfer tersebut di menu Verifikasi Transfer agar tidak tercatat dua kali.
+                                    </p>
+                                </div>
+                            @endif
 
                             {{-- Math calculations summary --}}
                             <div class="p-4 bg-emerald-500/5 border border-emerald-500/10 rounded-2xl space-y-2">
@@ -3787,6 +3806,88 @@
                         @endif
                     </div>
                 </div>
+
+                {{-- DETEKSI ANOMALI PENCATATAN GANDA (DUPLICATE PAYMENTS SCANNER) --}}
+                @if(count($this->settlementDuplicates) > 0)
+                    <div class="p-5 bg-rose-50/90 dark:bg-rose-950/40 border-2 border-rose-300 dark:border-rose-800 rounded-3xl shadow-sm space-y-3">
+                        <div class="flex flex-col md:flex-row md:items-center justify-between gap-2">
+                            <div class="flex items-center gap-2.5">
+                                <span class="text-2xl">⚠️</span>
+                                <div>
+                                    <h3 class="text-sm font-black text-rose-900 dark:text-rose-200">
+                                        Deteksi Transaksi Duplikat / Overpaid ({{ count($this->settlementDuplicates) }} Tagihan)
+                                    </h3>
+                                    <p class="text-[11px] text-rose-700 dark:text-rose-300">
+                                        Ditemukan tagihan yang memiliki lebih dari satu pembayaran (misal diceklis kasir dan bukti portal disetujui juga) sehingga pendapatan tercatat ganda.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="overflow-x-auto rounded-2xl border border-rose-200 dark:border-rose-900/60 bg-white dark:bg-slate-900 shadow-2xs">
+                            <table class="w-full text-xs text-left">
+                                <thead class="bg-rose-100/70 dark:bg-rose-950/60 text-rose-900 dark:text-rose-200 font-extrabold text-[11px] uppercase tracking-wider">
+                                    <tr>
+                                        <th class="p-3">Santri</th>
+                                        <th class="p-3">Kamar / Komplek</th>
+                                        <th class="p-3">Tagihan &amp; Periode</th>
+                                        <th class="p-3 text-right">Tagihan Asli</th>
+                                        <th class="p-3 text-right">Total Tercatat</th>
+                                        <th class="p-3">Rincian Transaksi Pembayaran</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-rose-100 dark:divide-slate-800 font-medium">
+                                    @foreach($this->settlementDuplicates as $dup)
+                                        <tr class="hover:bg-rose-50/50 dark:hover:bg-slate-800/40 transition">
+                                            <td class="p-3">
+                                                <span class="font-bold text-slate-900 dark:text-white block">{{ $dup['name'] }}</span>
+                                                <span class="text-[10px] text-slate-400 font-mono">NIS: {{ $dup['nis'] }}</span>
+                                            </td>
+                                            <td class="p-3 text-slate-600 dark:text-slate-300">
+                                                {{ $dup['dormitory'] }} · {{ $dup['room'] }}
+                                            </td>
+                                            <td class="p-3">
+                                                <span class="font-bold text-slate-800 dark:text-slate-200">{{ $dup['bill_label'] }}</span>
+                                                <span class="block text-[10px] text-slate-400">Periode: {{ $dup['period'] }}</span>
+                                            </td>
+                                            <td class="p-3 text-right font-mono font-bold text-slate-700 dark:text-slate-300">
+                                                Rp {{ number_format($dup['bill_amount'], 0, ',', '.') }}
+                                            </td>
+                                            <td class="p-3 text-right font-mono font-extrabold text-rose-600 dark:text-rose-400">
+                                                Rp {{ number_format($dup['total_paid'], 0, ',', '.') }}
+                                                @if($dup['overpaid'] > 0)
+                                                    <span class="block text-[9px] text-rose-500 font-normal">lebih Rp {{ number_format($dup['overpaid'], 0, ',', '.') }}</span>
+                                                @endif
+                                            </td>
+                                            <td class="p-3 space-y-1.5">
+                                                @foreach($dup['payments'] as $p)
+                                                    <div class="flex items-center justify-between gap-3 p-1.5 rounded-lg bg-slate-50 dark:bg-slate-800/80 border border-slate-200/70 dark:border-slate-700/70 text-[11px]">
+                                                        <div>
+                                                            <span class="font-bold text-slate-800 dark:text-slate-200">{{ $p['method'] }}</span>
+                                                            <span class="text-[10px] text-slate-400">({{ $p['payment_date'] }} oleh {{ $p['logged_by'] }})</span>
+                                                            <span class="font-mono font-bold text-slate-700 dark:text-slate-300 ml-1">Rp {{ number_format($p['amount'], 0, ',', '.') }}</span>
+                                                            @if(!empty($p['notes']))
+                                                                <span class="block text-[9px] text-slate-400">{{ $p['notes'] }}</span>
+                                                            @endif
+                                                        </div>
+                                                        @if(!$p['is_gateway'])
+                                                            <button type="button"
+                                                                    wire:click="voidDuplicatePayment('{{ $p['id'] }}')"
+                                                                    wire:confirm="Apakah Anda yakin ingin membatalkan/void pembayaran ini untuk menghapus duplikasi pencatatan?"
+                                                                    class="px-2 py-1 rounded bg-rose-600 hover:bg-rose-700 text-white text-[10px] font-bold transition shrink-0 cursor-pointer">
+                                                                Void / Hapus
+                                                            </button>
+                                                        @endif
+                                                    </div>
+                                                @endforeach
+                                            </td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                @endif
 
                 {{-- Checklist & Peringatan Pra-Tutup Buku --}}
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -6159,16 +6260,48 @@
                             <span class="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-2">
                                 📋 Rincian Alokasi Tagihan Pondok
                             </span>
-                            <div class="space-y-2 max-h-48 overflow-y-auto pr-1">
+                            <div class="space-y-2 max-h-56 overflow-y-auto pr-1">
                                 @forelse($selectedTransferData->bill_breakdown as $item)
-                                    <div class="p-3 bg-white dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700/80 rounded-xl flex items-center justify-between text-xs shadow-2xs">
-                                        <div>
-                                            <span class="font-bold text-slate-900 dark:text-white block">{{ $item['config_label'] ?? 'Tagihan' }}</span>
-                                            <span class="text-[10px] text-slate-400">Periode: {{ $item['period_label'] ?? '-' }}</span>
+                                    @php
+                                        $billStatus = $selectedTransferBillsStatus[$item['bill_id'] ?? ''] ?? null;
+                                        $isPaid = $billStatus['is_paid'] ?? false;
+                                    @endphp
+                                    <div @class([
+                                        'p-3 rounded-xl border text-xs shadow-2xs transition-all space-y-1.5',
+                                        'bg-rose-50/90 dark:bg-rose-950/40 border-rose-300 dark:border-rose-800' => $isPaid,
+                                        'bg-white dark:bg-slate-800/80 border-slate-200/80 dark:border-slate-700/80' => !$isPaid,
+                                    ])>
+                                        <div class="flex items-center justify-between">
+                                            <div>
+                                                <span class="font-bold text-slate-900 dark:text-white block">{{ $item['config_label'] ?? 'Tagihan' }}</span>
+                                                <span class="text-[10px] text-slate-400">Periode: {{ $item['period_label'] ?? '-' }}</span>
+                                            </div>
+                                            <div class="text-right">
+                                                <span class="font-bold text-emerald-600 dark:text-emerald-400 block">
+                                                    Rp {{ number_format($item['amount'], 0, ',', '.') }}
+                                                </span>
+                                                @if($isPaid)
+                                                    <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-black uppercase bg-rose-600 text-white">
+                                                        ⚠️ Sudah Lunas di Kasir
+                                                    </span>
+                                                @endif
+                                            </div>
                                         </div>
-                                        <span class="font-bold text-emerald-600 dark:text-emerald-400">
-                                            Rp {{ number_format($item['amount'], 0, ',', '.') }}
-                                        </span>
+
+                                        @if($isPaid && !empty($billStatus['payments']))
+                                            <div class="pt-2 border-t border-rose-200/80 dark:border-rose-900/60 text-[11px] text-rose-800 dark:text-rose-200 space-y-1">
+                                                <span class="font-bold block">Riwayat pembayaran tercatat sebelumnya:</span>
+                                                @foreach($billStatus['payments'] as $prevPay)
+                                                    <div class="flex items-center justify-between text-[10px] text-rose-700 dark:text-rose-300 bg-white/70 dark:bg-slate-900/60 p-1.5 rounded-lg border border-rose-200/60 dark:border-rose-900/40">
+                                                        <span>• {{ $prevPay['payment_date'] }} via <strong>{{ $prevPay['method'] }}</strong> (oleh {{ $prevPay['logger_name'] }})</span>
+                                                        <span class="font-mono font-bold">Rp {{ number_format($prevPay['amount'], 0, ',', '.') }}</span>
+                                                    </div>
+                                                @endforeach
+                                                <div class="text-[10px] text-rose-600 dark:text-rose-400 italic">
+                                                    Jika disetujui, pendapatan akan tercatat ganda. Tolak pengajuan ini jika santri telah membayar tunai, atau batalkan pembayaran kasir terlebih dahulu jika transfer ini yang sah.
+                                                </div>
+                                            </div>
+                                        @endif
                                     </div>
                                 @empty
                                     <div class="p-3 text-center text-slate-400 text-xs">Tidak ada rincian tagihan</div>
@@ -6224,6 +6357,9 @@
                                     Alasan Penolakan <span class="text-slate-400 font-normal">(wajib diisi jika ingin menolak transfer)</span>:
                                 </label>
                                 <div class="flex flex-wrap gap-1.5">
+                                    <button type="button" wire:click="setQuickRejectionReason('Sudah dibayar secara langsung / tunai di kasir')" class="px-2 py-1 rounded-lg bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/40 dark:hover:bg-rose-900/40 text-[10px] text-rose-700 dark:text-rose-300 font-semibold border border-rose-200/60 dark:border-rose-800/60 transition">
+                                        ⚡ Sudah Bayar di Kasir
+                                    </button>
                                     <button type="button" wire:click="setQuickRejectionReason('Bukti transfer buram atau tidak terbaca')" class="px-2 py-1 rounded-lg bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/40 dark:hover:bg-rose-900/40 text-[10px] text-rose-700 dark:text-rose-300 font-semibold border border-rose-200/60 dark:border-rose-800/60 transition">
                                         ⚡ Bukti Buram
                                     </button>
@@ -6254,6 +6390,9 @@
                     </button>
 
                     @if($selectedTransferData->status === 'pending')
+                        @php
+                            $hasPaidConflict = collect($selectedTransferBillsStatus)->contains('is_paid', true);
+                        @endphp
                         <div class="flex items-center gap-2">
                             <button type="button"
                                     @click="showConfirmReject = true"
@@ -6261,11 +6400,20 @@
                                 <span>❌ Tolak Pengajuan</span>
                             </button>
 
-                            <button type="button"
-                                    @click="showConfirmApprove = true"
-                                    class="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-extrabold shadow-lg shadow-emerald-500/20 transition-all flex items-center gap-2 cursor-pointer">
-                                <span>✓ Setujui &amp; Terbitkan Kuitansi</span>
-                            </button>
+                            @if($hasPaidConflict)
+                                <button type="button"
+                                        disabled
+                                        title="Tagihan sudah lunas dicatat di kasir. Batalkan pembayaran kasir terlebih dahulu jika transfer ini yang sah."
+                                        class="px-6 py-2.5 bg-slate-300 dark:bg-slate-700 text-slate-500 rounded-xl text-xs font-extrabold cursor-not-allowed flex items-center gap-2">
+                                    <span>⚠️ Sudah Lunas di Kasir (Kunci Ganda)</span>
+                                </button>
+                            @else
+                                <button type="button"
+                                        @click="showConfirmApprove = true"
+                                        class="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-extrabold shadow-lg shadow-emerald-500/20 transition-all flex items-center gap-2 cursor-pointer">
+                                    <span>✓ Setujui &amp; Terbitkan Kuitansi</span>
+                                </button>
+                            @endif
                         </div>
                     @endif
                 </div>
