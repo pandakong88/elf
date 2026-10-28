@@ -214,4 +214,90 @@ class DuplicatePaymentPreventionTest extends TestCase
         // Duplikat hilang dari scanner
         $this->assertCount(0, $component->get('settlementDuplicates'));
     }
+
+    public function test_batch_void_duplicate_cash_cleans_cash_and_guarantees_bills_remain_paid(): void
+    {
+        // 1. Buat tagihan kedua untuk santri lain
+        $santri2 = Person::create([
+            'id'     => (string) Str::uuid(),
+            'name'   => 'Laila Maftuhah',
+            'nis'    => '20260171',
+            'gender' => 'P',
+            'status' => 'aktif',
+        ]);
+
+        $bill2 = Bill::create([
+            'person_id'    => $santri2->id,
+            'bill_type'    => 'syahriah_pondok',
+            'title'        => 'Syahriah Pondok Oktober 2026',
+            'amount'       => 35000.00,
+            'amount_paid'  => 0.00,
+            'period_month' => 10,
+            'period_year'  => 2026,
+            'status'       => 'unpaid',
+            'created_by'   => $this->admin->id,
+        ]);
+
+        // Simulasikan 2 tagihan masing-masing punya CASH + TRANSFER
+        // Bill 1 ($this->bill Rp 2.000):
+        $cash1 = BillPayment::create([
+            'id' => (string) Str::uuid(), 'bill_id' => $this->bill->id, 'receipt_no' => 'KAS-B1',
+            'amount_paid' => 2000.00, 'payment_method' => 'cash', 'payment_date' => now()->toDateString(),
+            'logged_by' => $this->admin->id,
+        ]);
+        $trf1 = BillPayment::create([
+            'id' => (string) Str::uuid(), 'bill_id' => $this->bill->id, 'receipt_no' => 'TRF-B1',
+            'amount_paid' => 2000.00, 'payment_method' => 'transfer', 'payment_date' => now()->toDateString(),
+            'logged_by' => $this->admin->id,
+        ]);
+        $this->bill->recalculateStatus();
+
+        // Bill 2 ($bill2 Rp 35.000):
+        $cash2 = BillPayment::create([
+            'id' => (string) Str::uuid(), 'bill_id' => $bill2->id, 'receipt_no' => 'KAS-B2',
+            'amount_paid' => 35000.00, 'payment_method' => 'cash', 'payment_date' => now()->toDateString(),
+            'logged_by' => $this->admin->id,
+        ]);
+        $trf2 = BillPayment::create([
+            'id' => (string) Str::uuid(), 'bill_id' => $bill2->id, 'receipt_no' => 'TRF-B2',
+            'amount_paid' => 35000.00, 'payment_method' => 'transfer', 'payment_date' => now()->toDateString(),
+            'logged_by' => $this->admin->id,
+        ]);
+        $bill2->recalculateStatus();
+
+        // 2. Akses komponen dan cek batch summary
+        $this->actingAs($this->admin);
+
+        $component = Livewire::test(BillingManager::class)
+            ->set('activeTab', 'settlement')
+            ->set('settlementDateFrom', now()->startOfMonth()->toDateString())
+            ->set('settlementDateTo', now()->toDateString());
+
+        $summary = $component->get('batchVoidCashSummary');
+        $this->assertEquals(2, $summary['count']);
+        $this->assertEquals(37000.00, $summary['total_amount']);
+        $this->assertEquals(2, $summary['santri_count']);
+
+        // 3. Eksekusi batch void
+        $component->call('executeBatchVoidDuplicateCash')
+            ->assertDispatched('toast-show');
+
+        // 4. Verifikasi: Kedua pembayaran CASH terhapus
+        $this->assertDatabaseMissing('bill_payments', ['id' => $cash1->id]);
+        $this->assertDatabaseMissing('bill_payments', ['id' => $cash2->id]);
+
+        // Verifikasi: Pembayaran TRANSFER tetap ada utuh
+        $this->assertDatabaseHas('bill_payments', ['id' => $trf1->id]);
+        $this->assertDatabaseHas('bill_payments', ['id' => $trf2->id]);
+
+        // 5. KEAMANAN KRUSIAL: Status kedua tagihan DIPASTIKAN TETAP LUNAS ('paid'), BUKAN 'unpaid'!
+        $this->assertEquals('paid', $this->bill->fresh()->status);
+        $this->assertEquals(2000.00, (float)$this->bill->fresh()->amount_paid);
+
+        $this->assertEquals('paid', $bill2->fresh()->status);
+        $this->assertEquals(35000.00, (float)$bill2->fresh()->amount_paid);
+
+        // Dan daftar duplikat di scanner sekarang menjadi 0
+        $this->assertCount(0, $component->get('settlementDuplicates'));
+    }
 }

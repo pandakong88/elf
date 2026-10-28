@@ -3810,7 +3810,7 @@
                 {{-- DETEKSI ANOMALI PENCATATAN GANDA (DUPLICATE PAYMENTS SCANNER) --}}
                 @if(count($this->settlementDuplicates) > 0)
                     <div class="p-5 bg-rose-50/90 dark:bg-rose-950/40 border-2 border-rose-300 dark:border-rose-800 rounded-3xl shadow-sm space-y-3">
-                        <div class="flex flex-col md:flex-row md:items-center justify-between gap-2">
+                        <div class="flex flex-col md:flex-row md:items-center justify-between gap-3">
                             <div class="flex items-center gap-2.5">
                                 <span class="text-2xl">⚠️</span>
                                 <div>
@@ -3822,6 +3822,17 @@
                                     </p>
                                 </div>
                             </div>
+                            @php
+                                $batchVoidSummary = $this->batchVoidCashSummary;
+                            @endphp
+                            @if($batchVoidSummary['count'] > 0)
+                                <button type="button"
+                                        wire:click="openBatchVoidModal"
+                                        class="inline-flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-rose-600 to-rose-700 hover:from-rose-700 hover:to-rose-800 text-white font-black text-xs rounded-2xl shadow-md shadow-rose-600/20 transition-all active:scale-95 cursor-pointer shrink-0">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                    <span>⚡ Bersihkan Semua CASH Duplikat ({{ $batchVoidSummary['count'] }})</span>
+                                </button>
+                            @endif
                         </div>
 
                         <div class="overflow-x-auto rounded-2xl border border-rose-200 dark:border-rose-900/60 bg-white dark:bg-slate-900 shadow-2xs">
@@ -6416,6 +6427,105 @@
                             @endif
                         </div>
                     @endif
+                </div>
+
+            </div>
+        </div>
+    @endif
+
+    {{-- ======================================================== --}}
+    {{-- MODAL KONFIRMASI BERSIHKAN MASSAL CASH DUPLIKAT          --}}
+    {{-- ======================================================== --}}
+    @if($showBatchVoidModal)
+        @php
+            $batchData = $this->batchVoidCashSummary;
+        @endphp
+        <div class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/70 backdrop-blur-xs flex items-center justify-center p-4">
+            <div class="bg-white dark:bg-slate-900 border border-rose-200 dark:border-rose-900/50 rounded-3xl p-6 sm:p-7 max-w-xl w-full shadow-2xl space-y-5 animate-in fade-in zoom-in-95 duration-150">
+                
+                {{-- Header Icon & Title --}}
+                <div class="flex items-start gap-4">
+                    <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-rose-500 to-rose-600 text-white flex items-center justify-center shadow-md shadow-rose-500/20 shrink-0">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                    </div>
+                    <div class="space-y-1">
+                        <h3 class="text-base font-black text-slate-900 dark:text-white">
+                            Bersihkan {{ $batchData['count'] }} Transaksi CASH Duplikat
+                        </h3>
+                        <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                            Membatalkan seluruh pencatatan tunai kasir yang terlanjur terinput ganda untuk tagihan yang sudah dibayar via transfer portal.
+                        </p>
+                    </div>
+                </div>
+
+                {{-- JAMINAN KEAMANAN (SAFETY GUARANTEE BANNER) --}}
+                <div class="p-3.5 bg-emerald-50/90 dark:bg-emerald-950/40 border border-emerald-300 dark:border-emerald-800 rounded-2xl flex items-start gap-3">
+                    <span class="text-xl shrink-0">🛡️</span>
+                    <div class="text-[11px] text-emerald-900 dark:text-emerald-200 leading-relaxed">
+                        <strong class="font-black block text-xs mb-0.5">Jaminan Sistem: Tagihan Tetap 100% LUNAS</strong>
+                        Sistem hanya menghapus baris CASH pada tagihan yang <strong>sudah lunas via bukti Transfer Portal yang sah</strong>. Status tagihan santri <u>tidak akan berubah</u> menjadi belum bayar / tunggakan, melainkan tetap <strong>LUNAS</strong> dengan metode Transfer Bank.
+                    </div>
+                </div>
+
+                {{-- RINGKASAN METRIK --}}
+                <div class="grid grid-cols-3 gap-2.5 p-3 bg-slate-50 dark:bg-slate-800/60 rounded-2xl border border-slate-200/70 dark:border-slate-700/70 text-center">
+                    <div>
+                        <span class="text-[10px] font-bold text-slate-400 block uppercase">Santri</span>
+                        <span class="text-sm font-black text-slate-800 dark:text-slate-100">{{ $batchData['santri_count'] }} Orang</span>
+                    </div>
+                    <div class="border-x border-slate-200 dark:border-slate-700">
+                        <span class="text-[10px] font-bold text-slate-400 block uppercase">Tagihan</span>
+                        <span class="text-sm font-black text-slate-800 dark:text-slate-100">{{ $batchData['count'] }} Transaksi</span>
+                    </div>
+                    <div>
+                        <span class="text-[10px] font-bold text-slate-400 block uppercase">Total CASH Batal</span>
+                        <span class="text-sm font-black text-rose-600 dark:text-rose-400">Rp {{ number_format($batchData['total_amount'], 0, ',', '.') }}</span>
+                    </div>
+                </div>
+
+                {{-- DAFTAR TRANSAKSI YANG AKAN DI-VOID --}}
+                <div class="space-y-1.5">
+                    <span class="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">Daftar Tagihan yang Dibersihkan:</span>
+                    <div class="max-h-52 overflow-y-auto space-y-1.5 pr-1 text-xs">
+                        @foreach($batchData['items'] as $item)
+                            <div class="p-2.5 bg-slate-50 dark:bg-slate-800/40 rounded-xl border border-slate-200/60 dark:border-slate-700/60 flex items-center justify-between gap-3">
+                                <div>
+                                    <div class="flex items-center gap-2">
+                                        <span class="font-bold text-slate-900 dark:text-white">{{ $item['santri_name'] }}</span>
+                                        <span class="text-[9px] text-slate-400 font-mono">NIS: {{ $item['santri_nis'] }}</span>
+                                    </div>
+                                    <span class="text-[10px] text-slate-500 dark:text-slate-400 block">
+                                        {{ $item['bill_label'] }} ({{ $item['period'] }})
+                                    </span>
+                                </div>
+                                <div class="text-right shrink-0">
+                                    <span class="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-600 dark:text-emerald-400">
+                                        ✓ Tetap Lunas: Rp {{ number_format($item['transfer_amount'], 0, ',', '.') }}
+                                    </span>
+                                    <span class="block text-[10px] font-extrabold text-rose-600 dark:text-rose-400">
+                                        Batal CASH: -Rp {{ number_format($item['cash_amount'], 0, ',', '.') }}
+                                    </span>
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+
+                {{-- Action Buttons --}}
+                <div class="flex items-center justify-end gap-3 pt-2 border-t border-slate-100 dark:border-slate-800">
+                    <button type="button"
+                            wire:click="closeBatchVoidModal"
+                            class="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl text-xs font-bold transition cursor-pointer">
+                        Batal
+                    </button>
+                    <button type="button"
+                            wire:click="executeBatchVoidDuplicateCash"
+                            wire:loading.attr="disabled"
+                            class="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-rose-600 to-rose-700 hover:from-rose-700 hover:to-rose-800 text-white rounded-xl text-xs font-black shadow-lg shadow-rose-600/20 transition active:scale-95 cursor-pointer disabled:opacity-50">
+                        <svg wire:loading.remove wire:target="executeBatchVoidDuplicateCash" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                        <svg wire:loading wire:target="executeBatchVoidDuplicateCash" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                        <span>Ya, Bersihkan {{ $batchData['count'] }} CASH Duplikat</span>
+                    </button>
                 </div>
 
             </div>

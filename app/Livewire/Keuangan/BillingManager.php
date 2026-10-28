@@ -2625,6 +2625,7 @@ class BillingManager extends Component
 
     // Void Modal State
     public bool $showVoidModal = false;
+    public bool $showBatchVoidModal = false;
     public ?string $paymentToVoidId = null;
     public ?array $paymentToVoidData = null;
 
@@ -3797,6 +3798,126 @@ class BillingManager extends Component
     {
         $this->paymentToVoidId = $paymentId;
         $this->executeVoidPayment();
+    }
+
+    public function openBatchVoidModal(): void
+    {
+        $this->showBatchVoidModal = true;
+    }
+
+    public function closeBatchVoidModal(): void
+    {
+        $this->showBatchVoidModal = false;
+    }
+
+    public function getBatchVoidCashSummaryProperty(): array
+    {
+        $duplicates = $this->settlementDuplicates;
+        $itemsToVoid = [];
+        $totalAmount = 0.0;
+        $santriMap = [];
+
+        foreach ($duplicates as $dup) {
+            $bill = Bill::with('payments')->find($dup['bill_id']);
+            if (!$bill) continue;
+
+            // Hitung total pembayaran non-cash (TRANSFER / GATEWAY)
+            $nonCashPayments = $bill->payments->filter(fn($p) => !in_array(strtolower($p->payment_method ?? ''), ['cash', 'tunai']));
+            $nonCashTotal = (float) $nonCashPayments->sum('amount_paid');
+
+            // CRITICAL HARD GUARD: Hanya boleh di-void jika pembayaran TRANSFER sudah menutupi nominal tagihan
+            // Ini menjamin setelah CASH dibatalkan, tagihan dipastikan TETAP LUNAS dan tidak menjadi tunggakan!
+            if ($nonCashTotal >= (float)$bill->amount) {
+                $cashPayments = $bill->payments->filter(fn($p) => in_array(strtolower($p->payment_method ?? ''), ['cash', 'tunai']));
+                foreach ($cashPayments as $cp) {
+                    $itemsToVoid[] = [
+                        'bill_id'         => $bill->id,
+                        'payment_id'      => $cp->id,
+                        'santri_name'     => $dup['name'],
+                        'santri_nis'      => $dup['nis'],
+                        'bill_label'      => $dup['bill_label'],
+                        'period'          => $dup['period'],
+                        'cash_amount'     => (float) $cp->amount_paid,
+                        'transfer_amount' => $nonCashTotal,
+                        'payment_date'    => $cp->payment_date ? \Carbon\Carbon::parse($cp->payment_date)->locale('id')->translatedFormat('d M Y') : '-',
+                    ];
+                    $totalAmount += (float) $cp->amount_paid;
+                    $santriMap[$bill->person_id] = $dup['name'];
+                }
+            }
+        }
+
+        return [
+            'items'        => $itemsToVoid,
+            'count'        => count($itemsToVoid),
+            'total_amount' => $totalAmount,
+            'santri_count' => count($santriMap),
+        ];
+    }
+
+    public function executeBatchVoidDuplicateCash(): void
+    {
+        $user = auth()->user();
+        $isCentral = $user && ($user->hasRole('super-admin') || $user->hasRole('manajemen') || $user->hasRole('bendahara-pondok') || $user->hasRole('bendahara-pusat') || $user->hasRole('pengasuh'));
+        $canVoid = $isCentral || ($user && $user->hasPermissionTo('void-pembayaran'));
+
+        if (!$canVoid) {
+            $this->toastError('Anda tidak memiliki wewenang untuk membatalkan (void) transaksi pembayaran.');
+            $this->closeBatchVoidModal();
+            return;
+        }
+
+        $summary = $this->batchVoidCashSummary;
+        $items = $summary['items'];
+
+        if (empty($items)) {
+            $this->toastWarning('Tidak ada transaksi CASH duplikat yang memenuhi syarat aman untuk dibersihkan.');
+            $this->closeBatchVoidModal();
+            return;
+        }
+
+        $deletedCount = 0;
+        $deletedTotal = 0.0;
+
+        DB::transaction(function () use ($items, &$deletedCount, &$deletedTotal) {
+            foreach ($items as $item) {
+                $payment = BillPayment::find($item['payment_id']);
+                if (!$payment) continue;
+
+                $bill = Bill::with('payments')->lockForUpdate()->find($payment->bill_id);
+                if (!$bill) continue;
+
+                // Verifikasi ulang bahwa tagihan memiliki pembayaran non-cash yang menutupi tagihan
+                $otherPaymentsTotal = (float) $bill->payments
+                    ->where('id', '!=', $payment->id)
+                    ->sum('amount_paid');
+
+                if ($otherPaymentsTotal < (float)$bill->amount) {
+                    // JANGAN HAPUS jika akan membuat tagihan menjadi kurang bayar/unpaid!
+                    continue;
+                }
+
+                $amount = (float) $payment->amount_paid;
+                $payment->delete();
+                $bill->refresh();
+                $bill->recalculateStatus();
+
+                // Pastikan status tagihan tetap 'paid'
+                if ($bill->status !== 'paid') {
+                    throw new \Exception("Peringatan keamanan: Tagihan {$bill->id} menjadi {$bill->status} setelah pembatalan.");
+                }
+
+                $deletedCount++;
+                $deletedTotal += $amount;
+            }
+        });
+
+        unset($this->settlementDuplicates);
+        unset($this->batchVoidCashSummary);
+
+        $this->closeBatchVoidModal();
+        $formattedTotal = number_format($deletedTotal, 0, ',', '.');
+        $this->toastSuccess("Berhasil membersihkan {$deletedCount} transaksi CASH duplikat (Total Rp {$formattedTotal}). Seluruh tagihan dipastikan TETAP LUNAS via Transfer Portal.");
     }
 
     public function getPendingTransferSubmissionsForSelectedSantriProperty()
