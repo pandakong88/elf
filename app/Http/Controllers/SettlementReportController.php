@@ -501,6 +501,7 @@ class SettlementReportController extends Controller
                 ->with(['person.roomAssignments' => fn($q) => $q->active()->with('room')])
                 ->get();
 
+            $seenBillIds = [];
             foreach ($gatewayTrx as $trx) {
                 $person = $trx->person;
                 $activeAssignment = $person?->roomAssignments?->first();
@@ -508,6 +509,10 @@ class SettlementReportController extends Controller
                 foreach ($trx->bill_breakdown ?? [] as $item) {
                     if (($item['bill_type'] ?? '') === 'kas_komplek') {
                         $amt = (float) ($item['pay_portion'] ?? $item['net_amount'] ?? 0);
+                        $bId = $item['bill_id'] ?? '';
+                        if ($bId) {
+                            $seenBillIds[$bId] = true;
+                        }
                         $totalAmount += $amt;
                         $santriList[] = [
                             'nis'          => $person?->nis ?? '-',
@@ -517,6 +522,7 @@ class SettlementReportController extends Controller
                             'paid_date'    => $trx->created_at->locale('id')->translatedFormat('d M Y, H:i'),
                             'method'       => ($trx->channel_label ?? $trx->payment_channel ?? 'Online') . ' (Online Gateway)',
                             'amount'       => $amt,
+                            'is_duplicate' => false,
                         ];
                     }
                 }
@@ -548,6 +554,12 @@ class SettlementReportController extends Controller
                 $activeAssignment = $person?->roomAssignments?->first();
                 $amt = (float) $pay->amount_paid;
 
+                $bId = $bill?->id ?? '';
+                $isDup = $bId && isset($seenBillIds[$bId]);
+                if ($bId) {
+                    $seenBillIds[$bId] = true;
+                }
+
                 $totalAmount += $amt;
                 $santriList[] = [
                     'nis'          => $person?->nis ?? '-',
@@ -555,8 +567,9 @@ class SettlementReportController extends Controller
                     'room_name'    => $activeAssignment?->room?->name ?? '-',
                     'period_label' => $bill?->period_formatted ?: ($bill?->config?->label ?: 'Kas Asrama'),
                     'paid_date'    => $pay->payment_date ? Carbon::parse($pay->payment_date)->locale('id')->translatedFormat('d M Y') : '-',
-                    'method'       => strtoupper($pay->payment_method ?? 'Kasir'),
+                    'method'       => strtoupper($pay->payment_method ?? 'Kasir') . ($isDup ? ' (⚠️ DUPLIKAT)' : ''),
                     'amount'       => $amt,
+                    'is_duplicate' => $isDup,
                 ];
             }
         }
@@ -774,6 +787,8 @@ class SettlementReportController extends Controller
             // Pos Tagihan Normal
             $billType = $meta['bill_type'];
 
+            $seenCategoryBillIds = [];
+
             // 1. Gateway
             if ($source === 'gateway' || $source === 'all') {
                 $gtx = PaymentTransaction::where('status', 'success')
@@ -799,6 +814,10 @@ class SettlementReportController extends Controller
                             if ($categoryKey === 'syahriah_putri' && $person?->gender !== 'P') continue;
 
                             $amt = (float) ($item['pay_portion'] ?? $item['net_amount'] ?? 0);
+                            $bId = $item['bill_id'] ?? '';
+                            if ($bId) {
+                                $seenCategoryBillIds[$bId] = true;
+                            }
                             $totalAmount += $amt;
 
                             $santriList[] = [
@@ -809,6 +828,7 @@ class SettlementReportController extends Controller
                                 'paid_date'    => $trx->created_at->locale('id')->translatedFormat('d M Y, H:i'),
                                 'method'       => ($trx->channel_label ?? $trx->payment_channel ?? 'Online') . ' (Online)',
                                 'amount'       => $amt,
+                                'is_duplicate' => false,
                             ];
                         }
                     }
@@ -841,6 +861,12 @@ class SettlementReportController extends Controller
                     if ($categoryKey === 'syahriah_putri' && $person?->gender !== 'P') continue;
 
                     $amt = (float) $pay->amount_paid;
+                    $bId = $bill?->id ?? '';
+                    $isDup = $bId && isset($seenCategoryBillIds[$bId]);
+                    if ($bId) {
+                        $seenCategoryBillIds[$bId] = true;
+                    }
+
                     $totalAmount += $amt;
 
                     $santriList[] = [
@@ -849,8 +875,9 @@ class SettlementReportController extends Controller
                         'unit_info'    => $room,
                         'period_label' => $bill?->period_formatted ?: ($bill?->config?->label ?: $meta['title']),
                         'paid_date'    => $pay->payment_date ? Carbon::parse($pay->payment_date)->locale('id')->translatedFormat('d M Y') : '-',
-                        'method'       => strtoupper($pay->payment_method ?? 'Kasir'),
+                        'method'       => strtoupper($pay->payment_method ?? 'Kasir') . ($isDup ? ' (⚠️ DUPLIKAT)' : ''),
                         'amount'       => $amt,
+                        'is_duplicate' => $isDup,
                     ];
                 }
             }

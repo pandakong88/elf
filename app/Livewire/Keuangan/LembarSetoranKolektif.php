@@ -5,6 +5,7 @@ namespace App\Livewire\Keuangan;
 use Livewire\Component;
 use App\Modules\Keuangan\Models\Bill;
 use App\Modules\Keuangan\Models\BillingConfiguration;
+use App\Modules\Keuangan\Models\ManualTransferSubmission;
 use App\Modules\Keuangan\Services\BillingService;
 use App\Modules\Kepengasuhan\Models\Dormitory;
 use App\Modules\Madrasah\Models\MadrasahKelas;
@@ -855,8 +856,26 @@ class LembarSetoranKolektif extends Component
         $periods = $this->getRelevantPeriods();
         $interval = $this->activeInterval;
         $configId = $this->activeConfigId ?: $this->config?->id;
+
+        // Muat pengajuan bukti transfer portal yang masih berstatus pending untuk santri di lembar ini
+        $santriIds = $santriList->pluck('id')->toArray();
+        $pendingSubmissions = ManualTransferSubmission::whereIn('person_id', $santriIds)
+            ->where('status', 'pending')
+            ->get(['id', 'submission_code', 'person_id', 'bill_ids', 'bill_breakdown']);
+
+        $pendingBillMap = [];
+        foreach ($pendingSubmissions as $sub) {
+            foreach ($sub->bill_ids ?? [] as $bId) {
+                $pendingBillMap[$bId] = $sub->submission_code;
+            }
+            foreach ($sub->bill_breakdown ?? [] as $bItem) {
+                if (!empty($bItem['bill_id'])) {
+                    $pendingBillMap[$bItem['bill_id']] = $sub->submission_code;
+                }
+            }
+        }
  
-        return $santriList->map(function ($santri) use ($periods, $interval, $configId) {
+        return $santriList->map(function ($santri) use ($periods, $interval, $configId, $pendingBillMap) {
             $bills = [];
             foreach ($periods as $periodKey => $periodLabel) {
                 [$m, $y] = explode('-', $periodKey);
@@ -897,10 +916,14 @@ class LembarSetoranKolektif extends Component
                 }
                 
                 $bill = $billQuery->first();
+                $isPendingTransfer = $bill && isset($pendingBillMap[$bill->id]);
+                $pendingSubCode = $isPendingTransfer ? $pendingBillMap[$bill->id] : null;
                 
                 $bills[$periodKey] = [
-                    'label' => $periodLabel,
-                    'bill'  => $bill,
+                    'label'               => $periodLabel,
+                    'bill'                => $bill,
+                    'is_pending_transfer' => $isPendingTransfer,
+                    'pending_sub_code'    => $pendingSubCode,
                 ];
             }
 

@@ -391,6 +391,11 @@
                                                 <span class="block text-[8px] font-black uppercase">
                                                     {{ $isCellFullyChecked ? '✓ ' : ($isCellPartialInput ? '⚡ ' : ($isPartial ? '⚡ ' : '')) }}{{ $months[$periodKey] ?? $periodKey }}
                                                 </span>
+                                                @if(!empty($data['is_pending_transfer']))
+                                                    <span class="block text-[7px] font-black text-amber-600 dark:text-amber-300 bg-amber-500/15 px-0.5 rounded leading-tight" title="Wali santri telah mengunggah bukti transfer [{{ $data['pending_sub_code'] }}]">
+                                                        ⏳ TF Portal
+                                                    </span>
+                                                @endif
                                             </button>
                                             <input type="number"
                                                 wire:model.live.debounce.200ms="paymentAmounts.{{ $data['bill']->id }}"
@@ -583,6 +588,11 @@
                                                     title="{{ $isCellFullyChecked ? 'Lunas Penuh (Rp ' . number_format($inputVal, 0, ',', '.') . ')' : ($isCellPartialInput ? 'Cicilan/Sebagian (Rp ' . number_format($inputVal, 0, ',', '.') . ')' : 'Tandai Lunas Penuh') }}">
                                                     ✓
                                                 </button>
+                                                @if(!empty($data['is_pending_transfer']))
+                                                    <span class="inline-flex items-center px-1 text-[8px] font-bold text-amber-600 dark:text-amber-400 bg-amber-500/10 border-r border-amber-300 dark:border-amber-800 shrink-0" title="Wali santri telah mengunggah bukti transfer portal [{{ $data['pending_sub_code'] }}]">
+                                                        ⏳ TF
+                                                    </span>
+                                                @endif
                                                 <div class="relative">
                                                     <input
                                                         type="number"
