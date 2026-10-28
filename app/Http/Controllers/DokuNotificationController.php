@@ -169,10 +169,16 @@ class DokuNotificationController extends Controller
 
                 foreach ($breakdown as $item) {
                     if (empty($item['bill_id'])) continue;
-                    $bill = Bill::find($item['bill_id']);
+                    $bill = Bill::lockForUpdate()->find($item['bill_id']);
                     if (!$bill) continue;
 
-                    $amountPaid = (float) ($item['amount'] ?? $bill->remaining_amount ?? 0);
+                    $remaining = max(0, (float)$bill->amount - (float)$bill->amount_paid);
+                    if ($bill->status === 'paid' || $remaining <= 0) {
+                        Log::warning('[DokuNotification] Tagihan sudah lunas, lewati pencatatan ganda', ['bill_id' => $bill->id]);
+                        continue;
+                    }
+
+                    $amountPaid = min((float) ($item['amount'] ?? $bill->remaining_amount ?? 0), $remaining);
                     if ($amountPaid <= 0) continue;
 
                     BillPayment::create([
