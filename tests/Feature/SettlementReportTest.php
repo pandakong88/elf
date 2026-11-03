@@ -679,4 +679,120 @@ class SettlementReportTest extends TestCase
         $response->assertStatus(200);
         $response->assertHeader('content-type', 'application/pdf');
     }
+
+    public function test_settlement_batch_slips_includes_dynamic_categories_like_kebersihan_and_pinjaman(): void
+    {
+        $this->actingAs($this->admin);
+
+        $santriPutri = Person::create([
+            'id'     => (string) Str::uuid(),
+            'name'   => 'Fatimah Az-Zahra',
+            'nis'    => '2026201',
+            'gender' => 'P',
+            'status' => 'aktif',
+        ]);
+
+        // Tagihan kebersihan putri
+        $billKebersihan = Bill::create([
+            'person_id'   => $santriPutri->id,
+            'bill_type'   => 'kebersihan',
+            'title'       => 'Iuran Kebersihan Lingkungan',
+            'amount'      => 27000,
+            'amount_paid' => 27000,
+            'status'      => 'paid',
+            'created_by'  => $this->admin->id,
+        ]);
+        BillPayment::create([
+            'bill_id'        => $billKebersihan->id,
+            'amount_paid'    => 27000,
+            'payment_date'   => now()->toDateString(),
+            'payment_method' => 'cash',
+            'receipt_no'     => 'KSR-KBR-01',
+            'logged_by'      => $this->admin->id,
+        ]);
+
+        // Tagihan pinjaman putri
+        $billPinjaman = Bill::create([
+            'person_id'   => $santriPutri->id,
+            'bill_type'   => 'pinjaman',
+            'title'       => 'Cicilan Pinjaman Santri',
+            'amount'      => 274000,
+            'amount_paid' => 274000,
+            'status'      => 'paid',
+            'created_by'  => $this->admin->id,
+        ]);
+        BillPayment::create([
+            'bill_id'        => $billPinjaman->id,
+            'amount_paid'    => 274000,
+            'payment_date'   => now()->toDateString(),
+            'payment_method' => 'cash',
+            'receipt_no'     => 'KSR-PINJ-01',
+            'logged_by'      => $this->admin->id,
+        ]);
+
+        // Request helper directly to verify discovery
+        $controller = new \App\Http\Controllers\SettlementReportController();
+        $request = \Illuminate\Http\Request::create(route('keuangan.settlement.batch-slips'), 'GET', [
+            'date_from' => now()->startOfMonth()->toDateString(),
+            'date_to'   => now()->toDateString(),
+            'source'    => 'all',
+            'gender'    => 'P',
+        ]);
+
+        $activeKeys = $controller->getActiveSettlementCategoryKeys($request, 'P');
+        $this->assertContains('kebersihan', $activeKeys);
+        $this->assertContains('pinjaman', $activeKeys);
+
+        // Request batch slips PDF
+        $response = $this->get(route('keuangan.settlement.batch-slips', [
+            'date_from' => now()->startOfMonth()->toDateString(),
+            'date_to'   => now()->toDateString(),
+            'source'    => 'all',
+            'gender'    => 'P',
+        ]));
+
+        $response->assertStatus(200);
+        $response->assertHeader('content-type', 'application/pdf');
+
+        // Request individual slip for kebersihan
+        $responseKebersihan = $this->get(route('keuangan.settlement.slip-kategori', [
+            'categoryKey' => 'kebersihan',
+            'date_from'   => now()->startOfMonth()->toDateString(),
+            'date_to'     => now()->toDateString(),
+            'source'      => 'all',
+            'gender'      => 'P',
+        ]));
+        $responseKebersihan->assertStatus(200);
+
+        // Request individual slip for pinjaman
+        $responsePinjaman = $this->get(route('keuangan.settlement.slip-kategori', [
+            'categoryKey' => 'pinjaman',
+            'date_from'   => now()->startOfMonth()->toDateString(),
+            'date_to'     => now()->toDateString(),
+            'source'      => 'all',
+            'gender'      => 'P',
+        ]));
+        $responsePinjaman->assertStatus(200);
+
+        // Test export-excel with gender and bank filter
+        $responseExcel = $this->get(route('keuangan.settlement.export-excel', [
+            'date_from' => now()->startOfMonth()->toDateString(),
+            'date_to'   => now()->toDateString(),
+            'source'    => 'all',
+            'gender'    => 'P',
+            'bank'      => 'BSI',
+        ]));
+        $responseExcel->assertStatus(200);
+
+        // Test slip-komplek with gender and bank filter
+        $responseSlipKomplek = $this->get(route('keuangan.settlement.slip-komplek', [
+            'dormitoryId' => $this->dormPutra->id,
+            'date_from'   => now()->startOfMonth()->toDateString(),
+            'date_to'     => now()->toDateString(),
+            'source'      => 'all',
+            'gender'      => 'L',
+            'bank'        => 'BCA',
+        ]));
+        $responseSlipKomplek->assertStatus(200);
+    }
 }

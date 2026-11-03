@@ -3717,9 +3717,8 @@
         {{-- ═══════════════════════════════════════════════════════════════════════ --}}
         @if ($activeTab === 'settlement')
             <div class="space-y-6">
-                {{-- 1. Header Banner & Actions --}}
-                <div class="bg-white/80 dark:bg-slate-900/90 border border-slate-200/80 dark:border-slate-800 p-6 rounded-3xl shadow-xs backdrop-blur-sm space-y-5">
-                    {{-- Baris Atas: Informasi & Tombol Kunci Utama --}}
+                {{-- 1. Header Banner & Title --}}
+                <div class="bg-white/80 dark:bg-slate-900/90 border border-slate-200/80 dark:border-slate-800 p-6 rounded-3xl shadow-xs backdrop-blur-sm">
                     <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
                         <div class="space-y-2">
                             <div class="flex flex-wrap items-center gap-2">
@@ -3755,12 +3754,109 @@
                             </div>
                         @endif
                     </div>
+                </div>
 
-                    {{-- Baris Bawah: Action Toolbar Ekspor & Dokumen --}}
+                {{-- 2. Filter & Rentang Tanggal + Aksi & Unduh Laporan --}}
+                <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 p-5 rounded-3xl shadow-xs space-y-4">
+                    <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                        {{-- Presets --}}
+                        <div class="flex items-center gap-1.5 flex-wrap">
+                            <span class="text-[11px] font-bold text-slate-400 mr-1">Preset Cepat:</span>
+                            <button type="button" wire:click="setSettlementQuickDate('today')" 
+                                    class="px-3 py-1 rounded-xl text-xs font-bold transition {{ $settlementPreset === 'today' ? 'bg-sky-600 text-white shadow-xs' : 'bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700' }}">
+                                Hari Ini
+                            </button>
+                            <button type="button" wire:click="setSettlementQuickDate('last_7_days')" 
+                                    class="px-3 py-1 rounded-xl text-xs font-bold transition {{ $settlementPreset === 'last_7_days' ? 'bg-sky-600 text-white shadow-xs' : 'bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700' }}">
+                                7 Hari Terakhir
+                            </button>
+                            <button type="button" wire:click="setSettlementQuickDate('this_month')" 
+                                    class="px-3 py-1 rounded-xl text-xs font-bold transition {{ $settlementPreset === 'this_month' ? 'bg-sky-600 text-white shadow-xs' : 'bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700' }}">
+                                Bulan Ini
+                            </button>
+                            <button type="button" wire:click="setSettlementQuickDate('last_month')" 
+                                    class="px-3 py-1 rounded-xl text-xs font-bold transition {{ $settlementPreset === 'last_month' ? 'bg-sky-600 text-white shadow-xs' : 'bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700' }}">
+                                Bulan Lalu
+                            </button>
+                        </div>
+
+                        {{-- Date Inputs & Source Selector --}}
+                        <div class="flex items-center gap-3 flex-wrap">
+                            {{-- Unit / Gender Selector --}}
+                            @if($this->genderScope())
+                                <div class="flex items-center gap-1.5 px-3 py-1.5 bg-sky-50 dark:bg-sky-950/40 border border-sky-200 dark:border-sky-800 rounded-xl text-xs font-bold text-sky-800 dark:text-sky-300">
+                                    <svg class="w-3.5 h-3.5 text-sky-600 dark:text-sky-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+                                    <span>Unit: {{ $this->genderScope() === 'L' ? 'Putra (Banin)' : 'Putri (Banat)' }}</span>
+                                </div>
+                            @else
+                                <div class="flex items-center gap-1.5">
+                                    <span class="text-[11px] font-bold text-slate-400">Unit:</span>
+                                    <select wire:model.live="settlementGender" 
+                                            class="text-xs font-bold rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white px-2.5 py-1.5 focus:ring-2 focus:ring-sky-500">
+                                        <option value="">🌐 Semua Unit (Konsolidasi)</option>
+                                        <option value="L">🕌 Unit Putra (Banin)</option>
+                                        <option value="P">🧕 Unit Putri (Banat)</option>
+                                    </select>
+                                </div>
+                            @endif
+
+                            {{-- Date From --}}
+                            <div class="flex items-center gap-1.5">
+                                <span class="text-[11px] font-bold text-slate-400">Dari:</span>
+                                <input type="date" wire:model.live="settlementDateFrom" 
+                                       class="text-xs font-bold rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white px-2.5 py-1.5 focus:ring-2 focus:ring-sky-500">
+                            </div>
+
+                            {{-- Date To --}}
+                            <div class="flex items-center gap-1.5">
+                                <span class="text-[11px] font-bold text-slate-400">Sampai:</span>
+                                <input type="date" wire:model.live="settlementDateTo" 
+                                       class="text-xs font-bold rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white px-2.5 py-1.5 focus:ring-2 focus:ring-sky-500">
+                            </div>
+
+                            {{-- Source Selector --}}
+                            <div class="flex items-center gap-1.5">
+                                <span class="text-[11px] font-bold text-slate-400">Sumber:</span>
+                                <select wire:model.live="settlementSource" 
+                                        class="text-xs font-bold rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white px-2.5 py-1.5 focus:ring-2 focus:ring-sky-500">
+                                    <option value="all">🌐 Semua Pembayaran (Gabungan)</option>
+                                    <option value="gateway">⚡ Khusus Online Gateway (DOKU)</option>
+                                    <option value="kasir">💵 Khusus Kasir &amp; Transfer Manual</option>
+                                </select>
+                            </div>
+
+                            {{-- Pos Tagihan / Pos Anggaran Filter --}}
+                            <div class="flex items-center gap-1.5">
+                                <span class="text-[11px] font-bold text-slate-400">Pos Iuran:</span>
+                                <select wire:model.live="settlementCategoryFilter" 
+                                        class="text-xs font-bold rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white px-2.5 py-1.5 focus:ring-2 focus:ring-sky-500">
+                                    @foreach($this->settlementCategoryOptions as $catVal => $catLabel)
+                                        <option value="{{ $catVal }}">{{ $catLabel }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+
+                            {{-- Bank Destination Filter --}}
+                            @if(count($this->transferBankOptions) > 0)
+                                <div class="flex items-center gap-1.5">
+                                    <span class="text-[11px] font-bold text-slate-400">Rek Bank:</span>
+                                    <select wire:model.live="settlementBankFilter" 
+                                            class="text-xs font-bold rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white px-2.5 py-1.5 focus:ring-2 focus:ring-sky-500">
+                                        <option value="">Semua Rek Bank</option>
+                                        @foreach($this->transferBankOptions as $bankOpt)
+                                            <option value="{{ $bankOpt }}">{{ $bankOpt }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                            @endif
+                        </div>
+                    </div>
+
+                    {{-- Baris Bawah: Action Toolbar Ekspor & Dokumen Sesuai Filter --}}
                     <div class="pt-4 border-t border-slate-100 dark:border-slate-800/80 flex flex-wrap items-center justify-between gap-3">
-                        <div class="flex items-center gap-2 text-xs font-bold text-slate-400">
-                            <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-                            <span class="text-[11px] font-extrabold uppercase tracking-wider">Aksi &amp; Unduh Laporan:</span>
+                        <div class="flex items-center gap-2 text-xs font-bold text-slate-500 dark:text-slate-400">
+                            <svg class="w-4 h-4 text-sky-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                            <span class="text-[11px] font-extrabold uppercase tracking-wider">Aksi &amp; Unduh Laporan (Sesuai Filter Terpilih):</span>
                         </div>
 
                         <div class="flex flex-wrap items-center gap-2">
@@ -3828,18 +3924,19 @@
                             </div>
 
                             {{-- Tombol Cetak Semua Slip (Batch PDF) --}}
-                            <a href="{{ route('keuangan.settlement.batch-slips', ['date_from' => $settlementDateFrom, 'date_to' => $settlementDateTo, 'source' => $settlementSource, 'gender' => $this->genderScope() ?: $settlementGender, 'category' => $settlementCategoryFilter]) }}" 
+                            <a href="{{ route('keuangan.settlement.batch-slips', ['date_from' => $settlementDateFrom, 'date_to' => $settlementDateTo, 'source' => $settlementSource, 'gender' => $this->genderScope() ?: $settlementGender, 'category' => $settlementCategoryFilter, 'bank' => $settlementBankFilter]) }}" 
                                 target="_blank"
                                 class="inline-flex items-center gap-2 px-3.5 py-2 bg-indigo-50 dark:bg-indigo-950/40 hover:bg-indigo-100 dark:hover:bg-indigo-900/60 text-indigo-700 dark:text-indigo-300 font-bold text-xs rounded-xl border border-indigo-300 dark:border-indigo-700/70 shadow-2xs transition-all active:scale-95 whitespace-nowrap"
-                                title="Cetak Seluruh Slip Serah Terima (1 File PDF)">
+                                title="Cetak Seluruh Slip Serah Terima (1 File PDF Sesuai Filter)">
                                 <svg class="w-4 h-4 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
                                 <span>Cetak Semua Slip (Batch PDF)</span>
                             </a>
 
                             {{-- Tombol Cetak PDF Rekap --}}
-                            <a href="{{ route('keuangan.settlement.pdf', ['date_from' => $settlementDateFrom, 'date_to' => $settlementDateTo, 'source' => $settlementSource, 'gender' => $this->genderScope() ?: $settlementGender, 'category' => $settlementCategoryFilter]) }}" 
+                            <a href="{{ route('keuangan.settlement.pdf', ['date_from' => $settlementDateFrom, 'date_to' => $settlementDateTo, 'source' => $settlementSource, 'gender' => $this->genderScope() ?: $settlementGender, 'category' => $settlementCategoryFilter, 'bank' => $settlementBankFilter]) }}" 
                                 target="_blank"
-                                class="inline-flex items-center gap-2 px-3.5 py-2 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700/80 text-slate-700 dark:text-slate-200 font-bold text-xs rounded-xl border border-slate-200 dark:border-slate-700 shadow-2xs transition-all active:scale-95 whitespace-nowrap">
+                                class="inline-flex items-center gap-2 px-3.5 py-2 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700/80 text-slate-700 dark:text-slate-200 font-bold text-xs rounded-xl border border-slate-200 dark:border-slate-700 shadow-2xs transition-all active:scale-95 whitespace-nowrap"
+                                title="Cetak Rekapitulasi Pembagian Kas PDF Sesuai Filter">
                                 <svg class="w-4 h-4 text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
                                 <span>Cetak Rekap PDF</span>
                             </a>
@@ -3848,7 +3945,7 @@
                             <a href="{{ route('keuangan.settlement.export-excel', ['date_from' => $settlementDateFrom, 'date_to' => $settlementDateTo, 'source' => $settlementSource, 'bank' => $settlementBankFilter, 'gender' => $this->genderScope() ?: $settlementGender, 'category' => $settlementCategoryFilter]) }}" 
                                 target="_blank"
                                 class="inline-flex items-center gap-2 px-3.5 py-2 bg-emerald-50 dark:bg-emerald-950/40 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 text-emerald-700 dark:text-emerald-300 font-bold text-xs rounded-xl border border-emerald-300 dark:border-emerald-700/70 shadow-2xs transition-all active:scale-95 whitespace-nowrap"
-                                title="Download Laporan Rekonsiliasi Excel Multi-Sheet (Ringkasan & Rincian Santri)">
+                                title="Download Laporan Rekonsiliasi Excel Multi-Sheet (Ringkasan & Rincian Santri Sesuai Filter)">
                                 <svg class="w-4 h-4 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
                                 <span>Export Excel (.xlsx)</span>
                             </a>
@@ -3989,104 +4086,7 @@
                     </div>
                 </div>
 
-                {{-- 2. Filter & Rentang Tanggal --}}
-                <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 p-5 rounded-3xl shadow-xs space-y-4">
-                    <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-                        {{-- Presets --}}
-                        <div class="flex items-center gap-1.5 flex-wrap">
-                            <span class="text-[11px] font-bold text-slate-400 mr-1">Preset Cepat:</span>
-                            <button type="button" wire:click="setSettlementQuickDate('today')" 
-                                    class="px-3 py-1 rounded-xl text-xs font-bold transition {{ $settlementPreset === 'today' ? 'bg-sky-600 text-white shadow-xs' : 'bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700' }}">
-                                Hari Ini
-                            </button>
-                            <button type="button" wire:click="setSettlementQuickDate('last_7_days')" 
-                                    class="px-3 py-1 rounded-xl text-xs font-bold transition {{ $settlementPreset === 'last_7_days' ? 'bg-sky-600 text-white shadow-xs' : 'bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700' }}">
-                                7 Hari Terakhir
-                            </button>
-                            <button type="button" wire:click="setSettlementQuickDate('this_month')" 
-                                    class="px-3 py-1 rounded-xl text-xs font-bold transition {{ $settlementPreset === 'this_month' ? 'bg-sky-600 text-white shadow-xs' : 'bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700' }}">
-                                Bulan Ini
-                            </button>
-                            <button type="button" wire:click="setSettlementQuickDate('last_month')" 
-                                    class="px-3 py-1 rounded-xl text-xs font-bold transition {{ $settlementPreset === 'last_month' ? 'bg-sky-600 text-white shadow-xs' : 'bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700' }}">
-                                Bulan Lalu
-                            </button>
-                        </div>
-
-                        {{-- Date Inputs & Source Selector --}}
-                        <div class="flex items-center gap-3 flex-wrap">
-                            {{-- Unit / Gender Selector --}}
-                            @if($this->genderScope())
-                                <div class="flex items-center gap-1.5 px-3 py-1.5 bg-sky-50 dark:bg-sky-950/40 border border-sky-200 dark:border-sky-800 rounded-xl text-xs font-bold text-sky-800 dark:text-sky-300">
-                                    <svg class="w-3.5 h-3.5 text-sky-600 dark:text-sky-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
-                                    <span>Unit: {{ $this->genderScope() === 'L' ? 'Putra (Banin)' : 'Putri (Banat)' }}</span>
-                                </div>
-                            @else
-                                <div class="flex items-center gap-1.5">
-                                    <span class="text-[11px] font-bold text-slate-400">Unit:</span>
-                                    <select wire:model.live="settlementGender" 
-                                            class="text-xs font-bold rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white px-2.5 py-1.5 focus:ring-2 focus:ring-sky-500">
-                                        <option value="">🌐 Semua Unit (Konsolidasi)</option>
-                                        <option value="L">🕌 Unit Putra (Banin)</option>
-                                        <option value="P">🧕 Unit Putri (Banat)</option>
-                                    </select>
-                                </div>
-                            @endif
-
-                            {{-- Date From --}}
-                            <div class="flex items-center gap-1.5">
-                                <span class="text-[11px] font-bold text-slate-400">Dari:</span>
-                                <input type="date" wire:model.live="settlementDateFrom" 
-                                       class="text-xs font-bold rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white px-2.5 py-1.5 focus:ring-2 focus:ring-sky-500">
-                            </div>
-
-                            {{-- Date To --}}
-                            <div class="flex items-center gap-1.5">
-                                <span class="text-[11px] font-bold text-slate-400">Sampai:</span>
-                                <input type="date" wire:model.live="settlementDateTo" 
-                                       class="text-xs font-bold rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white px-2.5 py-1.5 focus:ring-2 focus:ring-sky-500">
-                            </div>
-
-                            {{-- Source Selector --}}
-                            <div class="flex items-center gap-1.5">
-                                <span class="text-[11px] font-bold text-slate-400">Sumber:</span>
-                                <select wire:model.live="settlementSource" 
-                                        class="text-xs font-bold rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white px-2.5 py-1.5 focus:ring-2 focus:ring-sky-500">
-                                    <option value="all">🌐 Semua Pembayaran (Gabungan)</option>
-                                    <option value="gateway">⚡ Khusus Online Gateway (DOKU)</option>
-                                    <option value="kasir">💵 Khusus Kasir &amp; Transfer Manual</option>
-                                </select>
-                            </div>
-
-                            {{-- Pos Tagihan / Pos Anggaran Filter --}}
-                            <div class="flex items-center gap-1.5">
-                                <span class="text-[11px] font-bold text-slate-400">Pos Iuran:</span>
-                                <select wire:model.live="settlementCategoryFilter" 
-                                        class="text-xs font-bold rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white px-2.5 py-1.5 focus:ring-2 focus:ring-sky-500">
-                                    @foreach($this->settlementCategoryOptions as $catVal => $catLabel)
-                                        <option value="{{ $catVal }}">{{ $catLabel }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
-
-                            {{-- Bank Destination Filter --}}
-                            @if(count($this->transferBankOptions) > 0)
-                                <div class="flex items-center gap-1.5">
-                                    <span class="text-[11px] font-bold text-slate-400">Rek Bank:</span>
-                                    <select wire:model.live="settlementBankFilter" 
-                                            class="text-xs font-bold rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white px-2.5 py-1.5 focus:ring-2 focus:ring-sky-500">
-                                        <option value="">Semua Rek Bank</option>
-                                        @foreach($this->transferBankOptions as $bankOpt)
-                                            <option value="{{ $bankOpt }}">{{ $bankOpt }}</option>
-                                        @endforeach
-                                    </select>
-                                </div>
-                            @endif
-                        </div>
-                    </div>
-                </div>
-
-                {{-- 3. KPI Cards: 3 Sumber Uang & Total Bersih --}}
+                {{-- KPI Cards: 3 Sumber Uang & Total Bersih --}}
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                     {{-- Card 1: Gateway Online --}}
                     <div class="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-xs space-y-2">
@@ -4301,7 +4301,7 @@
                                                 </button>
 
                                                 {{-- Tombol Cetak Slip PDF --}}
-                                                <a href="{{ route('keuangan.settlement.slip-kategori', ['categoryKey' => $cat['key'], 'date_from' => $settlementDateFrom, 'date_to' => $settlementDateTo, 'source' => $settlementSource]) }}" 
+                                                <a href="{{ route('keuangan.settlement.slip-kategori', ['categoryKey' => $cat['key'], 'date_from' => $settlementDateFrom, 'date_to' => $settlementDateTo, 'source' => $settlementSource, 'gender' => $this->genderScope() ?: $settlementGender, 'bank' => $settlementBankFilter]) }}" 
                                                    target="_blank"
                                                    class="px-2.5 py-1.5 bg-indigo-50 dark:bg-indigo-950/40 hover:bg-indigo-100 dark:hover:bg-indigo-900/60 text-indigo-700 dark:text-indigo-300 rounded-xl text-[11px] font-extrabold border border-indigo-300 dark:border-indigo-700 transition flex items-center gap-1"
                                                    title="Cetak Slip Serah Terima PDF">
@@ -4408,7 +4408,7 @@
                                                 </button>
 
                                                 {{-- Tombol Slip PDF --}}
-                                                <a href="{{ route('keuangan.settlement.slip-komplek', ['dormitoryId' => $dorm['dormitory_id'], 'date_from' => $settlementDateFrom, 'date_to' => $settlementDateTo, 'source' => $settlementSource]) }}" 
+                                                <a href="{{ route('keuangan.settlement.slip-komplek', ['dormitoryId' => $dorm['dormitory_id'], 'date_from' => $settlementDateFrom, 'date_to' => $settlementDateTo, 'source' => $settlementSource, 'gender' => $this->genderScope() ?: $settlementGender, 'bank' => $settlementBankFilter]) }}" 
                                                    target="_blank"
                                                    class="px-2.5 py-1.5 bg-emerald-50 dark:bg-emerald-950/40 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 text-emerald-700 dark:text-emerald-300 rounded-xl text-[11px] font-extrabold border border-emerald-300 dark:border-emerald-700 transition flex items-center gap-1"
                                                    title="Cetak Slip Serah Terima Kas Komplek">
@@ -4594,7 +4594,7 @@
                             </div>
 
                             <div class="px-6 py-3.5 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-950/40">
-                                <a href="{{ route('keuangan.settlement.slip-komplek', ['dormitoryId' => $modalDormitoryData['dormitory_id'], 'date_from' => $settlementDateFrom, 'date_to' => $settlementDateTo, 'source' => $settlementSource]) }}" 
+                                <a href="{{ route('keuangan.settlement.slip-komplek', ['dormitoryId' => $modalDormitoryData['dormitory_id'], 'date_from' => $settlementDateFrom, 'date_to' => $settlementDateTo, 'source' => $settlementSource, 'gender' => $this->genderScope() ?: $settlementGender, 'bank' => $settlementBankFilter]) }}" 
                                    target="_blank"
                                    class="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition shadow-xs">
                                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
@@ -4676,7 +4676,7 @@
                             </div>
 
                             <div class="px-6 py-3.5 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-950/40">
-                                <a href="{{ route('keuangan.settlement.slip-kategori', ['categoryKey' => $modalCategoryData['key'], 'date_from' => $settlementDateFrom, 'date_to' => $settlementDateTo, 'source' => $settlementSource]) }}" 
+                                <a href="{{ route('keuangan.settlement.slip-kategori', ['categoryKey' => $modalCategoryData['key'], 'date_from' => $settlementDateFrom, 'date_to' => $settlementDateTo, 'source' => $settlementSource, 'gender' => $this->genderScope() ?: $settlementGender, 'bank' => $settlementBankFilter]) }}" 
                                    target="_blank"
                                    class="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-bold transition shadow-xs">
                                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>

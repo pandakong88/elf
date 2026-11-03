@@ -98,6 +98,7 @@ class SettlementReportController extends Controller
             $dateTo   = $request->query('date_to', now()->toDateString());
             $source   = $request->query('source', 'all'); // 'gateway' | 'kasir' | 'all'
             $categoryFilter = $request->query('category', '');
+            $bankFilter = $request->query('bank', '');
             $targetGender = $genderScope ?: ($request->filled('gender') ? $request->query('gender') : null);
 
             $fromCarbon = Carbon::parse($dateFrom)->startOfDay();
@@ -230,6 +231,15 @@ class SettlementReportController extends Controller
                           ->orWhereBetween('created_at', [$fromCarbon, $toCarbon]);
                     })
                     ->when($targetGender, fn($q, $g) => $q->whereHas('bill.person', fn($pq) => $pq->where('gender', $g)))
+                    ->when($bankFilter, function ($q, $bank) {
+                        $q->where(function ($subQ) use ($bank) {
+                            $subQ->where('payment_method', 'like', "%{$bank}%")
+                                 ->orWhere('notes', 'like', "%{$bank}%")
+                                 ->orWhereHas('bill.person.manualTransferSubmissions', function ($mq) use ($bank) {
+                                     $mq->where('status', 'approved')->where('bank_destination', $bank);
+                                 });
+                        });
+                    })
                     ->with(['bill.person.roomAssignments' => fn($q) => $q->active()->with('room.dormitory'), 'bill.config']);
 
                 $kasirPayments = $kasirQuery->get();
@@ -285,6 +295,7 @@ class SettlementReportController extends Controller
                               });
                         })
                         ->when($targetGender, fn($q, $g) => $q->whereHas('person', fn($pq) => $pq->where('gender', $g)))
+                        ->when($bankFilter, fn($q, $bank) => $q->where('bank_destination', $bank))
                         ->with('person')
                         ->get();
 
@@ -375,17 +386,15 @@ class SettlementReportController extends Controller
 
         $categoryFilter = $request->query('category', '');
 
-        $categoryKeys = match ($targetGender) {
-            'L' => ['syahriah_putra', 'madrasah', 'kitab', 'majek_pagi', 'majek_sore', 'pocket_money'],
-            'P' => ['syahriah_putri', 'madrasah', 'kitab', 'majek_pagi', 'majek_sore', 'pocket_money'],
-            default => ['syahriah_putra', 'syahriah_putri', 'madrasah', 'kitab', 'majek_pagi', 'majek_sore', 'pocket_money'],
-        };
+        $categoryKeys = $this->getActiveSettlementCategoryKeys($request, $targetGender);
 
         if (!empty($categoryFilter)) {
             if ($categoryFilter === 'kas_komplek') {
                 $categoryKeys = [];
             } elseif ($categoryFilter === 'syahriah_pondok') {
                 $categoryKeys = array_values(array_filter($categoryKeys, fn($k) => str_contains($k, 'syahriah')));
+            } elseif ($categoryFilter === 'majek') {
+                $categoryKeys = array_values(array_filter($categoryKeys, fn($k) => in_array($k, ['majek_pagi', 'majek_sore'])));
             } else {
                 $categoryKeys = array_values(array_filter($categoryKeys, fn($k) => $k === $categoryFilter));
             }
@@ -549,9 +558,13 @@ class SettlementReportController extends Controller
      */
     public function getDormitorySlipData(Request $request, string $dormitoryId): array
     {
+        $genderScope = $this->resolveGenderScope();
+        $targetGender = $genderScope ?: ($request->filled('gender') ? $request->query('gender') : null);
+
         $dateFrom   = $request->query('date_from', now()->startOfMonth()->toDateString());
         $dateTo     = $request->query('date_to', now()->toDateString());
         $source     = $request->query('source', 'all');
+        $bankFilter = $request->query('bank', '');
 
         $fromCarbon = Carbon::parse($dateFrom)->startOfDay();
         $toCarbon   = Carbon::parse($dateTo)->endOfDay();
@@ -569,6 +582,7 @@ class SettlementReportController extends Controller
                              ->whereBetween('created_at', [$fromCarbon, $toCarbon]);
                       });
                 })
+                ->when($targetGender, fn($q, $g) => $q->whereHas('person', fn($pq) => $pq->where('gender', $g)))
                 ->whereHas('person.roomAssignments', function ($q) use ($dormitoryId) {
                     $q->active()->whereHas('room', fn($r) => $r->where('dormitory_id', $dormitoryId));
                 })
@@ -613,6 +627,16 @@ class SettlementReportController extends Controller
                     $q->whereBetween('payment_date', [$dateFrom, $dateTo])
                       ->orWhereBetween('created_at', [$fromCarbon, $toCarbon]);
                 })
+                ->when($bankFilter, function ($q, $bank) {
+                    $q->where(function ($subQ) use ($bank) {
+                        $subQ->where('payment_method', 'like', "%{$bank}%")
+                             ->orWhere('notes', 'like', "%{$bank}%")
+                             ->orWhereHas('bill.person.manualTransferSubmissions', function ($mq) use ($bank) {
+                                 $mq->where('status', 'approved')->where('bank_destination', $bank);
+                             });
+                    });
+                })
+                ->when($targetGender, fn($q, $g) => $q->whereHas('bill.person', fn($pq) => $pq->where('gender', $g)))
                 ->whereHas('bill', function ($q) use ($dormitoryId) {
                     $q->where('bill_type', 'kas_komplek')
                         ->whereHas('person.roomAssignments', function ($rq) use ($dormitoryId) {
@@ -717,6 +741,7 @@ class SettlementReportController extends Controller
         $dateFrom   = $request->query('date_from', now()->startOfMonth()->toDateString());
         $dateTo     = $request->query('date_to', now()->toDateString());
         $source     = $request->query('source', 'all');
+        $bankFilter = $request->query('bank', '');
 
         $fromCarbon = Carbon::parse($dateFrom)->startOfDay();
         $toCarbon   = Carbon::parse($dateTo)->endOfDay();
@@ -778,13 +803,41 @@ class SettlementReportController extends Controller
                 'filter_gender'  => null,
                 'bill_type'      => 'pocket_money',
             ],
-            default => [
-                'title'          => 'Alokasi ' . ucwords(str_replace('_', ' ', $categoryKey)),
-                'recipient_role' => 'Pengurus Terkait',
-                'unit_label'     => 'Bagian Terkait',
+            'kebersihan' => [
+                'title'          => 'Pos Tagihan Kebersihan',
+                'recipient_role' => 'Pengurus Sarana & Kebersihan',
+                'unit_label'     => 'Bagian Kebersihan',
                 'filter_gender'  => null,
-                'bill_type'      => $categoryKey,
+                'bill_type'      => 'kebersihan',
             ],
+            'pinjaman' => [
+                'title'          => 'Pos Tagihan Pinjaman Santri',
+                'recipient_role' => 'Pengelola Pinjaman Santri',
+                'unit_label'     => 'Bagian Keuangan (Pinjaman)',
+                'filter_gender'  => null,
+                'bill_type'      => 'pinjaman',
+            ],
+            'lainnya' => [
+                'title'          => 'Iuran Lainnya / Insidental',
+                'recipient_role' => 'Pengurus Pos Terkait',
+                'unit_label'     => 'Bagian Keuangan / Umum',
+                'filter_gender'  => null,
+                'bill_type'      => 'lainnya',
+            ],
+            default => (function () use ($categoryKey) {
+                $cfg = \App\Modules\Keuangan\Models\BillingConfiguration::where('type', $categoryKey)
+                    ->orWhereRaw("LOWER(REPLACE(label, ' ', '_')) = ?", [$categoryKey])
+                    ->first();
+                $title = $cfg?->label ?: ('Pos Tagihan ' . ucwords(str_replace('_', ' ', $categoryKey)));
+                $role = $cfg?->manager_role ? ucwords(str_replace(['-', '_'], ' ', $cfg->manager_role)) : 'Pengurus Terkait';
+                return [
+                    'title'          => $title,
+                    'recipient_role' => $role,
+                    'unit_label'     => 'Bagian Terkait',
+                    'filter_gender'  => null,
+                    'bill_type'      => $categoryKey,
+                ];
+            })(),
         };
 
         $effectiveGender = $meta['filter_gender'] ?: $targetGender;
@@ -837,6 +890,7 @@ class SettlementReportController extends Controller
                           });
                     })
                     ->when($effectiveGender, fn($q, $g) => $q->whereHas('person', fn($pq) => $pq->where('gender', $g)))
+                    ->when($bankFilter, fn($q, $b) => $q->where('bank_destination', $b))
                     ->with(['person.roomAssignments' => fn($q) => $q->active()->with('room.dormitory')])
                     ->get();
 
@@ -883,28 +937,41 @@ class SettlementReportController extends Controller
 
                     foreach ($trx->bill_breakdown ?? [] as $item) {
                         $itemType = $item['bill_type'] ?? '';
-                        if ($itemType === $billType || ($billType === 'syahriah_pondok' && in_array($categoryKey, ['syahriah_putra', 'syahriah_putri']))) {
-                            if ($categoryKey === 'syahriah_putra' && $person?->gender !== 'L') continue;
-                            if ($categoryKey === 'syahriah_putri' && $person?->gender !== 'P') continue;
+                        $itemTargetKey = match ($itemType) {
+                            'pocket_money'      => 'pocket_money',
+                            'syahriah_pondok'   => ($person?->gender === 'P' ? 'syahriah_putri' : 'syahriah_putra'),
+                            'syahriah_madrasah' => 'madrasah',
+                            'kitab'             => 'kitab',
+                            'majek_pagi'        => 'majek_pagi',
+                            'majek_sore'        => 'majek_sore',
+                            'kas_komplek'       => 'kas_komplek',
+                            default             => (!empty($item['config_label']) ? \Illuminate\Support\Str::slug($item['config_label'], '_') : (!empty($itemType) ? $itemType : 'lainnya')),
+                        };
 
-                            $amt = (float) ($item['pay_portion'] ?? $item['net_amount'] ?? 0);
-                            $bId = $item['bill_id'] ?? '';
-                            if ($bId) {
-                                $seenCategoryBillIds[$bId] = true;
-                            }
-                            $totalAmount += $amt;
-
-                            $santriList[] = [
-                                'nis'          => $person?->nis ?? '-',
-                                'name'         => $person?->name ?? '—',
-                                'unit_info'    => $room,
-                                'period_label' => $item['period_label'] ?? $item['config_label'] ?? $meta['title'],
-                                'paid_date'    => $trx->created_at->locale('id')->translatedFormat('d M Y, H:i'),
-                                'method'       => ($trx->channel_label ?? $trx->payment_channel ?? 'Online') . ' (Online)',
-                                'amount'       => $amt,
-                                'is_duplicate' => false,
-                            ];
+                        if ($itemTargetKey !== $categoryKey && $itemType !== $billType) {
+                            continue;
                         }
+
+                        if ($categoryKey === 'syahriah_putra' && $person?->gender !== 'L') continue;
+                        if ($categoryKey === 'syahriah_putri' && $person?->gender !== 'P') continue;
+
+                        $amt = (float) ($item['pay_portion'] ?? $item['net_amount'] ?? 0);
+                        $bId = $item['bill_id'] ?? '';
+                        if ($bId) {
+                            $seenCategoryBillIds[$bId] = true;
+                        }
+                        $totalAmount += $amt;
+
+                        $santriList[] = [
+                            'nis'          => $person?->nis ?? '-',
+                            'name'         => $person?->name ?? '—',
+                            'unit_info'    => $room,
+                            'period_label' => $item['period_label'] ?? $item['config_label'] ?? $meta['title'],
+                            'paid_date'    => $trx->created_at->locale('id')->translatedFormat('d M Y, H:i'),
+                            'method'       => ($trx->channel_label ?? $trx->payment_channel ?? 'Online') . ' (Online)',
+                            'amount'       => $amt,
+                            'is_duplicate' => false,
+                        ];
                     }
                 }
             }
@@ -919,9 +986,27 @@ class SettlementReportController extends Controller
                         $q->whereBetween('payment_date', [$dateFrom, $dateTo])
                           ->orWhereBetween('created_at', [$fromCarbon, $toCarbon]);
                     })
-                    ->whereHas('bill', function ($q) use ($billType, $effectiveGender) {
-                        $q->where('bill_type', $billType)
-                            ->when($effectiveGender, fn($bq, $g) => $bq->whereHas('person', fn($pq) => $pq->where('gender', $g)));
+                    ->when($bankFilter, function ($q, $bank) {
+                        $q->where(function ($subQ) use ($bank) {
+                            $subQ->where('payment_method', 'like', "%{$bank}%")
+                                 ->orWhere('notes', 'like', "%{$bank}%")
+                                 ->orWhereHas('bill.person.manualTransferSubmissions', function ($mq) use ($bank) {
+                                     $mq->where('status', 'approved')->where('bank_destination', $bank);
+                                 });
+                        });
+                    })
+                    ->whereHas('bill', function ($q) use ($billType, $effectiveGender, $categoryKey) {
+                        $q->where(function ($bq) use ($billType, $categoryKey) {
+                            $bq->where('bill_type', $billType)
+                               ->orWhere('bill_type', $categoryKey)
+                               ->orWhereHas('config', function ($cq) use ($billType, $categoryKey) {
+                                   $cq->where('type', $billType)
+                                      ->orWhere('type', $categoryKey)
+                                      ->orWhere('label', $categoryKey)
+                                      ->orWhereRaw("LOWER(REPLACE(label, ' ', '_')) = ?", [$categoryKey]);
+                               });
+                        })
+                        ->when($effectiveGender, fn($bq, $g) => $bq->whereHas('person', fn($pq) => $pq->where('gender', $g)));
                     })
                     ->with(['bill.person.roomAssignments' => fn($q) => $q->active()->with('room.dormitory'), 'bill.config'])
                     ->get();
@@ -930,6 +1015,22 @@ class SettlementReportController extends Controller
                     $bill = $pay->bill;
                     $person = $bill?->person;
                     $room = $person?->roomAssignments?->first()?->room?->name ?? '-';
+
+                    $type = $bill?->bill_type ?? '';
+                    $itemTargetKey = match ($type) {
+                        'pocket_money'      => 'pocket_money',
+                        'syahriah_pondok'   => ($person?->gender === 'P' ? 'syahriah_putri' : 'syahriah_putra'),
+                        'syahriah_madrasah' => 'madrasah',
+                        'kitab'             => 'kitab',
+                        'majek_pagi'        => 'majek_pagi',
+                        'majek_sore'        => 'majek_sore',
+                        'kas_komplek'       => 'kas_komplek',
+                        default             => (!empty($bill?->config?->label) ? \Illuminate\Support\Str::slug($bill->config->label, '_') : (!empty($type) ? $type : 'lainnya')),
+                    };
+
+                    if ($itemTargetKey !== $categoryKey && $type !== $billType) {
+                        continue;
+                    }
 
                     if ($categoryKey === 'syahriah_putra' && $person?->gender !== 'L') continue;
                     if ($categoryKey === 'syahriah_putri' && $person?->gender !== 'P') continue;
@@ -965,6 +1066,108 @@ class SettlementReportController extends Controller
     }
 
     /**
+     * Helper to discover all active category keys for the period and filters.
+     */
+    public function getActiveSettlementCategoryKeys(Request $request, ?string $targetGender = null): array
+    {
+        $baseKeys = match ($targetGender) {
+            'L' => ['syahriah_putra', 'madrasah', 'kitab', 'majek_pagi', 'majek_sore', 'pocket_money'],
+            'P' => ['syahriah_putri', 'madrasah', 'kitab', 'majek_pagi', 'majek_sore', 'pocket_money'],
+            default => ['syahriah_putra', 'syahriah_putri', 'madrasah', 'kitab', 'majek_pagi', 'majek_sore', 'pocket_money'],
+        };
+
+        $dateFrom   = $request->query('date_from', now()->startOfMonth()->toDateString());
+        $dateTo     = $request->query('date_to', now()->toDateString());
+        $source     = $request->query('source', 'all');
+        $bankFilter = $request->query('bank', '');
+
+        $fromCarbon = Carbon::parse($dateFrom)->startOfDay();
+        $toCarbon   = Carbon::parse($dateTo)->endOfDay();
+
+        $discoveredKeys = [];
+
+        // 1. Kasir Payments in the period
+        if ($source === 'kasir' || $source === 'all') {
+            $kasirPayments = BillPayment::where(function ($q) {
+                    $q->where('payment_method', 'not like', 'gateway%')
+                      ->orWhereNull('payment_method');
+                })
+                ->where(function ($q) use ($dateFrom, $dateTo, $fromCarbon, $toCarbon) {
+                    $q->whereBetween('payment_date', [$dateFrom, $dateTo])
+                      ->orWhereBetween('created_at', [$fromCarbon, $toCarbon]);
+                })
+                ->when($targetGender, fn($q, $g) => $q->whereHas('bill.person', fn($pq) => $pq->where('gender', $g)))
+                ->when($bankFilter, function ($q, $bank) {
+                    $q->where(function ($subQ) use ($bank) {
+                        $subQ->where('payment_method', 'like', "%{$bank}%")
+                             ->orWhere('notes', 'like', "%{$bank}%")
+                             ->orWhereHas('bill.person.manualTransferSubmissions', function ($mq) use ($bank) {
+                                 $mq->where('status', 'approved')->where('bank_destination', $bank);
+                             });
+                    });
+                })
+                ->with(['bill.person', 'bill.config'])
+                ->get();
+
+            foreach ($kasirPayments as $pay) {
+                $bill = $pay->bill;
+                $person = $bill?->person;
+                $type = $bill?->bill_type ?? '';
+                $targetKey = match ($type) {
+                    'pocket_money'      => 'pocket_money',
+                    'syahriah_pondok'   => ($person?->gender === 'P' ? 'syahriah_putri' : 'syahriah_putra'),
+                    'syahriah_madrasah' => 'madrasah',
+                    'kitab'             => 'kitab',
+                    'majek_pagi'        => 'majek_pagi',
+                    'majek_sore'        => 'majek_sore',
+                    'kas_komplek'       => 'kas_komplek',
+                    default             => (!empty($bill?->config?->label) ? \Illuminate\Support\Str::slug($bill->config->label, '_') : (!empty($type) ? $type : 'lainnya')),
+                };
+                if ($targetKey !== 'kas_komplek') {
+                    $discoveredKeys[$targetKey] = true;
+                }
+            }
+        }
+
+        // 2. Gateway Transactions in the period
+        if ($source === 'gateway' || $source === 'all') {
+            $gatewayTrx = PaymentTransaction::where('status', 'success')
+                ->where(function ($q) use ($fromCarbon, $toCarbon) {
+                    $q->whereBetween('callback_received_at', [$fromCarbon, $toCarbon])
+                      ->orWhere(function ($oq) use ($fromCarbon, $toCarbon) {
+                          $oq->whereNull('callback_received_at')
+                             ->whereBetween('created_at', [$fromCarbon, $toCarbon]);
+                      });
+                })
+                ->when($targetGender, fn($q, $g) => $q->whereHas('person', fn($pq) => $pq->where('gender', $g)))
+                ->with('person')
+                ->get();
+
+            foreach ($gatewayTrx as $trx) {
+                $person = $trx->person;
+                foreach ($trx->bill_breakdown ?? [] as $item) {
+                    $type = $item['bill_type'] ?? '';
+                    $targetKey = match ($type) {
+                        'pocket_money'      => 'pocket_money',
+                        'syahriah_pondok'   => ($person?->gender === 'P' ? 'syahriah_putri' : 'syahriah_putra'),
+                        'syahriah_madrasah' => 'madrasah',
+                        'kitab'             => 'kitab',
+                        'majek_pagi'        => 'majek_pagi',
+                        'majek_sore'        => 'majek_sore',
+                        'kas_komplek'       => 'kas_komplek',
+                        default             => (!empty($item['config_label']) ? \Illuminate\Support\Str::slug($item['config_label'], '_') : (!empty($type) ? $type : 'lainnya')),
+                    };
+                    if ($targetKey !== 'kas_komplek') {
+                        $discoveredKeys[$targetKey] = true;
+                    }
+                }
+            }
+        }
+
+        return array_values(array_unique(array_merge($baseKeys, array_keys($discoveredKeys))));
+    }
+
+    /**
      * Download Batch Slip Serah Terima (Seluruh Pos & Asrama dalam 1 Dokumen PDF).
      */
     public function downloadBatchSlipsPdf(Request $request): Response
@@ -981,17 +1184,15 @@ class SettlementReportController extends Controller
 
             $categoryFilter = $request->query('category', '');
 
-            $categoryKeys = match ($targetGender) {
-                'L' => ['syahriah_putra', 'madrasah', 'kitab', 'majek_pagi', 'majek_sore', 'pocket_money'],
-                'P' => ['syahriah_putri', 'madrasah', 'kitab', 'majek_pagi', 'majek_sore', 'pocket_money'],
-                default => ['syahriah_putra', 'syahriah_putri', 'madrasah', 'kitab', 'majek_pagi', 'majek_sore', 'pocket_money'],
-            };
+            $categoryKeys = $this->getActiveSettlementCategoryKeys($request, $targetGender);
 
             if (!empty($categoryFilter)) {
                 if ($categoryFilter === 'kas_komplek') {
                     $categoryKeys = [];
                 } elseif ($categoryFilter === 'syahriah_pondok') {
                     $categoryKeys = array_values(array_filter($categoryKeys, fn($k) => str_contains($k, 'syahriah')));
+                } elseif ($categoryFilter === 'majek') {
+                    $categoryKeys = array_values(array_filter($categoryKeys, fn($k) => in_array($k, ['majek_pagi', 'majek_sore'])));
                 } else {
                     $categoryKeys = array_values(array_filter($categoryKeys, fn($k) => $k === $categoryFilter));
                 }
