@@ -1318,86 +1318,85 @@ class="relative bg-slate-950 border border-slate-800 rounded-3xl shadow-2xl over
     <!-- ========================================================= -->
     <!-- TOP NAVIGATION & COMPACT ARCADE HEADER -->
     <!-- ========================================================= -->
-    <div class="p-3.5 sm:p-4 border-b border-slate-800/80 bg-slate-900/80 flex flex-col md:flex-row md:items-center justify-between gap-3 relative z-30">
-        <!-- Left: Mascot Info & Level Gauge -->
-        <div class="flex items-center gap-3">
+    <div class="p-2.5 sm:p-4 border-b border-slate-800/80 bg-slate-900/80 flex flex-col md:flex-row md:items-center justify-between gap-2.5 sm:gap-3 relative z-30">
+        <!-- Top Row on Mobile / Left Section on Desktop -->
+        <div class="flex items-center justify-between md:justify-start gap-2.5 sm:gap-3 w-full md:w-auto">
             @if($pet)
-                <div class="relative">
-                    <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-amber-500 to-yellow-300 p-0.5 shadow-lg shadow-amber-500/20">
-                        <div class="w-full h-full bg-slate-900 rounded-[14px] flex items-center justify-center text-2xl">
-                            {{ $pet->meta['emoji'] }}
+                <div class="flex items-center gap-2.5 sm:gap-3 min-w-0">
+                    <div class="relative shrink-0">
+                        <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-gradient-to-tr from-amber-500 to-yellow-300 p-0.5 shadow-md sm:shadow-lg shadow-amber-500/20">
+                            <div class="w-full h-full bg-slate-900 rounded-[10px] sm:rounded-[14px] flex items-center justify-center text-xl sm:text-2xl">
+                                {{ $pet->meta['emoji'] }}
+                            </div>
                         </div>
-                    </div>
-                    <span class="absolute -bottom-1 -right-1 px-1.5 py-0.2 rounded-md bg-amber-500 text-slate-950 text-[9px] font-black uppercase tracking-wider shadow">
-                        Lv.{{ $pet->level }}
-                    </span>
-                </div>
-
-                <div>
-                    @if($isEditingName)
-                        <div class="flex items-center gap-1.5 py-0.5">
-                            <input 
-                                type="text" 
-                                wire:model="editNameValue" 
-                                wire:keydown.enter="savePetName"
-                                wire:keydown.escape="cancelEditingName"
-                                class="px-2.5 py-1 text-xs sm:text-sm bg-slate-950 border-2 border-amber-500 rounded-xl text-white font-black focus:outline-none w-36 sm:w-48 shadow-inner" 
-                                maxlength="30"
-                                autofocus
-                            />
-                            <button 
-                                wire:click="savePetName" 
-                                type="button" 
-                                class="px-2.5 py-1 rounded-lg text-xs font-black bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-950 hover:brightness-110 shadow cursor-pointer active:scale-95"
-                                title="Simpan Nama"
-                            >
-                                ✓ Simpan
-                            </button>
-                            <button 
-                                wire:click="cancelEditingName" 
-                                type="button" 
-                                class="px-2 py-1 rounded-lg text-xs font-bold bg-slate-800 text-slate-400 hover:text-white cursor-pointer"
-                                title="Batal"
-                            >
-                                ✕
-                            </button>
-                        </div>
-                    @else
-                        <div class="flex items-center gap-2">
-                            <h4 class="text-sm sm:text-base font-black text-white tracking-wide flex items-center gap-1.5">
-                                <span>{{ $pet->name }}</span>
-                                <span class="text-xs text-amber-400 font-normal">({{ $pet->meta['species'] }})</span>
-                            </h4>
-
-                            <!-- Direct Livewire Inline Edit Pencil Button -->
-                            <button 
-                                wire:click="startEditingName" 
-                                type="button" 
-                                class="p-1 rounded-lg text-slate-400 hover:text-amber-300 hover:bg-slate-800 transition-colors cursor-pointer text-xs" 
-                                title="Klik untuk mengubah nama pet"
-                            >
-                                ✏️
-                            </button>
-
-                            <span class="hidden sm:inline-block px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-300 border border-emerald-500/20">
-                                {{ $pet->rank_title }}
-                            </span>
-                        </div>
-                    @endif
-
-                    <!-- XP Gauge -->
-                    <div class="flex items-center gap-2 mt-1">
-                        @php
-                            $needed = $pet->xpForNextLevel();
-                            $pct = $needed > 0 ? min(100, round(($pet->xp / $needed) * 100)) : 100;
-                        @endphp
-                        <div class="w-28 sm:w-40 h-2 bg-slate-950 rounded-full overflow-hidden border border-slate-700/60 p-0.5">
-                            <div class="h-full bg-gradient-to-r from-amber-500 to-yellow-300 rounded-full transition-all duration-500" style="width: {{ $pct }}%"></div>
-                        </div>
-                        <span class="text-[10px] font-mono text-slate-400 font-bold">
-                            {{ $pet->xp }}/{{ $needed }} XP
+                        <span class="absolute -bottom-1 -right-1 px-1.5 py-0.2 rounded-md bg-amber-500 text-slate-950 text-[8px] sm:text-[9px] font-black uppercase tracking-wider shadow">
+                            Lv.{{ $pet->level }}
                         </span>
                     </div>
+
+                    <div class="min-w-0">
+                        @if($isEditingName)
+                            <div class="flex items-center gap-1 py-0.5">
+                                <input 
+                                    type="text" 
+                                    wire:model="editNameValue" 
+                                    wire:keydown.enter="savePetName"
+                                    wire:keydown.escape="cancelEditingName"
+                                    class="px-2 py-0.5 text-xs sm:text-sm bg-slate-950 border-2 border-amber-500 rounded-lg text-white font-black focus:outline-none w-28 sm:w-48 shadow-inner" 
+                                    maxlength="30"
+                                    autofocus
+                                />
+                                <button wire:click="savePetName" type="button" class="px-2 py-0.5 rounded-lg text-xs font-black bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-950 shadow cursor-pointer">✓</button>
+                                <button wire:click="cancelEditingName" type="button" class="px-1.5 py-0.5 rounded-lg text-xs font-bold bg-slate-800 text-slate-400 hover:text-white cursor-pointer">✕</button>
+                            </div>
+                        @else
+                            <div class="flex items-center gap-1.5">
+                                <h4 class="text-xs sm:text-base font-black text-white tracking-wide truncate max-w-[130px] sm:max-w-none">
+                                    {{ $pet->name }}
+                                </h4>
+                                <button 
+                                    wire:click="startEditingName" 
+                                    type="button" 
+                                    class="p-0.5 rounded text-slate-400 hover:text-amber-300 text-[10px] sm:text-xs cursor-pointer" 
+                                    title="Ubah nama"
+                                >
+                                    ✏️
+                                </button>
+                                <span class="hidden sm:inline-block px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-300 border border-emerald-500/20">
+                                    {{ $pet->rank_title }}
+                                </span>
+                            </div>
+                        @endif
+
+                        <!-- XP Gauge -->
+                        <div class="flex items-center gap-1.5 mt-0.5">
+                            @php
+                                $needed = $pet->xpForNextLevel();
+                                $pct = $needed > 0 ? min(100, round(($pet->xp / $needed) * 100)) : 100;
+                            @endphp
+                            <div class="w-20 sm:w-40 h-1.5 sm:h-2 bg-slate-950 rounded-full overflow-hidden border border-slate-700/60 p-0.5">
+                                <div class="h-full bg-gradient-to-r from-amber-500 to-yellow-300 rounded-full transition-all duration-500" style="width: {{ $pct }}%"></div>
+                            </div>
+                            <span class="text-[9px] sm:text-[10px] font-mono text-slate-400 font-bold shrink-0">
+                                {{ $pet->xp }}/{{ $needed }} XP
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Mobile Coin & Sound right next to avatar row -->
+                <div class="flex md:hidden items-center gap-1.5 shrink-0">
+                    <div class="flex items-center gap-1 px-2 py-1 bg-gradient-to-r from-amber-500/10 to-yellow-500/10 border border-amber-500/30 text-amber-300 rounded-lg text-[11px] font-black">
+                        <span>🪙</span>
+                        <span class="font-mono text-xs">{{ number_format($pet->coins) }}</span>
+                    </div>
+                    <button 
+                        @click="toggleSound()" 
+                        type="button"
+                        class="p-1.5 rounded-lg bg-slate-800 border border-slate-700 text-slate-300 text-xs cursor-pointer active:scale-95"
+                    >
+                        <span x-text="soundEnabled ? '🔊' : '🔇'"></span>
+                    </button>
                 </div>
             @else
                 <div class="flex items-center gap-2">
@@ -1410,56 +1409,56 @@ class="relative bg-slate-950 border border-slate-800 rounded-3xl shadow-2xl over
             @endif
         </div>
 
-        <!-- Right: Coins, Sound Toggle & Nav Switches -->
-        <div class="flex items-center flex-wrap gap-2 justify-end">
+        <!-- Right Side: Desktop Coins + Navigation Tabs -->
+        <div class="flex items-center gap-2 w-full md:w-auto justify-between md:justify-end">
             @if($pet)
-                <!-- Coin Counter -->
-                <div class="flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-amber-500/10 to-yellow-500/10 border border-amber-500/30 text-amber-300 rounded-xl text-xs font-black shadow-xs">
-                    <span class="text-base animate-pulse">🪙</span>
-                    <span class="font-mono text-sm tracking-tight">{{ number_format($pet->coins) }}</span>
-                    <span class="text-[10px] text-amber-400/80">Koin</span>
+                <!-- Desktop Only Coins & Sound -->
+                <div class="hidden md:flex items-center gap-2">
+                    <div class="flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-amber-500/10 to-yellow-500/10 border border-amber-500/30 text-amber-300 rounded-xl text-xs font-black shadow-xs">
+                        <span class="text-base animate-pulse">🪙</span>
+                        <span class="font-mono text-sm tracking-tight">{{ number_format($pet->coins) }}</span>
+                        <span class="text-[10px] text-amber-400/80">Koin</span>
+                    </div>
+                    <button 
+                        @click="toggleSound()" 
+                        type="button"
+                        class="p-2 rounded-xl bg-slate-800 border border-slate-700 hover:bg-slate-700 text-slate-300 hover:text-white transition-all text-xs cursor-pointer"
+                        :title="soundEnabled ? 'Matikan Suara Mini-Game' : 'Nyalakan Suara Mini-Game'"
+                    >
+                        <span x-text="soundEnabled ? '🔊' : '🔇'"></span>
+                    </button>
                 </div>
 
-                <!-- Sound Audio Toggle -->
-                <button 
-                    @click="toggleSound()" 
-                    type="button"
-                    class="p-2 rounded-xl bg-slate-800 border border-slate-700 hover:bg-slate-700 text-slate-300 hover:text-white transition-all text-xs cursor-pointer"
-                    :title="soundEnabled ? 'Matikan Suara Mini-Game' : 'Nyalakan Suara Mini-Game'"
-                >
-                    <span x-text="soundEnabled ? '🔊' : '🔇'"></span>
-                </button>
-
-                <!-- Navigation Tabs -->
-                <div class="flex items-center gap-1 p-1 bg-slate-950 rounded-xl border border-slate-800">
+                <!-- Navigation Tabs: Full width 4-col grid on mobile, inline flex on desktop -->
+                <div class="grid grid-cols-4 md:flex items-center gap-1 p-1 bg-slate-950 rounded-xl border border-slate-800 w-full md:w-auto">
                     <button 
                         wire:click="setViewMode('arena')" 
                         type="button"
-                        class="px-3 py-1.5 rounded-lg text-xs font-black uppercase tracking-wider transition-all {{ $viewMode === 'arena' ? 'bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-950 shadow-md' : 'text-slate-400 hover:text-white' }}"
+                        class="px-2 sm:px-3 py-1.5 rounded-lg text-[11px] sm:text-xs font-black uppercase tracking-wider transition-all text-center {{ $viewMode === 'arena' ? 'bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-950 shadow-md' : 'text-slate-400 hover:text-white' }}"
                     >
-                        🏠 Kamar
+                        🏠 <span class="hidden sm:inline">Kamar</span>
                     </button>
                     <button 
                         wire:click="setViewMode('shop')" 
                         type="button"
-                        class="px-3 py-1.5 rounded-lg text-xs font-black uppercase tracking-wider transition-all {{ $viewMode === 'shop' ? 'bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-950 shadow-md' : 'text-slate-400 hover:text-white' }}"
+                        class="px-2 sm:px-3 py-1.5 rounded-lg text-[11px] sm:text-xs font-black uppercase tracking-wider transition-all text-center {{ $viewMode === 'shop' ? 'bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-950 shadow-md' : 'text-slate-400 hover:text-white' }}"
                     >
-                        🛒 Toko
+                        🛒 <span class="hidden sm:inline">Toko</span>
                     </button>
                     <button 
                         wire:click="setViewMode('rewards')" 
                         type="button"
-                        class="px-3 py-1.5 rounded-lg text-xs font-black uppercase tracking-wider transition-all {{ $viewMode === 'rewards' ? 'bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-950 shadow-md' : 'text-slate-400 hover:text-white' }}"
+                        class="px-2 sm:px-3 py-1.5 rounded-lg text-[11px] sm:text-xs font-black uppercase tracking-wider transition-all text-center {{ $viewMode === 'rewards' ? 'bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-950 shadow-md' : 'text-slate-400 hover:text-white' }}"
                     >
-                        📜 Reward
+                        📜 <span class="hidden sm:inline">Reward</span>
                     </button>
                     <button 
                         wire:click="setViewMode('adopt')" 
                         type="button"
                         title="Ganti Karakter / Nama"
-                        class="px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all {{ $viewMode === 'adopt' ? 'bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-950 shadow-md' : 'text-slate-400 hover:text-white' }}"
+                        class="px-2 sm:px-2.5 py-1.5 rounded-lg text-[11px] sm:text-xs font-bold transition-all text-center {{ $viewMode === 'adopt' ? 'bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-950 shadow-md' : 'text-slate-400 hover:text-white' }}"
                     >
-                        ⚙️
+                        ⚙️ <span class="hidden sm:inline">Karakter</span>
                     </button>
                 </div>
             @endif
@@ -1472,75 +1471,75 @@ class="relative bg-slate-950 border border-slate-800 rounded-3xl shadow-2xl over
     @if($viewMode === 'arena' && $pet)
         <div class="p-3 sm:p-5 space-y-4">
             
-            <!-- 4 Modern Arcade Status Bars with Icons & Micro Progress -->
-            <div class="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3">
+            <!-- 4 Modern Arcade Status Bars (Ultra Compact Single-Row on Mobile, Rich Cards on Desktop) -->
+            <div class="grid grid-cols-4 gap-1.5 sm:gap-3">
                 <!-- 1. Hunger -->
-                <div class="p-2.5 sm:p-3 bg-slate-900/90 border border-slate-800 rounded-2xl flex items-center gap-2.5 shadow-sm">
-                    <div class="w-9 h-9 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-lg shrink-0">
+                <div class="p-1.5 sm:p-3 bg-slate-900/90 border border-slate-800 rounded-xl sm:rounded-2xl flex flex-col sm:flex-row items-center sm:items-center gap-1 sm:gap-2.5 shadow-sm text-center sm:text-left">
+                    <div class="w-7 h-7 sm:w-9 sm:h-9 rounded-lg sm:rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-sm sm:text-lg shrink-0">
                         🍗
                     </div>
-                    <div class="flex-1 min-w-0">
-                        <div class="flex items-center justify-between text-xs mb-1">
-                            <span class="text-[11px] font-extrabold text-slate-300">Kenyang</span>
-                            <span class="font-mono font-black text-xs {{ $pet->hunger > 50 ? 'text-emerald-400' : ($pet->hunger > 25 ? 'text-amber-400' : 'text-red-400 animate-pulse') }}">
+                    <div class="w-full flex-1 min-w-0">
+                        <div class="flex items-center justify-between text-xs mb-0.5 sm:mb-1">
+                            <span class="hidden sm:inline text-[11px] font-extrabold text-slate-300">Kenyang</span>
+                            <span class="mx-auto sm:mx-0 font-mono font-black text-[10px] sm:text-xs {{ $pet->hunger > 50 ? 'text-emerald-400' : ($pet->hunger > 25 ? 'text-amber-400' : 'text-red-400 animate-pulse') }}">
                                 {{ $pet->hunger }}%
                             </span>
                         </div>
-                        <div class="w-full h-2 bg-slate-950 rounded-full overflow-hidden p-0.5 border border-slate-800">
+                        <div class="w-full h-1.5 sm:h-2 bg-slate-950 rounded-full overflow-hidden p-0.5 border border-slate-800">
                             <div class="h-full rounded-full transition-all duration-500 {{ $pet->hunger > 50 ? 'bg-gradient-to-r from-emerald-500 to-teal-400' : ($pet->hunger > 25 ? 'bg-amber-500' : 'bg-red-500') }}" style="width: {{ $pet->hunger }}%"></div>
                         </div>
                     </div>
                 </div>
 
                 <!-- 2. Hygiene -->
-                <div class="p-2.5 sm:p-3 bg-slate-900/90 border border-slate-800 rounded-2xl flex items-center gap-2.5 shadow-sm">
-                    <div class="w-9 h-9 rounded-xl bg-sky-500/10 border border-sky-500/20 flex items-center justify-center text-lg shrink-0">
+                <div class="p-1.5 sm:p-3 bg-slate-900/90 border border-slate-800 rounded-xl sm:rounded-2xl flex flex-col sm:flex-row items-center sm:items-center gap-1 sm:gap-2.5 shadow-sm text-center sm:text-left">
+                    <div class="w-7 h-7 sm:w-9 sm:h-9 rounded-lg sm:rounded-xl bg-sky-500/10 border border-sky-500/20 flex items-center justify-center text-sm sm:text-lg shrink-0">
                         🧼
                     </div>
-                    <div class="flex-1 min-w-0">
-                        <div class="flex items-center justify-between text-xs mb-1">
-                            <span class="text-[11px] font-extrabold text-slate-300">Kebersihan</span>
-                            <span class="font-mono font-black text-xs {{ $pet->hygiene > 50 ? 'text-sky-400' : ($pet->hygiene > 25 ? 'text-amber-400' : 'text-red-400 animate-pulse') }}">
+                    <div class="w-full flex-1 min-w-0">
+                        <div class="flex items-center justify-between text-xs mb-0.5 sm:mb-1">
+                            <span class="hidden sm:inline text-[11px] font-extrabold text-slate-300">Bersih</span>
+                            <span class="mx-auto sm:mx-0 font-mono font-black text-[10px] sm:text-xs {{ $pet->hygiene > 50 ? 'text-sky-400' : ($pet->hygiene > 25 ? 'text-amber-400' : 'text-red-400 animate-pulse') }}">
                                 {{ $pet->hygiene }}%
                             </span>
                         </div>
-                        <div class="w-full h-2 bg-slate-950 rounded-full overflow-hidden p-0.5 border border-slate-800">
+                        <div class="w-full h-1.5 sm:h-2 bg-slate-950 rounded-full overflow-hidden p-0.5 border border-slate-800">
                             <div class="h-full rounded-full transition-all duration-500 {{ $pet->hygiene > 50 ? 'bg-gradient-to-r from-sky-500 to-blue-400' : ($pet->hygiene > 25 ? 'bg-amber-500' : 'bg-red-500') }}" style="width: {{ $pet->hygiene }}%"></div>
                         </div>
                     </div>
                 </div>
 
                 <!-- 3. Energy -->
-                <div class="p-2.5 sm:p-3 bg-slate-900/90 border border-slate-800 rounded-2xl flex items-center gap-2.5 shadow-sm">
-                    <div class="w-9 h-9 rounded-xl bg-yellow-500/10 border border-yellow-500/20 flex items-center justify-center text-lg shrink-0">
+                <div class="p-1.5 sm:p-3 bg-slate-900/90 border border-slate-800 rounded-xl sm:rounded-2xl flex flex-col sm:flex-row items-center sm:items-center gap-1 sm:gap-2.5 shadow-sm text-center sm:text-left">
+                    <div class="w-7 h-7 sm:w-9 sm:h-9 rounded-lg sm:rounded-xl bg-yellow-500/10 border border-yellow-500/20 flex items-center justify-center text-sm sm:text-lg shrink-0">
                         ⚡
                     </div>
-                    <div class="flex-1 min-w-0">
-                        <div class="flex items-center justify-between text-xs mb-1">
-                            <span class="text-[11px] font-extrabold text-slate-300">Energi</span>
-                            <span class="font-mono font-black text-xs {{ $pet->energy > 50 ? 'text-yellow-400' : ($pet->energy > 25 ? 'text-amber-400' : 'text-red-400 animate-pulse') }}">
+                    <div class="w-full flex-1 min-w-0">
+                        <div class="flex items-center justify-between text-xs mb-0.5 sm:mb-1">
+                            <span class="hidden sm:inline text-[11px] font-extrabold text-slate-300">Energi</span>
+                            <span class="mx-auto sm:mx-0 font-mono font-black text-[10px] sm:text-xs {{ $pet->energy > 50 ? 'text-yellow-400' : ($pet->energy > 25 ? 'text-amber-400' : 'text-red-400 animate-pulse') }}">
                                 {{ $pet->energy }}%
                             </span>
                         </div>
-                        <div class="w-full h-2 bg-slate-950 rounded-full overflow-hidden p-0.5 border border-slate-800">
+                        <div class="w-full h-1.5 sm:h-2 bg-slate-950 rounded-full overflow-hidden p-0.5 border border-slate-800">
                             <div class="h-full rounded-full transition-all duration-500 {{ $pet->energy > 50 ? 'bg-gradient-to-r from-yellow-500 to-amber-400' : ($pet->energy > 25 ? 'bg-amber-500' : 'bg-red-500') }}" style="width: {{ $pet->energy }}%"></div>
                         </div>
                     </div>
                 </div>
 
                 <!-- 4. Happiness -->
-                <div class="p-2.5 sm:p-3 bg-slate-900/90 border border-slate-800 rounded-2xl flex items-center gap-2.5 shadow-sm">
-                    <div class="w-9 h-9 rounded-xl bg-pink-500/10 border border-pink-500/20 flex items-center justify-center text-lg shrink-0">
+                <div class="p-1.5 sm:p-3 bg-slate-900/90 border border-slate-800 rounded-xl sm:rounded-2xl flex flex-col sm:flex-row items-center sm:items-center gap-1 sm:gap-2.5 shadow-sm text-center sm:text-left">
+                    <div class="w-7 h-7 sm:w-9 sm:h-9 rounded-lg sm:rounded-xl bg-pink-500/10 border border-pink-500/20 flex items-center justify-center text-sm sm:text-lg shrink-0">
                         💖
                     </div>
-                    <div class="flex-1 min-w-0">
-                        <div class="flex items-center justify-between text-xs mb-1">
-                            <span class="text-[11px] font-extrabold text-slate-300">Bahagia</span>
-                            <span class="font-mono font-black text-xs {{ $pet->happiness > 50 ? 'text-pink-400' : ($pet->happiness > 25 ? 'text-amber-400' : 'text-red-400 animate-pulse') }}">
+                    <div class="w-full flex-1 min-w-0">
+                        <div class="flex items-center justify-between text-xs mb-0.5 sm:mb-1">
+                            <span class="hidden sm:inline text-[11px] font-extrabold text-slate-300">Bahagia</span>
+                            <span class="mx-auto sm:mx-0 font-mono font-black text-[10px] sm:text-xs {{ $pet->happiness > 50 ? 'text-pink-400' : ($pet->happiness > 25 ? 'text-amber-400' : 'text-red-400 animate-pulse') }}">
                                 {{ $pet->happiness }}%
                             </span>
                         </div>
-                        <div class="w-full h-2 bg-slate-950 rounded-full overflow-hidden p-0.5 border border-slate-800">
+                        <div class="w-full h-1.5 sm:h-2 bg-slate-950 rounded-full overflow-hidden p-0.5 border border-slate-800">
                             <div class="h-full rounded-full transition-all duration-500 {{ $pet->happiness > 50 ? 'bg-gradient-to-r from-pink-500 to-rose-400' : ($pet->happiness > 25 ? 'bg-amber-500' : 'bg-red-500') }}" style="width: {{ $pet->happiness }}%"></div>
                         </div>
                     </div>
@@ -1561,45 +1560,45 @@ class="relative bg-slate-950 border border-slate-800 rounded-3xl shadow-2xl over
                     <!-- Modern Arch Window on Wall (Interactive: click to look outside!) -->
                     <div 
                         @click="interactWindow()"
-                        class="absolute top-5 left-6 w-20 sm:w-28 h-28 sm:h-36 rounded-t-full border-2 border-slate-700/60 bg-slate-900/80 overflow-hidden shadow-lg flex flex-col items-center justify-center cursor-pointer hover:border-amber-400/60 transition-colors group z-10"
+                        class="absolute top-3 sm:top-5 left-3 sm:left-6 w-16 sm:w-28 h-24 sm:h-36 rounded-t-full border-2 border-slate-700/60 bg-slate-900/80 overflow-hidden shadow-lg flex flex-col items-center justify-center cursor-pointer hover:border-amber-400/60 transition-colors group z-10"
                         title="Jendela Kamar (Klik untuk melihat suasana luar)"
                     >
                         @if($pet->is_sleeping)
                             <!-- Night Sky through window -->
                             <div class="w-full h-full bg-gradient-to-b from-indigo-950 via-slate-900 to-slate-950 relative flex items-center justify-center">
-                                <span class="absolute top-4 right-4 text-xl group-hover:scale-110 transition-transform">🌙</span>
-                                <span class="absolute top-8 left-3 text-[10px] text-amber-200 twinkle-star">✨</span>
-                                <span class="absolute bottom-6 right-5 text-[8px] text-indigo-300 twinkle-star">★</span>
-                                <span class="absolute top-14 left-8 text-[9px] text-slate-400 twinkle-star">✦</span>
+                                <span class="absolute top-3 right-3 sm:top-4 sm:right-4 text-base sm:text-xl group-hover:scale-110 transition-transform">🌙</span>
+                                <span class="absolute top-7 left-2.5 sm:top-8 sm:left-3 text-[9px] sm:text-[10px] text-amber-200 twinkle-star">✨</span>
+                                <span class="absolute bottom-5 right-4 sm:bottom-6 sm:right-5 text-[7px] sm:text-[8px] text-indigo-300 twinkle-star">★</span>
+                                <span class="absolute top-12 left-6 sm:top-14 sm:left-8 text-[8px] sm:text-[9px] text-slate-400 twinkle-star">✦</span>
                                 <!-- Falling star on click -->
                                 <template x-if="windowEvent === 'star'">
-                                    <span class="star-shoot-anim absolute text-lg z-20 text-yellow-300">🌠</span>
+                                    <span class="star-shoot-anim absolute text-base sm:text-lg z-20 text-yellow-300">🌠</span>
                                 </template>
                             </div>
                         @else
                             <!-- Morning/Day Sky with sun, clouds, & green tree leaves -->
                             <div class="w-full h-full bg-gradient-to-b from-sky-400/40 via-emerald-500/20 to-slate-900 relative flex items-center justify-center">
-                                <span class="absolute top-3 left-3 text-lg animate-pulse">☀️</span>
-                                <span class="absolute top-6 right-2 text-xs opacity-80">☁️</span>
-                                <span class="absolute bottom-2 text-emerald-400/60 text-xl font-bold group-hover:scale-110 transition-transform">🌳</span>
+                                <span class="absolute top-2.5 left-2.5 sm:top-3 sm:left-3 text-base sm:text-lg animate-pulse">☀️</span>
+                                <span class="absolute top-5 right-2 text-[10px] sm:text-xs opacity-80">☁️</span>
+                                <span class="absolute bottom-1.5 text-emerald-400/60 text-lg sm:text-xl font-bold group-hover:scale-110 transition-transform">🌳</span>
                                 <!-- Flying bird on click -->
                                 <template x-if="windowEvent === 'bird'">
-                                    <span class="bird-fly-anim absolute text-lg z-20">🕊️</span>
+                                    <span class="bird-fly-anim absolute text-base sm:text-lg z-20">🕊️</span>
                                 </template>
                             </div>
                         @endif
                     </div>
 
-                    <!-- Motivational Poster on Wall (Interactive: click for positive boost!) -->
+                    <!-- Motivational Poster on Wall (Hidden on mobile to keep space clean) -->
                     <div 
                         @click="playSound('coin'); spawnFloatingText('Fokus &amp; Semangat! ✨', '#facc15'); $wire.interactPoster()"
-                        class="absolute top-3.5 sm:top-5 left-24 sm:left-36 px-2 sm:px-2.5 py-1 rounded-xl border border-amber-500/40 bg-slate-900/90 shadow-md text-center cursor-pointer hover:scale-105 hover:border-amber-400 transition-all z-10"
+                        class="hidden md:block absolute top-3.5 sm:top-5 left-36 px-2.5 py-1 rounded-xl border border-amber-500/40 bg-slate-900/90 shadow-md text-center cursor-pointer hover:scale-105 hover:border-amber-400 transition-all z-10"
                         title="Poster Motivasi (Klik untuk kata-kata semangat)"
                     >
-                        <span class="text-[8px] sm:text-[10px] font-black text-amber-300 tracking-wider font-mono block">
+                        <span class="text-[10px] font-black text-amber-300 tracking-wider font-mono block">
                             ✨ WORK &amp; CHILL
                         </span>
-                        <span class="text-[7px] sm:text-[8px] text-slate-400 block -mt-0.5">Stay Positive!</span>
+                        <span class="text-[8px] text-slate-400 block -mt-0.5">Stay Positive!</span>
                     </div>
 
                     <!-- 1. COMPACT RADIO BOOMBOX PILL (Default Minimal View - Takes Zero Clutter) -->
@@ -1609,7 +1608,7 @@ class="relative bg-slate-950 border border-slate-800 rounded-3xl shadow-2xl over
                         x-transition:enter-start="opacity-0 scale-90"
                         x-transition:enter-end="opacity-100 scale-100"
                         @click="showRadioDeck = true"
-                        class="absolute top-3.5 sm:top-5 right-3 sm:right-6 z-20 flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border cursor-pointer transition-all shadow-lg group select-none"
+                        class="absolute top-3 sm:top-5 right-2 sm:right-6 z-20 flex items-center gap-1.5 px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-xl border cursor-pointer transition-all shadow-lg group select-none"
                         :class="isMusicPlaying ? 'bg-purple-950/95 border-purple-400/90 shadow-[0_0_16px_rgba(168,85,247,0.45)] ring-1 ring-purple-400/50 scale-105' : 'bg-slate-900/90 border-slate-700/80 hover:border-purple-400/60 hover:scale-105'"
                         title="Klik untuk membuka Kontrol Lengkap Radio Hindia"
                     >
@@ -1809,19 +1808,19 @@ class="relative bg-slate-950 border border-slate-800 rounded-3xl shadow-2xl over
                     <div class="carpet-rug absolute bottom-12 left-1/2 -translate-x-1/2 w-64 sm:w-80 h-24 rounded-full opacity-90 pointer-events-none"></div>
 
                     <!-- Ball Playground Control Center in Room -->
-                    <div x-show="!isSleeping" class="absolute top-44 left-5 sm:left-6 z-20">
+                    <div x-show="!isSleeping" class="absolute top-28 sm:top-44 left-3 sm:left-6 z-20">
                         <!-- State 1: Ball NOT Active -> Tombol "Mulai Main Bola" Jelas & Menarik -->
                         <div x-show="!ballEnabled">
                             <button 
                                 @click="startBallGame()"
                                 type="button" 
-                                class="px-2.5 sm:px-3 py-1.5 rounded-xl text-[11px] sm:text-xs font-black border border-emerald-500/60 bg-slate-900/90 text-emerald-300 hover:bg-emerald-950/90 hover:border-emerald-400 hover:scale-105 transition-all flex items-center gap-2 shadow-lg shadow-black/50 cursor-pointer active:scale-95 group"
+                                class="px-2 sm:px-3 py-1 sm:py-1.5 rounded-xl text-[10px] sm:text-xs font-black border border-emerald-500/60 bg-slate-900/90 text-emerald-300 hover:bg-emerald-950/90 hover:border-emerald-400 hover:scale-105 transition-all flex items-center gap-1.5 sm:gap-2 shadow-lg shadow-black/50 cursor-pointer active:scale-95 group"
                                 title="Keluarkan bola karet & mulai bermain sundul bola bersama pet"
                             >
-                                <span class="text-base group-hover:rotate-45 transition-transform">⚽</span>
+                                <span class="text-sm sm:text-base group-hover:rotate-45 transition-transform">⚽</span>
                                 <div class="text-left">
                                     <span class="block leading-tight font-extrabold text-white group-hover:text-emerald-300">Main Bola</span>
-                                    <span class="block text-[8px] text-emerald-400/90 leading-none">Klik untuk mulai</span>
+                                    <span class="hidden sm:block text-[8px] text-emerald-400/90 leading-none">Klik untuk mulai</span>
                                 </div>
                             </button>
                         </div>
@@ -1999,35 +1998,35 @@ class="relative bg-slate-950 border border-slate-800 rounded-3xl shadow-2xl over
                     </div>
                 </template>
 
-                <!-- Top Speech Bubble (Interactive Karaoke Singing Lyric when Music is Playing!) -->
-                <div class="relative z-20 mt-1 max-w-xs sm:max-w-md text-center">
+                <!-- Speech Bubble (Interactive Karaoke Singing Lyric or Pet Expression) -->
+                <div class="relative z-30 mb-0.5 sm:mb-2 max-w-[210px] sm:max-w-xs text-center pointer-events-none">
                     <template x-if="isMusicPlaying && !isSleeping && currentLyricLine">
-                        <div class="inline-flex items-center gap-2 px-3.5 py-1.5 sm:py-2 bg-gradient-to-r from-purple-950/95 via-indigo-950/95 to-slate-900/95 border-2 border-purple-400/80 rounded-2xl shadow-[0_0_25px_rgba(168,85,247,0.5)] backdrop-blur-md">
-                            <span class="text-base sm:text-lg animate-bounce">🎤</span>
-                            <div class="text-left">
-                                <span class="text-[8px] sm:text-[9px] font-black text-purple-300 uppercase tracking-wider block">
+                        <div class="inline-flex items-center gap-1.5 sm:gap-2 px-3 py-1 sm:py-1.5 bg-gradient-to-r from-purple-950/95 via-indigo-950/95 to-slate-900/95 border-2 border-purple-400/80 rounded-xl sm:rounded-2xl shadow-[0_0_20px_rgba(168,85,247,0.5)] backdrop-blur-md">
+                            <span class="text-xs sm:text-base animate-bounce">🎤</span>
+                            <div class="text-left min-w-0">
+                                <span class="text-[7px] sm:text-[8px] font-black text-purple-300 uppercase tracking-wider block">
                                     {{ $pet->name }} ikut nyanyi:
                                 </span>
-                                <p class="text-xs sm:text-sm font-black text-white italic drop-shadow" x-text="currentLyricLine"></p>
+                                <p class="text-[10px] sm:text-xs font-black text-white italic drop-shadow truncate max-w-[170px] sm:max-w-xs" x-text="currentLyricLine"></p>
                             </div>
-                            <span class="text-sm text-yellow-300 animate-pulse">🎶</span>
+                            <span class="text-xs text-yellow-300 animate-pulse">🎶</span>
                         </div>
                     </template>
                     <template x-if="!isMusicPlaying || isSleeping || !currentLyricLine">
-                        <div class="inline-flex items-center gap-2 px-4 py-2 bg-slate-900/95 border border-slate-700/80 rounded-2xl shadow-2xl backdrop-blur-md">
-                            <span class="text-base">
+                        <div class="inline-flex items-center gap-1.5 px-3 py-1 sm:py-1.5 bg-slate-900/95 border border-slate-700/80 rounded-xl sm:rounded-2xl shadow-xl backdrop-blur-md">
+                            <span class="text-xs sm:text-sm">
                                 @if($pet->is_sleeping) 💤
                                 @elseif($pet->hunger <= 25) 🥺
                                 @elseif($pet->hygiene <= 25) 🫧
                                 @else ✨
                                 @endif
                             </span>
-                            <p class="text-xs sm:text-sm font-bold text-slate-100">
+                            <p class="text-[10px] sm:text-xs font-bold text-slate-100 leading-tight">
                                 {{ $petSpeech ?: $pet->meta['greeting'] }}
                             </p>
                         </div>
                     </template>
-                    <div class="w-3.5 h-3.5 bg-slate-900 border-r border-b border-slate-700/80 rotate-45 mx-auto -mt-1.5 shadow-md" :class="(isMusicPlaying && !isSleeping && currentLyricLine) ? 'border-purple-400 bg-purple-950' : ''"></div>
+                    <div class="w-2.5 h-2.5 bg-slate-900 border-r border-b border-slate-700/80 rotate-45 mx-auto -mt-1 shadow" :class="(isMusicPlaying && !isSleeping && currentLyricLine) ? 'border-purple-400 bg-purple-950' : ''"></div>
                 </div>
 
                 <!-- ========================================================= -->
@@ -2062,7 +2061,7 @@ class="relative bg-slate-950 border border-slate-800 rounded-3xl shadow-2xl over
                     <!-- ===================================================== -->
                     <!-- DETAILED VECTOR MASCOT RENDERING (SVG ARTWORK) -->
                     <!-- ===================================================== -->
-                    <div class="w-44 h-44 sm:w-52 sm:h-52 relative flex items-center justify-center filter drop-shadow-[0_12px_24px_rgba(0,0,0,0.6)] group-hover:scale-105 transition-transform duration-200">
+                    <div class="w-36 h-36 sm:w-52 sm:h-52 relative flex items-center justify-center filter drop-shadow-[0_12px_24px_rgba(0,0,0,0.6)] group-hover:scale-105 transition-transform duration-200">
                         
                         <!-- Cartoon Handheld Karaoke Microphone & Note Sparkles -->
                         <template x-if="isMusicPlaying && !isSleeping">
@@ -2394,96 +2393,92 @@ class="relative bg-slate-950 border border-slate-800 rounded-3xl shadow-2xl over
 
                     </div>
 
-                    <!-- Tap Hint Pulse -->
-                    <div class="mt-2 text-[11px] font-bold text-slate-300 group-hover:text-amber-300 transition-colors flex items-center gap-1.5 bg-slate-900/80 px-3.5 py-1 rounded-full border border-slate-700/80 shadow">
-                        <span class="animate-bounce">👋</span> Ajak main, tos bareng, atau oper bola ke sahabatmu!
-                    </div>
                 </div>
 
-                <!-- Bottom Status Notification Pill -->
-                <div class="relative z-20 text-[11px] sm:text-xs font-bold px-4 py-1.5 rounded-full border shadow-lg {{ $pet->is_sleeping ? 'bg-indigo-950/90 border-indigo-700 text-indigo-300' : 'bg-slate-900/90 border-slate-700 text-slate-200' }}">
+                <!-- Single Bottom Status Notification Pill -->
+                <div class="relative z-20 text-[10px] sm:text-xs font-bold px-3.5 py-1 rounded-full border shadow-md {{ $pet->is_sleeping ? 'bg-indigo-950/90 border-indigo-700 text-indigo-300' : 'bg-slate-900/90 border-slate-700 text-slate-200' }}">
                     @if($pet->is_sleeping)
-                        🌙 Sedang istirahat lelap memulihkan tenaga (Klik lampu tidur untuk bangunkan)
+                        🌙 Sedang tidur lelap (Klik lampu untuk bangunkan)
                     @elseif($pet->hunger <= 25)
-                        🍗 Perutku keroncongan! Beri makan dari tas makanan di bawah...
+                        🍗 Perut keroncongan! Suapkan camilan di bawah...
                     @elseif($pet->hygiene <= 25)
-                        🧼 Badanku terasa lengket dan gerah, yuk mandiin pakai sabun!
+                        🧼 Mandi &amp; piket yuk biar bersih kembali!
                     @elseif($pet->energy <= 25)
-                        ⚡ Aku mulai mengantuk dan lelah, tidurkan dulu yuk...
+                        ⚡ Mulai lelah, yuk tidurkan sejenak...
                     @else
-                        ✨ Mood sahabatmu sangat senang dan ceria!
+                        ✨ Mood senang &bull; Tap pet untuk ajak main!
                     @endif
                 </div>
             </div>
 
             <!-- ========================================================= -->
-            <!-- ACTION DOCK: POU-STYLE INTERACTIVE CARE BUTTONS -->
+            <!-- ACTION DOCK: POU-STYLE INTERACTIVE CARE BUTTONS (3-COL ON MOBILE, 6-COL ON DESKTOP) -->
             <!-- ========================================================= -->
-            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 sm:gap-2.5">
+            <div class="grid grid-cols-3 sm:grid-cols-6 gap-1.5 sm:gap-2.5">
                 <!-- 1. Ngopi Santai Button -->
                 <button 
                     @click="triggerDrinking()"
                     type="button" 
-                    class="p-2.5 sm:p-3 rounded-2xl bg-gradient-to-br from-amber-600/20 to-orange-600/10 border border-amber-500/40 hover:border-amber-400 text-amber-300 font-black text-xs flex flex-col items-center justify-center gap-1 transition-all hover:scale-[1.02] active:scale-95 shadow-xl cursor-pointer"
+                    class="p-2 sm:p-3 rounded-xl sm:rounded-2xl bg-gradient-to-br from-amber-600/20 to-orange-600/10 border border-amber-500/40 hover:border-amber-400 text-amber-300 font-black text-xs flex flex-col items-center justify-center gap-0.5 sm:gap-1 transition-all hover:scale-[1.02] active:scale-95 shadow-md cursor-pointer"
                 >
-                    <span class="text-2xl sm:text-3xl filter drop-shadow">☕</span>
-                    <span>Ngopi Santai</span>
-                    <span class="text-[9px] font-medium text-amber-400/80">Kopi Susu (+Energi)</span>
+                    <span class="text-xl sm:text-2xl filter drop-shadow">☕</span>
+                    <span class="text-[11px] sm:text-xs font-black">Ngopi</span>
+                    <span class="hidden sm:block text-[9px] font-medium text-amber-400/80">Kopi Susu</span>
                 </button>
 
-                <!-- 2. Piket & Rapi-Rapi Button -->
-                <button 
-                    @click="triggerPiket()"
-                    type="button" 
-                    class="p-2.5 sm:p-3 rounded-2xl bg-gradient-to-br from-teal-600/20 to-emerald-600/10 border border-teal-500/40 hover:border-teal-400 text-teal-300 font-black text-xs flex flex-col items-center justify-center gap-1 transition-all hover:scale-[1.02] active:scale-95 shadow-xl cursor-pointer"
-                >
-                    <span class="text-2xl sm:text-3xl filter drop-shadow">🧹</span>
-                    <span>Piket &amp; Rapi</span>
-                    <span class="text-[9px] font-medium text-teal-400/80">Bersih Meja (+Koin)</span>
-                </button>
-
-                <!-- 3. Membaca Buku Button -->
-                <button 
-                    @click="playSound('pat'); spawnFloatingText('Wawasan Baru! +8 XP 📚', '#a855f7', '📖'); $wire.readBook()"
-                    type="button" 
-                    class="p-2.5 sm:p-3 rounded-2xl bg-gradient-to-br from-violet-600/20 to-purple-600/10 border border-violet-500/40 hover:border-violet-400 text-violet-300 font-black text-xs flex flex-col items-center justify-center gap-1 transition-all hover:scale-[1.02] active:scale-95 shadow-xl cursor-pointer"
-                >
-                    <span class="text-2xl sm:text-3xl filter drop-shadow">📚</span>
-                    <span>Baca Buku</span>
-                    <span class="text-[9px] font-medium text-violet-400/80">Novel &amp; Ilmu (+XP)</span>
-                </button>
-
-                <!-- 4. Camilan Enak Button -->
+                <!-- 2. Camilan Enak Button -->
                 <button 
                     @click="showFoodDrawer = !showFoodDrawer"
                     type="button" 
-                    class="p-2.5 sm:p-3 rounded-2xl bg-gradient-to-br from-rose-600/20 to-pink-600/10 border border-rose-500/40 hover:border-rose-400 text-rose-300 font-black text-xs flex flex-col items-center justify-center gap-1 transition-all hover:scale-[1.02] active:scale-95 shadow-xl cursor-pointer"
+                    class="p-2 sm:p-3 rounded-xl sm:rounded-2xl bg-gradient-to-br from-rose-600/20 to-pink-600/10 border border-rose-500/40 hover:border-rose-400 text-rose-300 font-black text-xs flex flex-col items-center justify-center gap-0.5 sm:gap-1 transition-all hover:scale-[1.02] active:scale-95 shadow-md cursor-pointer"
                 >
-                    <span class="text-2xl sm:text-3xl filter drop-shadow">🍩</span>
-                    <span>Camilan Enak</span>
-                    <span class="text-[9px] font-medium text-rose-400/80">Tas Camilan</span>
+                    <span class="text-xl sm:text-2xl filter drop-shadow">🍩</span>
+                    <span class="text-[11px] sm:text-xs font-black">Makan</span>
+                    <span class="hidden sm:block text-[9px] font-medium text-rose-400/80">Tas Camilan</span>
+                </button>
+
+                <!-- 3. Piket & Rapi-Rapi Button -->
+                <button 
+                    @click="triggerPiket()"
+                    type="button" 
+                    class="p-2 sm:p-3 rounded-xl sm:rounded-2xl bg-gradient-to-br from-teal-600/20 to-emerald-600/10 border border-teal-500/40 hover:border-teal-400 text-teal-300 font-black text-xs flex flex-col items-center justify-center gap-0.5 sm:gap-1 transition-all hover:scale-[1.02] active:scale-95 shadow-md cursor-pointer"
+                >
+                    <span class="text-xl sm:text-2xl filter drop-shadow">🧹</span>
+                    <span class="text-[11px] sm:text-xs font-black">Piket</span>
+                    <span class="hidden sm:block text-[9px] font-medium text-teal-400/80">Bersih Meja</span>
+                </button>
+
+                <!-- 4. Membaca Buku Button -->
+                <button 
+                    @click="playSound('pat'); spawnFloatingText('Wawasan Baru! +8 XP 📚', '#a855f7', '📖'); $wire.readBook()"
+                    type="button" 
+                    class="p-2 sm:p-3 rounded-xl sm:rounded-2xl bg-gradient-to-br from-violet-600/20 to-purple-600/10 border border-violet-500/40 hover:border-violet-400 text-violet-300 font-black text-xs flex flex-col items-center justify-center gap-0.5 sm:gap-1 transition-all hover:scale-[1.02] active:scale-95 shadow-md cursor-pointer"
+                >
+                    <span class="text-xl sm:text-2xl filter drop-shadow">📚</span>
+                    <span class="text-[11px] sm:text-xs font-black">Baca</span>
+                    <span class="hidden sm:block text-[9px] font-medium text-violet-400/80">Novel &amp; Ilmu</span>
                 </button>
 
                 <!-- 5. Tidurkan / Bangunkan Button -->
                 <button 
                     @click="triggerSleepToggle()"
                     type="button" 
-                    class="p-2.5 sm:p-3 rounded-2xl bg-gradient-to-br from-indigo-600/20 to-sky-600/10 border border-indigo-500/40 hover:border-indigo-400 text-indigo-300 font-black text-xs flex flex-col items-center justify-center gap-1 transition-all hover:scale-[1.02] active:scale-95 shadow-xl cursor-pointer"
+                    class="p-2 sm:p-3 rounded-xl sm:rounded-2xl bg-gradient-to-br from-indigo-600/20 to-sky-600/10 border border-indigo-500/40 hover:border-indigo-400 text-indigo-300 font-black text-xs flex flex-col items-center justify-center gap-0.5 sm:gap-1 transition-all hover:scale-[1.02] active:scale-95 shadow-md cursor-pointer"
                 >
-                    <span class="text-2xl sm:text-3xl filter drop-shadow">{{ $pet->is_sleeping ? '💡' : '🌙' }}</span>
-                    <span>{{ $pet->is_sleeping ? 'Bangunkan' : 'Rehat / Tidur' }}</span>
-                    <span class="text-[9px] font-medium text-indigo-400/80">{{ $pet->is_sleeping ? 'Nyalakan lampu' : 'Padamkan lampu' }}</span>
+                    <span class="text-xl sm:text-2xl filter drop-shadow">{{ $pet->is_sleeping ? '💡' : '🌙' }}</span>
+                    <span class="text-[11px] sm:text-xs font-black">{{ $pet->is_sleeping ? 'Bangun' : 'Tidur' }}</span>
+                    <span class="hidden sm:block text-[9px] font-medium text-indigo-400/80">{{ $pet->is_sleeping ? 'Nyalakan' : 'Padamkan' }}</span>
                 </button>
 
                 <!-- 6. Mini-Game Arcade Button -->
                 <button 
                     @click="$wire.isMiniGameOpen = true"
                     type="button" 
-                    class="p-2.5 sm:p-3 rounded-2xl bg-gradient-to-br from-emerald-600/20 to-teal-600/10 border border-emerald-500/40 hover:border-emerald-400 text-emerald-300 font-black text-xs flex flex-col items-center justify-center gap-1 transition-all hover:scale-[1.02] active:scale-95 shadow-xl cursor-pointer"
+                    class="p-2 sm:p-3 rounded-xl sm:rounded-2xl bg-gradient-to-br from-emerald-600/20 to-teal-600/10 border border-emerald-500/40 hover:border-emerald-400 text-emerald-300 font-black text-xs flex flex-col items-center justify-center gap-0.5 sm:gap-1 transition-all hover:scale-[1.02] active:scale-95 shadow-md cursor-pointer"
                 >
-                    <span class="text-2xl sm:text-3xl filter drop-shadow">🎮</span>
-                    <span>Main Game</span>
-                    <span class="text-[9px] font-medium text-emerald-400/80">Tangkap Koin (+Reward)</span>
+                    <span class="text-xl sm:text-2xl filter drop-shadow">🎮</span>
+                    <span class="text-[11px] sm:text-xs font-black">Game</span>
+                    <span class="hidden sm:block text-[9px] font-medium text-emerald-400/80">Tangkap Koin</span>
                 </button>
             </div>
 
