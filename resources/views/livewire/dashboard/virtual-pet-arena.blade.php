@@ -1429,26 +1429,33 @@ class="relative bg-slate-950 border border-slate-800 rounded-3xl shadow-2xl over
                     </button>
                 </div>
 
-                <!-- Navigation Tabs: Full width 4-col grid on mobile, inline flex on desktop -->
-                <div class="grid grid-cols-4 md:flex items-center gap-1 p-1 bg-slate-950 rounded-xl border border-slate-800 w-full md:w-auto">
+                <!-- Navigation Tabs: Full width 5-col grid on mobile, inline flex on desktop -->
+                <div class="grid grid-cols-5 md:flex items-center gap-1 p-1 bg-slate-950 rounded-xl border border-slate-800 w-full md:w-auto">
                     <button 
                         wire:click="setViewMode('arena')" 
                         type="button"
-                        class="px-2 sm:px-3 py-1.5 rounded-lg text-[11px] sm:text-xs font-black uppercase tracking-wider transition-all text-center {{ $viewMode === 'arena' ? 'bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-950 shadow-md' : 'text-slate-400 hover:text-white' }}"
+                        class="px-1.5 sm:px-3 py-1.5 rounded-lg text-[10px] sm:text-xs font-black uppercase tracking-wider transition-all text-center {{ $viewMode === 'arena' ? 'bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-950 shadow-md' : 'text-slate-400 hover:text-white' }}"
                     >
                         🏠 <span class="hidden sm:inline">Kamar</span>
                     </button>
                     <button 
                         wire:click="setViewMode('shop')" 
                         type="button"
-                        class="px-2 sm:px-3 py-1.5 rounded-lg text-[11px] sm:text-xs font-black uppercase tracking-wider transition-all text-center {{ $viewMode === 'shop' ? 'bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-950 shadow-md' : 'text-slate-400 hover:text-white' }}"
+                        class="px-1.5 sm:px-3 py-1.5 rounded-lg text-[10px] sm:text-xs font-black uppercase tracking-wider transition-all text-center {{ $viewMode === 'shop' ? 'bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-950 shadow-md' : 'text-slate-400 hover:text-white' }}"
                     >
                         🛒 <span class="hidden sm:inline">Toko</span>
                     </button>
                     <button 
+                        wire:click="setViewMode('leaderboard')" 
+                        type="button"
+                        class="px-1.5 sm:px-3 py-1.5 rounded-lg text-[10px] sm:text-xs font-black uppercase tracking-wider transition-all text-center {{ $viewMode === 'leaderboard' ? 'bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-950 shadow-md' : 'text-slate-400 hover:text-white' }}"
+                    >
+                        🏆 <span class="hidden sm:inline">Peringkat</span>
+                    </button>
+                    <button 
                         wire:click="setViewMode('rewards')" 
                         type="button"
-                        class="px-2 sm:px-3 py-1.5 rounded-lg text-[11px] sm:text-xs font-black uppercase tracking-wider transition-all text-center {{ $viewMode === 'rewards' ? 'bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-950 shadow-md' : 'text-slate-400 hover:text-white' }}"
+                        class="px-1.5 sm:px-3 py-1.5 rounded-lg text-[10px] sm:text-xs font-black uppercase tracking-wider transition-all text-center {{ $viewMode === 'rewards' ? 'bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-950 shadow-md' : 'text-slate-400 hover:text-white' }}"
                     >
                         📜 <span class="hidden sm:inline">Reward</span>
                     </button>
@@ -1456,7 +1463,7 @@ class="relative bg-slate-950 border border-slate-800 rounded-3xl shadow-2xl over
                         wire:click="setViewMode('adopt')" 
                         type="button"
                         title="Ganti Karakter / Nama"
-                        class="px-2 sm:px-2.5 py-1.5 rounded-lg text-[11px] sm:text-xs font-bold transition-all text-center {{ $viewMode === 'adopt' ? 'bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-950 shadow-md' : 'text-slate-400 hover:text-white' }}"
+                        class="px-1.5 sm:px-2.5 py-1.5 rounded-lg text-[10px] sm:text-xs font-bold transition-all text-center {{ $viewMode === 'adopt' ? 'bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-950 shadow-md' : 'text-slate-400 hover:text-white' }}"
                     >
                         ⚙️ <span class="hidden sm:inline">Karakter</span>
                     </button>
@@ -2619,6 +2626,295 @@ class="relative bg-slate-950 border border-slate-800 rounded-3xl shadow-2xl over
                 @endforeach
             </div>
 
+            <div class="text-center pt-2">
+                <button wire:click="setViewMode('arena')" type="button" class="px-6 py-2 rounded-xl text-xs font-extrabold bg-slate-800 text-slate-300 hover:text-white transition-all cursor-pointer">
+                    ← Kembali ke Kamar
+                </button>
+            </div>
+        </div>
+    @endif
+
+    <!-- ========================================================= -->
+    <!-- VIEW MODE: LEADERBOARD / PERINGKAT ADMIN -->
+    <!-- ========================================================= -->
+    @if($viewMode === 'leaderboard' && $pet)
+        <div class="p-4 sm:p-6 space-y-5">
+            <!-- Header & Filter Tabs -->
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-slate-800 pb-4">
+                <div>
+                    <h4 class="text-base sm:text-lg font-black text-white font-serif-display uppercase tracking-wider flex items-center gap-2">
+                        <span>🏆</span> Hall of Fame &amp; Klasemen Sahabat ELF
+                    </h4>
+                    <p class="text-xs text-slate-400 mt-0.5">
+                        Ajang persaingan sehat &amp; kolaborasi para admin pesantren dalam merawat dan menaikkan level sahabat virtual!
+                    </p>
+                </div>
+
+                <!-- Sort Filter Buttons -->
+                <div class="flex items-center gap-1.5 p-1 bg-slate-950 rounded-xl border border-slate-800 shrink-0">
+                    <button 
+                        wire:click="setLeaderboardSort('level')" 
+                        type="button"
+                        class="px-2.5 py-1 rounded-lg text-[10px] sm:text-xs font-black transition-all flex items-center gap-1 cursor-pointer {{ $leaderboardSort === 'level' ? 'bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-950 shadow' : 'text-slate-400 hover:text-white' }}"
+                    >
+                        <span>🏆</span>
+                        <span>Level &amp; XP</span>
+                    </button>
+                    <button 
+                        wire:click="setLeaderboardSort('coins')" 
+                        type="button"
+                        class="px-2.5 py-1 rounded-lg text-[10px] sm:text-xs font-black transition-all flex items-center gap-1 cursor-pointer {{ $leaderboardSort === 'coins' ? 'bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-950 shadow' : 'text-slate-400 hover:text-white' }}"
+                    >
+                        <span>🪙</span>
+                        <span>Koin</span>
+                    </button>
+                    <button 
+                        wire:click="setLeaderboardSort('happiness')" 
+                        type="button"
+                        class="px-2.5 py-1 rounded-lg text-[10px] sm:text-xs font-black transition-all flex items-center gap-1 cursor-pointer {{ $leaderboardSort === 'happiness' ? 'bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-950 shadow' : 'text-slate-400 hover:text-white' }}"
+                    >
+                        <span>💖</span>
+                        <span>Ceria</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Posisi Pet Kamu (My Standing Banner) -->
+            <div class="p-3.5 sm:p-4 rounded-2xl bg-gradient-to-r from-amber-500/15 via-purple-500/10 to-slate-900 border border-amber-500/40 shadow-lg flex flex-col sm:flex-row items-center justify-between gap-3">
+                <div class="flex items-center gap-3 w-full sm:w-auto">
+                    <div class="px-3.5 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-950 font-black text-center shadow shrink-0">
+                        <span class="text-[9px] uppercase tracking-wider block font-bold text-slate-900/80">Peringkat</span>
+                        <span class="text-base sm:text-lg font-black leading-none">#{{ $myRank ?? '-' }}</span>
+                    </div>
+                    <div class="min-w-0">
+                        <div class="flex items-center gap-2">
+                            <span class="text-sm font-black text-white truncate">{{ $pet->name }}</span>
+                            <span class="text-[9px] px-1.5 py-0.5 rounded bg-amber-400/20 text-amber-300 font-mono font-bold border border-amber-400/30">
+                                Lv. {{ $pet->level }}
+                            </span>
+                            <span class="text-[9px] text-slate-400 hidden sm:inline">&bull; {{ $pet->rank_title }}</span>
+                        </div>
+                        <p class="text-xs text-amber-200/90 mt-0.5 font-medium">
+                            @if($myRank === 1)
+                                👑 <strong>Luar biasa!</strong> Pet kamu memimpin takhta klasemen tertinggi para admin!
+                            @elseif($aheadPet)
+                                @php 
+                                    $xpGap = max(1, ($aheadPet->level * 100 + $aheadPet->xp) - ($pet->level * 100 + $pet->xp));
+                                @endphp
+                                🚀 Selisih <strong class="text-yellow-300 font-mono">{{ number_format($xpGap) }} XP</strong> untuk menyalip <strong>{{ $aheadPet->name }}</strong> (Admin {{ $aheadPet->user->name ?? 'Admin' }})!
+                            @else
+                                🌱 Terus rawat pet dan selesaikan tugas sistem untuk memuncaki klasemen!
+                            @endif
+                        </p>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-2 w-full sm:w-auto justify-end shrink-0">
+                    <button wire:click="setViewMode('arena')" type="button" class="px-3.5 py-1.5 rounded-xl text-xs font-black bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-950 hover:brightness-110 active:scale-95 transition-all shadow cursor-pointer">
+                        🎮 Rawat Pet
+                    </button>
+                </div>
+            </div>
+
+            <!-- Top 3 Mini Podium -->
+            @if(count($leaderboardPets) >= 1)
+                <div class="grid grid-cols-3 gap-2 sm:gap-4 items-end pt-4 sm:pt-6 pb-2 px-1 sm:px-6">
+                    <!-- Juara 2 (🥈 Kiri) -->
+                    <div class="flex flex-col items-center text-center min-w-0">
+                        @if(isset($leaderboardPets[1]))
+                            <span class="text-lg sm:text-2xl filter drop-shadow">🥈</span>
+                            <div class="w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-slate-800 border-2 border-slate-300 flex items-center justify-center text-2xl sm:text-3xl shadow-lg mt-1 group hover:scale-105 transition-transform">
+                                {{ $leaderboardPets[1]->meta['emoji'] ?? '🐾' }}
+                            </div>
+                            <span class="text-xs sm:text-sm font-black text-slate-200 truncate w-full mt-1.5">
+                                {{ $leaderboardPets[1]->name }}
+                            </span>
+                            <span class="text-[9px] sm:text-[10px] text-slate-400 truncate w-full">
+                                {{ $leaderboardPets[1]->user->name ?? 'Admin' }}
+                            </span>
+                            <div class="px-2 py-0.5 rounded-md bg-slate-900 border border-slate-700 text-[9px] sm:text-[10px] font-mono font-bold text-slate-300 mt-1">
+                                @if($leaderboardSort === 'coins')
+                                    🪙 {{ number_format($leaderboardPets[1]->coins) }}
+                                @elseif($leaderboardSort === 'happiness')
+                                    💖 {{ $leaderboardPets[1]->happiness }}%
+                                @else
+                                    Lv. {{ $leaderboardPets[1]->level }} ({{ number_format($leaderboardPets[1]->xp) }} XP)
+                                @endif
+                            </div>
+                            <div class="w-full h-18 sm:h-24 bg-gradient-to-t from-slate-900 to-slate-800/90 rounded-t-2xl border-t-4 border-slate-300 flex flex-col items-center justify-center shadow-md mt-2">
+                                <span class="text-xs sm:text-sm font-black text-slate-300">#2</span>
+                            </div>
+                        @else
+                            <div class="w-full h-14 sm:h-18 bg-slate-900/40 rounded-t-2xl border-t border-slate-800"></div>
+                        @endif
+                    </div>
+
+                    <!-- Juara 1 (🥇 Tengah, Tertinggi) -->
+                    <div class="flex flex-col items-center text-center min-w-0">
+                        <span class="text-2xl sm:text-3xl filter drop-shadow animate-bounce">👑</span>
+                        <div class="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-gradient-to-tr from-amber-500/30 to-yellow-400/30 border-3 border-amber-400 ring-4 ring-amber-400/20 flex items-center justify-center text-3xl sm:text-4xl shadow-2xl mt-1 hover:scale-105 transition-transform">
+                            {{ $leaderboardPets[0]->meta['emoji'] ?? '🐾' }}
+                        </div>
+                        <span class="text-xs sm:text-base font-black text-amber-300 truncate w-full mt-1.5 flex items-center justify-center gap-1">
+                            <span>{{ $leaderboardPets[0]->name }}</span>
+                            <span class="text-xs">✨</span>
+                        </span>
+                        <span class="text-[10px] sm:text-xs text-amber-200/80 font-bold truncate w-full">
+                            {{ $leaderboardPets[0]->user->name ?? 'Admin' }}
+                        </span>
+                        <div class="px-2.5 py-0.5 rounded-md bg-amber-500/20 border border-amber-500/40 text-[10px] sm:text-xs font-mono font-black text-yellow-300 mt-1">
+                            @if($leaderboardSort === 'coins')
+                                🪙 {{ number_format($leaderboardPets[0]->coins) }}
+                            @elseif($leaderboardSort === 'happiness')
+                                💖 {{ $leaderboardPets[0]->happiness }}%
+                            @else
+                                Lv. {{ $leaderboardPets[0]->level }} ({{ number_format($leaderboardPets[0]->xp) }} XP)
+                            @endif
+                        </div>
+                        <div class="w-full h-26 sm:h-34 bg-gradient-to-t from-amber-950 via-amber-900/60 to-amber-600/40 rounded-t-2xl border-t-4 border-yellow-300 flex flex-col items-center justify-center shadow-[0_0_25px_rgba(245,158,11,0.4)] mt-2">
+                            <span class="text-xs sm:text-sm font-black text-amber-200">🥇 #1 JUARA</span>
+                        </div>
+                    </div>
+
+                    <!-- Juara 3 (🥉 Kanan) -->
+                    <div class="flex flex-col items-center text-center min-w-0">
+                        @if(isset($leaderboardPets[2]))
+                            <span class="text-lg sm:text-2xl filter drop-shadow">🥉</span>
+                            <div class="w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-slate-800 border-2 border-amber-700 flex items-center justify-center text-2xl sm:text-3xl shadow-lg mt-1 group hover:scale-105 transition-transform">
+                                {{ $leaderboardPets[2]->meta['emoji'] ?? '🐾' }}
+                            </div>
+                            <span class="text-xs sm:text-sm font-black text-amber-200/90 truncate w-full mt-1.5">
+                                {{ $leaderboardPets[2]->name }}
+                            </span>
+                            <span class="text-[9px] sm:text-[10px] text-slate-400 truncate w-full">
+                                {{ $leaderboardPets[2]->user->name ?? 'Admin' }}
+                            </span>
+                            <div class="px-2 py-0.5 rounded-md bg-slate-900 border border-slate-700 text-[9px] sm:text-[10px] font-mono font-bold text-amber-500 mt-1">
+                                @if($leaderboardSort === 'coins')
+                                    🪙 {{ number_format($leaderboardPets[2]->coins) }}
+                                @elseif($leaderboardSort === 'happiness')
+                                    💖 {{ $leaderboardPets[2]->happiness }}%
+                                @else
+                                    Lv. {{ $leaderboardPets[2]->level }} ({{ number_format($leaderboardPets[2]->xp) }} XP)
+                                @endif
+                            </div>
+                            <div class="w-full h-14 sm:h-18 bg-gradient-to-t from-slate-900 to-slate-800/80 rounded-t-2xl border-t-4 border-amber-700 flex flex-col items-center justify-center shadow-md mt-2">
+                                <span class="text-xs sm:text-sm font-black text-amber-700">#3</span>
+                            </div>
+                        @else
+                            <div class="w-full h-12 sm:h-16 bg-slate-900/40 rounded-t-2xl border-t border-slate-800"></div>
+                        @endif
+                    </div>
+                </div>
+            @endif
+
+            <!-- Daftar Klasemen Lengkap Seluruh Admin -->
+            <div class="space-y-2 pt-2">
+                <div class="flex items-center justify-between text-xs text-slate-400 px-2 font-bold uppercase tracking-wider">
+                    <span>Klasemen Lengkap ({{ count($leaderboardPets) }} Sahabat Terdaftar)</span>
+                    <span>Total XP / Koin</span>
+                </div>
+
+                @forelse($leaderboardPets as $index => $rankedPet)
+                    @php 
+                        $isMe = $pet && $rankedPet->id === $pet->id;
+                    @endphp
+                    <div class="p-3 sm:p-4 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 transition-all {{ $isMe ? 'bg-amber-500/10 border-2 border-amber-500/60 shadow-lg ring-1 ring-amber-400/30' : 'bg-slate-900/80 border border-slate-800 hover:border-slate-700' }}">
+                        <div class="flex items-center gap-3 min-w-0">
+                            <!-- Rank Number Badge -->
+                            <div class="shrink-0">
+                                @if($index === 0)
+                                    <div class="w-8 h-8 rounded-xl bg-gradient-to-br from-amber-400 to-yellow-600 text-slate-950 font-black text-xs sm:text-sm flex items-center justify-center shadow">
+                                        🥇
+                                    </div>
+                                @elseif($index === 1)
+                                    <div class="w-8 h-8 rounded-xl bg-gradient-to-br from-slate-300 to-slate-500 text-slate-950 font-black text-xs sm:text-sm flex items-center justify-center shadow">
+                                        🥈
+                                    </div>
+                                @elseif($index === 2)
+                                    <div class="w-8 h-8 rounded-xl bg-gradient-to-br from-amber-700 to-amber-900 text-amber-200 font-black text-xs sm:text-sm flex items-center justify-center shadow">
+                                        🥉
+                                    </div>
+                                @else
+                                    <div class="w-8 h-8 rounded-xl bg-slate-800 border border-slate-700 text-slate-400 font-mono font-bold text-xs sm:text-sm flex items-center justify-center">
+                                        #{{ $index + 1 }}
+                                    </div>
+                                @endif
+                            </div>
+
+                            <!-- Pet Emoji Avatar -->
+                            <div class="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl bg-slate-800/80 border border-slate-700 flex items-center justify-center text-xl sm:text-2xl shrink-0 shadow-inner">
+                                {{ $rankedPet->meta['emoji'] ?? '🐾' }}
+                            </div>
+
+                            <!-- Pet & Admin Info -->
+                            <div class="min-w-0 truncate">
+                                <div class="flex items-center gap-1.5 flex-wrap">
+                                    <span class="font-black text-xs sm:text-sm text-white truncate">{{ $rankedPet->name }}</span>
+                                    @if($isMe)
+                                        <span class="px-1.5 py-0.2 rounded text-[8px] bg-amber-400/20 text-amber-300 font-mono font-black border border-amber-400/30">
+                                            Kamu
+                                        </span>
+                                    @endif
+                                    <span class="text-[9px] px-1.5 py-0.2 rounded bg-slate-800 text-slate-300 font-semibold border border-slate-700">
+                                        {{ $rankedPet->meta['species'] ?? 'Sahabat' }}
+                                    </span>
+                                </div>
+                                <div class="text-[10px] sm:text-xs text-slate-400 flex items-center gap-1.5 mt-0.5 truncate">
+                                    <span class="text-slate-300 font-semibold truncate">👤 {{ $rankedPet->user->name ?? 'Admin ELF' }}</span>
+                                    <span>&bull;</span>
+                                    <span class="text-amber-400/90 font-medium truncate">{{ $rankedPet->rank_title }}</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Stats & Interaksi Sosial -->
+                        <div class="flex items-center gap-2 justify-between sm:justify-end shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-800">
+                            <!-- Stats badges -->
+                            <div class="flex items-center gap-1.5">
+                                <span class="px-2 sm:px-2.5 py-1 rounded-xl bg-slate-950 border border-slate-800 text-[10px] sm:text-xs font-mono font-black text-purple-300" title="Level Pet">
+                                    Lv. {{ $rankedPet->level }}
+                                </span>
+                                <span class="px-2 sm:px-2.5 py-1 rounded-xl bg-slate-950 border border-slate-800 text-[10px] sm:text-xs font-mono font-bold text-yellow-400" title="Total XP">
+                                    {{ number_format($rankedPet->xp) }} XP
+                                </span>
+                                <span class="hidden md:inline-flex px-2 py-1 rounded-xl bg-slate-950 border border-slate-800 text-[10px] sm:text-xs font-mono font-bold text-amber-300" title="Koin">
+                                    🪙 {{ number_format($rankedPet->coins) }}
+                                </span>
+                                <span class="hidden sm:inline-flex px-2 py-1 rounded-xl bg-slate-950 border border-slate-800 text-[10px] sm:text-xs font-bold text-pink-400" title="Tingkat Kebahagiaan">
+                                    💖 {{ $rankedPet->happiness }}%
+                                </span>
+                            </div>
+
+                            <!-- Social Action: Tos Semangat -->
+                            @if(!$isMe)
+                                <button 
+                                    wire:click="cheerPet({{ $rankedPet->id }})" 
+                                    type="button" 
+                                    class="px-2.5 sm:px-3 py-1.5 rounded-xl text-[10px] sm:text-xs font-black bg-gradient-to-r from-amber-500/20 to-orange-500/20 border border-amber-500/40 hover:border-amber-400 text-amber-300 hover:text-white transition-all hover:scale-105 active:scale-95 shadow cursor-pointer flex items-center gap-1 shrink-0"
+                                    title="Kirim Tos Semangat (+5 Koin &amp; +5 XP persahabatan)"
+                                >
+                                    <span class="animate-pulse">✨</span>
+                                    <span class="hidden sm:inline">Tos Semangat</span>
+                                    <span class="sm:hidden">Tos</span>
+                                </button>
+                            @else
+                                <span class="px-2.5 py-1 text-[10px] font-bold text-amber-400/90 bg-amber-500/10 rounded-xl border border-amber-500/30">
+                                    🌟 Pet Kamu
+                                </span>
+                            @endif
+                        </div>
+                    </div>
+                @empty
+                    <div class="p-8 text-center bg-slate-900/60 border border-slate-800 rounded-2xl text-slate-400">
+                        <span class="text-4xl block mb-2">🐾</span>
+                        <p class="text-sm font-bold text-white">Belum ada admin yang mengadopsi pet.</p>
+                        <p class="text-xs mt-1">Jadilah yang pertama merawat sahabat virtual maskot!</p>
+                    </div>
+                @endforelse
+            </div>
+
+            <!-- Footer Return Button -->
             <div class="text-center pt-2">
                 <button wire:click="setViewMode('arena')" type="button" class="px-6 py-2 rounded-xl text-xs font-extrabold bg-slate-800 text-slate-300 hover:text-white transition-all cursor-pointer">
                     ← Kembali ke Kamar

@@ -13,8 +13,11 @@ class VirtualPetArena extends Component
 
     public ?AdminVirtualPet $pet = null;
 
-    // Mode: 'arena', 'shop', 'adopt', 'rewards'
+    // Mode: 'arena', 'shop', 'adopt', 'rewards', 'leaderboard'
     public string $viewMode = 'arena';
+
+    // Filter Sort Leaderboard: 'level', 'coins', 'happiness'
+    public string $leaderboardSort = 'level';
 
     // Form Adopsi / Edit
     public string $selectedPetType = 'kibo';
@@ -485,11 +488,92 @@ class VirtualPetArena extends Component
         $this->speechEmotion = 'happy';
     }
 
+    /**
+     * Ubah kriteria sorting leaderboard.
+     */
+    public function setLeaderboardSort(string $sort): void
+    {
+        if (in_array($sort, ['level', 'coins', 'happiness'])) {
+            $this->leaderboardSort = $sort;
+        }
+    }
+
+    /**
+     * Interaksi sosial antar sesama admin: Tos / Beri Semangat ke Pet lain.
+     * Dibatasi 1x per 24 jam per target pet.
+     */
+    public function cheerPet(int $targetPetId): void
+    {
+        $user = Auth::user();
+        if (!$user || !$this->pet) {
+            return;
+        }
+
+        if ($this->pet->id === $targetPetId) {
+            $this->toastInfo("Kamu menyemangati pet milikmu sendiri! Tetap konsisten dan semangat ya! ✨");
+            return;
+        }
+
+        $sessionKey = 'cheered_pet_' . $user->id . '_' . $targetPetId;
+        $lastCheered = session($sessionKey);
+        if ($lastCheered && now()->diffInHours($lastCheered) < 24) {
+            $this->toastInfo("Kamu sudah memberi tos semangat ke pet ini hari ini. Coba lagi besok ya!", '⏳ Sudah Disemangati');
+            return;
+        }
+
+        $targetPet = AdminVirtualPet::with('user')->find($targetPetId);
+        if (!$targetPet) {
+            $this->toastError("Data pet tidak ditemukan.");
+            return;
+        }
+
+        // Beri reward persahabatan ke pet target (+10 XP & +5 Koin)
+        $targetPet->addReward(5, 10, "Tos Semangat dari Admin {$user->name}");
+        $targetPet->happiness = min(100, $targetPet->happiness + 5);
+        $targetPet->save();
+
+        // Beri apresiasi juga ke admin yang menyemangati (+5 Koin & +5 XP)
+        $this->pet->addReward(5, 5, "Menyemangati Pet {$targetPet->name}");
+        $this->pet->save();
+
+        session([$sessionKey => now()]);
+
+        $this->toastSuccess(
+            "Tos semangat terkirim ke {$targetPet->name} (Admin {$targetPet->user->name})! Kamu mendapat +5 Koin & +5 XP!",
+            '✨ Tos Persahabatan Berhasil!'
+        );
+        $this->petSpeech = "Alhamdulillah! Senang sekali bisa saling mendukung sesama sahabat admin!";
+        $this->speechEmotion = 'happy';
+    }
+
     public function render()
     {
         $uniquePetTypes = collect(AdminVirtualPet::PET_TYPES)
             ->filter(fn($val, $key) => in_array($key, ['kibo', 'bunbun', 'pansan', 'pingo']))
             ->all();
+
+        // Query data seluruh pet admin untuk leaderboard
+        $petsQuery = AdminVirtualPet::with('user');
+        match ($this->leaderboardSort) {
+            'coins' => $petsQuery->orderByDesc('coins')->orderByDesc('level')->orderByDesc('xp'),
+            'happiness' => $petsQuery->orderByDesc('happiness')->orderByDesc('level')->orderByDesc('xp'),
+            default => $petsQuery->orderByDesc('level')->orderByDesc('xp')->orderByDesc('happiness'),
+        };
+        $leaderboardPets = $petsQuery->get();
+
+        $myRank = null;
+        $aheadPet = null;
+        if ($this->pet) {
+            foreach ($leaderboardPets as $index => $rankedPet) {
+                if ($rankedPet->id === $this->pet->id) {
+                    $myRank = $index + 1;
+                    if ($index > 0) {
+                        $aheadPet = $leaderboardPets[$index - 1];
+                    }
+                    break;
+                }
+            }
+        }
 
         return view('livewire.dashboard.virtual-pet-arena', [
             'pet' => $this->pet,
@@ -503,6 +587,10 @@ class VirtualPetArena extends Component
             'petSpeech' => $this->petSpeech,
             'speechEmotion' => $this->speechEmotion,
             'isMiniGameOpen' => $this->isMiniGameOpen,
+            'leaderboardPets' => $leaderboardPets,
+            'leaderboardSort' => $this->leaderboardSort,
+            'myRank' => $myRank,
+            'aheadPet' => $aheadPet,
         ]);
     }
 }
