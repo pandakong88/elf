@@ -2006,33 +2006,14 @@ class="relative bg-slate-950 border border-slate-800 rounded-3xl shadow-2xl over
                 </template>
 
                 <!-- ========================================================= -->
-                <!-- MASCOT VECTOR AVATAR STAGE (INTERACTIVE POINTER TRACKING) -->
+                <!-- MASCOT CENTERING ANCHOR (ROCK-SOLID CENTERED WRAPPER) -->
                 <!-- ========================================================= -->
                 <div 
-                    @click="triggerPetTap()"
-                    @pointerdown="startRub($event)"
-                    @pointermove="doRub($event)"
-                    @pointerup="endRub()"
-                    @pointerleave="endRub()"
-                    :class="{ 
-                        'mascot-jump-anim': petJumping, 
-                        'mascot-dance': petDancing && !petJumping, 
-                        'mascot-flip': petFlipping, 
-                        'mascot-drink-anim': petDrinking,
-                        'mascot-chomp-anim': petEating,
-                        'mascot-sweep-anim': petSweeping,
-                        'mascot-idle': !petJumping && !petDancing && !petFlipping && !petDrinking && !petEating && !petSweeping
-                    }"
                     style="position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%);"
-                    :style="petWiggleAngle ? `position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%) rotate(${petWiggleAngle}deg) scale(1.08);` : 'position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%);'"
-                    class="z-20 cursor-pointer select-none transition-transform duration-150 flex flex-col items-center justify-center group touch-none"
-                    title="Ajak bercanda, tos bareng, atau oper bola ke sahabatmu!"
+                    class="z-20 flex flex-col items-center justify-center select-none touch-none"
                 >
                     <!-- Floating Speech Bubble (Positioned directly over Pet's head) -->
-                    <div 
-                        style="position: absolute; top: -52px; left: 50%; transform: translateX(-50%);"
-                        class="z-30 pointer-events-none max-w-[190px] sm:max-w-xs text-center whitespace-normal"
-                    >
+                    <div class="relative -mb-2 z-30 pointer-events-none max-w-[190px] sm:max-w-xs text-center whitespace-normal">
                         <template x-if="isMusicPlaying && !isSleeping && currentLyricLine">
                             <div class="inline-flex items-center gap-1.5 sm:gap-2 px-2.5 py-1 bg-gradient-to-r from-purple-950/95 via-indigo-950/95 to-slate-900/95 border-2 border-purple-400/80 rounded-xl shadow-[0_0_20px_rgba(168,85,247,0.5)] backdrop-blur-md">
                                 <span class="text-xs animate-bounce">🎤</span>
@@ -2061,17 +2042,36 @@ class="relative bg-slate-950 border border-slate-800 rounded-3xl shadow-2xl over
                         </template>
                         <div class="w-2 h-2 bg-slate-900 border-r border-b border-slate-700/80 rotate-45 mx-auto -mt-1 shadow" :class="(isMusicPlaying && !isSleeping && currentLyricLine) ? 'border-purple-400 bg-purple-950' : ''"></div>
                     </div>
-                    <!-- Sleeping ZZZ Effect -->
-                    @if($pet->is_sleeping)
-                        <div class="absolute -top-6 right-6 text-indigo-300 font-black text-sm zzz-1 select-none pointer-events-none drop-shadow">Z</div>
-                        <div class="absolute -top-10 right-12 text-indigo-200 font-black text-base zzz-2 select-none pointer-events-none drop-shadow">Z</div>
-                        <div class="absolute -top-14 right-18 text-white font-black text-xl zzz-3 select-none pointer-events-none drop-shadow">Z</div>
-                    @endif
 
-                    <!-- ===================================================== -->
-                    <!-- DETAILED VECTOR MASCOT RENDERING (SVG ARTWORK) -->
-                    <!-- ===================================================== -->
-                    <div class="w-36 h-36 sm:w-52 sm:h-52 relative flex items-center justify-center filter drop-shadow-[0_12px_24px_rgba(0,0,0,0.6)] group-hover:scale-105 transition-transform duration-200">
+                    <!-- Interactive Animated Mascot Body (Holds animations without breaking centering) -->
+                    <div 
+                        @click="triggerPetTap()"
+                        @pointerdown="startRub($event)"
+                        @pointermove="doRub($event)"
+                        @pointerup="endRub()"
+                        @pointerleave="endRub()"
+                        :class="{ 
+                            'mascot-jump-anim': petJumping, 
+                            'mascot-dance': petDancing && !petJumping, 
+                            'mascot-flip': petFlipping, 
+                            'mascot-drink-anim': petDrinking,
+                            'mascot-chomp-anim': petEating,
+                            'mascot-sweep-anim': petSweeping,
+                            'mascot-idle': !petJumping && !petDancing && !petFlipping && !petDrinking && !petEating && !petSweeping
+                        }"
+                        :style="petWiggleAngle ? `transform: rotate(${petWiggleAngle}deg) scale(1.08);` : ''"
+                        class="cursor-pointer select-none transition-transform duration-150 flex flex-col items-center justify-center group"
+                        title="Ajak bercanda, tos bareng, atau oper bola ke sahabatmu!"
+                    >
+                        <!-- Sleeping ZZZ Effect -->
+                        @if($pet->is_sleeping)
+                            <div class="absolute -top-6 right-6 text-indigo-300 font-black text-sm zzz-1 select-none pointer-events-none drop-shadow">Z</div>
+                            <div class="absolute -top-10 right-12 text-indigo-200 font-black text-base zzz-2 select-none pointer-events-none drop-shadow">Z</div>
+                            <div class="absolute -top-14 right-18 text-white font-black text-xl zzz-3 select-none pointer-events-none drop-shadow">Z</div>
+                        @endif
+
+                        <!-- DETAILED VECTOR MASCOT RENDERING (SVG ARTWORK) -->
+                        <div class="w-36 h-36 sm:w-52 sm:h-52 relative flex items-center justify-center filter drop-shadow-[0_12px_24px_rgba(0,0,0,0.6)] group-hover:scale-105 transition-transform duration-200">
                         
                         <!-- Cartoon Handheld Karaoke Microphone & Note Sparkles -->
                         <template x-if="isMusicPlaying && !isSleeping">
@@ -2404,6 +2404,8 @@ class="relative bg-slate-950 border border-slate-800 rounded-3xl shadow-2xl over
                     </div>
 
                 </div>
+
+            </div>
 
                 <!-- Single Bottom Status Notification Pill -->
                 <div 
