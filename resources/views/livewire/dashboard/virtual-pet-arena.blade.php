@@ -1551,7 +1551,7 @@ class="relative bg-slate-950 border border-slate-800 rounded-3xl shadow-2xl over
             <!-- ========================================================= -->
             <div 
                 x-ref="stageElement"
-                class="relative rounded-3xl border border-slate-800 overflow-hidden min-h-[380px] sm:min-h-[420px] flex flex-col items-center justify-between p-4 sm:p-6 transition-all duration-700 select-none {{ $pet->is_sleeping ? 'room-night shadow-inner' : 'room-floor' }}"
+                class="relative rounded-3xl border border-slate-800 overflow-hidden h-[390px] sm:h-[440px] w-full transition-all duration-700 select-none {{ $pet->is_sleeping ? 'room-night shadow-inner' : 'room-floor' }}"
             >
                 
                 <!-- Room Walls & Decorative Interactive Elements -->
@@ -1643,7 +1643,7 @@ class="relative bg-slate-950 border border-slate-800 rounded-3xl shadow-2xl over
                         x-transition:leave="transition ease-in duration-150"
                         x-transition:leave-start="opacity-100 scale-100 translate-y-0"
                         x-transition:leave-end="opacity-0 scale-90 -translate-y-2"
-                        class="absolute top-3 sm:top-5 right-2 sm:right-6 z-30 w-[calc(100%-16px)] max-w-[270px] sm:max-w-[300px] p-2.5 sm:p-3 rounded-2xl border shadow-2xl backdrop-blur-xl bg-slate-950/95 transition-all select-none"
+                        class="absolute top-3 sm:top-5 right-2 sm:right-6 z-40 w-[calc(100%-16px)] max-w-[270px] sm:max-w-[300px] p-2.5 sm:p-3 rounded-2xl border shadow-2xl backdrop-blur-xl bg-slate-950/95 transition-all select-none"
                         :class="isMusicPlaying ? 'border-purple-500/80 shadow-[0_0_30px_rgba(168,85,247,0.4)] ring-1 ring-purple-500/50' : 'border-slate-700/80'"
                     >
                         <!-- Top Header Row: Radio Title, Track Counter & Minimize Button -->
@@ -1762,11 +1762,11 @@ class="relative bg-slate-950 border border-slate-800 rounded-3xl shadow-2xl over
                         <span class="text-sm hover:-translate-y-1 transition-transform">📘</span>
                     </div>
 
-                    <!-- Adorable Mini Succulent Plant in Ceramic Pot on Desk -->
+                    <!-- Adorable Mini Succulent Plant in Ceramic Pot on Floor -->
                     <div 
                         @click="interactPlant()"
-                        class="absolute bottom-14 left-8 flex flex-col items-center cursor-pointer hover:scale-115 transition-all z-20 group"
-                        title="Tanaman Sukulen Meja (Klik untuk menyiram &amp; bikin mekar!)"
+                        class="absolute bottom-6 left-3.5 sm:left-6 flex flex-col items-center cursor-pointer hover:scale-115 active:scale-95 transition-all z-20 group p-1"
+                        title="Tanaman Sukulen (Klik untuk menyiram &amp; bikin mekar!)"
                     >
                         <span 
                             x-show="plantBlooming"
@@ -1775,53 +1775,50 @@ class="relative bg-slate-950 border border-slate-800 rounded-3xl shadow-2xl over
                             x-transition:enter-end="scale-125 opacity-100"
                             class="text-base absolute -top-4 text-pink-400 animate-bounce"
                         >🌸</span>
-                        <span class="text-2xl filter drop-shadow group-hover:rotate-12 transition-transform">🪴</span>
-                        <span class="text-[9px] font-bold text-emerald-300/90 bg-slate-900/90 px-1.5 py-0.2 rounded-md border border-slate-700 opacity-0 group-hover:opacity-100 transition-opacity">Siram</span>
+                        <span class="text-2xl sm:text-3xl filter drop-shadow group-hover:rotate-12 transition-transform">🪴</span>
+                        <span class="text-[9px] font-black text-emerald-300 bg-slate-900/90 px-1.5 py-0.5 rounded-md border border-slate-700 shadow-sm mt-0.5">Siram</span>
                     </div>
 
-                    <!-- Steaming Warm Coffee Mug on Table -->
+                    <!-- Steaming Warm Coffee Mug on Floor -->
                     <div 
                         @click="triggerDrinking()"
-                        class="absolute bottom-14 right-8 flex flex-col items-center cursor-pointer hover:scale-110 transition-transform z-20 group"
+                        class="absolute bottom-6 right-3.5 sm:right-6 flex flex-col items-center cursor-pointer hover:scale-110 active:scale-95 transition-transform z-20 group p-1"
                         title="Secangkir Kopi Hangat (Klik untuk ngopi santai!)"
                     >
                         <span class="text-xs text-amber-300/80 animate-bounce -mb-1">♨️</span>
-                        <span class="text-2xl filter drop-shadow">☕</span>
-                        <span class="text-[9px] font-bold text-amber-300/90 bg-slate-900/90 px-1.5 py-0.2 rounded-md border border-slate-700 opacity-0 group-hover:opacity-100 transition-opacity">Ngopi</span>
+                        <span class="text-2xl sm:text-3xl filter drop-shadow">☕</span>
+                        <span class="text-[9px] font-black text-amber-300 bg-slate-900/90 px-1.5 py-0.5 rounded-md border border-slate-700 shadow-sm mt-0.5">Ngopi</span>
                     </div>
 
-                    <!-- Hanging Bedside Lamp (Interactive Click to toggle sleep) -->
+                    <!-- Hanging Bedside Lamp in Center Ceiling -->
                     <div 
                         @click="triggerSleepToggle()"
                         :class="{ 'cord-swing': lampSwinging }"
-                        class="absolute top-0 right-1/4 flex flex-col items-center pointer-events-auto cursor-pointer group z-20"
+                        class="absolute top-0 left-1/2 -translate-x-1/2 flex flex-col items-center pointer-events-auto cursor-pointer group z-20"
                         title="Klik tali saklar untuk menyalakan/memadamkan lampu kamar"
                     >
-                        <div class="w-0.5 h-10 bg-slate-600 group-hover:bg-amber-400 transition-colors"></div>
-                        <div class="w-12 h-8 rounded-b-2xl border transition-all flex items-center justify-center {{ $pet->is_sleeping ? 'bg-slate-800 border-slate-700 text-slate-500' : 'bg-gradient-to-b from-amber-300 to-yellow-400 border-yellow-200 text-amber-900 shadow-[0_0_35px_rgba(245,158,11,0.6)]' }}">
+                        <div class="w-0.5 h-6 sm:h-9 bg-slate-600 group-hover:bg-amber-400 transition-colors"></div>
+                        <div class="w-10 h-6 sm:w-12 sm:h-7 rounded-b-xl sm:rounded-b-2xl border transition-all flex items-center justify-center {{ $pet->is_sleeping ? 'bg-slate-800 border-slate-700 text-slate-500' : 'bg-gradient-to-b from-amber-300 to-yellow-400 border-yellow-200 text-amber-900 shadow-[0_0_25px_rgba(245,158,11,0.6)]' }}">
                             <span class="text-xs font-bold">{{ $pet->is_sleeping ? '💤' : '💡' }}</span>
                         </div>
-                        <div class="w-0.5 h-5 bg-amber-400/80 animate-bounce"></div>
+                        <div class="w-0.5 h-3 sm:h-4 bg-amber-400/80 animate-bounce"></div>
                     </div>
 
                     <!-- Persahabatan / Persian Carpet Rug under Pet -->
-                    <div class="carpet-rug absolute bottom-12 left-1/2 -translate-x-1/2 w-64 sm:w-80 h-24 rounded-full opacity-90 pointer-events-none"></div>
+                    <div class="carpet-rug absolute bottom-5 left-1/2 -translate-x-1/2 w-56 sm:w-72 h-14 sm:h-18 rounded-full opacity-85 pointer-events-none z-10"></div>
 
                     <!-- Ball Playground Control Center in Room -->
-                    <div x-show="!isSleeping" class="absolute top-28 sm:top-44 left-3 sm:left-6 z-20">
+                    <div x-show="!isSleeping" class="absolute top-28 sm:top-36 left-3.5 z-20">
                         <!-- State 1: Ball NOT Active -> Tombol "Mulai Main Bola" Jelas & Menarik -->
                         <div x-show="!ballEnabled">
                             <button 
                                 @click="startBallGame()"
                                 type="button" 
-                                class="px-2 sm:px-3 py-1 sm:py-1.5 rounded-xl text-[10px] sm:text-xs font-black border border-emerald-500/60 bg-slate-900/90 text-emerald-300 hover:bg-emerald-950/90 hover:border-emerald-400 hover:scale-105 transition-all flex items-center gap-1.5 sm:gap-2 shadow-lg shadow-black/50 cursor-pointer active:scale-95 group"
+                                class="px-2 sm:px-2.5 py-1 rounded-xl text-[10px] sm:text-xs font-black border border-emerald-500/60 bg-slate-900/90 text-emerald-300 hover:bg-emerald-950/90 hover:border-emerald-400 hover:scale-105 transition-all flex items-center gap-1.5 shadow-lg shadow-black/50 cursor-pointer active:scale-95 group"
                                 title="Keluarkan bola karet & mulai bermain sundul bola bersama pet"
                             >
                                 <span class="text-sm sm:text-base group-hover:rotate-45 transition-transform">⚽</span>
-                                <div class="text-left">
-                                    <span class="block leading-tight font-extrabold text-white group-hover:text-emerald-300">Main Bola</span>
-                                    <span class="hidden sm:block text-[8px] text-emerald-400/90 leading-none">Klik untuk mulai</span>
-                                </div>
+                                <span class="font-extrabold text-white group-hover:text-emerald-300">Main Bola</span>
                             </button>
                         </div>
 
@@ -1998,37 +1995,6 @@ class="relative bg-slate-950 border border-slate-800 rounded-3xl shadow-2xl over
                     </div>
                 </template>
 
-                <!-- Speech Bubble (Interactive Karaoke Singing Lyric or Pet Expression) -->
-                <div class="relative z-30 mb-0.5 sm:mb-2 max-w-[210px] sm:max-w-xs text-center pointer-events-none">
-                    <template x-if="isMusicPlaying && !isSleeping && currentLyricLine">
-                        <div class="inline-flex items-center gap-1.5 sm:gap-2 px-3 py-1 sm:py-1.5 bg-gradient-to-r from-purple-950/95 via-indigo-950/95 to-slate-900/95 border-2 border-purple-400/80 rounded-xl sm:rounded-2xl shadow-[0_0_20px_rgba(168,85,247,0.5)] backdrop-blur-md">
-                            <span class="text-xs sm:text-base animate-bounce">🎤</span>
-                            <div class="text-left min-w-0">
-                                <span class="text-[7px] sm:text-[8px] font-black text-purple-300 uppercase tracking-wider block">
-                                    {{ $pet->name }} ikut nyanyi:
-                                </span>
-                                <p class="text-[10px] sm:text-xs font-black text-white italic drop-shadow truncate max-w-[170px] sm:max-w-xs" x-text="currentLyricLine"></p>
-                            </div>
-                            <span class="text-xs text-yellow-300 animate-pulse">🎶</span>
-                        </div>
-                    </template>
-                    <template x-if="!isMusicPlaying || isSleeping || !currentLyricLine">
-                        <div class="inline-flex items-center gap-1.5 px-3 py-1 sm:py-1.5 bg-slate-900/95 border border-slate-700/80 rounded-xl sm:rounded-2xl shadow-xl backdrop-blur-md">
-                            <span class="text-xs sm:text-sm">
-                                @if($pet->is_sleeping) 💤
-                                @elseif($pet->hunger <= 25) 🥺
-                                @elseif($pet->hygiene <= 25) 🫧
-                                @else ✨
-                                @endif
-                            </span>
-                            <p class="text-[10px] sm:text-xs font-bold text-slate-100 leading-tight">
-                                {{ $petSpeech ?: $pet->meta['greeting'] }}
-                            </p>
-                        </div>
-                    </template>
-                    <div class="w-2.5 h-2.5 bg-slate-900 border-r border-b border-slate-700/80 rotate-45 mx-auto -mt-1 shadow" :class="(isMusicPlaying && !isSleeping && currentLyricLine) ? 'border-purple-400 bg-purple-950' : ''"></div>
-                </div>
-
                 <!-- ========================================================= -->
                 <!-- MASCOT VECTOR AVATAR STAGE (INTERACTIVE POINTER TRACKING) -->
                 <!-- ========================================================= -->
@@ -2048,9 +2014,39 @@ class="relative bg-slate-950 border border-slate-800 rounded-3xl shadow-2xl over
                         'mascot-idle': !petJumping && !petDancing && !petFlipping && !petDrinking && !petEating && !petSweeping
                     }"
                     :style="petWiggleAngle ? `transform: rotate(${petWiggleAngle}deg) scale(1.08);` : ''"
-                    class="relative z-20 cursor-pointer select-none transition-transform duration-150 flex flex-col items-center justify-center group my-auto touch-none"
+                    class="absolute bottom-6 left-1/2 -translate-x-1/2 z-20 cursor-pointer select-none transition-transform duration-150 flex flex-col items-center justify-center group touch-none"
                     title="Ajak bercanda, tos bareng, atau oper bola ke sahabatmu!"
                 >
+                    <!-- Floating Speech Bubble (Positioned directly over Pet's head) -->
+                    <div class="absolute -top-12 sm:-top-16 left-1/2 -translate-x-1/2 z-30 pointer-events-none max-w-[190px] sm:max-w-xs text-center whitespace-normal">
+                        <template x-if="isMusicPlaying && !isSleeping && currentLyricLine">
+                            <div class="inline-flex items-center gap-1.5 sm:gap-2 px-2.5 py-1 bg-gradient-to-r from-purple-950/95 via-indigo-950/95 to-slate-900/95 border-2 border-purple-400/80 rounded-xl shadow-[0_0_20px_rgba(168,85,247,0.5)] backdrop-blur-md">
+                                <span class="text-xs animate-bounce">🎤</span>
+                                <div class="text-left min-w-0">
+                                    <span class="text-[7px] font-black text-purple-300 uppercase tracking-wider block">
+                                        {{ $pet->name }} ikut nyanyi:
+                                    </span>
+                                    <p class="text-[10px] sm:text-xs font-black text-white italic drop-shadow truncate max-w-[140px] sm:max-w-xs" x-text="currentLyricLine"></p>
+                                </div>
+                                <span class="text-xs text-yellow-300 animate-pulse">🎶</span>
+                            </div>
+                        </template>
+                        <template x-if="!isMusicPlaying || isSleeping || !currentLyricLine">
+                            <div class="inline-flex items-center gap-1.5 px-2.5 py-1 bg-slate-900/95 border border-slate-700/80 rounded-xl shadow-xl backdrop-blur-md">
+                                <span class="text-xs">
+                                    @if($pet->is_sleeping) 💤
+                                    @elseif($pet->hunger <= 25) 🥺
+                                    @elseif($pet->hygiene <= 25) 🫧
+                                    @else ✨
+                                    @endif
+                                </span>
+                                <p class="text-[10px] sm:text-xs font-bold text-slate-100 leading-tight">
+                                    {{ $petSpeech ?: $pet->meta['greeting'] }}
+                                </p>
+                            </div>
+                        </template>
+                        <div class="w-2 h-2 bg-slate-900 border-r border-b border-slate-700/80 rotate-45 mx-auto -mt-1 shadow" :class="(isMusicPlaying && !isSleeping && currentLyricLine) ? 'border-purple-400 bg-purple-950' : ''"></div>
+                    </div>
                     <!-- Sleeping ZZZ Effect -->
                     @if($pet->is_sleeping)
                         <div class="absolute -top-6 right-6 text-indigo-300 font-black text-sm zzz-1 select-none pointer-events-none drop-shadow">Z</div>
@@ -2396,7 +2392,7 @@ class="relative bg-slate-950 border border-slate-800 rounded-3xl shadow-2xl over
                 </div>
 
                 <!-- Single Bottom Status Notification Pill -->
-                <div class="relative z-20 text-[10px] sm:text-xs font-bold px-3.5 py-1 rounded-full border shadow-md {{ $pet->is_sleeping ? 'bg-indigo-950/90 border-indigo-700 text-indigo-300' : 'bg-slate-900/90 border-slate-700 text-slate-200' }}">
+                <div class="absolute bottom-1 left-1/2 -translate-x-1/2 z-20 text-[9px] sm:text-[11px] font-bold px-3 py-0.5 rounded-full border shadow-md {{ $pet->is_sleeping ? 'bg-indigo-950/90 border-indigo-700 text-indigo-300' : 'bg-slate-900/90 border-slate-700 text-slate-200' }} whitespace-nowrap pointer-events-none">
                     @if($pet->is_sleeping)
                         🌙 Sedang tidur lelap (Klik lampu untuk bangunkan)
                     @elseif($pet->hunger <= 25)
