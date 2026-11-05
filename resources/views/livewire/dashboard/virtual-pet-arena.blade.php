@@ -1551,7 +1551,8 @@ class="relative bg-slate-950 border border-slate-800 rounded-3xl shadow-2xl over
             <!-- ========================================================= -->
             <div 
                 x-ref="stageElement"
-                class="relative rounded-3xl border border-slate-800 overflow-hidden h-[390px] sm:h-[440px] w-full transition-all duration-700 select-none {{ $pet->is_sleeping ? 'room-night shadow-inner' : 'room-floor' }}"
+                style="height: 400px; min-height: 400px; width: 100%; position: relative;"
+                class="rounded-3xl border border-slate-800 overflow-hidden transition-all duration-700 select-none relative {{ $pet->is_sleeping ? 'room-night shadow-inner' : 'room-floor' }}"
             >
                 
                 <!-- Room Walls & Decorative Interactive Elements -->
@@ -1560,7 +1561,8 @@ class="relative bg-slate-950 border border-slate-800 rounded-3xl shadow-2xl over
                     <!-- Modern Arch Window on Wall (Interactive: click to look outside!) -->
                     <div 
                         @click="interactWindow()"
-                        class="absolute top-3 sm:top-5 left-3 sm:left-6 w-16 sm:w-28 h-24 sm:h-36 rounded-t-full border-2 border-slate-700/60 bg-slate-900/80 overflow-hidden shadow-lg flex flex-col items-center justify-center cursor-pointer hover:border-amber-400/60 transition-colors group z-10"
+                        style="position: absolute; top: 12px; left: 12px; width: 68px; height: 96px;"
+                        class="rounded-t-full border-2 border-slate-700/60 bg-slate-900/80 overflow-hidden shadow-lg flex flex-col items-center justify-center cursor-pointer hover:border-amber-400/60 transition-colors group z-10"
                         title="Jendela Kamar (Klik untuk melihat suasana luar)"
                     >
                         @if($pet->is_sleeping)
@@ -1608,7 +1610,8 @@ class="relative bg-slate-950 border border-slate-800 rounded-3xl shadow-2xl over
                         x-transition:enter-start="opacity-0 scale-90"
                         x-transition:enter-end="opacity-100 scale-100"
                         @click="showRadioDeck = true"
-                        class="absolute top-3 sm:top-5 right-2 sm:right-6 z-20 flex items-center gap-1.5 px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-xl border cursor-pointer transition-all shadow-lg group select-none"
+                        style="position: absolute; top: 12px; right: 12px;"
+                        class="z-20 flex items-center gap-1.5 px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-xl border cursor-pointer transition-all shadow-lg group select-none"
                         :class="isMusicPlaying ? 'bg-purple-950/95 border-purple-400/90 shadow-[0_0_16px_rgba(168,85,247,0.45)] ring-1 ring-purple-400/50 scale-105' : 'bg-slate-900/90 border-slate-700/80 hover:border-purple-400/60 hover:scale-105'"
                         title="Klik untuk membuka Kontrol Lengkap Radio Hindia"
                     >
@@ -1643,7 +1646,8 @@ class="relative bg-slate-950 border border-slate-800 rounded-3xl shadow-2xl over
                         x-transition:leave="transition ease-in duration-150"
                         x-transition:leave-start="opacity-100 scale-100 translate-y-0"
                         x-transition:leave-end="opacity-0 scale-90 -translate-y-2"
-                        class="absolute top-3 sm:top-5 right-2 sm:right-6 z-40 w-[calc(100%-16px)] max-w-[270px] sm:max-w-[300px] p-2.5 sm:p-3 rounded-2xl border shadow-2xl backdrop-blur-xl bg-slate-950/95 transition-all select-none"
+                        style="position: absolute; top: 12px; right: 12px;"
+                        class="z-40 w-[calc(100%-24px)] max-w-[270px] sm:max-w-[300px] p-2.5 sm:p-3 rounded-2xl border shadow-2xl backdrop-blur-xl bg-slate-950/95 transition-all select-none"
                         :class="isMusicPlaying ? 'border-purple-500/80 shadow-[0_0_30px_rgba(168,85,247,0.4)] ring-1 ring-purple-500/50' : 'border-slate-700/80'"
                     >
                         <!-- Top Header Row: Radio Title, Track Counter & Minimize Button -->
@@ -1765,7 +1769,8 @@ class="relative bg-slate-950 border border-slate-800 rounded-3xl shadow-2xl over
                     <!-- Adorable Mini Succulent Plant in Ceramic Pot on Floor -->
                     <div 
                         @click="interactPlant()"
-                        class="absolute bottom-6 left-3.5 sm:left-6 flex flex-col items-center cursor-pointer hover:scale-115 active:scale-95 transition-all z-20 group p-1"
+                        style="position: absolute; bottom: 20px; left: 14px;"
+                        class="flex flex-col items-center cursor-pointer hover:scale-115 active:scale-95 transition-all z-20 group p-1"
                         title="Tanaman Sukulen (Klik untuk menyiram &amp; bikin mekar!)"
                     >
                         <span 
@@ -1782,7 +1787,8 @@ class="relative bg-slate-950 border border-slate-800 rounded-3xl shadow-2xl over
                     <!-- Steaming Warm Coffee Mug on Floor -->
                     <div 
                         @click="triggerDrinking()"
-                        class="absolute bottom-6 right-3.5 sm:right-6 flex flex-col items-center cursor-pointer hover:scale-110 active:scale-95 transition-transform z-20 group p-1"
+                        style="position: absolute; bottom: 20px; right: 14px;"
+                        class="flex flex-col items-center cursor-pointer hover:scale-110 active:scale-95 transition-transform z-20 group p-1"
                         title="Secangkir Kopi Hangat (Klik untuk ngopi santai!)"
                     >
                         <span class="text-xs text-amber-300/80 animate-bounce -mb-1">♨️</span>
@@ -1794,7 +1800,8 @@ class="relative bg-slate-950 border border-slate-800 rounded-3xl shadow-2xl over
                     <div 
                         @click="triggerSleepToggle()"
                         :class="{ 'cord-swing': lampSwinging }"
-                        class="absolute top-0 left-1/2 -translate-x-1/2 flex flex-col items-center pointer-events-auto cursor-pointer group z-20"
+                        style="position: absolute; top: 0; left: 50%; transform: translateX(-50%);"
+                        class="flex flex-col items-center pointer-events-auto cursor-pointer group z-20"
                         title="Klik tali saklar untuk menyalakan/memadamkan lampu kamar"
                     >
                         <div class="w-0.5 h-6 sm:h-9 bg-slate-600 group-hover:bg-amber-400 transition-colors"></div>
@@ -1805,10 +1812,13 @@ class="relative bg-slate-950 border border-slate-800 rounded-3xl shadow-2xl over
                     </div>
 
                     <!-- Persahabatan / Persian Carpet Rug under Pet -->
-                    <div class="carpet-rug absolute bottom-5 left-1/2 -translate-x-1/2 w-56 sm:w-72 h-14 sm:h-18 rounded-full opacity-85 pointer-events-none z-10"></div>
+                    <div 
+                        style="position: absolute; bottom: 16px; left: 50%; transform: translateX(-50%); width: 220px; height: 56px;"
+                        class="carpet-rug rounded-full opacity-85 pointer-events-none z-10"
+                    ></div>
 
                     <!-- Ball Playground Control Center in Room -->
-                    <div x-show="!isSleeping" class="absolute top-28 sm:top-36 left-3.5 z-20">
+                    <div x-show="!isSleeping" style="position: absolute; top: 118px; left: 14px;" class="z-20">
                         <!-- State 1: Ball NOT Active -> Tombol "Mulai Main Bola" Jelas & Menarik -->
                         <div x-show="!ballEnabled">
                             <button 
@@ -2013,12 +2023,16 @@ class="relative bg-slate-950 border border-slate-800 rounded-3xl shadow-2xl over
                         'mascot-sweep-anim': petSweeping,
                         'mascot-idle': !petJumping && !petDancing && !petFlipping && !petDrinking && !petEating && !petSweeping
                     }"
-                    :style="petWiggleAngle ? `transform: rotate(${petWiggleAngle}deg) scale(1.08);` : ''"
-                    class="absolute bottom-6 left-1/2 -translate-x-1/2 z-20 cursor-pointer select-none transition-transform duration-150 flex flex-col items-center justify-center group touch-none"
+                    style="position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%);"
+                    :style="petWiggleAngle ? `position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%) rotate(${petWiggleAngle}deg) scale(1.08);` : 'position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%);'"
+                    class="z-20 cursor-pointer select-none transition-transform duration-150 flex flex-col items-center justify-center group touch-none"
                     title="Ajak bercanda, tos bareng, atau oper bola ke sahabatmu!"
                 >
                     <!-- Floating Speech Bubble (Positioned directly over Pet's head) -->
-                    <div class="absolute -top-12 sm:-top-16 left-1/2 -translate-x-1/2 z-30 pointer-events-none max-w-[190px] sm:max-w-xs text-center whitespace-normal">
+                    <div 
+                        style="position: absolute; top: -52px; left: 50%; transform: translateX(-50%);"
+                        class="z-30 pointer-events-none max-w-[190px] sm:max-w-xs text-center whitespace-normal"
+                    >
                         <template x-if="isMusicPlaying && !isSleeping && currentLyricLine">
                             <div class="inline-flex items-center gap-1.5 sm:gap-2 px-2.5 py-1 bg-gradient-to-r from-purple-950/95 via-indigo-950/95 to-slate-900/95 border-2 border-purple-400/80 rounded-xl shadow-[0_0_20px_rgba(168,85,247,0.5)] backdrop-blur-md">
                                 <span class="text-xs animate-bounce">🎤</span>
@@ -2392,7 +2406,10 @@ class="relative bg-slate-950 border border-slate-800 rounded-3xl shadow-2xl over
                 </div>
 
                 <!-- Single Bottom Status Notification Pill -->
-                <div class="absolute bottom-1 left-1/2 -translate-x-1/2 z-20 text-[9px] sm:text-[11px] font-bold px-3 py-0.5 rounded-full border shadow-md {{ $pet->is_sleeping ? 'bg-indigo-950/90 border-indigo-700 text-indigo-300' : 'bg-slate-900/90 border-slate-700 text-slate-200' }} whitespace-nowrap pointer-events-none">
+                <div 
+                    style="position: absolute; bottom: 4px; left: 50%; transform: translateX(-50%);"
+                    class="z-20 text-[9px] sm:text-[11px] font-bold px-3 py-0.5 rounded-full border shadow-md {{ $pet->is_sleeping ? 'bg-indigo-950/90 border-indigo-700 text-indigo-300' : 'bg-slate-900/90 border-slate-700 text-slate-200' }} whitespace-nowrap pointer-events-none"
+                >
                     @if($pet->is_sleeping)
                         🌙 Sedang tidur lelap (Klik lampu untuk bangunkan)
                     @elseif($pet->hunger <= 25)
