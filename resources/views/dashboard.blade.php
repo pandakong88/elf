@@ -17,11 +17,11 @@
                         <h3 class="text-xs sm:text-sm font-black text-white uppercase tracking-wider font-serif-display">
                             Arcade Hub Admin
                         </h3>
-                        <p class="text-[10px] text-slate-400">Pilih mini-game kartu santai &amp; kompetitif untuk pengisi waktu istirahat</p>
+                        <p class="text-[10px] text-slate-400">Pilih mini-game kartu santai &amp; rawat sahabat virtual maskot ELF Al-Fithroh</p>
                     </div>
                 </div>
 
-                <div class="flex items-center gap-1.5 p-1 bg-slate-900/90 rounded-xl sm:rounded-2xl border border-slate-800 self-stretch sm:self-auto">
+                <div class="flex items-center flex-wrap gap-1.5 p-1 bg-slate-900/90 rounded-xl sm:rounded-2xl border border-slate-800 self-stretch sm:self-auto">
                     <!-- Tab 1: Tri-Peaks Pyramid -->
                     <button 
                         type="button" 
@@ -31,10 +31,7 @@
                             : 'text-slate-400 hover:text-white font-bold hover:bg-slate-800/60'"
                         class="flex-1 sm:flex-initial px-3.5 sm:px-5 py-2 rounded-lg sm:rounded-xl text-xs uppercase tracking-wider transition-all flex items-center justify-center gap-2 cursor-pointer"
                     >
-                        <span>🏔️ Tri-Peaks Solitaire</span>
-                        <span class="px-1.5 py-0.2 rounded-md text-[9px] font-black uppercase tracking-wider bg-red-600 text-white animate-pulse">
-                            BARU 🔥
-                        </span>
+                        <span>🏔️ Tri-Peaks</span>
                     </button>
 
                     <!-- Tab 2: Hi-Lo Royale -->
@@ -46,9 +43,21 @@
                             : 'text-slate-400 hover:text-white font-bold hover:bg-slate-800/60'"
                         class="flex-1 sm:flex-initial px-3.5 sm:px-5 py-2 rounded-lg sm:rounded-xl text-xs uppercase tracking-wider transition-all flex items-center justify-center gap-2 cursor-pointer"
                     >
-                        <span>👑 Elvith Royale Hi-Lo</span>
-                        <span class="px-1.5 py-0.2 rounded-md text-[9px] font-black uppercase tracking-wider bg-slate-800 text-slate-300">
-                            KLASIK
+                        <span>👑 Hi-Lo</span>
+                    </button>
+
+                    <!-- Tab 3: Virtual Pet (ELF Pet Sanctuary) -->
+                    <button 
+                        type="button" 
+                        @click="setGame('pet')"
+                        :class="activeArcade === 'pet' 
+                            ? 'bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-950 shadow-md font-black' 
+                            : 'text-slate-400 hover:text-white font-bold hover:bg-slate-800/60'"
+                        class="flex-1 sm:flex-initial px-3.5 sm:px-5 py-2 rounded-lg sm:rounded-xl text-xs uppercase tracking-wider transition-all flex items-center justify-center gap-2 cursor-pointer"
+                    >
+                        <span>🐾 Sahabat ELF (Pou)</span>
+                        <span class="px-1.5 py-0.2 rounded-md text-[9px] font-black uppercase tracking-wider bg-emerald-600 text-white animate-pulse">
+                            BARU 🔥
                         </span>
                     </button>
                 </div>
@@ -61,6 +70,10 @@
 
             <div x-show="activeArcade === 'hilo'" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-2" x-transition:enter-end="opacity-100 translate-y-0" x-cloak>
                 @livewire('dashboard.card-game-arena')
+            </div>
+
+            <div x-show="activeArcade === 'pet'" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-2" x-transition:enter-end="opacity-100 translate-y-0" x-cloak>
+                @livewire('dashboard.virtual-pet-arena')
             </div>
 
         </div>
