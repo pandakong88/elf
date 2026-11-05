@@ -2408,6 +2408,204 @@ class="relative bg-slate-950 border border-slate-800 rounded-3xl shadow-2xl over
                             </svg>
                         @endif
 
+                        @php
+                            $eqHead = $pet->getEquippedItem('head');
+                            $eqEyes = $pet->getEquippedItem('eyes');
+                            $eqBody = $pet->getEquippedItem('body');
+                            $eqProp = $pet->getEquippedItem('prop');
+                        @endphp
+
+                        <!-- MODULAR SVG OUTFIT & COSMETIC OVERLAY -->
+                        @if($eqHead || $eqEyes || $eqBody || $eqProp)
+                            <svg viewBox="0 0 200 200" class="absolute inset-0 w-full h-full pointer-events-none z-30 select-none">
+                                <defs>
+                                    <linearGradient id="crownGold" x1="0%" y1="0%" x2="100%" y2="100%">
+                                        <stop offset="0%" stop-color="#fef08a" />
+                                        <stop offset="50%" stop-color="#facc15" />
+                                        <stop offset="100%" stop-color="#ca8a04" />
+                                    </linearGradient>
+                                    <linearGradient id="kaisarGold" x1="0%" y1="0%" x2="100%" y2="100%">
+                                        <stop offset="0%" stop-color="#fef9c3" />
+                                        <stop offset="40%" stop-color="#fbbf24" />
+                                        <stop offset="100%" stop-color="#b45309" />
+                                    </linearGradient>
+                                </defs>
+
+                                <!-- 1. BODY LAYER -->
+                                @if($eqBody === 'sarung_wadimor')
+                                    <g>
+                                        <path d="M 68 135 C 68 135 70 178 70 178 C 70 182 130 182 130 178 C 130 178 132 135 132 135 Z" fill="#047857" stroke="#064e3b" stroke-width="1.5" />
+                                        <line x1="70" y1="150" x2="130" y2="150" stroke="#f59e0b" stroke-width="1.5" />
+                                        <line x1="70" y1="164" x2="130" y2="164" stroke="#f59e0b" stroke-width="1.5" />
+                                        <line x1="90" y1="135" x2="90" y2="180" stroke="#f59e0b" stroke-width="1.5" />
+                                        <line x1="110" y1="135" x2="110" y2="180" stroke="#f59e0b" stroke-width="1.5" />
+                                    </g>
+                                @elseif($eqBody === 'baju_koko')
+                                    <g>
+                                        <path d="M 72 125 L 64 145 L 80 150 L 80 172 L 120 172 L 120 150 L 136 145 L 128 125 Z" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5" />
+                                        <rect x="97" y="125" width="6" height="32" fill="#e2e8f0" />
+                                        <circle cx="100" cy="132" r="1.5" fill="#0f172a" />
+                                        <circle cx="100" cy="142" r="1.5" fill="#0f172a" />
+                                        <circle cx="100" cy="152" r="1.5" fill="#0f172a" />
+                                    </g>
+                                @elseif($eqBody === 'jubah_arab')
+                                    <g>
+                                        <path d="M 68 124 L 56 160 L 76 178 L 124 178 L 144 160 L 132 124 Z" fill="#0f172a" stroke="#1e293b" stroke-width="1.5" />
+                                        <path d="M 88 124 L 100 148 L 112 124" fill="none" stroke="#eab308" stroke-width="2.5" />
+                                        <line x1="100" y1="148" x2="100" y2="178" stroke="#eab308" stroke-width="2" />
+                                    </g>
+                                @elseif($eqBody === 'sarung_bhs')
+                                    <g>
+                                        <path d="M 68 135 C 68 135 70 178 70 178 C 70 182 130 182 130 178 C 130 178 132 135 132 135 Z" fill="#581c87" stroke="#3b0764" stroke-width="1.5" />
+                                        <polygon points="100,148 108,156 100,164 92,156" fill="#facc15" stroke="#b45309" stroke-width="1" />
+                                        <polygon points="80,148 88,156 80,164 72,156" fill="#facc15" stroke="#b45309" stroke-width="1" />
+                                        <polygon points="120,148 128,156 120,164 112,156" fill="#facc15" stroke="#b45309" stroke-width="1" />
+                                    </g>
+                                @elseif($eqBody === 'jas_tuxedo')
+                                    <g>
+                                        <path d="M 68 125 L 58 158 L 78 176 L 122 176 L 142 158 L 132 125 Z" fill="#09090b" stroke="#27272a" stroke-width="1.5" />
+                                        <polygon points="90,125 110,125 100,146" fill="#ffffff" />
+                                        <polygon points="95,128 100,131 95,134" fill="#ef4444" />
+                                        <polygon points="105,128 100,131 105,134" fill="#ef4444" />
+                                        <circle cx="100" cy="131" r="1.5" fill="#b91c1c" />
+                                    </g>
+                                @elseif($eqBody === 'jubah_kaisar')
+                                    <g>
+                                        <path d="M 62 122 L 50 168 L 72 182 L 128 182 L 150 168 L 138 122 Z" fill="url(#kaisarGold)" stroke="#f59e0b" stroke-width="2" />
+                                        <circle cx="100" cy="138" r="4" fill="#38bdf8" stroke="#ffffff" stroke-width="1.5" />
+                                        <line x1="80" y1="145" x2="120" y2="145" stroke="#ffffff" stroke-width="2" stroke-linecap="round" />
+                                        <polygon points="100,154 104,162 100,170 96,162" fill="#ec4899" />
+                                    </g>
+                                @endif
+
+                                <!-- 2. EYES / WAJAH LAYER -->
+                                @if($eqEyes === 'masker_santri')
+                                    <g>
+                                        <rect x="74" y="96" width="52" height="24" rx="6" fill="#38bdf8" stroke="#0284c7" stroke-width="1.5" opacity="0.95" />
+                                        <line x1="78" y1="104" x2="122" y2="104" stroke="#bae6fd" stroke-width="1" />
+                                        <line x1="78" y1="112" x2="122" y2="112" stroke="#bae6fd" stroke-width="1" />
+                                        <path d="M 74 100 Q 64 96 68 112" fill="none" stroke="#e2e8f0" stroke-width="1.5" />
+                                        <path d="M 126 100 Q 136 96 132 112" fill="none" stroke="#e2e8f0" stroke-width="1.5" />
+                                    </g>
+                                @elseif($eqEyes === 'kacamata_kitab')
+                                    <g>
+                                        <circle cx="82" cy="92" r="13" fill="none" stroke="#78350f" stroke-width="2.5" />
+                                        <circle cx="118" cy="92" r="13" fill="none" stroke="#78350f" stroke-width="2.5" />
+                                        <ellipse cx="80" cy="89" rx="7" ry="4" fill="#ffffff" opacity="0.35" transform="rotate(-20 80 89)" />
+                                        <ellipse cx="116" cy="89" rx="7" ry="4" fill="#ffffff" opacity="0.35" transform="rotate(-20 116 89)" />
+                                        <path d="M 95 90 Q 100 87 105 90" fill="none" stroke="#78350f" stroke-width="2" />
+                                    </g>
+                                @elseif($eqEyes === 'kacamata_thug')
+                                    <g>
+                                        <path d="M 66 86 H 97 V 98 H 89 V 102 H 74 V 98 H 66 Z" fill="#000000" />
+                                        <path d="M 103 86 H 134 V 98 H 126 V 102 H 111 V 98 H 103 Z" fill="#000000" />
+                                        <rect x="97" y="88" width="6" height="4" fill="#000000" />
+                                        <rect x="70" y="89" width="3" height="3" fill="#ffffff" />
+                                        <rect x="73" y="92" width="3" height="3" fill="#ffffff" />
+                                        <rect x="107" y="89" width="3" height="3" fill="#ffffff" />
+                                        <rect x="110" y="92" width="3" height="3" fill="#ffffff" />
+                                    </g>
+                                @elseif($eqEyes === 'monocle_emas')
+                                    <g>
+                                        <circle cx="118" cy="92" r="13" fill="#fef08a" fill-opacity="0.2" stroke="#eab308" stroke-width="2.5" />
+                                        <path d="M 131 92 Q 138 115 125 130" fill="none" stroke="#eab308" stroke-width="1.5" stroke-dasharray="2 1" />
+                                    </g>
+                                @elseif($eqEyes === 'kacamata_cyberpunk')
+                                    <g>
+                                        <polygon points="62,84 138,84 134,102 100,106 66,102" fill="#06b6d4" opacity="0.85" stroke="#22d3ee" stroke-width="2" />
+                                        <line x1="68" y1="92" x2="132" y2="92" stroke="#ffffff" stroke-width="1.5" opacity="0.9" />
+                                        <circle cx="76" cy="97" r="1.5" fill="#f43f5e" />
+                                        <circle cx="124" cy="97" r="1.5" fill="#a855f7" />
+                                    </g>
+                                @endif
+
+                                <!-- 3. HEADWEAR LAYER -->
+                                @if($eqHead === 'peci_hitam')
+                                    <g>
+                                        <rect x="70" y="44" width="60" height="26" rx="4" fill="#0f172a" stroke="#334155" stroke-width="1.5" />
+                                        <circle cx="100" cy="56" r="3" fill="#f59e0b" />
+                                    </g>
+                                @elseif($eqHead === 'kopiah_putih')
+                                    <g>
+                                        <rect x="68" y="44" width="64" height="26" rx="5" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5" />
+                                        <line x1="72" y1="62" x2="128" y2="62" stroke="#eab308" stroke-width="2" stroke-dasharray="3 2" />
+                                    </g>
+                                @elseif($eqHead === 'sorban_hijau')
+                                    <g>
+                                        <rect x="64" y="38" width="72" height="30" rx="14" fill="#065f46" stroke="#047857" stroke-width="2" />
+                                        <path d="M 68 56 Q 60 85 64 110 Q 70 85 74 62" fill="#047857" opacity="0.9" />
+                                        <polygon points="100,44 105,52 100,60 95,52" fill="#10b981" stroke="#34d399" />
+                                    </g>
+                                @elseif($eqHead === 'blangkon_solo')
+                                    <g>
+                                        <path d="M 64 64 C 64 42 76 38 100 38 C 124 38 136 42 136 64 Z" fill="#78350f" stroke="#92400e" stroke-width="1.5" />
+                                        <ellipse cx="100" cy="62" rx="36" ry="6" fill="#451a03" />
+                                    </g>
+                                @elseif($eqHead === 'helm_bogo')
+                                    <g>
+                                        <path d="M 60 70 C 58 35 142 35 140 70 C 140 85 60 85 60 70 Z" fill="#f43f5e" stroke="#be123c" stroke-width="2" />
+                                        <ellipse cx="100" cy="68" rx="32" ry="16" fill="#0f172a" opacity="0.85" stroke="#e2e8f0" stroke-width="1" />
+                                        <ellipse cx="94" cy="64" rx="12" ry="4" fill="#ffffff" opacity="0.4" transform="rotate(-10 94 64)" />
+                                    </g>
+                                @elseif($eqHead === 'mahkota_sultan')
+                                    <g>
+                                        <path d="M 66 64 L 66 42 L 80 54 L 100 34 L 120 54 L 134 42 L 134 64 Z" fill="url(#crownGold)" stroke="#b45309" stroke-width="2" />
+                                        <circle cx="100" cy="48" r="3.5" fill="#ef4444" stroke="#991b1b" />
+                                        <circle cx="80" cy="56" r="2.5" fill="#10b981" />
+                                        <circle cx="120" cy="56" r="2.5" fill="#10b981" />
+                                        <rect x="65" y="60" width="70" height="6" rx="2" fill="#facc15" stroke="#ca8a04" />
+                                    </g>
+                                @endif
+
+                                <!-- 4. PROPS / AKSESORIS LAYER -->
+                                @if($eqProp === 'sapu_lidi')
+                                    <g>
+                                        <line x1="152" y1="80" x2="162" y2="175" stroke="#78350f" stroke-width="3" stroke-linecap="round" />
+                                        <path d="M 158 145 L 150 178 L 175 178 L 165 145 Z" fill="#d97706" stroke="#92400e" stroke-width="1" />
+                                        <rect x="156" y="146" width="10" height="4" fill="#ef4444" rx="1" />
+                                    </g>
+                                @elseif($eqProp === 'tasbih_led')
+                                    <g>
+                                        <rect x="146" y="128" width="16" height="22" rx="4" fill="#1e293b" stroke="#334155" stroke-width="1.5" />
+                                        <rect x="149" y="132" width="10" height="7" rx="1" fill="#22c55e" />
+                                        <text x="154" y="137" font-size="5" font-family="monospace" font-weight="bold" fill="#052e16" text-anchor="middle">99</text>
+                                        <circle cx="154" cy="144" r="3" fill="#94a3b8" stroke="#475569" stroke-width="1" />
+                                    </g>
+                                @elseif($eqProp === 'gitar_ambyar')
+                                    <g>
+                                        <ellipse cx="148" cy="145" rx="14" ry="18" fill="#b45309" stroke="#78350f" stroke-width="1.5" transform="rotate(-25 148 145)" />
+                                        <circle cx="148" cy="145" r="5" fill="#451a03" />
+                                        <line x1="140" y1="130" x2="125" y2="95" stroke="#78350f" stroke-width="4" stroke-linecap="round" />
+                                        <line x1="144" y1="140" x2="127" y2="100" stroke="#fef08a" stroke-width="1" />
+                                    </g>
+                                @elseif($eqProp === 'termos_kopi')
+                                    <g>
+                                        <rect x="144" y="130" width="18" height="36" rx="4" fill="#94a3b8" stroke="#475569" stroke-width="1.5" />
+                                        <rect x="147" y="132" width="4" height="32" fill="#ffffff" opacity="0.5" />
+                                        <rect x="146" y="125" width="14" height="6" rx="2" fill="#0f172a" />
+                                        <path d="M 153 120 Q 150 114 153 108" fill="none" stroke="#e2e8f0" stroke-width="1.5" stroke-linecap="round" opacity="0.7" />
+                                    </g>
+                                @elseif($eqProp === 'lightsaber_santri')
+                                    <g>
+                                        <line x1="156" y1="126" x2="170" y2="68" stroke="#4ade80" stroke-width="6" stroke-linecap="round" filter="drop-shadow(0 0 4px #22c55e)" />
+                                        <line x1="156" y1="126" x2="170" y2="68" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round" />
+                                        <rect x="150" y="128" width="6" height="18" rx="2" fill="#334155" stroke="#0f172a" stroke-width="1" transform="rotate(-15 153 137)" />
+                                    </g>
+                                @elseif($eqProp === 'rubicon_emas')
+                                    <g>
+                                        <rect x="136" y="148" width="36" height="18" rx="3" fill="#facc15" stroke="#ca8a04" stroke-width="1.5" />
+                                        <polygon points="144,148 150,140 166,140 170,148" fill="#eab308" stroke="#ca8a04" stroke-width="1.5" />
+                                        <polygon points="151,142 165,142 163,147 147,147" fill="#0284c7" opacity="0.8" />
+                                        <circle cx="144" cy="168" r="6" fill="#1e293b" stroke="#0f172a" stroke-width="1.5" />
+                                        <circle cx="144" cy="168" r="2.5" fill="#facc15" />
+                                        <circle cx="164" cy="168" r="6" fill="#1e293b" stroke="#0f172a" stroke-width="1.5" />
+                                        <circle cx="164" cy="168" r="2.5" fill="#facc15" />
+                                        <path d="M 172 136 L 174 140 L 178 142 L 174 144 L 172 148 L 170 144 L 166 142 L 170 140 Z" fill="#ffffff" />
+                                    </g>
+                                @endif
+                            </svg>
+                        @endif
+
                     </div>
 
                 </div>
@@ -2570,61 +2768,309 @@ class="relative bg-slate-950 border border-slate-800 rounded-3xl shadow-2xl over
     <!-- ========================================================= -->
     @if($viewMode === 'shop' && $pet)
         <div class="p-4 sm:p-6 space-y-5">
-            <div class="flex items-center justify-between border-b border-slate-800 pb-4">
+            <!-- Shop Header -->
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-4">
                 <div>
                     <h4 class="text-base sm:text-lg font-black text-white font-serif-display uppercase tracking-wider flex items-center gap-2">
-                        <span>🏪</span> Toko Camilan &amp; Kafe Sahabat
+                        <span>🏪</span> Toko &amp; Lemari Sahabat ELF
                     </h4>
-                    <p class="text-xs text-slate-400 mt-0.5">Beli asupan bergizi untuk sahabatmu menggunakan koin dari hasil pencatatan</p>
+                    <p class="text-xs text-slate-400 mt-0.5">Beli asupan bergizi atau dandani sahabatmu dengan outfit santri &amp; kosmetik absurd!</p>
                 </div>
-                <div class="flex items-center gap-1.5 px-3.5 py-1.5 bg-amber-500/10 border border-amber-500/30 text-amber-300 rounded-xl text-xs font-black shadow-xs">
+                <div class="flex items-center gap-1.5 px-3.5 py-1.5 bg-amber-500/10 border border-amber-500/30 text-amber-300 rounded-xl text-xs font-black shadow-xs self-start sm:self-auto">
                     <span class="text-base">🪙</span>
                     <span class="font-mono text-sm">{{ number_format($pet->coins) }} Koin</span>
                 </div>
             </div>
 
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-                @foreach($foodItems as $key => $food)
-                    @php 
-                        $invStock = ($pet->inventory ?? [])[$key] ?? 0;
-                        $canAfford = $pet->coins >= $food['price'];
-                    @endphp
-                    <div class="p-4 bg-slate-900/90 border border-slate-800 rounded-2xl flex flex-col justify-between gap-3 hover:border-amber-500/40 transition-all shadow-lg">
-                        <div class="flex items-start justify-between">
-                            <span class="text-4xl p-2.5 bg-slate-800/80 rounded-2xl shadow-inner">{{ $food['emoji'] }}</span>
-                            <span class="text-xs font-mono font-bold text-slate-400 bg-slate-950 px-2 py-1 rounded-lg border border-slate-800">
-                                Punya: <strong class="text-white">{{ $invStock }}</strong>
-                            </span>
-                        </div>
+            <!-- Sub-Tabs Switcher (Camilan vs Lemari Wardrobe) -->
+            <div class="flex items-center gap-2 p-1.5 bg-slate-950 rounded-2xl border border-slate-800">
+                <button 
+                    wire:click="setShopTab('food')" 
+                    type="button" 
+                    class="flex-1 py-2 sm:py-2.5 px-3 rounded-xl text-xs sm:text-sm font-black transition-all flex items-center justify-center gap-2 cursor-pointer {{ $shopTab === 'food' ? 'bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-950 shadow-md' : 'text-slate-400 hover:text-white hover:bg-slate-900' }}"
+                >
+                    <span class="text-base sm:text-lg">🍞</span>
+                    <span>Camilan &amp; Minuman</span>
+                </button>
+                <button 
+                    wire:click="setShopTab('wardrobe')" 
+                    type="button" 
+                    class="flex-1 py-2 sm:py-2.5 px-3 rounded-xl text-xs sm:text-sm font-black transition-all flex items-center justify-center gap-2 cursor-pointer {{ $shopTab === 'wardrobe' ? 'bg-gradient-to-r from-purple-500 to-indigo-500 text-white shadow-md' : 'text-slate-400 hover:text-white hover:bg-slate-900' }}"
+                >
+                    <span class="text-base sm:text-lg">👔</span>
+                    <span>Lemari Outfit &amp; Kosmetik Absurd</span>
+                    <span class="px-2 py-0.5 rounded-full text-[9px] font-mono bg-pink-500 text-white font-bold animate-pulse">22 Item</span>
+                </button>
+            </div>
 
-                        <div>
-                            <h5 class="text-sm font-black text-white">{{ $food['name'] }}</h5>
-                            <div class="flex flex-wrap gap-1 mt-2">
-                                <span class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                                    +{{ $food['hunger'] }}% Kenyang
+            <!-- TAB 1: CAMILAN & MINUMAN -->
+            @if($shopTab === 'food')
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+                    @foreach($foodItems as $key => $food)
+                        @php 
+                            $invStock = ($pet->inventory ?? [])[$key] ?? 0;
+                            $canAfford = $pet->coins >= $food['price'];
+                        @endphp
+                        <div class="p-4 bg-slate-900/90 border border-slate-800 rounded-2xl flex flex-col justify-between gap-3 hover:border-amber-500/40 transition-all shadow-lg">
+                            <div class="flex items-start justify-between">
+                                <span class="text-4xl p-2.5 bg-slate-800/80 rounded-2xl shadow-inner">{{ $food['emoji'] }}</span>
+                                <span class="text-xs font-mono font-bold text-slate-400 bg-slate-950 px-2 py-1 rounded-lg border border-slate-800">
+                                    Punya: <strong class="text-white">{{ $invStock }}</strong>
                                 </span>
-                                <span class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-pink-500/10 text-pink-400 border border-pink-500/20">
-                                    +{{ $food['happiness'] }}% Senang
-                                </span>
-                                <span class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-amber-500/10 text-amber-400 border border-amber-500/20">
-                                    +{{ $food['xp'] }} XP
-                                </span>
+                            </div>
+
+                            <div>
+                                <h5 class="text-sm font-black text-white">{{ $food['name'] }}</h5>
+                                <div class="flex flex-wrap gap-1 mt-2">
+                                    <span class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                                        +{{ $food['hunger'] }}% Kenyang
+                                    </span>
+                                    <span class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-pink-500/10 text-pink-400 border border-pink-500/20">
+                                        +{{ $food['happiness'] }}% Senang
+                                    </span>
+                                    <span class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                                        +{{ $food['xp'] }} XP
+                                    </span>
+                                </div>
+                            </div>
+
+                            <button 
+                                @click="playSound('coin'); $wire.buyItem('{{ $key }}')" 
+                                type="button"
+                                {{ !$canAfford ? 'disabled' : '' }}
+                                class="w-full py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 {{ $canAfford ? 'bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-950 hover:brightness-110 active:scale-95 shadow-md cursor-pointer' : 'bg-slate-800 text-slate-500 cursor-not-allowed' }}"
+                            >
+                                <span>Beli</span>
+                                <span>•</span>
+                                <span>🪙 {{ $food['price'] }} Koin</span>
+                            </button>
+                        </div>
+                    @endforeach
+                </div>
+            @endif
+
+            <!-- TAB 2: WARDROBE & KOSMETIK ABSURD -->
+            @if($shopTab === 'wardrobe')
+                <div class="space-y-4">
+                    <!-- Category Filter Buttons -->
+                    <div class="flex items-center gap-1.5 p-1 bg-slate-950 rounded-xl border border-slate-800 flex-wrap sm:flex-nowrap">
+                        <button 
+                            wire:click="setWardrobeCategoryFilter('all')" 
+                            type="button" 
+                            class="flex-1 py-1.5 px-3 rounded-lg text-xs font-black transition-all cursor-pointer {{ $wardrobeCategoryFilter === 'all' ? 'bg-indigo-600 text-white shadow' : 'text-slate-400 hover:text-white' }}"
+                        >
+                            Semua (22)
+                        </button>
+                        <button 
+                            wire:click="setWardrobeCategoryFilter('head')" 
+                            type="button" 
+                            class="flex-1 py-1.5 px-3 rounded-lg text-xs font-black transition-all cursor-pointer {{ $wardrobeCategoryFilter === 'head' ? 'bg-indigo-600 text-white shadow' : 'text-slate-400 hover:text-white' }}"
+                        >
+                            🧢 Kepala (6)
+                        </button>
+                        <button 
+                            wire:click="setWardrobeCategoryFilter('eyes')" 
+                            type="button" 
+                            class="flex-1 py-1.5 px-3 rounded-lg text-xs font-black transition-all cursor-pointer {{ $wardrobeCategoryFilter === 'eyes' ? 'bg-indigo-600 text-white shadow' : 'text-slate-400 hover:text-white' }}"
+                        >
+                            🕶️ Wajah (5)
+                        </button>
+                        <button 
+                            wire:click="setWardrobeCategoryFilter('body')" 
+                            type="button" 
+                            class="flex-1 py-1.5 px-3 rounded-lg text-xs font-black transition-all cursor-pointer {{ $wardrobeCategoryFilter === 'body' ? 'bg-indigo-600 text-white shadow' : 'text-slate-400 hover:text-white' }}"
+                        >
+                            🥋 Pakaian (6)
+                        </button>
+                        <button 
+                            wire:click="setWardrobeCategoryFilter('prop')" 
+                            type="button" 
+                            class="flex-1 py-1.5 px-3 rounded-lg text-xs font-black transition-all cursor-pointer {{ $wardrobeCategoryFilter === 'prop' ? 'bg-indigo-600 text-white shadow' : 'text-slate-400 hover:text-white' }}"
+                        >
+                            🎒 Aksesoris (5)
+                        </button>
+                    </div>
+
+                    <!-- Active Equipped Outfit Summary Bar -->
+                    @php
+                        $activeHead = $pet->getEquippedItem('head');
+                        $activeEyes = $pet->getEquippedItem('eyes');
+                        $activeBody = $pet->getEquippedItem('body');
+                        $activeProp = $pet->getEquippedItem('prop');
+                    @endphp
+                    <div class="p-3 sm:p-4 bg-slate-950/80 border border-slate-800 rounded-2xl flex flex-col md:flex-row md:items-center justify-between gap-3 shadow-inner">
+                        <div class="flex items-center gap-2">
+                            <span class="text-xl">🪞</span>
+                            <div>
+                                <h6 class="text-xs font-black text-white uppercase tracking-wider">Set Outfit Sedang Dipakai:</h6>
+                                <p class="text-[10px] text-slate-400">Klik 'Lepas' pada slot untuk melepas kosmetik dari sahabat</p>
                             </div>
                         </div>
 
-                        <button 
-                            @click="playSound('coin'); $wire.buyItem('{{ $key }}')" 
-                            type="button"
-                            {{ !$canAfford ? 'disabled' : '' }}
-                            class="w-full py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 {{ $canAfford ? 'bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-950 hover:brightness-110 active:scale-95 shadow-md cursor-pointer' : 'bg-slate-800 text-slate-500 cursor-not-allowed' }}"
-                        >
-                            <span>Beli</span>
-                            <span>•</span>
-                            <span>🪙 {{ $food['price'] }} Koin</span>
-                        </button>
+                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                            <!-- Slot Head -->
+                            <div class="px-2.5 py-1.5 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-between gap-2 min-w-0">
+                                <div class="min-w-0 truncate text-[11px]">
+                                    <span class="text-slate-400 text-[10px] block">Kepala:</span>
+                                    <strong class="text-slate-200 truncate block">
+                                        {{ $activeHead ? ($allOutfits[$activeHead]['emoji'] ?? '') . ' ' . ($allOutfits[$activeHead]['name'] ?? '') : 'Polos' }}
+                                    </strong>
+                                </div>
+                                @if($activeHead)
+                                    <button wire:click="toggleEquipOutfit('{{ $activeHead }}')" type="button" class="text-[10px] px-1.5 py-0.5 rounded bg-rose-500/20 text-rose-300 hover:bg-rose-500/40 border border-rose-500/30 cursor-pointer shrink-0">
+                                        Lepas
+                                    </button>
+                                @endif
+                            </div>
+
+                            <!-- Slot Eyes -->
+                            <div class="px-2.5 py-1.5 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-between gap-2 min-w-0">
+                                <div class="min-w-0 truncate text-[11px]">
+                                    <span class="text-slate-400 text-[10px] block">Wajah:</span>
+                                    <strong class="text-slate-200 truncate block">
+                                        {{ $activeEyes ? ($allOutfits[$activeEyes]['emoji'] ?? '') . ' ' . ($allOutfits[$activeEyes]['name'] ?? '') : 'Polos' }}
+                                    </strong>
+                                </div>
+                                @if($activeEyes)
+                                    <button wire:click="toggleEquipOutfit('{{ $activeEyes }}')" type="button" class="text-[10px] px-1.5 py-0.5 rounded bg-rose-500/20 text-rose-300 hover:bg-rose-500/40 border border-rose-500/30 cursor-pointer shrink-0">
+                                        Lepas
+                                    </button>
+                                @endif
+                            </div>
+
+                            <!-- Slot Body -->
+                            <div class="px-2.5 py-1.5 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-between gap-2 min-w-0">
+                                <div class="min-w-0 truncate text-[11px]">
+                                    <span class="text-slate-400 text-[10px] block">Pakaian:</span>
+                                    <strong class="text-slate-200 truncate block">
+                                        {{ $activeBody ? ($allOutfits[$activeBody]['emoji'] ?? '') . ' ' . ($allOutfits[$activeBody]['name'] ?? '') : 'Polos' }}
+                                    </strong>
+                                </div>
+                                @if($activeBody)
+                                    <button wire:click="toggleEquipOutfit('{{ $activeBody }}')" type="button" class="text-[10px] px-1.5 py-0.5 rounded bg-rose-500/20 text-rose-300 hover:bg-rose-500/40 border border-rose-500/30 cursor-pointer shrink-0">
+                                        Lepas
+                                    </button>
+                                @endif
+                            </div>
+
+                            <!-- Slot Prop -->
+                            <div class="px-2.5 py-1.5 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-between gap-2 min-w-0">
+                                <div class="min-w-0 truncate text-[11px]">
+                                    <span class="text-slate-400 text-[10px] block">Aksesoris:</span>
+                                    <strong class="text-slate-200 truncate block">
+                                        {{ $activeProp ? ($allOutfits[$activeProp]['emoji'] ?? '') . ' ' . ($allOutfits[$activeProp]['name'] ?? '') : 'Polos' }}
+                                    </strong>
+                                </div>
+                                @if($activeProp)
+                                    <button wire:click="toggleEquipOutfit('{{ $activeProp }}')" type="button" class="text-[10px] px-1.5 py-0.5 rounded bg-rose-500/20 text-rose-300 hover:bg-rose-500/40 border border-rose-500/30 cursor-pointer shrink-0">
+                                        Lepas
+                                    </button>
+                                @endif
+                            </div>
+                        </div>
                     </div>
-                @endforeach
-            </div>
+
+                    <!-- Outfits Grid -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4">
+                        @foreach($outfitItems as $key => $item)
+                            @php
+                                $isOwned = $pet->hasOutfit($key);
+                                $isEquipped = $pet->isEquipped($key);
+                                $canAfford = $pet->coins >= $item['price'];
+                            @endphp
+                            <div class="p-4 bg-slate-900/90 border rounded-2xl flex flex-col justify-between gap-3 transition-all shadow-lg {{ $isEquipped ? 'border-emerald-500/60 ring-2 ring-emerald-500/20' : ($isOwned ? 'border-indigo-500/40' : 'border-slate-800 hover:border-slate-700') }}">
+                                <!-- Top: Emoji & Tier Badge -->
+                                <div class="flex items-start justify-between">
+                                    <span class="text-4xl p-2.5 bg-slate-800/80 rounded-2xl shadow-inner border border-slate-700/50">
+                                        {{ $item['emoji'] }}
+                                    </span>
+                                    <div class="text-right">
+                                        @if($item['tier'] === 'cheap')
+                                            <span class="px-2 py-0.5 rounded-md text-[9px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                                                {{ $item['badge'] }}
+                                            </span>
+                                        @elseif($item['tier'] === 'mid')
+                                            <span class="px-2 py-0.5 rounded-md text-[9px] font-bold bg-sky-500/10 text-sky-400 border border-sky-500/20">
+                                                {{ $item['badge'] }}
+                                            </span>
+                                        @elseif($item['tier'] === 'sultan')
+                                            <span class="px-2 py-0.5 rounded-md text-[9px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40 shadow-xs">
+                                                ✨ {{ $item['badge'] }}
+                                            </span>
+                                        @elseif($item['tier'] === 'insane')
+                                            <span class="px-2 py-0.5 rounded-md text-[9px] font-black bg-gradient-to-r from-rose-500/20 to-purple-500/20 text-rose-300 border border-rose-500/40 animate-pulse">
+                                                🔥 {{ $item['badge'] }}
+                                            </span>
+                                        @endif
+                                        <div class="text-[9px] text-slate-500 mt-1 uppercase font-semibold">
+                                            @if($item['category'] === 'head') 🧢 Kepala
+                                            @elseif($item['category'] === 'eyes') 🕶️ Wajah
+                                            @elseif($item['category'] === 'body') 🥋 Pakaian
+                                            @else 🎒 Aksesoris
+                                            @endif
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Middle: Title & Lore Description -->
+                                <div>
+                                    <h5 class="text-sm font-black text-white flex items-center gap-1.5">
+                                        <span>{{ $item['name'] }}</span>
+                                    </h5>
+                                    <p class="text-xs text-slate-400 mt-1 line-clamp-2 leading-relaxed">
+                                        {{ $item['description'] ?? $item['desc'] ?? '' }}
+                                    </p>
+                                </div>
+
+                                <!-- Bottom: Status & Action Button -->
+                                <div>
+                                    @if($isEquipped)
+                                        <button 
+                                            wire:click="toggleEquipOutfit('{{ $key }}')" 
+                                            type="button"
+                                            class="w-full py-2.5 rounded-xl text-xs font-black uppercase tracking-wider bg-emerald-600 hover:bg-emerald-500 text-white shadow-md transition-all flex items-center justify-center gap-1.5 cursor-pointer active:scale-95"
+                                        >
+                                            <span>Sedang Dipakai ✅</span>
+                                            <span class="text-[10px] font-normal opacity-85">(Klik Lepas)</span>
+                                        </button>
+                                    @elseif($isOwned)
+                                        <button 
+                                            wire:click="toggleEquipOutfit('{{ $key }}')" 
+                                            type="button"
+                                            class="w-full py-2.5 rounded-xl text-xs font-black uppercase tracking-wider bg-indigo-600 hover:bg-indigo-500 text-white shadow-md transition-all flex items-center justify-center gap-1.5 cursor-pointer active:scale-95"
+                                        >
+                                            <span>👔 Pakai Sekarang</span>
+                                        </button>
+                                    @else
+                                        <!-- Not Owned: Buy Button -->
+                                        @if($canAfford)
+                                            <button 
+                                                @click="playSound('coin'); $wire.buyOutfitItem('{{ $key }}')" 
+                                                type="button"
+                                                class="w-full py-2.5 rounded-xl text-xs font-black uppercase tracking-wider bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-950 hover:brightness-110 active:scale-95 shadow-md transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                                            >
+                                                <span>Beli</span>
+                                                <span>•</span>
+                                                <span>🪙 {{ number_format($item['price']) }} Koin</span>
+                                            </button>
+                                        @else
+                                            <button 
+                                                type="button"
+                                                disabled
+                                                class="w-full py-2.5 rounded-xl text-xs font-black uppercase tracking-wider bg-slate-800 text-slate-500 cursor-not-allowed flex items-center justify-center gap-1.5"
+                                            >
+                                                <span>🪙 {{ number_format($item['price']) }}</span>
+                                                <span>•</span>
+                                                <span class="text-[10px]">Koin Kurang</span>
+                                            </button>
+                                        @endif
+                                    @endif
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+            @endif
 
             <div class="text-center pt-2">
                 <button wire:click="setViewMode('arena')" type="button" class="px-6 py-2 rounded-xl text-xs font-extrabold bg-slate-800 text-slate-300 hover:text-white transition-all cursor-pointer">
@@ -2729,6 +3175,15 @@ class="relative bg-slate-950 border border-slate-800 rounded-3xl shadow-2xl over
                             <span class="text-xs sm:text-sm font-black text-slate-200 truncate w-full mt-1.5">
                                 {{ $leaderboardPets[1]->name }}
                             </span>
+                            @if(!empty($leaderboardPets[1]->equipped_outfit))
+                                <div class="flex items-center justify-center gap-0.5 text-[10px]">
+                                    @foreach($leaderboardPets[1]->equipped_outfit as $eqKey)
+                                        @if(isset(\App\Models\AdminVirtualPet::OUTFIT_ITEMS[$eqKey]))
+                                            <span>{{ \App\Models\AdminVirtualPet::OUTFIT_ITEMS[$eqKey]['emoji'] }}</span>
+                                        @endif
+                                    @endforeach
+                                </div>
+                            @endif
                             <span class="text-[9px] sm:text-[10px] text-slate-400 truncate w-full">
                                 {{ $leaderboardPets[1]->user->name ?? 'Admin' }}
                             </span>
@@ -2759,6 +3214,15 @@ class="relative bg-slate-950 border border-slate-800 rounded-3xl shadow-2xl over
                             <span>{{ $leaderboardPets[0]->name }}</span>
                             <span class="text-xs">✨</span>
                         </span>
+                        @if(!empty($leaderboardPets[0]->equipped_outfit))
+                            <div class="flex items-center justify-center gap-0.5 text-xs">
+                                @foreach($leaderboardPets[0]->equipped_outfit as $eqKey)
+                                    @if(isset(\App\Models\AdminVirtualPet::OUTFIT_ITEMS[$eqKey]))
+                                        <span>{{ \App\Models\AdminVirtualPet::OUTFIT_ITEMS[$eqKey]['emoji'] }}</span>
+                                    @endif
+                                @endforeach
+                            </div>
+                        @endif
                         <span class="text-[10px] sm:text-xs text-amber-200/80 font-bold truncate w-full">
                             {{ $leaderboardPets[0]->user->name ?? 'Admin' }}
                         </span>
@@ -2786,6 +3250,15 @@ class="relative bg-slate-950 border border-slate-800 rounded-3xl shadow-2xl over
                             <span class="text-xs sm:text-sm font-black text-amber-200/90 truncate w-full mt-1.5">
                                 {{ $leaderboardPets[2]->name }}
                             </span>
+                            @if(!empty($leaderboardPets[2]->equipped_outfit))
+                                <div class="flex items-center justify-center gap-0.5 text-[10px]">
+                                    @foreach($leaderboardPets[2]->equipped_outfit as $eqKey)
+                                        @if(isset(\App\Models\AdminVirtualPet::OUTFIT_ITEMS[$eqKey]))
+                                            <span>{{ \App\Models\AdminVirtualPet::OUTFIT_ITEMS[$eqKey]['emoji'] }}</span>
+                                        @endif
+                                    @endforeach
+                                </div>
+                            @endif
                             <span class="text-[9px] sm:text-[10px] text-slate-400 truncate w-full">
                                 {{ $leaderboardPets[2]->user->name ?? 'Admin' }}
                             </span>
@@ -2859,6 +3332,15 @@ class="relative bg-slate-950 border border-slate-800 rounded-3xl shadow-2xl over
                                     <span class="text-[9px] px-1.5 py-0.2 rounded bg-slate-800 text-slate-300 font-semibold border border-slate-700">
                                         {{ $rankedPet->meta['species'] ?? 'Sahabat' }}
                                     </span>
+                                    @if(!empty($rankedPet->equipped_outfit))
+                                        <div class="flex items-center gap-0.5 px-1.5 py-0.2 rounded bg-indigo-950/60 border border-indigo-700/50 text-[10px]" title="Outfit Terpakai">
+                                            @foreach($rankedPet->equipped_outfit as $cat => $eqKey)
+                                                @if(isset(\App\Models\AdminVirtualPet::OUTFIT_ITEMS[$eqKey]))
+                                                    <span>{{ \App\Models\AdminVirtualPet::OUTFIT_ITEMS[$eqKey]['emoji'] }}</span>
+                                                @endif
+                                            @endforeach
+                                        </div>
+                                    @endif
                                 </div>
                                 <div class="text-[10px] sm:text-xs text-slate-400 flex items-center gap-1.5 mt-0.5 truncate">
                                     <span class="text-slate-300 font-semibold truncate">👤 {{ $rankedPet->user->name ?? 'Admin ELF' }}</span>

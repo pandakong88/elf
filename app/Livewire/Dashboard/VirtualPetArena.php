@@ -19,6 +19,12 @@ class VirtualPetArena extends Component
     // Filter Sort Leaderboard: 'level', 'coins', 'happiness'
     public string $leaderboardSort = 'level';
 
+    // Sub-tab di Toko: 'food' (makanan & kafe), 'wardrobe' (lemari pakaian & outfit)
+    public string $shopTab = 'food';
+
+    // Filter Kategori Lemari Outfit: 'all', 'head', 'eyes', 'body', 'prop'
+    public string $wardrobeCategoryFilter = 'all';
+
     // Form Adopsi / Edit
     public string $selectedPetType = 'kibo';
     public string $customPetName = '';
@@ -546,6 +552,78 @@ class VirtualPetArena extends Component
         $this->speechEmotion = 'happy';
     }
 
+    /**
+     * Ganti sub-tab di Toko (makanan vs lemari pakaian).
+     */
+    public function setShopTab(string $tab): void
+    {
+        if (in_array($tab, ['food', 'wardrobe'])) {
+            $this->shopTab = $tab;
+        }
+    }
+
+    /**
+     * Filter kategori pakaian di lemari outfit.
+     */
+    public function setWardrobeCategoryFilter(string $category): void
+    {
+        if (in_array($category, ['all', 'head', 'eyes', 'body', 'prop'])) {
+            $this->wardrobeCategoryFilter = $category;
+        }
+    }
+
+    /**
+     * Beli pakaian dari katalog outfit.
+     */
+    public function buyOutfitItem(string $key): void
+    {
+        if (!$this->pet) {
+            return;
+        }
+
+        $result = $this->pet->buyOutfit($key);
+        if ($result['success']) {
+            $this->pet->refresh();
+            $this->toastSuccess($result['message'], '🎉 Pakaian Baru!');
+            $this->petSpeech = "Keren banget! Baju baruku bikin makin percaya diri di pesantren!";
+            $this->speechEmotion = 'happy';
+        } else {
+            $this->toastError($result['message'], 'Gagal Membeli');
+        }
+    }
+
+    /**
+     * Pasang / Lepas (Equip / Unequip) pakaian.
+     */
+    public function toggleEquipOutfit(string $key): void
+    {
+        if (!$this->pet) {
+            return;
+        }
+
+        if (!isset(AdminVirtualPet::OUTFIT_ITEMS[$key])) {
+            return;
+        }
+
+        $item = AdminVirtualPet::OUTFIT_ITEMS[$key];
+        $category = $item['category'];
+
+        if ($this->pet->isEquipped($key)) {
+            // Lepas pakaian
+            $result = $this->pet->unequipOutfit($category);
+            $this->pet->refresh();
+            $this->toastInfo($result['message'], '👕 Pakaian Dilepas');
+            $this->petSpeech = "Pakaian dilepas. Kadang tampil kasual dan polos juga nyaman!";
+        } else {
+            // Pasang pakaian
+            $result = $this->pet->equipOutfit($key);
+            $this->pet->refresh();
+            $this->toastSuccess($result['message'], '✨ Siap Tampil Keren!');
+            $this->petSpeech = "Cocok banget kan? Sekarang giliran kita bikin kagum para admin!";
+            $this->speechEmotion = 'happy';
+        }
+    }
+
     public function render()
     {
         $uniquePetTypes = collect(AdminVirtualPet::PET_TYPES)
@@ -575,10 +653,23 @@ class VirtualPetArena extends Component
             }
         }
 
+        // Filter outfit items by category if not 'all'
+        $filteredOutfits = AdminVirtualPet::OUTFIT_ITEMS;
+        if ($this->wardrobeCategoryFilter !== 'all') {
+            $filteredOutfits = array_filter(
+                $filteredOutfits,
+                fn($item) => $item['category'] === $this->wardrobeCategoryFilter
+            );
+        }
+
         return view('livewire.dashboard.virtual-pet-arena', [
             'pet' => $this->pet,
             'petTypes' => $uniquePetTypes,
             'foodItems' => AdminVirtualPet::FOOD_ITEMS,
+            'outfitItems' => $filteredOutfits,
+            'allOutfits' => AdminVirtualPet::OUTFIT_ITEMS,
+            'shopTab' => $this->shopTab,
+            'wardrobeCategoryFilter' => $this->wardrobeCategoryFilter,
             'isEditingName' => $this->isEditingName,
             'editNameValue' => $this->editNameValue,
             'viewMode' => $this->viewMode,
