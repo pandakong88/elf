@@ -198,6 +198,10 @@
     ],
     currentTrackIndex: 0,
     showRadioDeck: false,
+    // Sinkronisasi lirik: delay bawaan (detik) agar lirik tidak mendahului vokal,
+    // ditambah penyesuaian manual per-lagu yang disimpan di localStorage.
+    lyricDefaultDelay: 1.5,
+    lyricSyncAdjust: 0,
     currentLyricLine: '',
     petSingingMouthOpen: false,
     radioAudio: null,
@@ -695,6 +699,7 @@
 
     startRadioMusic() {
         const track = this.radioTracks[this.currentTrackIndex];
+        this.loadLyricSyncAdjust();
         this.isMusicPlaying = true;
         this.petDancing = true;
         this.spawnFloatingText(`🎵 ${track.artist} - ${track.title}`, '#c084fc', '📻');
@@ -792,10 +797,13 @@
         // Rhythmic mouth toggle: alternate every ~320ms while song is playing
         this.petSingingMouthOpen = Math.floor(currentTime * 3.1) % 2 === 0;
 
+        // Waktu lirik digeser mundur supaya baris baru muncul bersamaan dengan vokal
+        const lyricTime = currentTime - (this.lyricDefaultDelay + this.lyricSyncAdjust);
+
         if (track && track.lyrics && track.lyrics.length > 0) {
             let activeLine = track.lyrics[0].text;
             for (let i = 0; i < track.lyrics.length; i++) {
-                if (currentTime >= track.lyrics[i].time) {
+                if (lyricTime >= track.lyrics[i].time) {
                     activeLine = track.lyrics[i].text;
                 } else {
                     break;
@@ -803,6 +811,37 @@
             }
             this.currentLyricLine = activeLine;
         }
+    },
+
+    loadLyricSyncAdjust() {
+        try {
+            const saved = localStorage.getItem('petRadioLyricSync_' + this.currentTrackIndex);
+            this.lyricSyncAdjust = saved !== null ? (parseFloat(saved) || 0) : 0;
+        } catch (e) {
+            this.lyricSyncAdjust = 0;
+        }
+    },
+
+    adjustLyricSync(delta) {
+        const next = Math.round((this.lyricSyncAdjust + delta) * 10) / 10;
+        this.lyricSyncAdjust = Math.max(-5, Math.min(10, next));
+        try {
+            localStorage.setItem('petRadioLyricSync_' + this.currentTrackIndex, String(this.lyricSyncAdjust));
+        } catch (e) {}
+        this.updateSingingLyrics();
+    },
+
+    resetLyricSync() {
+        this.lyricSyncAdjust = 0;
+        try {
+            localStorage.removeItem('petRadioLyricSync_' + this.currentTrackIndex);
+        } catch (e) {}
+        this.updateSingingLyrics();
+    },
+
+    lyricSyncLabel() {
+        const total = Math.round((this.lyricDefaultDelay + this.lyricSyncAdjust) * 10) / 10;
+        return (total >= 0 ? '+' : '') + total.toFixed(1) + 's';
     },
 
     stopRadioMusic() {
@@ -830,6 +869,7 @@
         if (this.isMusicPlaying) {
             this.startRadioMusic();
         } else {
+            this.loadLyricSyncAdjust();
             const track = this.radioTracks[this.currentTrackIndex];
             this.spawnFloatingText(`Pilih: ${track.title} 📻`, '#c084fc', '⏭️');
         }
@@ -841,6 +881,7 @@
         if (this.isMusicPlaying) {
             this.startRadioMusic();
         } else {
+            this.loadLyricSyncAdjust();
             const track = this.radioTracks[this.currentTrackIndex];
             this.spawnFloatingText(`Pilih: ${track.title} 📻`, '#c084fc', '⏮️');
         }
@@ -1758,6 +1799,33 @@ class="relative bg-slate-950 border border-slate-800 rounded-3xl shadow-2xl over
                                 <span class="text-xs sm:text-sm">⏭️</span>
                                 <span class="text-[8px] sm:text-[9px] font-bold leading-none mt-0.5">Next</span>
                             </button>
+                        </div>
+
+                        <!-- Lyric Sync Adjuster: geser timing lirik agar pas dengan vokal -->
+                        <div class="mt-2 flex items-center justify-between gap-1.5 px-2 py-1.5 rounded-xl bg-slate-900/80 border border-slate-800">
+                            <span class="text-[9px] sm:text-[10px] font-bold text-slate-400 truncate">🎤 Sinkron Lirik</span>
+                            <div class="flex items-center gap-1 shrink-0">
+                                <button
+                                    @click="adjustLyricSync(-0.5)"
+                                    type="button"
+                                    class="px-1.5 py-0.5 rounded-md bg-slate-800 border border-slate-700 text-[9px] sm:text-[10px] font-black text-slate-300 hover:text-white hover:border-purple-400 cursor-pointer active:scale-95"
+                                    title="Lirik muncul lebih cepat (-0.5 detik)"
+                                >⏪ Cepat</button>
+                                <span class="min-w-[38px] text-center text-[9px] sm:text-[10px] font-mono font-black text-purple-300" x-text="lyricSyncLabel()"></span>
+                                <button
+                                    @click="adjustLyricSync(0.5)"
+                                    type="button"
+                                    class="px-1.5 py-0.5 rounded-md bg-slate-800 border border-slate-700 text-[9px] sm:text-[10px] font-black text-slate-300 hover:text-white hover:border-purple-400 cursor-pointer active:scale-95"
+                                    title="Lirik muncul lebih lambat (+0.5 detik)"
+                                >Lambat ⏩</button>
+                                <button
+                                    x-show="lyricSyncAdjust !== 0"
+                                    @click="resetLyricSync()"
+                                    type="button"
+                                    class="px-1 py-0.5 rounded-md text-[9px] font-bold text-rose-300 hover:text-rose-200 cursor-pointer"
+                                    title="Kembalikan ke timing bawaan"
+                                >↺</button>
+                            </div>
                         </div>
                     </div>
 
