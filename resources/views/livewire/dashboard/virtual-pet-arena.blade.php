@@ -25,56 +25,56 @@
             ],
             lyrics: [
                 { time: 0, text: '🎶 (Petikan gitar akustik mulai mengalun...) 🎸' },
-                { time: 13, text: 'Wajahmu kuingat selalu... ✨' },
-                { time: 17, text: 'Lupakan hal-hal yang menggangguku 🍃' },
-                { time: 21, text: 'Karena hari ini mata kita beradu 🤝' },
-                { time: 26, text: 'Kita saling bantu 💖' },
-                { time: 30, text: 'Melepas perasaan tinggi ke angkasa 🚀' },
-                { time: 35, text: 'Menantang dunia! 🌍' },
-                { time: 37, text: 'Merayakan muda~ 🎉' },
-                { time: 40, text: '\'Tuk satu jam saja ⏳' },
-                { time: 43, text: 'Kita hampir mati dan kau selamatkan aku 🥺' },
-                { time: 49, text: 'Dan ku menyelamatkanmu 🤝' },
-                { time: 52, text: 'Dan sekarang aku tahu... 💡' },
-                { time: 55, text: 'Cerita kita tak jauh berbeda 📖' },
-                { time: 60, text: 'Got beat down by the world 🥊' },
-                { time: 63, text: 'Sometimes I wanna fold 💔' },
-                { time: 66, text: 'Namun suratmu \'kan kuceritakan ke anak-anakku nanti 💌' },
-                { time: 73, text: 'Bahwa aku pernah dicintai... 💖' },
-                { time: 77, text: 'With everything you are~ 🌟' },
-                { time: 81, text: 'Fully as I am! ✨' },
-                { time: 85, text: 'With everything you are... 🎶' },
-                { time: 96, text: 'Wajahmu yang beragam rupa 👥' },
-                { time: 100, text: 'Pastikan ku tak sendirian 🌸' },
-                { time: 104, text: 'Jalani derita, kau bawakan kisahmu 🗣️' },
-                { time: 109, text: 'Aku mendengarkan 👂' },
-                { time: 112, text: 'Oh, kita bergantian... 💫' },
-                { time: 115, text: 'Bertukar nestapa 🌧️' },
-                { time: 118, text: 'Menawar trauma 🩹' },
-                { time: 121, text: 'Datang seadanya 🏡' },
-                { time: 123, text: 'Terasku terbuka 🚪' },
-                { time: 126, text: 'Kita hampir mati dan kau selamatkan aku 🤝' },
-                { time: 132, text: 'Dan ku menyelamatkanmu 💖' },
-                { time: 135, text: 'Dan sekarang aku tahu... 💡' },
-                { time: 138, text: 'Cerita kita tak jauh berbeda 📖' },
-                { time: 144, text: 'Got beat down by the world 🥊' },
-                { time: 146, text: 'Sometimes I wanna fold 💔' },
-                { time: 149, text: 'Namun suratmu \'kan kuceritakan ke anak-anakku nanti 💌' },
-                { time: 157, text: 'Bahwa aku pernah dicintai... 💖' },
-                { time: 161, text: 'Seada-adanya 🌿' },
-                { time: 164, text: 'Sekurang-kurangnya 🍂' },
-                { time: 168, text: 'Walau sulit utarakan hatiku dengan indah 🥀' },
-                { time: 173, text: 'Walau jarang ku bernyanyi dengan cara yang indah 🎤' },
-                { time: 178, text: 'Tapi tak sekali pun kisahku pernah kau bantah, oh 🥺' },
-                { time: 186, text: 'Cerita kita tak jauh berbeda 📖' },
-                { time: 191, text: 'Got beat down by the world 🥊' },
-                { time: 194, text: 'Sometimes I wanna fold 💔' },
-                { time: 197, text: 'Namun suratmu \'kan kuceritakan ke anak-anakku nanti 💌' },
-                { time: 204, text: 'Bahwa aku pernah dicintai... 💖' },
-                { time: 208, text: 'With everything you are~ 🌟' },
-                { time: 213, text: 'Fully as I am! ✨' },
-                { time: 217, text: 'With everything you are... 💖' },
-                { time: 228, text: '🎶 (Melodi lembut penutup...) 🕊️' }
+                { time: 12, text: 'Wajahmu kuingat selalu... ✨' },
+                { time: 20, text: 'Lupakan hal-hal yang menggangguku 🍃' },
+                { time: 26, text: 'Kar\'na hari ini mata kita beradu 🤝' },
+                { time: 32, text: 'Kita saling bantu 💖' },
+                { time: 35, text: 'Melepas perasaan tinggi ke angkasa 🚀' },
+                { time: 41, text: 'Menantang dunia! 🌍' },
+                { time: 44, text: 'Merayakan muda~ 🎉' },
+                { time: 47, text: '\'Tuk satu jam saja ⏳' },
+                { time: 50, text: 'Kita hampir mati dan kau selamatkan aku 🥺' },
+                { time: 55, text: 'Dan ku menyelamatkanmu 🤝' },
+                { time: 58, text: 'Dan sekarang aku tahu... 💡' },
+                { time: 62, text: 'Cerita kita tak jauh berbeda 📖' },
+                { time: 69, text: 'Got beat down by the world 🥊' },
+                { time: 72, text: 'Sometimes I wanna fold 💔' },
+                { time: 74, text: 'Namun suratmu \'kan kuceritakan ke anak-anakku nanti 💌' },
+                { time: 79, text: 'Bahwa aku pernah dicintai... 💖' },
+                { time: 85, text: 'With everything you are~ 🌟' },
+                { time: 91, text: 'Fully as I am! ✨' },
+                { time: 94, text: 'With everything you are... 🎶' },
+                { time: 98, text: 'Wajahmu yang beragam rupa 👥' },
+                { time: 106, text: 'Pastikan ku tak sendirian 🌸' },
+                { time: 112, text: 'Jalani derita, kau bawakan kisahmu 🗣️' },
+                { time: 115, text: 'Aku mendengarkan 👂' },
+                { time: 121, text: 'Oh, kita bergantian... 💫' },
+                { time: 124, text: 'Bertukar nestapa 🌧️' },
+                { time: 128, text: 'Menawar trauma 🩹' },
+                { time: 131, text: 'Datang seadanya 🏡' },
+                { time: 134, text: 'Terasku terbuka 🚪' },
+                { time: 136, text: 'Kita hampir mati dan kau selamatkan aku 🤝' },
+                { time: 141, text: 'Dan ku menyelamatkanmu 💖' },
+                { time: 144, text: 'Dan sekarang aku tahu... 💡' },
+                { time: 148, text: 'Cerita kita tak jauh berbeda 📖' },
+                { time: 155, text: 'Got beat down by the world 🥊' },
+                { time: 158, text: 'Sometimes I wanna fold 💔' },
+                { time: 160, text: 'Namun suratmu \'kan kuceritakan ke anak-anakku nanti 💌' },
+                { time: 166, text: 'Bahwa aku pernah dicintai... 💖' },
+                { time: 171, text: 'Seada-adanya 🌿' },
+                { time: 174, text: 'Sekurang-kurangnya 🍂' },
+                { time: 177, text: 'Walau sulit utarakan hatiku dengan indah 🥀' },
+                { time: 183, text: 'Walau jarang ku bernyanyi dengan cara yang indah 🎤' },
+                { time: 189, text: 'Tapi tak sekali pun kisahku pernah kau bantah, oh 🥺' },
+                { time: 195, text: 'Cerita kita tak jauh berbeda 📖' },
+                { time: 203, text: 'Got beat down by the world 🥊' },
+                { time: 206, text: 'Sometimes I wanna fold 💔' },
+                { time: 208, text: 'Namun suratmu \'kan kuceritakan ke anak-anakku nanti 💌' },
+                { time: 213, text: 'Bahwa aku pernah dicintai... 💖' },
+                { time: 218, text: 'With everything you are~ 🌟' },
+                { time: 224, text: 'Fully as I am! ✨' },
+                { time: 227, text: 'With everything you are... 💖' },
+                { time: 232, text: '🎶 (Melodi lembut penutup...) 🕊️' }
             ]
         },
         {
@@ -86,46 +86,47 @@
                 '/audio/pet-radio/evaluasi.mp3'
             ],
             lyrics: [
-                { time: 0, text: 'Yang tak bisa terobati... 🥀' },
-                { time: 8, text: 'Biarlah mengering sendiri 🍂' },
-                { time: 16, text: 'Menghias tubuh dan... 🍃' },
-                { time: 18, text: 'Yang mengevaluasi ragamu... 🪞' },
-                { time: 30, text: 'Hanya kau sendiri! 👤' },
-                { time: 34, text: 'Mereka tak mampu 🚫' },
-                { time: 37, text: 'Melewati yang telah kau lewati 🚶‍♂️' },
+                { time: 0, text: '🎶 (Intro musik melankolis...) 🎹' },
+                { time: 2, text: 'Yang tak bisa terobati... 🥀' },
+                { time: 10, text: 'Biarlah mengering sendiri 🍂' },
+                { time: 19, text: 'Menghias tubuh dan... 🍃' },
+                { time: 21, text: 'Yang mengevaluasi ragamu... 🪞' },
+                { time: 34, text: 'Hanya kau sendiri! 👤' },
+                { time: 37, text: 'Mereka tak mampu 🚫' },
+                { time: 39, text: 'Melewati yang telah kau lewati 🚶‍♂️' },
                 { time: 43, text: 'Tiap berganti hari 🌅' },
-                { time: 47, text: 'Rintangan yang kau hadapi 🧗‍♂️' },
-                { time: 52, text: 'Masalah yang mengeruh... 🌫️' },
+                { time: 46, text: 'Rintangan yang kau hadapi 🧗‍♂️' },
+                { time: 51, text: 'Masalah yang mengeruh... 🌫️' },
                 { time: 56, text: 'Perasaan yang rapuh 💔' },
                 { time: 60, text: 'Ini belum separuhnya! ⏳' },
-                { time: 64, text: 'Biasa saja... 🍃' },
-                { time: 68, text: 'Kamu tak apa! 🤍' },
-                { time: 73, text: 'Yang selalu ingin ambil peran 🎭' },
-                { time: 77, text: 'Hanya berlomba menjadi lebih sedih dari dirimu 🌧️' },
-                { time: 85, text: 'Muak dikesampingkan, disamakan 🤦‍♂️' },
-                { time: 91, text: 'Hatimu terluka, sempurna... 🥀' },
-                { time: 96, text: 'Masalah yang mengeruh 🌫️' },
-                { time: 100, text: 'Perasaan yang rapuh 💔' },
-                { time: 104, text: 'Ini belum separuhnya! ⏳' },
-                { time: 108, text: 'Biasa saja... 🍃' },
-                { time: 112, text: 'Kamu tak apa! 🤍' },
-                { time: 116, text: 'Perjalanan yang jauh 🛣️' },
-                { time: 120, text: 'Kau bangun untuk bertaruh 🎲' },
-                { time: 124, text: 'Hari belum selesai! ☀️' },
-                { time: 128, text: 'Biasa saja, kamu tak apa~ ✨' },
-                { time: 137, text: 'Bilas muka, gosok gigi, evaluasi! 🪥💧' },
-                { time: 141, text: 'Tidur sejenak menemui esok pagi 🛌🌙' },
-                { time: 145, text: 'Walau pedih ku bersamamu kali ini 🤝' },
-                { time: 149, text: 'Ku masih ingin melihatmu esok hari! 🌅' },
-                { time: 153, text: 'Bilas muka, gosok gigi, evaluasi! 🪥💧' },
-                { time: 157, text: 'Tidur sejenak menemui esok pagi 🛌🌙' },
-                { time: 161, text: 'Walau pedih ku bersamamu kali ini 🤝' },
-                { time: 165, text: 'Ku masih ingin melihatmu esok hari! 🌅' },
-                { time: 169, text: 'Bilas muka, gosok gigi, evaluasi! 🪥💧' },
-                { time: 173, text: 'Tidur sejenak menemui esok pagi 🛌🌙' },
-                { time: 177, text: 'Walau pedih ku bersamamu kali ini 🤝' },
-                { time: 181, text: 'Ku masih ingin melihatmu esok hari... 💖' },
-                { time: 188, text: '🎶 (Alunan synth penutup mengalir damai...) 🕊️' }
+                { time: 63, text: 'Biasa saja... 🍃' },
+                { time: 66, text: 'Kamu tak apa! 🤍' },
+                { time: 68, text: 'Yang selalu ingin ambil peran 🎭' },
+                { time: 76, text: 'Hanya berlomba menjadi lebih sedih dari dirimu 🌧️' },
+                { time: 88, text: 'Muak dikesampingkan, disamakan 🤦‍♂️' },
+                { time: 92, text: 'Hatimu terluka, sempurna... 🥀' },
+                { time: 98, text: 'Masalah yang mengeruh 🌫️' },
+                { time: 103, text: 'Perasaan yang rapuh 💔' },
+                { time: 107, text: 'Ini belum separuhnya! ⏳' },
+                { time: 110, text: 'Biasa saja... 🍃' },
+                { time: 113, text: 'Kamu tak apa! 🤍' },
+                { time: 117, text: 'Perjalanan yang jauh 🛣️' },
+                { time: 122, text: 'Kau bangun untuk bertaruh 🎲' },
+                { time: 126, text: 'Hari belum selesai! ☀️' },
+                { time: 129, text: 'Biasa saja, kamu tak apa~ ✨' },
+                { time: 135, text: 'Bilas muka, gosok gigi, evaluasi! 🪥💧' },
+                { time: 140, text: 'Tidur sejenak menemui esok pagi 🛌🌙' },
+                { time: 145, text: 'Walau pedih \'ku bersamamu kali ini 🤝' },
+                { time: 150, text: '\'Ku masih ingin melihatmu esok hari! 🌅' },
+                { time: 154, text: 'Bilas muka, gosok gigi, evaluasi! 🪥💧' },
+                { time: 159, text: 'Tidur sejenak menemui esok pagi 🛌🌙' },
+                { time: 164, text: 'Walau pedih \'ku bersamamu kali ini 🤝' },
+                { time: 168, text: '\'Ku masih ingin melihatmu esok hari! 🌅' },
+                { time: 173, text: 'Bilas muka, gosok gigi, evaluasi! 🪥💧' },
+                { time: 178, text: 'Tidur sejenak menemui esok pagi 🛌🌙' },
+                { time: 182, text: 'Walau pedih \'ku bersamamu kali ini 🤝' },
+                { time: 187, text: '\'Ku masih ingin melihatmu esok hari... 💖' },
+                { time: 192, text: '🎶 (Alunan synth penutup mengalir damai...) 🕊️' }
             ]
         },
         {
@@ -143,53 +144,53 @@
                 { time: 19, text: 'Besok coba kau izin pulang cepat! 🏃‍♂️💨' },
                 { time: 23, text: 'Bilang saja siapa sedang sakit... 🤫' },
                 { time: 27, text: 'Lusa coba izin terlambat~ ⏰' },
-                { time: 30, text: 'Bilang saja kau celaka sedikit 🤭' },
-                { time: 34, text: 'Habiskan cutimu sebelum resign! 🌴' },
-                { time: 38, text: 'I know you\'re scared, but it\'s totally fine! 💖' },
+                { time: 31, text: 'Bilang saja kau celaka sedikit 🤭' },
+                { time: 35, text: 'Habiskan cutimu sebelum usai! 🌴' },
+                { time: 39, text: 'I know you\'re scared, but it\'s totally fine! 💖' },
                 { time: 42, text: 'Karena kau bukan mesin assembly line! 🤖❌' },
                 { time: 46, text: 'Lihat promo liburan, babe, that\'s a sign! ✈️' },
                 { time: 50, text: 'Oh, karena ku tahu... 💡' },
-                { time: 53, text: 'Kalimat itu ada di ujung mulutmu! 🗣️' },
+                { time: 54, text: 'Kalimat itu ada di ujung mulutmu! 🗣️' },
                 { time: 58, text: 'Oh, karena kau tahu... 💭' },
-                { time: 61, text: 'Tak mau lakukan itu seumur hidupmu! 🚫' },
+                { time: 62, text: 'Tak mau lakukan itu seumur hidupmu! 🚫' },
                 { time: 65, text: 'Lakukan apa yang kau mau sekarang! 🔥' },
                 { time: 69, text: 'Saat hatimu bergerak, jangan kau larang! 💃' },
                 { time: 73, text: 'Hidup ini tak ada artinya, maka... 🤷‍♂️' },
-                { time: 77, text: 'Kau bebas mengarang maknanya seorang! 🎨' },
-                { time: 80, text: 'Lakukan apa yang kau mau sekarang! 🔥' },
-                { time: 84, text: 'Saat hatimu bergerak, jangan kau larang! 💃' },
+                { time: 76, text: 'Kau bebas mengarang maknanya seorang! 🎨' },
+                { time: 81, text: 'Lakukan apa yang kau mau sekarang! 🔥' },
+                { time: 85, text: 'Saat hatimu bergerak, jangan kau larang! 💃' },
                 { time: 88, text: 'Lagipula hidup akan berakhir, maka... ⏳' },
                 { time: 92, text: 'Lakukan apa yang kau mau sekarang! 🚀' },
                 { time: 96, text: 'Berdansalah, kau raja dunia! 👑🕺' },
                 { time: 100, text: 'Karir ini tak ada artinya! 🎸✨' },
-                { time: 103, text: 'Berdansalah, kau ratu dunia! 💃👑' },
-                { time: 107, text: 'Hidup ini tak ada artinya! 🥳🎉' },
-                { time: 111, text: 'Besok coba kau berbohong sedikit 🤫' },
+                { time: 104, text: 'Berdansalah, kau ratu dunia! 💃👑' },
+                { time: 108, text: 'Hidup ini tak ada artinya! 🥳🎉' },
+                { time: 112, text: 'Besok coba kau berbohong sedikit 🤫' },
                 { time: 115, text: 'Lalu kau melupa saat diungkit 🙈' },
                 { time: 119, text: 'Bisa juga kau jujur saja 😇' },
                 { time: 123, text: 'Separahnya kau akan makin lega! 🍃' },
                 { time: 127, text: 'Oh, karena ku tahu... 💡' },
-                { time: 130, text: 'Kalimat itu ada di ujung mulutmu! 🗣️' },
-                { time: 134, text: 'Oh, karena kau tahu... 💭' },
+                { time: 131, text: 'Kalimat itu ada di ujung mulutmu! 🗣️' },
+                { time: 135, text: 'Oh, karena kau tahu... 💭' },
                 { time: 138, text: 'Utamakanlah dirimu di sisa hidupmu! 💖' },
                 { time: 142, text: 'Lakukan apa yang kau mau sekarang! 🔥' },
                 { time: 146, text: 'Saat hatimu bergerak, jangan kau larang! 💃' },
-                { time: 149, text: 'Hidup ini tak ada artinya, maka... 🤷‍♂️' },
+                { time: 150, text: 'Hidup ini tak ada artinya, maka... 🤷‍♂️' },
                 { time: 153, text: 'Kau bebas mengarang maknanya seorang! 🎨' },
-                { time: 157, text: 'Lakukan apa yang kau mau sekarang! 🔥' },
-                { time: 161, text: 'Saat hatimu bergerak, jangan kau larang! 💃' },
+                { time: 158, text: 'Lakukan apa yang kau mau sekarang! 🔥' },
+                { time: 162, text: 'Saat hatimu bergerak, jangan kau larang! 💃' },
                 { time: 165, text: 'Lagipula hidup akan berakhir, maka... ⏳' },
-                { time: 169, text: 'Lakukan apa yang kau mau sekarang! 🚀' },
-                { time: 172, text: 'Lakukan apa yang kau mau sekarang! 🔥' },
-                { time: 176, text: 'Saat hatimu bergerak, jangan kau larang! 💃' },
-                { time: 180, text: 'Hidup ini tak ada artinya, maka... 🤷‍♂️' },
+                { time: 168, text: 'Lakukan apa yang kau mau sekarang! 🚀' },
+                { time: 173, text: 'Lakukan apa yang kau mau sekarang! 🔥' },
+                { time: 177, text: 'Saat hatimu bergerak, jangan kau larang! 💃' },
+                { time: 181, text: 'Hidup ini tak ada artinya, maka... 🤷‍♂️' },
                 { time: 184, text: 'Kau bebas mengarang maknanya seorang! 🎨' },
                 { time: 188, text: 'Lakukan apa yang kau mau sekarang! 🔥' },
                 { time: 192, text: 'Saat hatimu bergerak, jangan kau larang! 💃' },
                 { time: 196, text: 'Lagipula hidup akan berakhir, maka... ⏳' },
-                { time: 200, text: 'Lakukan apa yang kau mau sekarang! 🚀' },
-                { time: 203, text: 'Berdansalah, kau raja dunia! 👑🕺' },
-                { time: 207, text: 'Karir ini tak ada artinya! 🎸✨' },
+                { time: 199, text: 'Lakukan apa yang kau mau sekarang! 🚀' },
+                { time: 204, text: 'Berdansalah, kau raja dunia! 👑🕺' },
+                { time: 208, text: 'Karir ini tak ada artinya! 🎸✨' },
                 { time: 211, text: 'Berdansalah, kau ratu dunia! 💃👑' },
                 { time: 215, text: 'Hidup ini tak ada artinya! 🥳🎉' },
                 { time: 220, text: '🎶 (Outro solo musik & tepuk tangan...) 👏' }
@@ -198,6 +199,10 @@
     ],
     currentTrackIndex: 0,
     showRadioDeck: false,
+    // Sinkronisasi lirik: timing sudah dikalibrasi presisi dengan audio resmi,
+    // delay bawaan 0.0s dan user bisa fine-tuning manual di UI radio deck jika mau.
+    lyricDefaultDelay: 0.0,
+    lyricSyncAdjust: 0,
     currentLyricLine: '',
     petSingingMouthOpen: false,
     radioAudio: null,
@@ -695,6 +700,7 @@
 
     startRadioMusic() {
         const track = this.radioTracks[this.currentTrackIndex];
+        this.loadLyricSyncAdjust();
         this.isMusicPlaying = true;
         this.petDancing = true;
         this.spawnFloatingText(`🎵 ${track.artist} - ${track.title}`, '#c084fc', '📻');
@@ -792,10 +798,13 @@
         // Rhythmic mouth toggle: alternate every ~320ms while song is playing
         this.petSingingMouthOpen = Math.floor(currentTime * 3.1) % 2 === 0;
 
+        // Waktu lirik digeser mundur supaya baris baru muncul bersamaan dengan vokal
+        const lyricTime = currentTime - (this.lyricDefaultDelay + this.lyricSyncAdjust);
+
         if (track && track.lyrics && track.lyrics.length > 0) {
             let activeLine = track.lyrics[0].text;
             for (let i = 0; i < track.lyrics.length; i++) {
-                if (currentTime >= track.lyrics[i].time) {
+                if (lyricTime >= track.lyrics[i].time) {
                     activeLine = track.lyrics[i].text;
                 } else {
                     break;
@@ -803,6 +812,37 @@
             }
             this.currentLyricLine = activeLine;
         }
+    },
+
+    loadLyricSyncAdjust() {
+        try {
+            const saved = localStorage.getItem('petRadioLyricSync_' + this.currentTrackIndex);
+            this.lyricSyncAdjust = saved !== null ? (parseFloat(saved) || 0) : 0;
+        } catch (e) {
+            this.lyricSyncAdjust = 0;
+        }
+    },
+
+    adjustLyricSync(delta) {
+        const next = Math.round((this.lyricSyncAdjust + delta) * 10) / 10;
+        this.lyricSyncAdjust = Math.max(-5, Math.min(10, next));
+        try {
+            localStorage.setItem('petRadioLyricSync_' + this.currentTrackIndex, String(this.lyricSyncAdjust));
+        } catch (e) {}
+        this.updateSingingLyrics();
+    },
+
+    resetLyricSync() {
+        this.lyricSyncAdjust = 0;
+        try {
+            localStorage.removeItem('petRadioLyricSync_' + this.currentTrackIndex);
+        } catch (e) {}
+        this.updateSingingLyrics();
+    },
+
+    lyricSyncLabel() {
+        const total = Math.round((this.lyricDefaultDelay + this.lyricSyncAdjust) * 10) / 10;
+        return (total >= 0 ? '+' : '') + total.toFixed(1) + 's';
     },
 
     stopRadioMusic() {
@@ -830,6 +870,7 @@
         if (this.isMusicPlaying) {
             this.startRadioMusic();
         } else {
+            this.loadLyricSyncAdjust();
             const track = this.radioTracks[this.currentTrackIndex];
             this.spawnFloatingText(`Pilih: ${track.title} 📻`, '#c084fc', '⏭️');
         }
@@ -841,6 +882,7 @@
         if (this.isMusicPlaying) {
             this.startRadioMusic();
         } else {
+            this.loadLyricSyncAdjust();
             const track = this.radioTracks[this.currentTrackIndex];
             this.spawnFloatingText(`Pilih: ${track.title} 📻`, '#c084fc', '⏮️');
         }
@@ -1758,6 +1800,33 @@ class="relative bg-slate-950 border border-slate-800 rounded-3xl shadow-2xl over
                                 <span class="text-xs sm:text-sm">⏭️</span>
                                 <span class="text-[8px] sm:text-[9px] font-bold leading-none mt-0.5">Next</span>
                             </button>
+                        </div>
+
+                        <!-- Lyric Sync Adjuster: geser timing lirik agar pas dengan vokal -->
+                        <div class="mt-2 flex items-center justify-between gap-1.5 px-2 py-1.5 rounded-xl bg-slate-900/80 border border-slate-800">
+                            <span class="text-[9px] sm:text-[10px] font-bold text-slate-400 truncate">🎤 Sinkron Lirik</span>
+                            <div class="flex items-center gap-1 shrink-0">
+                                <button
+                                    @click="adjustLyricSync(-0.5)"
+                                    type="button"
+                                    class="px-1.5 py-0.5 rounded-md bg-slate-800 border border-slate-700 text-[9px] sm:text-[10px] font-black text-slate-300 hover:text-white hover:border-purple-400 cursor-pointer active:scale-95"
+                                    title="Lirik muncul lebih cepat (-0.5 detik)"
+                                >⏪ Cepat</button>
+                                <span class="min-w-[38px] text-center text-[9px] sm:text-[10px] font-mono font-black text-purple-300" x-text="lyricSyncLabel()"></span>
+                                <button
+                                    @click="adjustLyricSync(0.5)"
+                                    type="button"
+                                    class="px-1.5 py-0.5 rounded-md bg-slate-800 border border-slate-700 text-[9px] sm:text-[10px] font-black text-slate-300 hover:text-white hover:border-purple-400 cursor-pointer active:scale-95"
+                                    title="Lirik muncul lebih lambat (+0.5 detik)"
+                                >Lambat ⏩</button>
+                                <button
+                                    x-show="lyricSyncAdjust !== 0"
+                                    @click="resetLyricSync()"
+                                    type="button"
+                                    class="px-1 py-0.5 rounded-md text-[9px] font-bold text-rose-300 hover:text-rose-200 cursor-pointer"
+                                    title="Kembalikan ke timing bawaan"
+                                >↺</button>
+                            </div>
                         </div>
                     </div>
 
