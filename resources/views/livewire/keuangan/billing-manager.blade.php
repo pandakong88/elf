@@ -994,6 +994,7 @@
                                         <select wire:model.live="genMode" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-100 rounded-xl px-4 py-2.5 text-xs focus:ring-2 focus:ring-emerald-500 font-bold shadow-xs">
                                             <option value="single">📌 Periode Terpilih Saja (misal: Periode 1 / Bulan Terpilih)</option>
                                             @if(!in_array($selectedConfig->interval, ['once', 'insidental', 'event', 'sekali']))
+                                                <option value="range">📅 Rentang Periode Tertentu (misal: Bulan X s/d Bulan Y)</option>
                                                 <option value="full_year">
                                                     🎓 Semua Periode Sekaligus Dalam Setahun 
                                                     @if(in_array($selectedConfig->interval, ['semester', '2x_yearly'])) (2 Semester sekaligus)
@@ -1035,61 +1036,163 @@
                                             </div>
                                         </div>
                                     @else
-                                        <!-- Period & Year Select Grid -->
-                                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                            @if($genMode === 'single' || $selectedConfig->interval === 'monthly')
-                                                <div>
-                                                    <label class="block text-[10px] font-extrabold text-slate-500 uppercase tracking-wider mb-1.5">
-                                                        @if($genMode === 'full_year')
-                                                            Bulan Awal Mulai (12 Bulan Berurutan) <span class="text-rose-500">*</span>
-                                                        @else
-                                                            Pilih Periode Penagihan <span class="text-rose-500">*</span>
-                                                        @endif
-                                                    </label>
-                                                    <select wire:model="genMonth" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-100 rounded-xl px-4 py-2.5 text-xs focus:ring-2 focus:ring-emerald-500 font-bold shadow-xs">
-                                                        @if($genMode === 'single' && in_array($selectedConfig->interval, ['semester', '2x_yearly']))
-                                                            <option value="1">Semester 1 (Ganjil / Periode 1)</option>
-                                                            <option value="2">Semester 2 (Genap / Periode 2)</option>
-                                                        @elseif($genMode === 'single' && in_array($selectedConfig->interval, ['caturwulan', '3x_yearly']))
-                                                            <option value="1">Caturwulan 1 (Jan–Apr / Periode 1)</option>
-                                                            <option value="2">Caturwulan 2 (Mei–Agt / Periode 2)</option>
-                                                            <option value="3">Caturwulan 3 (Sep–Des / Periode 3)</option>
-                                                        @elseif($genMode === 'single' && in_array($selectedConfig->interval, ['triwulan', '4x_yearly']))
-                                                            <option value="1">Triwulan 1 (Jan–Mar / Periode 1)</option>
-                                                            <option value="2">Triwulan 2 (Apr–Jun / Periode 2)</option>
-                                                            <option value="3">Triwulan 3 (Jul–Sep / Periode 3)</option>
-                                                            <option value="4">Triwulan 4 (Okt–Des / Periode 4)</option>
-                                                        @elseif($genMode === 'single' && in_array($selectedConfig->interval, ['bimulanan', '6x_yearly']))
-                                                            <option value="1">Dwibulanan 1 (Jan–Feb / Siklus 1)</option>
-                                                            <option value="2">Dwibulanan 2 (Mar–Apr / Siklus 2)</option>
-                                                            <option value="3">Dwibulanan 3 (Mei–Jun / Siklus 3)</option>
-                                                            <option value="4">Dwibulanan 4 (Jul–Agt / Siklus 4)</option>
-                                                            <option value="5">Dwibulanan 5 (Sep–Okt / Siklus 5)</option>
-                                                            <option value="6">Dwibulanan 6 (Nov–Des / Siklus 6)</option>
-                                                        @else
-                                                            @for($m = 1; $m <= 12; $m++)
-                                                                <option value="{{ $m }}">Bulan {{ $m }} ({{ date('F', mktime(0, 0, 0, $m, 1)) }})</option>
+                                        @if($genMode === 'range')
+                                            <!-- Mode Rentang Periode: Dari Bulan s/d Bulan & Tahun -->
+                                            <div class="space-y-3">
+                                                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                                    <div>
+                                                        <label class="block text-[10px] font-extrabold text-slate-500 uppercase tracking-wider mb-1.5">
+                                                            Dari Periode / Bulan <span class="text-rose-500">*</span>
+                                                        </label>
+                                                        <select wire:model.live="genMonth" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-100 rounded-xl px-3 py-2 text-xs focus:ring-2 focus:ring-emerald-500 font-bold shadow-xs">
+                                                            @if(in_array($selectedConfig->interval, ['semester', '2x_yearly']))
+                                                                <option value="1">Semester 1 (Ganjil)</option>
+                                                                <option value="2">Semester 2 (Genap)</option>
+                                                            @elseif(in_array($selectedConfig->interval, ['caturwulan', '3x_yearly']))
+                                                                <option value="1">Caturwulan 1 (Jan–Apr)</option>
+                                                                <option value="2">Caturwulan 2 (Mei–Agt)</option>
+                                                                <option value="3">Caturwulan 3 (Sep–Des)</option>
+                                                            @elseif(in_array($selectedConfig->interval, ['triwulan', '4x_yearly']))
+                                                                <option value="1">Triwulan 1 (Jan–Mar)</option>
+                                                                <option value="2">Triwulan 2 (Apr–Jun)</option>
+                                                                <option value="3">Triwulan 3 (Jul–Sep)</option>
+                                                                <option value="4">Triwulan 4 (Okt–Des)</option>
+                                                            @elseif(in_array($selectedConfig->interval, ['bimulanan', '6x_yearly']))
+                                                                @for($b = 1; $b <= 6; $b++)
+                                                                    <option value="{{ $b }}">Dwibulanan {{ $b }}</option>
+                                                                @endfor
+                                                            @else
+                                                                @for($m = 1; $m <= 12; $m++)
+                                                                    <option value="{{ $m }}">Bulan {{ $m }} ({{ date('F', mktime(0, 0, 0, $m, 1)) }})</option>
+                                                                @endfor
+                                                            @endif
+                                                        </select>
+                                                    </div>
+
+                                                    <div>
+                                                        <label class="block text-[10px] font-extrabold text-slate-500 uppercase tracking-wider mb-1.5">
+                                                            Sampai Periode / Bulan <span class="text-rose-500">*</span>
+                                                        </label>
+                                                        <select wire:model.live="genMonthEnd" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-100 rounded-xl px-3 py-2 text-xs focus:ring-2 focus:ring-emerald-500 font-bold shadow-xs">
+                                                            @if(in_array($selectedConfig->interval, ['semester', '2x_yearly']))
+                                                                <option value="1">Semester 1 (Ganjil)</option>
+                                                                <option value="2">Semester 2 (Genap)</option>
+                                                            @elseif(in_array($selectedConfig->interval, ['caturwulan', '3x_yearly']))
+                                                                <option value="1">Caturwulan 1 (Jan–Apr)</option>
+                                                                <option value="2">Caturwulan 2 (Mei–Agt)</option>
+                                                                <option value="3">Caturwulan 3 (Sep–Des)</option>
+                                                            @elseif(in_array($selectedConfig->interval, ['triwulan', '4x_yearly']))
+                                                                <option value="1">Triwulan 1 (Jan–Mar)</option>
+                                                                <option value="2">Triwulan 2 (Apr–Jun)</option>
+                                                                <option value="3">Triwulan 3 (Jul–Sep)</option>
+                                                                <option value="4">Triwulan 4 (Okt–Des)</option>
+                                                            @elseif(in_array($selectedConfig->interval, ['bimulanan', '6x_yearly']))
+                                                                @for($b = 1; $b <= 6; $b++)
+                                                                    <option value="{{ $b }}">Dwibulanan {{ $b }}</option>
+                                                                @endfor
+                                                            @else
+                                                                @for($m = 1; $m <= 12; $m++)
+                                                                    <option value="{{ $m }}">Bulan {{ $m }} ({{ date('F', mktime(0, 0, 0, $m, 1)) }})</option>
+                                                                @endfor
+                                                            @endif
+                                                        </select>
+                                                    </div>
+
+                                                    <div>
+                                                        <label class="block text-[10px] font-extrabold text-slate-500 uppercase tracking-wider mb-1.5">Tahun Penagihan <span class="text-rose-500">*</span></label>
+                                                        <select wire:model="genYear" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-100 rounded-xl px-3 py-2 text-xs focus:ring-2 focus:ring-emerald-500 font-bold shadow-xs cursor-pointer">
+                                                            @for($y = now()->format('Y') - 1; $y <= now()->format('Y') + 2; $y++)
+                                                                <option value="{{ $y }}">
+                                                                    {{ $y }}
+                                                                    @if($y == now()->format('Y') - 1) — Tahun Lalu
+                                                                    @elseif($y == now()->format('Y')) — Tahun Ini ✓
+                                                                    @elseif($y == now()->format('Y') + 1) — Tahun Depan
+                                                                    @elseif($y == now()->format('Y') + 2) — 2 Tahun Depan
+                                                                    @endif
+                                                                </option>
                                                             @endfor
-                                                        @endif
+                                                        </select>
+                                                    </div>
+                                                </div>
+
+                                                @php
+                                                    $startVal = (int)($genMonth ?: 1);
+                                                    $endVal   = (int)($genMonthEnd ?: $startVal);
+                                                    $rangeCount = max(0, $endVal - $startVal + 1);
+                                                @endphp
+                                                @if($endVal >= $startVal)
+                                                    <div class="p-2.5 bg-emerald-50/80 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 rounded-xl flex items-center gap-2 text-[11px] text-emerald-800 dark:text-emerald-300 font-medium">
+                                                        <svg class="w-4 h-4 shrink-0 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                                        <span>
+                                                            Menerbitkan tagihan untuk <strong>{{ $rangeCount }} periode</strong> ({{ $selectedConfig->interval === 'monthly' ? date('F', mktime(0,0,0,$startVal,1)) . ' s/d ' . date('F', mktime(0,0,0,$endVal,1)) : "Periode {$startVal} s/d {$endVal}" }} {{ $genYear }}). Santri yang sudah memiliki tagihan otomatis dilewati (anti tagihan ganda).
+                                                        </span>
+                                                    </div>
+                                                @else
+                                                    <div class="p-2.5 bg-rose-50/80 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800/60 rounded-xl flex items-center gap-2 text-[11px] text-rose-700 dark:text-rose-300 font-medium">
+                                                        <svg class="w-4 h-4 shrink-0 text-rose-600 dark:text-rose-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                                        <span>
+                                                            Bulan akhir penagihan tidak boleh lebih awal dari bulan awal.
+                                                        </span>
+                                                    </div>
+                                                @endif
+                                            </div>
+                                        @else
+                                            <!-- Period & Year Select Grid -->
+                                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                                @if($genMode === 'single' || $selectedConfig->interval === 'monthly')
+                                                    <div>
+                                                        <label class="block text-[10px] font-extrabold text-slate-500 uppercase tracking-wider mb-1.5">
+                                                            @if($genMode === 'full_year')
+                                                                Bulan Awal Mulai (12 Bulan Berurutan) <span class="text-rose-500">*</span>
+                                                            @else
+                                                                Pilih Periode Penagihan <span class="text-rose-500">*</span>
+                                                            @endif
+                                                        </label>
+                                                        <select wire:model="genMonth" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-100 rounded-xl px-4 py-2.5 text-xs focus:ring-2 focus:ring-emerald-500 font-bold shadow-xs">
+                                                            @if($genMode === 'single' && in_array($selectedConfig->interval, ['semester', '2x_yearly']))
+                                                                <option value="1">Semester 1 (Ganjil / Periode 1)</option>
+                                                                <option value="2">Semester 2 (Genap / Periode 2)</option>
+                                                            @elseif($genMode === 'single' && in_array($selectedConfig->interval, ['caturwulan', '3x_yearly']))
+                                                                <option value="1">Caturwulan 1 (Jan–Apr / Periode 1)</option>
+                                                                <option value="2">Caturwulan 2 (Mei–Agt / Periode 2)</option>
+                                                                <option value="3">Caturwulan 3 (Sep–Des / Periode 3)</option>
+                                                            @elseif($genMode === 'single' && in_array($selectedConfig->interval, ['triwulan', '4x_yearly']))
+                                                                <option value="1">Triwulan 1 (Jan–Mar / Periode 1)</option>
+                                                                <option value="2">Triwulan 2 (Apr–Jun / Periode 2)</option>
+                                                                <option value="3">Triwulan 3 (Jul–Sep / Periode 3)</option>
+                                                                <option value="4">Triwulan 4 (Okt–Des / Periode 4)</option>
+                                                            @elseif($genMode === 'single' && in_array($selectedConfig->interval, ['bimulanan', '6x_yearly']))
+                                                                <option value="1">Dwibulanan 1 (Jan–Feb / Siklus 1)</option>
+                                                                <option value="2">Dwibulanan 2 (Mar–Apr / Siklus 2)</option>
+                                                                <option value="3">Dwibulanan 3 (Mei–Jun / Siklus 3)</option>
+                                                                <option value="4">Dwibulanan 4 (Jul–Agt / Siklus 4)</option>
+                                                                <option value="5">Dwibulanan 5 (Sep–Okt / Siklus 5)</option>
+                                                                <option value="6">Dwibulanan 6 (Nov–Des / Siklus 6)</option>
+                                                            @else
+                                                                @for($m = 1; $m <= 12; $m++)
+                                                                    <option value="{{ $m }}">Bulan {{ $m }} ({{ date('F', mktime(0, 0, 0, $m, 1)) }})</option>
+                                                                @endfor
+                                                            @endif
+                                                        </select>
+                                                    </div>
+                                                @endif
+                                                <div class="{{ ($genMode === 'full_year' && $selectedConfig->interval !== 'monthly') ? 'sm:col-span-2' : '' }}">
+                                                    <label class="block text-[10px] font-extrabold text-slate-500 uppercase tracking-wider mb-1.5">Tahun Penagihan <span class="text-rose-500">*</span></label>
+                                                    <select wire:model="genYear" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-100 rounded-xl px-4 py-2.5 text-xs focus:ring-2 focus:ring-emerald-500 font-bold shadow-xs cursor-pointer">
+                                                        @for($y = now()->format('Y') - 1; $y <= now()->format('Y') + 2; $y++)
+                                                            <option value="{{ $y }}">
+                                                                {{ $y }}
+                                                                @if($y == now()->format('Y') - 1) — Tahun Lalu
+                                                                @elseif($y == now()->format('Y')) — Tahun Ini ✓
+                                                                @elseif($y == now()->format('Y') + 1) — Tahun Depan
+                                                                @elseif($y == now()->format('Y') + 2) — 2 Tahun Depan
+                                                                @endif
+                                                            </option>
+                                                        @endfor
                                                     </select>
                                                 </div>
-                                            @endif
-                                            <div class="{{ ($genMode === 'full_year' && $selectedConfig->interval !== 'monthly') ? 'sm:col-span-2' : '' }}">
-                                                <label class="block text-[10px] font-extrabold text-slate-500 uppercase tracking-wider mb-1.5">Tahun Penagihan <span class="text-rose-500">*</span></label>
-                                                <select wire:model="genYear" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-100 rounded-xl px-4 py-2.5 text-xs focus:ring-2 focus:ring-emerald-500 font-bold shadow-xs cursor-pointer">
-                                                    @for($y = now()->format('Y') - 1; $y <= now()->format('Y') + 2; $y++)
-                                                        <option value="{{ $y }}">
-                                                            {{ $y }}
-                                                            @if($y == now()->format('Y') - 1) — Tahun Lalu
-                                                            @elseif($y == now()->format('Y')) — Tahun Ini ✓
-                                                            @elseif($y == now()->format('Y') + 1) — Tahun Depan
-                                                            @elseif($y == now()->format('Y') + 2) — 2 Tahun Depan
-                                                            @endif
-                                                        </option>
-                                                    @endfor
-                                                </select>
                                             </div>
-                                        </div>
+                                        @endif
                                     @endif
                                 </div>
                             @endif
