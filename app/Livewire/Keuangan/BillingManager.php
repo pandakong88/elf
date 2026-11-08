@@ -78,6 +78,7 @@ class BillingManager extends Component
     // Tab: Dynamic Billing Generator
     public ?string $genConfigId = null;
     public int $genMonth;
+    public int $genMonthEnd;
     public int $genYear;
     public int $genSubPeriod = 1;
 
@@ -793,7 +794,8 @@ class BillingManager extends Component
             }
         }
 
-        $this->genMonth = 1;
+        $this->genMonth = (int) now()->format('n');
+        $this->genMonthEnd = min(12, (int) now()->format('n') + 1);
         $this->genYear = (int) now()->format('Y');
 
         $this->newConfigEffectiveFrom = now()->toDateString();
@@ -1261,14 +1263,28 @@ class BillingManager extends Component
     public function openGeneratePreviewModal(): void
     {
         if (!$this->genMonth) {
-            $this->genMonth = 1;
+            $this->genMonth = (int) now()->format('n');
+        }
+        if (!$this->genMonthEnd) {
+            $this->genMonthEnd = $this->genMonth;
         }
 
-        $this->validate([
+        $validationRules = [
             'genConfigId' => 'required',
             'genMonth'    => 'required|integer|min:1|max:12',
             'genYear'     => 'required|integer|min:2020|max:2030',
-        ]);
+        ];
+
+        if ($this->genMode === 'range') {
+            $validationRules['genMonthEnd'] = 'required|integer|min:1|max:12';
+        }
+
+        $this->validate($validationRules);
+
+        if ($this->genMode === 'range' && $this->genMonthEnd < $this->genMonth) {
+            $this->toastError("Bulan akhir penagihan (" . date('F', mktime(0, 0, 0, (int)$this->genMonthEnd, 1)) . ") tidak boleh lebih awal dari bulan awal (" . date('F', mktime(0, 0, 0, (int)$this->genMonth, 1)) . ").");
+            return;
+        }
 
         $config = BillingConfiguration::findOrFail($this->genConfigId);
         if (!$config->is_active) {
@@ -1315,6 +1331,55 @@ class BillingManager extends Component
                     $periodsList[] = ['label' => "Bulan {$m} ({$monthName} {$y})", 'month' => $m];
                 }
             }
+        } elseif ($this->genMode === 'range') {
+            $startM = (int)$this->genMonth;
+            $endM = (int)$this->genMonthEnd;
+
+            if (in_array($config->interval, ['semester', '2x_yearly'])) {
+                for ($p = $startM; $p <= min($endM, 2); $p++) {
+                    $month = ($p === 1) ? 1 : 7;
+                    $periodsList[] = [
+                        'label' => "Semester {$p} (" . ($p === 1 ? 'Jan–Jun' : 'Jul–Des') . ")",
+                        'month' => $month,
+                        'sub'   => $p,
+                    ];
+                }
+            } elseif (in_array($config->interval, ['caturwulan', '3x_yearly'])) {
+                for ($p = $startM; $p <= min($endM, 3); $p++) {
+                    $month = ($p - 1) * 4 + 1;
+                    $periodsList[] = [
+                        'label' => "Caturwulan {$p}",
+                        'month' => $month,
+                        'sub'   => $p,
+                    ];
+                }
+            } elseif (in_array($config->interval, ['triwulan', '4x_yearly'])) {
+                for ($p = $startM; $p <= min($endM, 4); $p++) {
+                    $month = ($p - 1) * 3 + 1;
+                    $periodsList[] = [
+                        'label' => "Triwulan {$p}",
+                        'month' => $month,
+                        'sub'   => $p,
+                    ];
+                }
+            } elseif (in_array($config->interval, ['bimulanan', '6x_yearly'])) {
+                for ($p = $startM; $p <= min($endM, 6); $p++) {
+                    $month = ($p - 1) * 2 + 1;
+                    $periodsList[] = [
+                        'label' => "Dwibulanan {$p}",
+                        'month' => $month,
+                        'sub'   => $p,
+                    ];
+                }
+            } else {
+                for ($m = $startM; $m <= $endM; $m++) {
+                    $monthName = date('F', mktime(0, 0, 0, $m, 1));
+                    $periodsList[] = [
+                        'label' => "Bulan {$m} ({$monthName} {$this->genYear})",
+                        'month' => $m,
+                    ];
+                }
+            }
         } else {
             $m = (int)$this->genMonth;
             $label = $this->formatPeriodLabel($config->interval, $m, $this->genYear);
@@ -1346,10 +1411,82 @@ class BillingManager extends Component
     {
         if ($this->genMode === 'full_year') {
             $this->generateFullAcademicYearFromConfig($billingService);
+        } elseif ($this->genMode === 'range') {
+            $this->generateRangeBillsFromConfig($billingService);
         } else {
             $this->generateDynamicBills($billingService);
         }
         $this->showGeneratePreviewModal = false;
+    }
+
+    public function generateRangeBillsFromConfig(BillingService $billingService): void
+    {
+        $this->validate([
+            'genConfigId' => 'required',
+            'genMonth'    => 'required|integer|min:1|max:12',
+            'genMonthEnd' => 'required|integer|min:1|max:12',
+            'genYear'     => 'required|integer|min:2020|max:2030',
+        ]);
+
+        if ($this->genMonthEnd < $this->genMonth) {
+            $this->toastError("Bulan akhir penagihan tidak boleh lebih awal dari bulan awal.");
+            return;
+        }
+
+        $config = BillingConfiguration::findOrFail($this->genConfigId);
+        $totalGenerated = 0;
+        $totalSkipped = 0;
+
+        $startM = (int)$this->genMonth;
+        $endM = (int)$this->genMonthEnd;
+
+        if (in_array($config->interval, ['semester', '2x_yearly'])) {
+            for ($p = $startM; $p <= min($endM, 2); $p++) {
+                $month = ($p === 1) ? 1 : 7;
+                $res = $billingService->generateBillsFromConfig($config->id, $month, $this->genYear, auth()->id() ?: User::first()?->id, $p);
+                $totalGenerated += $res['generated'];
+                $totalSkipped += $res['skipped'];
+            }
+            $labelRange = "Semester {$startM} s/d {$endM}";
+        } elseif (in_array($config->interval, ['caturwulan', '3x_yearly'])) {
+            for ($p = $startM; $p <= min($endM, 3); $p++) {
+                $month = ($p - 1) * 4 + 1;
+                $res = $billingService->generateBillsFromConfig($config->id, $month, $this->genYear, auth()->id() ?: User::first()?->id, $p);
+                $totalGenerated += $res['generated'];
+                $totalSkipped += $res['skipped'];
+            }
+            $labelRange = "Caturwulan {$startM} s/d {$endM}";
+        } elseif (in_array($config->interval, ['triwulan', '4x_yearly'])) {
+            for ($p = $startM; $p <= min($endM, 4); $p++) {
+                $month = ($p - 1) * 3 + 1;
+                $res = $billingService->generateBillsFromConfig($config->id, $month, $this->genYear, auth()->id() ?: User::first()?->id, $p);
+                $totalGenerated += $res['generated'];
+                $totalSkipped += $res['skipped'];
+            }
+            $labelRange = "Triwulan {$startM} s/d {$endM}";
+        } elseif (in_array($config->interval, ['bimulanan', '6x_yearly'])) {
+            for ($p = $startM; $p <= min($endM, 6); $p++) {
+                $month = ($p - 1) * 2 + 1;
+                $res = $billingService->generateBillsFromConfig($config->id, $month, $this->genYear, auth()->id() ?: User::first()?->id, $p);
+                $totalGenerated += $res['generated'];
+                $totalSkipped += $res['skipped'];
+            }
+            $labelRange = "Dwibulanan {$startM} s/d {$endM}";
+        } else {
+            for ($m = $startM; $m <= $endM; $m++) {
+                $res = $billingService->generateBillsFromConfig($config->id, $m, $this->genYear, auth()->id() ?: User::first()?->id);
+                $totalGenerated += $res['generated'];
+                $totalSkipped += $res['skipped'];
+            }
+            $startName = date('F', mktime(0, 0, 0, $startM, 1));
+            $endName   = date('F', mktime(0, 0, 0, $endM, 1));
+            $countMonths = ($endM - $startM + 1);
+            $labelRange = "{$countMonths} Bulan ({$startName} s/d {$endName} {$this->genYear})";
+        }
+
+        $msg = "Tagihan Rentang {$labelRange} untuk iuran '{$config->label}' berhasil diterbitkan: {$totalGenerated} tagihan baru dibuat, {$totalSkipped} tagihan dilewati (sudah ada).";
+        session()->flash('message', $msg);
+        $this->toastSuccess($msg);
     }
 
     public function generateDynamicBills(BillingService $billingService): void

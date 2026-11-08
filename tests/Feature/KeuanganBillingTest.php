@@ -11,6 +11,7 @@ use App\Modules\Kepengasuhan\Models\Room;
 use App\Modules\Kepengasuhan\Models\RoomAssignment;
 use App\Modules\Kepengasuhan\Models\SantriProfile;
 use App\Modules\Keuangan\Models\Bill;
+use App\Modules\Keuangan\Models\BillingConfiguration;
 use App\Modules\Keuangan\Models\BillPayment;
 use App\Modules\Keuangan\Models\MajekRegistration;
 use App\Modules\Keuangan\Models\EventBill;
@@ -341,6 +342,87 @@ class KeuanganBillingTest extends TestCase
             'created_by'   => $this->admin->id,
         ]);
         $this->assertEquals('Semester 2 2026', $billSem2->period_formatted);
+    }
+
+    public function test_billing_generator_range_mode_for_multiple_months(): void
+    {
+        // 1. Create active santri
+        $santri = Person::create([
+            'id'     => Str::uuid()->toString(),
+            'name'   => 'Santri Baru November',
+            'gender' => 'L',
+        ]);
+        PersonRole::create([
+            'id'                => Str::uuid()->toString(),
+            'person_id'         => $santri->id,
+            'organization_id'   => $this->pondok->id,
+            'role_type'         => 'santri',
+            'enrollment_status' => 'aktif',
+            'presence_status'   => 'mukim',
+            'is_active'         => true,
+            'start_date'        => now()->toDateString(),
+        ]);
+
+        // 2. Create monthly billing configuration
+        $config = BillingConfiguration::create([
+            'id'             => Str::uuid()->toString(),
+            'label'          => 'Syahriah Bulanan Santri',
+            'type'           => 'syahriah_pondok',
+            'interval'       => 'monthly',
+            'amount'         => 75000.00,
+            'effective_from' => now()->startOfYear()->toDateString(),
+            'target_type'    => 'all',
+            'target_filters' => ['genders' => ['L', 'P']],
+            'due_day_type'   => 'fixed_day',
+            'due_day_value'  => 10,
+            'is_active'      => true,
+            'created_by'     => $this->admin->id,
+        ]);
+
+        // 3. Test Livewire component with range mode (Nov to Dec 2026)
+        $component = Livewire::actingAs($this->admin)
+            ->test(BillingManager::class)
+            ->set('genConfigId', $config->id)
+            ->set('genMode', 'range')
+            ->set('genMonth', 11)
+            ->set('genMonthEnd', 12)
+            ->set('genYear', 2026)
+            ->call('openGeneratePreviewModal')
+            ->assertSet('showGeneratePreviewModal', true);
+
+        // Verify preview stats calculated 2 periods (months 11 and 12)
+        $stats = $component->get('previewGenStats');
+        $this->assertEquals(2, $stats['period_count']);
+        $this->assertEquals(2, $stats['total_bills']); // 1 student * 2 periods
+        $this->assertEquals(150000.00, $stats['total_amount']); // 75.000 * 2
+
+        // Confirm generation
+        $component->call('confirmGenerateBills', new BillingService())
+            ->assertSet('showGeneratePreviewModal', false);
+
+        // Verify database has 2 bills created: 1 for Nov 2026 and 1 for Dec 2026
+        $this->assertDatabaseHas('bills', [
+            'person_id'         => $santri->id,
+            'billing_config_id' => $config->id,
+            'period_month'      => 11,
+            'period_year'       => 2026,
+            'amount'            => 75000.00,
+        ]);
+
+        $this->assertDatabaseHas('bills', [
+            'person_id'         => $santri->id,
+            'billing_config_id' => $config->id,
+            'period_month'      => 12,
+            'period_year'       => 2026,
+            'amount'            => 75000.00,
+        ]);
+
+        // Second run: test anti-duplicate / skip logic
+        $component->call('confirmGenerateBills', new BillingService());
+
+        // Total bills in DB for this santri should still be 2 (none duplicated)
+        $billCount = Bill::where('person_id', $santri->id)->where('billing_config_id', $config->id)->count();
+        $this->assertEquals(2, $billCount);
     }
 }
 
