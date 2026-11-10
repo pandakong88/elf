@@ -11,6 +11,7 @@ use App\Modules\Kepengasuhan\Models\CensusV3Response;
 use App\Modules\Kepengasuhan\Models\Dormitory;
 use App\Modules\Kepengasuhan\Models\Room;
 use App\Modules\Kepengasuhan\Services\CensusV3Service;
+use App\Modules\Kepengasuhan\Services\CensusV3AccessService;
 use App\Modules\Kepengasuhan\Services\SantriStatusService;
 use App\Modules\Kepengasuhan\Exports\CensusV3TemplateExport;
 use Maatwebsite\Excel\Facades\Excel;
@@ -18,9 +19,7 @@ use Illuminate\Support\Collection;
 
 class CensusV3InputSheet extends Component
 {
-    use SendsToast;
-
-    use WithFileUploads;
+    use SendsToast, WithFileUploads;
 
     public string $campaignId;
     public string $dormitoryId;
@@ -36,16 +35,22 @@ class CensusV3InputSheet extends Component
     public array $presenceStatuses = [];
     public array $enrollmentStatuses = [];
 
-    // Original statuses loaded from DB to detect changes
+    // Original statuses & responses loaded from DB to detect changes and avoid concurrent overwrites
+    public array $originalResponses = [];
     public array $originalPresenceStatuses = [];
     public array $originalEnrollmentStatuses = [];
 
     protected CensusV3Service $censusService;
+    protected CensusV3AccessService $accessService;
     protected SantriStatusService $statusService;
 
-    public function boot(CensusV3Service $censusService, SantriStatusService $statusService): void
-    {
+    public function boot(
+        CensusV3Service $censusService,
+        CensusV3AccessService $accessService,
+        SantriStatusService $statusService
+    ): void {
         $this->censusService = $censusService;
+        $this->accessService = $accessService;
         $this->statusService = $statusService;
     }
 
@@ -53,6 +58,17 @@ class CensusV3InputSheet extends Component
     {
         $this->campaignId = $campaign;
         $this->dormitoryId = $dormitory;
+
+        $cd = $this->getCampaignDormitoryProperty();
+        if (!$cd) {
+            $this->redirect(route('sensus.campaigns'));
+            return;
+        }
+
+        // Pengecekan otorisasi
+        if (!$this->accessService->canAccessDormitory(auth()->user(), $cd, 'fill')) {
+            abort(403, 'Akses ditolak. Anda tidak berwenang mengisi data sensus asrama ini.');
+        }
 
         $this->loadData();
     }
@@ -81,6 +97,7 @@ class CensusV3InputSheet extends Component
             }
 
             $this->responses[$personId] = $rowResponses;
+            $this->originalResponses[$personId] = $rowResponses;
 
             // Load statuses
             $this->presenceStatuses[$personId] = $s->presence_status ?? 'mukim';
@@ -94,7 +111,7 @@ class CensusV3InputSheet extends Component
 
     public function getCampaignDormitoryProperty(): ?CensusV3CampaignDormitory
     {
-        return CensusV3CampaignDormitory::with('campaign.template.fields', 'dormitory')
+        return CensusV3CampaignDormitory::with('campaign.template.fields', 'dormitory', 'assignees')
             ->where('campaign_id', $this->campaignId)
             ->where('dormitory_id', $this->dormitoryId)
             ->first();
@@ -121,6 +138,8 @@ class CensusV3InputSheet extends Component
 
     public function bulkConfirm(): void
     {
+        $this->ensureAuthorized();
+
         foreach ($this->santriList as $s) {
             $personId = $s->person_id;
             
@@ -151,6 +170,8 @@ class CensusV3InputSheet extends Component
 
     public function importExcel()
     {
+        $this->ensureAuthorized();
+
         $this->validate([
             'excelFile' => 'required|file|mimes:xlsx,xls|max:5120', // 5MB max
         ]);
@@ -215,12 +236,14 @@ class CensusV3InputSheet extends Component
 
     public function saveDraft(): void
     {
+        $this->ensureAuthorized();
         $this->saveData();
         $this->toastSuccess('Draft sensus berhasil disimpan.');
     }
 
     public function submit(): void
     {
+        $this->ensureAuthorized();
         try {
             $this->saveData();
             
@@ -234,6 +257,18 @@ class CensusV3InputSheet extends Component
         }
     }
 
+    protected function ensureAuthorized(): void
+    {
+        $cd = $this->campaignDormitory;
+        if (!$cd || !$this->accessService->canAccessDormitory(auth()->user(), $cd, 'fill')) {
+            abort(403, 'Anda tidak memiliki hak untuk mengubah data sensus asrama ini.');
+        }
+
+        if (!in_array($cd->status, ['pending', 'in_progress', 'rejected'])) {
+            abort(403, 'Sensus untuk asrama ini sudah disubmit atau disetujui, perubahan tidak diizinkan.');
+        }
+    }
+
     private function saveData(): void
     {
         $cd = $this->campaignDormitory;
@@ -243,17 +278,27 @@ class CensusV3InputSheet extends Component
             $personId = $s->person_id;
             $roleId = $s->role_id;
 
-            // 1. Save response data (to census_responses)
-            $this->censusService->saveResponse(
-                $cd->id,
-                $personId,
-                $this->responses[$personId],
-                $userId,
-                'web_ketua'
-            );
+            $hasResponseChange = ($this->responses[$personId] !== ($this->originalResponses[$personId] ?? null));
+            $hasPresenceChange = ($this->presenceStatuses[$personId] !== ($this->originalPresenceStatuses[$personId] ?? null));
+            $hasEnrollmentChange = ($this->enrollmentStatuses[$personId] !== ($this->originalEnrollmentStatuses[$personId] ?? null));
 
-            // 2. Save presence status changes if changed
-            if ($this->presenceStatuses[$personId] !== $this->originalPresenceStatuses[$personId]) {
+            // Jika belum ada response sama sekali di DB, tetap simpan
+            $isNotYetInDb = empty($s->response_id);
+
+            // Simpan HANYA baris yang mengalami perubahan atau belum ada respons (mencegah overwrite antar sesama pengisi)
+            if ($hasResponseChange || $isNotYetInDb) {
+                $this->censusService->saveResponse(
+                    $cd->id,
+                    $personId,
+                    $this->responses[$personId],
+                    $userId,
+                    'web_ketua'
+                );
+                $this->originalResponses[$personId] = $this->responses[$personId];
+            }
+
+            // Simpan status presence jika ada perubahan
+            if ($hasPresenceChange) {
                 if (auth()->user()->can('change-presence-status')) {
                     $this->statusService->changePresenceStatus(
                         $roleId,
@@ -266,8 +311,8 @@ class CensusV3InputSheet extends Component
                 }
             }
 
-            // 3. Save enrollment status changes if changed
-            if ($this->enrollmentStatuses[$personId] !== $this->originalEnrollmentStatuses[$personId]) {
+            // Simpan status enrollment jika ada perubahan
+            if ($hasEnrollmentChange) {
                 if (auth()->user()->can('change-enrollment-status')) {
                     $this->statusService->changeEnrollmentStatus(
                         $roleId,

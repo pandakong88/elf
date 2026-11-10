@@ -35,6 +35,16 @@ class PusatKendaliAsramaKelas extends Component
     public string $dormitoryFilter= '';
     public string $kelasFilter    = '';
 
+    // Modal Lemari & Peta Lemari
+    public bool    $showLockerModal           = false;
+    public ?string $selectedLockerId          = null;
+    public ?string $selectedLockerRoomId      = null;
+    public string  $selectedLockerCode        = '';
+    public ?string $selectedLockerPersonId    = null;
+    public string  $selectedLockerCondition   = 'baik';
+    public string  $selectedLockerNotes       = '';
+    public array   $selectedRoomSantriOptions = [];
+
     // -------------------------------------------------------------------------
     // Registration Form States (Santri Baru Super Lengkap)
     // -------------------------------------------------------------------------
@@ -514,22 +524,33 @@ class PusatKendaliAsramaKelas extends Component
     // Status Change Methods (Mukim ↔ Laju / Boyong)
     // =========================================================================
 
+    public string  $statusSantriOldStatus   = 'aktif';
+    public string  $statusSantriOldPresence = 'mukim';
+    public string  $statusSantriRoomInfo    = '-';
+    public string  $statusSantriKelasInfo   = '-';
+
     public function openStatusModal(string $santriId): void
     {
-        $person = Person::with('activeRoles')->findOrFail($santriId);
-        $role   = $person->activeRoles->firstWhere('role_type', 'santri');
+        $person = Person::with(['roles', 'activeRoomAssignment.room.dormitory', 'activeMadrasahEnrollment.kelas'])->findOrFail($santriId);
+        $role   = $person->roles->firstWhere('role_type', 'santri');
 
         if (!$role) {
             $this->toastError('Role santri tidak ditemukan.');
             return;
         }
 
-        $this->statusSantriId         = $santriId;
-        $this->statusSantriName       = $person->name;
-        $this->statusSantriRoleId     = $role->id;
-        $this->targetPresenceStatus   = $role->presence_status ?? 'mukim';
-        $this->targetEnrollmentStatus = $role->enrollment_status ?? 'aktif';
-        $this->statusChangeNotes      = '';
+        $this->statusSantriId           = $santriId;
+        $this->statusSantriName         = $person->name;
+        $this->statusSantriRoleId       = $role->id;
+        $this->targetPresenceStatus     = $role->presence_status ?? 'mukim';
+        $this->targetEnrollmentStatus   = $role->enrollment_status ?? 'aktif';
+        $this->statusSantriOldStatus    = $role->enrollment_status ?? 'aktif';
+        $this->statusSantriOldPresence  = $role->presence_status ?? 'mukim';
+        $this->statusSantriRoomInfo     = $person->activeRoomAssignment?->room
+            ? ($person->activeRoomAssignment->room->dormitory?->name . ' — ' . $person->activeRoomAssignment->room->name)
+            : 'Belum ada kamar';
+        $this->statusSantriKelasInfo    = $person->activeMadrasahEnrollment?->kelas?->name ?? 'Belum ada kelas';
+        $this->statusChangeNotes        = '';
 
         $this->showStatusModal = true;
     }
@@ -551,12 +572,39 @@ class PusatKendaliAsramaKelas extends Component
 
     public function requestStatusChangeConfirm(): void
     {
-        $this->confirmAction      = 'executeStatusChange';
-        $this->confirmTitle       = 'Konfirmasi Perubahan Status Santri';
-        $this->confirmMessage     = "Apakah Anda YAKIN ingin mengubah status santri {$this->statusSantriName}? Perubahan status keanggotaan/keberadaan akan memengaruhi alokasi kamar & kelas aktif santri.";
-        $this->confirmButtonText  = 'Ya, Ubah Status Santri';
-        $this->confirmButtonColor = 'amber';
-        $this->showConfirmModal   = true;
+        $person = \App\Modules\Core\Models\Person::with(['activeRoomAssignment.room.dormitory', 'activeMadrasahEnrollment.kelas'])->find($this->statusSantriId);
+        $this->statusSantriRoomInfo = $person?->activeRoomAssignment?->room
+            ? ($person->activeRoomAssignment->room->dormitory?->name . ' — ' . $person->activeRoomAssignment->room->name)
+            : 'Belum ada kamar';
+        $this->statusSantriKelasInfo = $person?->activeMadrasahEnrollment?->kelas?->name ?? 'Belum ada kelas';
+
+        $this->confirmAction = 'executeStatusChange';
+
+        if ($this->targetEnrollmentStatus === 'tanpa_keterangan') {
+            $this->confirmTitle       = 'Konfirmasi Status: Tanpa Keterangan';
+            $this->confirmButtonColor = 'amber';
+            $this->confirmButtonText  = 'Ya, Simpan (Tahan Fasilitas)';
+            $this->confirmMessage     = "Anda akan mengubah status santri {$this->statusSantriName} menjadi Tanpa Keterangan.";
+        } elseif (in_array($this->targetEnrollmentStatus, ['keluar_resmi', 'boyong', 'dikeluarkan', 'alumni'])) {
+            $statusLabel = match($this->targetEnrollmentStatus) {
+                'keluar_resmi', 'boyong' => 'Boyong / Keluar Pondok',
+                'dikeluarkan'            => 'Dikeluarkan',
+                'alumni'                 => 'Alumni / Lulus',
+                default                  => 'Non-Aktif',
+            };
+            $this->confirmTitle       = "Peringatan: Pelepasan Fasilitas ({$statusLabel})";
+            $this->confirmButtonColor = 'rose';
+            $this->confirmButtonText  = 'Ya, Lepas Fasilitas & Simpan';
+            $this->confirmMessage     = "Anda akan mengubah status {$this->statusSantriName} menjadi {$statusLabel}. Alokasi kamar & kelas akan dikosongkan.";
+        } else {
+            $this->confirmTitle       = 'Konfirmasi Status: Aktif';
+            $this->confirmButtonColor = 'emerald';
+            $this->confirmButtonText  = 'Ya, Simpan Status Aktif';
+            $presenceLabel = $this->targetPresenceStatus === 'laju' ? 'Laju (Pulang-Pergi)' : 'Mukim (Asrama)';
+            $this->confirmMessage     = "Anda akan menyimpan status santri {$this->statusSantriName} sebagai Aktif ({$presenceLabel}).";
+        }
+
+        $this->showConfirmModal = true;
     }
 
     public function requestBulkRoomTransferConfirm(): void
@@ -1241,6 +1289,55 @@ class PusatKendaliAsramaKelas extends Component
     }
 
     // =========================================================================
+    // Locker Management Methods (Peta Lemari)
+    // =========================================================================
+
+    public function openLockerModal(string $lockerId): void
+    {
+        $locker = \App\Modules\Kepengasuhan\Models\Locker::with(['room.currentAssignments.person'])->findOrFail($lockerId);
+        $this->selectedLockerId        = $locker->id;
+        $this->selectedLockerRoomId    = $locker->room_id;
+        $this->selectedLockerCode      = $locker->code;
+        $this->selectedLockerPersonId  = $locker->assigned_person_id;
+        $this->selectedLockerCondition = $locker->condition;
+        $this->selectedLockerNotes     = $locker->notes ?? '';
+
+        $this->selectedRoomSantriOptions = $locker->room->currentAssignments->map(fn($a) => [
+            'id'   => $a->person_id,
+            'name' => $a->person?->name,
+        ])->toArray();
+
+        $this->showLockerModal = true;
+    }
+
+    public function saveLockerModal(): void
+    {
+        if (!$this->selectedLockerId) return;
+
+        try {
+            $lockerService = app(\App\Modules\Kepengasuhan\Services\LockerService::class);
+            $lockerService->assignLocker($this->selectedLockerId, $this->selectedLockerPersonId ?: null);
+            $lockerService->updateCondition($this->selectedLockerId, $this->selectedLockerCondition, $this->selectedLockerNotes);
+
+            $this->showLockerModal = false;
+            $this->toastSuccess('Data lemari berhasil disimpan.');
+        } catch (\Exception $e) {
+            $this->toastError('Gagal menyimpan lemari: ' . $e->getMessage());
+        }
+    }
+
+    public function quickGenerateLockers(string $roomId, int $count = 8): void
+    {
+        try {
+            $lockerService = app(\App\Modules\Kepengasuhan\Services\LockerService::class);
+            $lockerService->generateRoomSet($roomId, $count);
+            $this->toastSuccess("Berhasil membuat {$count} lemari pakaian & {$count} rak kitab untuk kamar.");
+        } catch (\Exception $e) {
+            $this->toastError('Gagal membuat perabot: ' . $e->getMessage());
+        }
+    }
+
+    // =========================================================================
     // Render Method
     // =========================================================================
 
@@ -1301,6 +1398,18 @@ class PusatKendaliAsramaKelas extends Component
                 ->get();
         }
 
+        // 6. Data Peta Lemari Santri
+        $petaLemariData = collect();
+        if ($this->activeTab === 'lemari') {
+            $petaLemariData = Dormitory::active()
+                ->when($this->genderFilter, fn($q) => $q->where('gender', $this->genderFilter))
+                ->when($this->dormitoryFilter, fn($q) => $q->where('id', $this->dormitoryFilter))
+                ->with(['rooms' => function ($rq) {
+                    $rq->active()->orderByRaw('LENGTH(name) ASC, name ASC')->with(['lockers.assignedPerson', 'currentAssignments.person']);
+                }])
+                ->get();
+        }
+
         // Shared Options
         $registrationGender = $this->showNewSantriModal ? $this->newSantriGender : ($this->genderFilter ?: null);
 
@@ -1333,6 +1442,7 @@ class PusatKendaliAsramaKelas extends Component
             'kelasList'          => $kelasList,
             'baganKomplekData'   => $baganKomplekData,
             'baganKelasData'     => $baganKelasData,
+            'petaLemariData'     => $petaLemariData,
             'dormitoryOptions'   => $dormitoryOptions,
             'roomOptions'        => $roomOptions,
             'kelasOptions'       => $kelasOptions,

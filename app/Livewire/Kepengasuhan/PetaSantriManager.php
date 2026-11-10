@@ -73,6 +73,10 @@ class PetaSantriManager extends Component
     public string  $targetPresenceStatus   = 'mukim';
     public string  $targetEnrollmentStatus = 'aktif';
     public string  $statusChangeNotes      = '';
+    public string  $statusSantriOldStatus   = 'aktif';
+    public string  $statusSantriOldPresence = 'mukim';
+    public string  $statusSantriRoomInfo    = '-';
+    public string  $statusSantriKelasInfo   = '-';
 
     protected $queryString = [
         'activeTab'        => ['except' => 'komplek'],
@@ -342,31 +346,64 @@ class PetaSantriManager extends Component
 
     public function openStatusModal(string $santriId): void
     {
-        $person = Person::with('activeRoles')->findOrFail($santriId);
-        $role   = $person->activeRoles->firstWhere('role_type', 'santri');
+        $person = Person::with(['roles', 'activeRoomAssignment.room.dormitory', 'activeMadrasahEnrollment.kelas'])->findOrFail($santriId);
+        $role   = $person->roles->firstWhere('role_type', 'santri');
 
         if (!$role) {
             $this->toastError('Role santri tidak ditemukan untuk santri ini.');
             return;
         }
 
-        $this->statusSantriId         = $santriId;
-        $this->statusSantriName       = $person->name;
-        $this->statusSantriRoleId     = $role->id;
-        $this->targetPresenceStatus   = $role->presence_status ?? 'mukim';
-        $this->targetEnrollmentStatus = $role->enrollment_status ?? 'aktif';
-        $this->statusChangeNotes      = '';
-        $this->showStatusModal        = true;
+        $this->statusSantriId           = $santriId;
+        $this->statusSantriName         = $person->name;
+        $this->statusSantriRoleId       = $role->id;
+        $this->targetPresenceStatus     = $role->presence_status ?? 'mukim';
+        $this->targetEnrollmentStatus   = $role->enrollment_status ?? 'aktif';
+        $this->statusSantriOldStatus    = $role->enrollment_status ?? 'aktif';
+        $this->statusSantriOldPresence  = $role->presence_status ?? 'mukim';
+        $this->statusSantriRoomInfo     = $person->activeRoomAssignment?->room
+            ? ($person->activeRoomAssignment->room->dormitory?->name . ' — ' . $person->activeRoomAssignment->room->name)
+            : 'Belum ada kamar';
+        $this->statusSantriKelasInfo    = $person->activeMadrasahEnrollment?->kelas?->name ?? 'Belum ada kelas';
+        $this->statusChangeNotes        = '';
+        $this->showStatusModal          = true;
     }
 
     public function requestStatusChangeConfirm(): void
     {
-        $this->confirmAction      = 'executeStatusChange';
-        $this->confirmTitle       = 'Konfirmasi Perubahan Status Santri';
-        $this->confirmMessage     = "Apakah Anda YAKIN ingin mengubah status santri {$this->statusSantriName}? Perubahan ini akan memengaruhi alokasi kamar & kelas aktif santri.";
-        $this->confirmButtonText  = 'Ya, Ubah Status';
-        $this->confirmButtonColor = 'amber';
-        $this->showConfirmModal   = true;
+        $person = Person::with(['activeRoomAssignment.room.dormitory', 'activeMadrasahEnrollment.kelas'])->find($this->statusSantriId);
+        $this->statusSantriRoomInfo = $person?->activeRoomAssignment?->room
+            ? ($person->activeRoomAssignment->room->dormitory?->name . ' — ' . $person->activeRoomAssignment->room->name)
+            : 'Belum ada kamar';
+        $this->statusSantriKelasInfo = $person?->activeMadrasahEnrollment?->kelas?->name ?? 'Belum ada kelas';
+
+        $this->confirmAction = 'executeStatusChange';
+
+        if ($this->targetEnrollmentStatus === 'tanpa_keterangan') {
+            $this->confirmTitle       = 'Konfirmasi Status: Tanpa Keterangan';
+            $this->confirmButtonColor = 'amber';
+            $this->confirmButtonText  = 'Ya, Simpan (Tahan Fasilitas)';
+            $this->confirmMessage     = "Anda akan mengubah status santri {$this->statusSantriName} menjadi Tanpa Keterangan.";
+        } elseif (in_array($this->targetEnrollmentStatus, ['keluar_resmi', 'boyong', 'dikeluarkan', 'alumni'])) {
+            $statusLabel = match($this->targetEnrollmentStatus) {
+                'keluar_resmi', 'boyong' => 'Boyong / Keluar Pondok',
+                'dikeluarkan'            => 'Dikeluarkan',
+                'alumni'                 => 'Alumni / Lulus',
+                default                  => 'Non-Aktif',
+            };
+            $this->confirmTitle       = "Peringatan: Pelepasan Fasilitas ({$statusLabel})";
+            $this->confirmButtonColor = 'rose';
+            $this->confirmButtonText  = 'Ya, Lepas Fasilitas & Simpan';
+            $this->confirmMessage     = "Anda akan mengubah status {$this->statusSantriName} menjadi {$statusLabel}. Alokasi kamar & kelas akan dikosongkan.";
+        } else {
+            $this->confirmTitle       = 'Konfirmasi Status: Aktif';
+            $this->confirmButtonColor = 'emerald';
+            $this->confirmButtonText  = 'Ya, Simpan Status Aktif';
+            $presenceLabel = $this->targetPresenceStatus === 'laju' ? 'Laju (Pulang-Pergi)' : 'Mukim (Asrama)';
+            $this->confirmMessage     = "Anda akan menyimpan status santri {$this->statusSantriName} sebagai Aktif ({$presenceLabel}).";
+        }
+
+        $this->showConfirmModal = true;
     }
 
     public function executeStatusChange(): void
@@ -464,8 +501,12 @@ class PetaSantriManager extends Component
                 // Filter Status Keanggotaan (Enrollment Status)
                 if ($this->enrollmentFilter === 'aktif') {
                     $rq->where('enrollment_status', 'aktif');
-                } elseif ($this->enrollmentFilter === 'boyong') {
-                    $rq->whereIn('enrollment_status', ['boyong', 'keluar_resmi', 'dikeluarkan', 'tanpa_keterangan']);
+                } elseif ($this->enrollmentFilter === 'keluar_resmi' || $this->enrollmentFilter === 'boyong') {
+                    $rq->whereIn('enrollment_status', ['boyong', 'keluar_resmi']);
+                } elseif ($this->enrollmentFilter === 'tanpa_keterangan') {
+                    $rq->where('enrollment_status', 'tanpa_keterangan');
+                } elseif ($this->enrollmentFilter === 'dikeluarkan') {
+                    $rq->where('enrollment_status', 'dikeluarkan');
                 } elseif ($this->enrollmentFilter === 'alumni') {
                     $rq->where('enrollment_status', 'alumni');
                 }
@@ -570,10 +611,12 @@ class PetaSantriManager extends Component
         }
 
         $enrollmentLabel = match ($this->enrollmentFilter) {
-            'aktif'  => 'Aktif (Mukim & Laju)',
-            'boyong' => 'Boyong / Keluar',
-            'alumni' => 'Alumni / Lulus',
-            default  => 'Semua Status Keanggotaan',
+            'aktif'                    => 'Aktif',
+            'keluar_resmi', 'boyong'   => 'Boyong / Keluar Resmi',
+            'tanpa_keterangan'         => 'Tanpa Keterangan',
+            'dikeluarkan'              => 'Dikeluarkan',
+            'alumni'                   => 'Alumni / Lulus',
+            default                    => 'Semua Status Keanggotaan',
         };
 
         $presenceLabel = match ($this->presenceFilter) {

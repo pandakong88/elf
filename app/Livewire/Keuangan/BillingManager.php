@@ -461,8 +461,12 @@ class BillingManager extends Component
     public string $payLogEndDate     = '';
     public string $payLogUser        = '';
     public string $payLogConfigId    = '';
+    public string $payLogPeriod      = ''; // Dynamic period: Bulan (1-12), Semester (1-2), Caturwulan (1-3), etc.
+    public string $payLogPeriodYear  = ''; // Tahun periode tagihan (e.g. '2026')
     public string $payLogDormitoryId = '';
     public string $payLogKelasId     = '';
+    public string $payLogSortBy      = 'date'; // 'date', 'name', 'amount', 'receipt_no'
+    public string $payLogSortDir     = 'desc'; // 'asc', 'desc'
     public bool   $showPayLogAdvancedFilters = false;
 
     // Filters for exceptions (Dispensasi & Keringanan)
@@ -488,15 +492,41 @@ class BillingManager extends Component
         $this->resetPage('gatewayPage');
     }
 
-    public function updatingPayLogSearch(): void { $this->resetPage('payLogPage'); }
-    public function updatingPayLogMethod(): void { $this->resetPage('payLogPage'); }
-    public function updatingPayLogDate(): void { $this->resetPage('payLogPage'); }
-    public function updatingPayLogStartDate(): void { $this->resetPage('payLogPage'); }
-    public function updatingPayLogEndDate(): void { $this->resetPage('payLogPage'); }
-    public function updatingPayLogUser(): void { $this->resetPage('payLogPage'); }
-    public function updatingPayLogConfigId(): void { $this->resetPage('payLogPage'); }
+    public function updatingPayLogSearch(): void      { $this->resetPage('payLogPage'); }
+    public function updatingPayLogMethod(): void      { $this->resetPage('payLogPage'); }
+    public function updatingPayLogDate(): void        { $this->resetPage('payLogPage'); }
+    public function updatingPayLogStartDate(): void   { $this->resetPage('payLogPage'); }
+    public function updatingPayLogEndDate(): void     { $this->resetPage('payLogPage'); }
+    public function updatingPayLogUser(): void        { $this->resetPage('payLogPage'); }
+    public function updatingPayLogConfigId(): void    { $this->resetPage('payLogPage'); }
+    public function updatedPayLogConfigId(): void
+    {
+        $this->payLogPeriod = ''; // Reset period when config changes
+        $this->resetPage('payLogPage');
+    }
+    public function updatingPayLogPeriod(): void     { $this->resetPage('payLogPage'); }
+    public function updatingPayLogPeriodYear(): void { $this->resetPage('payLogPage'); }
     public function updatingPayLogDormitoryId(): void { $this->resetPage('payLogPage'); }
-    public function updatingPayLogKelasId(): void { $this->resetPage('payLogPage'); }
+    public function updatingPayLogKelasId(): void     { $this->resetPage('payLogPage'); }
+    public function updatingPayLogSortBy(): void      { $this->resetPage('payLogPage'); }
+    public function updatingPayLogSortDir(): void     { $this->resetPage('payLogPage'); }
+
+    public function togglePayLogSort(string $field): void
+    {
+        if ($this->payLogSortBy === $field) {
+            $this->payLogSortDir = $this->payLogSortDir === 'asc' ? 'desc' : 'asc';
+        } else {
+            $this->payLogSortBy = $field;
+            $this->payLogSortDir = in_array($field, ['amount', 'date']) ? 'desc' : 'asc';
+        }
+        $this->resetPage('payLogPage');
+    }
+
+    public function togglePayLogSortDir(): void
+    {
+        $this->payLogSortDir = $this->payLogSortDir === 'asc' ? 'desc' : 'asc';
+        $this->resetPage('payLogPage');
+    }
 
     public function togglePayLogAdvancedFilters(): void
     {
@@ -537,8 +567,12 @@ class BillingManager extends Component
         $this->payLogEndDate     = '';
         $this->payLogUser        = '';
         $this->payLogConfigId    = '';
+        $this->payLogPeriod      = '';
+        $this->payLogPeriodYear  = '';
         $this->payLogDormitoryId = '';
         $this->payLogKelasId     = '';
+        $this->payLogSortBy      = 'date';
+        $this->payLogSortDir     = 'desc';
         $this->resetPage('payLogPage');
     }
 
@@ -4758,9 +4792,9 @@ class BillingManager extends Component
             ->when($this->payLogSearch, function ($q) {
                 $term = trim($this->payLogSearch);
                 $q->where(function($sub) use ($term) {
-                    $sub->where('receipt_no', 'like', '%' . $term . '%')
-                        ->orWhere('payment_group_id', 'like', '%' . $term . '%')
-                        ->orWhere('id', 'like', '%' . $term . '%')
+                    $sub->where('bill_payments.receipt_no', 'like', '%' . $term . '%')
+                        ->orWhere('bill_payments.payment_group_id', 'like', '%' . $term . '%')
+                        ->orWhere('bill_payments.id', 'like', '%' . $term . '%')
                         ->orWhereHas('bill.person', function ($sq) use ($term) {
                             $sq->where('name', 'like', '%' . $term . '%')
                               ->orWhere('nik', 'like', '%' . $term . '%')
@@ -4773,26 +4807,57 @@ class BillingManager extends Component
                             $sq->where('label', 'like', '%' . $term . '%')
                               ->orWhere('bill_type', 'like', '%' . $term . '%');
                         })
-                        ->orWhere('notes', 'like', '%' . $term . '%');
+                        ->orWhere('bill_payments.notes', 'like', '%' . $term . '%');
                 });
             })
             ->when($this->payLogMethod, function ($q) {
-                $q->where('payment_method', strtolower($this->payLogMethod));
+                $q->where('bill_payments.payment_method', strtolower($this->payLogMethod));
             })
             ->when($this->payLogDate, function ($q) {
-                $q->whereDate('payment_date', $this->payLogDate);
+                $q->whereDate('bill_payments.payment_date', $this->payLogDate);
             })
             ->when($this->payLogStartDate, function ($q) {
-                $q->whereDate('payment_date', '>=', $this->payLogStartDate);
+                $q->whereDate('bill_payments.payment_date', '>=', $this->payLogStartDate);
             })
             ->when($this->payLogEndDate, function ($q) {
-                $q->whereDate('payment_date', '<=', $this->payLogEndDate);
+                $q->whereDate('bill_payments.payment_date', '<=', $this->payLogEndDate);
             })
             ->when($this->payLogUser, function ($q) {
-                $q->where('logged_by', $this->payLogUser);
+                $q->where('bill_payments.logged_by', $this->payLogUser);
             })
             ->when($this->payLogConfigId, function ($q) {
                 $q->whereHas('bill', fn($bq) => $bq->where('billing_config_id', $this->payLogConfigId));
+            })
+            ->when($this->payLogPeriodYear, function ($q) {
+                $q->whereHas('bill', fn($bq) => $bq->where('period_year', (int)$this->payLogPeriodYear));
+            })
+            ->when($this->payLogPeriod !== '', function ($q) {
+                $selectedCfg = $this->payLogConfigId ? BillingConfiguration::find($this->payLogConfigId) : null;
+                $interval = $selectedCfg?->interval ?? 'monthly';
+                $val = (int)$this->payLogPeriod;
+
+                $q->whereHas('bill', function ($bq) use ($interval, $val) {
+                    if (in_array($interval, ['semester', '2x_yearly'])) {
+                        $bq->where(function($sq) use ($val) {
+                            $sq->where('period_sub', $val)
+                               ->orWhere(function($subq) use ($val) {
+                                   $subq->whereNull('period_sub');
+                                   if ($val === 1) {
+                                       $subq->whereIn('period_month', [1, 2, 3, 4, 5, 6]);
+                                   } else {
+                                       $subq->whereIn('period_month', [2, 7, 8, 9, 10, 11, 12]);
+                                   }
+                               });
+                        });
+                    } elseif (in_array($interval, ['caturwulan', '3x_yearly', 'triwulan', '4x_yearly', 'bimulanan', '6x_yearly'])) {
+                        $bq->where(function($sq) use ($val) {
+                            $sq->where('period_sub', $val)
+                               ->orWhere('period_month', $val);
+                        });
+                    } else {
+                        $bq->where('period_month', $val);
+                    }
+                });
             })
             ->when($this->payLogDormitoryId, function ($q) {
                 $q->whereHas('bill.person.roomAssignments', function($rq) {
@@ -4805,12 +4870,12 @@ class BillingManager extends Component
                     $mq->where('is_active', true)->where('kelas_id', $this->payLogKelasId);
                 });
             })
-            ->orderBy('created_at', 'desc');
+            ->orderBy('bill_payments.created_at', 'desc');
 
         if (!$isCentral && $user) {
             $allowedConfigIds = BillingConfiguration::all()->filter($filterFunc)->pluck('id')->toArray();
             $paymentsLogQuery->where(function ($q) use ($allowedConfigIds, $user) {
-                $q->where('logged_by', $user->id)
+                $q->where('bill_payments.logged_by', $user->id)
                   ->orWhereHas('bill', function ($bq) use ($allowedConfigIds) {
                       $bq->whereIn('billing_config_id', $allowedConfigIds);
                   });
@@ -4819,20 +4884,30 @@ class BillingManager extends Component
 
         // Summary Statistics for the filtered log query
         $summaryBaseQuery = clone $paymentsLogQuery;
-        $payLogTotalCash     = (float) (clone $summaryBaseQuery)->where('payment_method', 'cash')->sum('amount_paid');
-        $payLogTotalTransfer = (float) (clone $summaryBaseQuery)->where('payment_method', 'transfer')->sum('amount_paid');
-        $payLogTotalGateway  = (float) (clone $summaryBaseQuery)->where('payment_method', 'gateway_duitku')->sum('amount_paid');
+        $payLogTotalCash     = (float) (clone $summaryBaseQuery)->where('bill_payments.payment_method', 'cash')->sum('amount_paid');
+        $payLogTotalTransfer = (float) (clone $summaryBaseQuery)->where('bill_payments.payment_method', 'transfer')->sum('amount_paid');
+        $payLogTotalGateway  = (float) (clone $summaryBaseQuery)->where('bill_payments.payment_method', 'gateway_duitku')->sum('amount_paid');
         $payLogTotalCount    = (int) (clone $summaryBaseQuery)->count();
-        $payLogGatewayCount  = (int) (clone $summaryBaseQuery)->where('payment_method', 'gateway_duitku')->count();
+        $payLogGatewayCount  = (int) (clone $summaryBaseQuery)->where('bill_payments.payment_method', 'gateway_duitku')->count();
 
         // Mode Kuitansi vs Mode Log Item
         $receiptsLog = null;
+        $dir = strtolower($this->payLogSortDir) === 'asc' ? 'asc' : 'desc';
+
         if ($this->cashierHistoryMode === 'receipt') {
             $receiptGroupQuery = (clone $paymentsLogQuery)
                 ->reorder()
-                ->selectRaw('COALESCE(receipt_no, id) as group_key, MAX(id) as latest_id, MAX(created_at) as latest_created')
-                ->groupBy(DB::raw('COALESCE(receipt_no, id)'))
-                ->orderBy(DB::raw('MAX(created_at)'), 'desc');
+                ->leftJoin('bills', 'bill_payments.bill_id', '=', 'bills.id')
+                ->leftJoin('persons', 'bills.person_id', '=', 'persons.id')
+                ->selectRaw('COALESCE(bill_payments.receipt_no, bill_payments.id) as group_key, MAX(bill_payments.id) as latest_id, MAX(bill_payments.created_at) as latest_created, SUM(bill_payments.amount_paid) as total_amount, MAX(persons.name) as santri_name')
+                ->groupBy(DB::raw('COALESCE(bill_payments.receipt_no, bill_payments.id)'));
+
+            match ($this->payLogSortBy) {
+                'name'       => $receiptGroupQuery->orderBy(DB::raw('MAX(persons.name)'), $dir)->orderBy(DB::raw('MAX(bill_payments.created_at)'), 'desc'),
+                'amount'     => $receiptGroupQuery->orderBy(DB::raw('SUM(bill_payments.amount_paid)'), $dir)->orderBy(DB::raw('MAX(bill_payments.created_at)'), 'desc'),
+                'receipt_no' => $receiptGroupQuery->orderBy(DB::raw('COALESCE(bill_payments.receipt_no, bill_payments.id)'), $dir),
+                default      => $receiptGroupQuery->orderBy(DB::raw('MAX(bill_payments.created_at)'), $dir),
+            };
 
             $receiptsPaginated = $receiptGroupQuery->paginate(15, pageName: 'payLogPage');
             $groupKeys = $receiptsPaginated->pluck('group_key')->toArray();
@@ -4908,14 +4983,36 @@ class BillingManager extends Component
             $receiptsLog = $receiptsPaginated;
         }
 
-        $paymentsLog = $paymentsLogQuery->paginate(15, pageName: 'payLogPage');
+        $itemLogQuery = (clone $paymentsLogQuery)->reorder();
+        if ($this->payLogSortBy === 'name') {
+            $itemLogQuery->leftJoin('bills', 'bill_payments.bill_id', '=', 'bills.id')
+                         ->leftJoin('persons', 'bills.person_id', '=', 'persons.id')
+                         ->select('bill_payments.*')
+                         ->orderBy('persons.name', $dir)
+                         ->orderBy('bill_payments.created_at', 'desc');
+        } elseif ($this->payLogSortBy === 'amount') {
+            $itemLogQuery->select('bill_payments.*')
+                         ->orderBy('bill_payments.amount_paid', $dir)
+                         ->orderBy('bill_payments.created_at', 'desc');
+        } elseif ($this->payLogSortBy === 'receipt_no') {
+            $itemLogQuery->select('bill_payments.*')
+                         ->orderBy('bill_payments.receipt_no', $dir);
+        } else {
+            $itemLogQuery->select('bill_payments.*')
+                         ->orderBy('bill_payments.created_at', $dir);
+        }
+
+        $paymentsLog = $itemLogQuery->paginate(15, pageName: 'payLogPage');
         $generationHistory = $historyQuery->paginate(10, pageName: 'historyPage');
 
         // Dropdown Lists for Advanced Filters
         $cashierUsers = User::whereIn('id', BillPayment::select('logged_by')->distinct())->orderBy('name')->get(['id', 'name']);
-        $payLogConfigs = BillingConfiguration::orderBy('label')->get(['id', 'label', 'type']);
+        $payLogConfigs = BillingConfiguration::orderBy('label')->get(['id', 'label', 'type', 'interval']);
         $payLogDormitories = Dormitory::when($this->genderScope(), fn($q, $g) => $q->where('gender', $g))->orderBy('name')->get(['id', 'name', 'gender']);
         $payLogClasses = MadrasahKelas::where('is_active', true)->orderBy('name')->get(['id', 'name', 'academic_year']);
+        $currentYear = (int) now()->format('Y');
+        $existingYears = Bill::select('period_year')->whereNotNull('period_year')->distinct()->pluck('period_year')->map(fn($y) => (int)$y)->toArray();
+        $payLogYears = collect(array_unique(array_merge([$currentYear, $currentYear - 1, $currentYear - 2, $currentYear + 1], $existingYears)))->sortDesc()->values();
 
         $regItemsQuery = BillingConfiguration::where('type', 'pendaftaran');
         if (!empty($this->regItemSearch)) {
@@ -5237,6 +5334,7 @@ class BillingManager extends Component
             'payLogTotalCount'    => $payLogTotalCount,
             'cashierUsers'        => $cashierUsers,
             'payLogConfigs'       => $payLogConfigs,
+            'payLogYears'         => $payLogYears,
             'payLogDormitories'   => $payLogDormitories,
             'payLogClasses'       => $payLogClasses,
             'gatewayTransactions' => $gatewayTransactions,

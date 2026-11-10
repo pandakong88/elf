@@ -97,7 +97,7 @@ class WebAuthController extends Controller
                 'bg_color'    => 'from-teal-950/60 to-slate-900',
                 'border_color'=> 'border-teal-500/40 hover:border-teal-400',
                 'badge_color' => 'bg-teal-500/20 text-teal-300 border-teal-500/30',
-                'users'       => $allUsers->filter(fn($u) => in_array('musyrif', $u['roles_array']) || in_array('guru', $u['roles_array']))->values(),
+                'users'       => $allUsers->filter(fn($u) => in_array('musyrif', $u['roles_array']) || in_array('sekretaris-putra', $u['roles_array']) || in_array('sekretaris-putri', $u['roles_array']) || in_array('guru', $u['roles_array']))->values(),
             ],
         ];
 
@@ -210,9 +210,9 @@ class WebAuthController extends Controller
             'admin-data',
         ]);
         if (!$isCentral) {
-            if ($user->hasRole(['bendahara-putra', 'lurah-putra'])) {
+            if ($user->hasRole(['bendahara-putra', 'lurah-putra', 'sekretaris-putra'])) {
                 $genderScope = 'L';
-            } elseif ($user->hasRole(['bendahara-putri', 'lurah-putri'])) {
+            } elseif ($user->hasRole(['bendahara-putri', 'lurah-putri', 'sekretaris-putri'])) {
                 $genderScope = 'P';
             } elseif ($user->person?->gender) {
                 $genderScope = $user->person->gender;

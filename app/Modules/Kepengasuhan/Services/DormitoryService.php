@@ -6,6 +6,7 @@ use App\Modules\Core\Models\Person;
 use App\Modules\Kepengasuhan\Models\Dormitory;
 use App\Modules\Kepengasuhan\Models\Room;
 use App\Modules\Kepengasuhan\Models\RoomAssignment;
+use App\Modules\Kepengasuhan\Models\Locker;
 use DomainException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -80,6 +81,11 @@ class DormitoryService
                     'is_active'   => false,
                     'valid_until' => now()->subDay()->toDateString(),
                 ]);
+
+            // Lepaskan loker/lemari santri di kamar lain (jika ada) karena santri berpindah kamar
+            Locker::where('assigned_person_id', $person->id)
+                ->where('room_id', '!=', $room->id)
+                ->update(['assigned_person_id' => null]);
 
             return RoomAssignment::create([
                 'id'          => Str::uuid()->toString(),
@@ -170,12 +176,18 @@ class DormitoryService
      */
     public function unassignRoom(string $assignmentId): void
     {
-        RoomAssignment::where('id', $assignmentId)
-            ->where('is_active', true)
-            ->update([
+        $assignment = RoomAssignment::find($assignmentId);
+        if ($assignment) {
+            // Lepaskan loker di kamar tersebut
+            Locker::where('assigned_person_id', $assignment->person_id)
+                ->where('room_id', $assignment->room_id)
+                ->update(['assigned_person_id' => null]);
+
+            $assignment->update([
                 'is_active'   => false,
                 'valid_until' => now()->toDateString(),
             ]);
+        }
     }
 
     /**

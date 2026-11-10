@@ -19,12 +19,14 @@ class Room extends Model
         'name',
         'capacity',
         'description',
+        'furniture_layout',
         'is_active',
     ];
 
     protected $casts = [
-        'capacity'  => 'integer',
-        'is_active' => 'boolean',
+        'capacity'         => 'integer',
+        'furniture_layout' => 'array',
+        'is_active'        => 'boolean',
     ];
 
     public function dormitory(): BelongsTo
@@ -40,6 +42,16 @@ class Room extends Model
     public function currentAssignments(): HasMany
     {
         return $this->hasMany(RoomAssignment::class, 'room_id')->where('is_active', true);
+    }
+
+    public function lockers(): HasMany
+    {
+        return $this->hasMany(Locker::class, 'room_id')->orderBy('code');
+    }
+
+    public function activeLockers(): HasMany
+    {
+        return $this->hasMany(Locker::class, 'room_id')->where('is_active', true)->orderBy('code');
     }
 
     public function scopeActive($query)

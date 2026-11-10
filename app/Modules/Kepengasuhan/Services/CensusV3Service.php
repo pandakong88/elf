@@ -11,6 +11,7 @@ use App\Modules\Kepengasuhan\Models\CensusV3Response;
 use App\Modules\Kepengasuhan\Models\Dormitory;
 use App\Modules\Kepengasuhan\Models\RoomAssignment;
 use App\Modules\Kepengasuhan\Models\SantriProfile;
+use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use DomainException;
@@ -119,10 +120,27 @@ class CensusV3Service
     public function createCampaign(array $data, string $userId): CensusV3Campaign
     {
         return DB::transaction(function () use ($data, $userId) {
+            $user = User::find($userId);
+            $accessService = app(CensusV3AccessService::class);
+            $userScope = $accessService->genderScope($user);
+
+            if ($user && $user->hasRole(['sekretaris-putra', 'sekretaris-putri']) && $userScope !== null) {
+                if ($userScope === 'L' && ($data['target_scope'] ?? '') === 'putri') {
+                    throw new DomainException('Sekretaris putra hanya dapat membuat kampanye untuk komplek putra.');
+                }
+                if ($userScope === 'P' && ($data['target_scope'] ?? '') === 'putra') {
+                    throw new DomainException('Sekretaris putri hanya dapat membuat kampanye untuk komplek putri.');
+                }
+                if (($data['target_scope'] ?? '') === 'all') {
+                    throw new DomainException('Sekretaris hanya dapat membuat kampanye sesuai gender binaannya.');
+                }
+            }
+
             $campaign = CensusV3Campaign::create([
                 'name'               => $data['name'],
                 'description'        => $data['description'] ?? null,
-                'template_id'        => $data['template_id'],
+                'census_type'        => $data['census_type'] ?? 'formal',
+                'template_id'        => $data['template_id'] ?? null,
                 'month'              => $data['month'],
                 'year'               => $data['year'],
                 'target_scope'       => $data['target_scope'] ?? 'all',
@@ -164,7 +182,7 @@ class CensusV3Service
         }
 
         $dormitories = $dormitoryQuery->get();
-        $assignedUsers = $data['assigned_users'] ?? []; // [dormitory_id => user_id]
+        $assignedUsers = $data['assigned_users'] ?? []; // [dormitory_id => user_id atau array of user_ids]
 
         foreach ($dormitories as $dormitory) {
             // Hitung total santri aktif di asrama ini
@@ -173,14 +191,28 @@ class CensusV3Service
                 ->where('rooms.dormitory_id', $dormitory->id)
                 ->count();
 
-            CensusV3CampaignDormitory::create([
+            $rawAssigned = $assignedUsers[$dormitory->id] ?? null;
+            $assigneeIds = [];
+            if (is_array($rawAssigned)) {
+                $assigneeIds = array_values(array_filter($rawAssigned));
+            } elseif (!empty($rawAssigned)) {
+                $assigneeIds = [$rawAssigned];
+            }
+
+            $primaryAssigned = !empty($assigneeIds) ? $assigneeIds[0] : null;
+
+            $cd = CensusV3CampaignDormitory::create([
                 'campaign_id'     => $campaign->id,
                 'dormitory_id'    => $dormitory->id,
-                'assigned_to'     => $assignedUsers[$dormitory->id] ?? null,
+                'assigned_to'     => $primaryAssigned,
                 'status'          => 'pending',
                 'progress_filled' => 0,
                 'progress_total'  => $totalSantri,
             ]);
+
+            if (!empty($assigneeIds)) {
+                $cd->assignees()->sync($assigneeIds);
+            }
         }
     }
 
@@ -241,6 +273,14 @@ class CensusV3Service
     ): CensusV3Response {
         return DB::transaction(function () use ($campaignDormitoryId, $personId, $responseData, $inputtedBy, $inputMethod) {
             $cd = CensusV3CampaignDormitory::findOrFail($campaignDormitoryId);
+
+            if ($cd->campaign && $cd->campaign->status === 'cancelled') {
+                throw new DomainException('Kampanye sensus ini telah dibatalkan.');
+            }
+
+            if (!in_array($cd->status, ['pending', 'in_progress', 'rejected'])) {
+                throw new DomainException('Laporan sensus untuk asrama ini sudah dikirim atau disetujui, dan tidak dapat diubah lagi.');
+            }
 
             // Ambil field template untuk validasi & profil sync
             $templateFields = $cd->campaign->template->fields()->get()->keyBy('field_key');
@@ -351,24 +391,29 @@ class CensusV3Service
 
         $unfilledIds = array_diff($allPersonIds, $filledPersonIds);
 
-        foreach ($unfilledIds as $personId) {
-            $assignment = RoomAssignment::active()
+        if (!empty($unfilledIds)) {
+            $assignments = RoomAssignment::active()
                 ->join('rooms', 'room_assignments.room_id', '=', 'rooms.id')
                 ->where('rooms.dormitory_id', $cd->dormitory_id)
-                ->where('room_assignments.person_id', $personId)
-                ->select('room_assignments.*')
-                ->first();
+                ->whereIn('room_assignments.person_id', $unfilledIds)
+                ->select('room_assignments.person_id', 'room_assignments.room_id')
+                ->get()
+                ->keyBy('person_id');
 
-            CensusV3Response::create([
-                'campaign_id'  => $cd->campaign_id,
-                'dormitory_id' => $cd->dormitory_id,
-                'person_id'    => $personId,
-                'room_id'      => $assignment?->room_id,
-                'response_data'=> [],
-                'input_method' => 'web_admin',
-                'inputted_by'  => auth()->id() ?? $cd->assigned_to ?? $cd->campaign->created_by,
-                'is_complete'  => true,
-            ]);
+            $inputtedBy = auth()->id() ?? $cd->assigned_to ?? $cd->campaign->created_by;
+
+            foreach ($unfilledIds as $personId) {
+                CensusV3Response::create([
+                    'campaign_id'  => $cd->campaign_id,
+                    'dormitory_id' => $cd->dormitory_id,
+                    'person_id'    => $personId,
+                    'room_id'      => $assignments->get($personId)?->room_id,
+                    'response_data'=> [],
+                    'input_method' => 'web_admin',
+                    'inputted_by'  => $inputtedBy,
+                    'is_complete'  => true,
+                ]);
+            }
         }
 
         // Update total progress
@@ -395,26 +440,28 @@ class CensusV3Service
                 ->where('has_profile_changes', true)
                 ->get();
 
-            $templateFields = $cd->campaign->template->fields()
-                ->where('is_system_field', true)
-                ->whereNotNull('profile_field_key')
-                ->get()
-                ->keyBy('field_key');
+            if ($cd->campaign->template) {
+                $templateFields = $cd->campaign->template->fields()
+                    ->where('is_system_field', true)
+                    ->whereNotNull('profile_field_key')
+                    ->get()
+                    ->keyBy('field_key');
 
-            foreach ($responses as $response) {
-                $updates = [];
-                foreach ($response->response_data as $key => $value) {
-                    $field = $templateFields->get($key);
-                    if ($field && !empty($value)) {
-                        $updates[$field->profile_field_key] = $value;
+                foreach ($responses as $response) {
+                    $updates = [];
+                    foreach ($response->response_data as $key => $value) {
+                        $field = $templateFields->get($key);
+                        if ($field && !empty($value)) {
+                            $updates[$field->profile_field_key] = $value;
+                        }
                     }
-                }
 
-                if (!empty($updates)) {
-                    SantriProfile::updateOrCreate(
-                        ['person_id' => $response->person_id],
-                        array_merge(['person_id' => $response->person_id], $updates)
-                    );
+                    if (!empty($updates)) {
+                        SantriProfile::updateOrCreate(
+                            ['person_id' => $response->person_id],
+                            array_merge(['person_id' => $response->person_id], $updates)
+                        );
+                    }
                 }
             }
 
@@ -456,6 +503,27 @@ class CensusV3Service
         $campaign->update([
             'status'    => 'closed',
             'closed_at' => now(),
+        ]);
+
+        return $campaign->fresh();
+    }
+
+    /**
+     * Batalkan kampanye yang sedang aktif/berjalan/review.
+     */
+    public function cancelCampaign(string $campaignId, ?string $reason = null, ?string $userId = null): CensusV3Campaign
+    {
+        $campaign = CensusV3Campaign::findOrFail($campaignId);
+
+        if (in_array($campaign->status, ['closed', 'cancelled'])) {
+            throw new \DomainException("Kampanye dengan status '{$campaign->status}' tidak dapat dibatalkan.");
+        }
+
+        $campaign->update([
+            'status'              => 'cancelled',
+            'cancellation_reason' => $reason,
+            'cancelled_at'        => now(),
+            'cancelled_by'        => $userId,
         ]);
 
         return $campaign->fresh();

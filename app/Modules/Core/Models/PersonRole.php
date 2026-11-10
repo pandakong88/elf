@@ -43,7 +43,7 @@ class PersonRole extends Model
     public const ENROLLMENT_STATUSES = [
         'aktif'            => 'Aktif',
         'alumni'           => 'Alumni',
-        'keluar_resmi'     => 'Keluar Resmi',
+        'keluar_resmi'     => 'Boyong / Keluar Resmi',
         'dikeluarkan'      => 'Dikeluarkan',
         'tanpa_keterangan' => 'Tanpa Keterangan',
     ];
@@ -56,7 +56,7 @@ class PersonRole extends Model
     /**
      * Status enrollment yang dianggap sudah tidak aktif/alumni/keluar.
      */
-    public const INACTIVE_ENROLLMENT_STATUSES = ['alumni', 'keluar_resmi', 'dikeluarkan', 'tanpa_keterangan'];
+    public const INACTIVE_ENROLLMENT_STATUSES = ['alumni', 'keluar_resmi', 'dikeluarkan'];
 
     /**
      * Semua nilai enum presence_status yang valid.

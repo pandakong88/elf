@@ -47,6 +47,45 @@ class CensusV3CampaignDormitory extends Model
         return $this->belongsTo(User::class, 'assigned_to');
     }
 
+    public function assignees(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
+    {
+        return $this->belongsToMany(
+            User::class,
+            'census_campaign_dormitory_assignees',
+            'campaign_dormitory_id',
+            'user_id'
+        )->withTimestamps();
+    }
+
+    public function isAssignedTo(string $userId): bool
+    {
+        if ($this->assigned_to === $userId) {
+            return true;
+        }
+
+        if ($this->relationLoaded('assignees')) {
+            return $this->assignees->contains('id', $userId);
+        }
+
+        return $this->assignees()->where('users.id', $userId)->exists();
+    }
+
+    public function getAssigneeNamesAttribute(): string
+    {
+        $names = collect();
+        if ($this->relationLoaded('assignees') && $this->assignees->isNotEmpty()) {
+            $names = $this->assignees->pluck('name');
+        } elseif ($this->relationLoaded('assignedUser') && $this->assignedUser) {
+            $names = collect([$this->assignedUser->name]);
+        } elseif ($this->assignees()->exists()) {
+            $names = $this->assignees()->pluck('name');
+        } elseif ($this->assigned_to && $this->assignedUser) {
+            $names = collect([$this->assignedUser->name]);
+        }
+
+        return $names->isNotEmpty() ? $names->implode(', ') : 'Belum ditugaskan';
+    }
+
     // -------------------------------------------------------------------------
     // Scopes
     // -------------------------------------------------------------------------
@@ -92,6 +131,17 @@ class CensusV3CampaignDormitory extends Model
             'approved'    => 'green',
             'rejected'    => 'red',
             default       => 'gray',
+        };
+    }
+
+    public function getStatusBadgeClass(): string
+    {
+        return match ($this->getStatusColor()) {
+            'yellow' => 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300',
+            'blue'   => 'bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300',
+            'green'  => 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300',
+            'red'    => 'bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300',
+            default  => 'bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-300',
         };
     }
 }

@@ -17,12 +17,12 @@ class CensusV3Campaign extends Model
     protected $table = 'census_campaigns';
 
     protected $fillable = [
-        'name', 'description', 'template_id',
+        'name', 'description', 'census_type', 'template_id',
         'month', 'year',
         'target_scope',
         'workflow_mode', 'allow_excel', 'allow_direct_input',
-        'deadline', 'status', 'opened_at', 'closed_at',
-        'created_by', 'approved_by',
+        'deadline', 'status', 'cancellation_reason', 'opened_at', 'closed_at', 'cancelled_at',
+        'created_by', 'approved_by', 'cancelled_by',
     ];
 
     protected $casts = [
@@ -33,6 +33,7 @@ class CensusV3Campaign extends Model
         'deadline'           => 'date',
         'opened_at'          => 'datetime',
         'closed_at'          => 'datetime',
+        'cancelled_at'       => 'datetime',
     ];
 
     // -------------------------------------------------------------------------
@@ -54,9 +55,19 @@ class CensusV3Campaign extends Model
         return $this->hasMany(CensusV3Response::class, 'campaign_id');
     }
 
+    public function mutationEntries(): HasMany
+    {
+        return $this->hasMany(CensusMutationEntry::class, 'campaign_id');
+    }
+
     public function creator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
+    }
+
+    public function canceller(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'cancelled_by');
     }
 
     // -------------------------------------------------------------------------
@@ -85,6 +96,7 @@ class CensusV3Campaign extends Model
             'collecting' => 'Sedang Berjalan',
             'review'     => 'Menunggu Review',
             'closed'     => 'Selesai',
+            'cancelled'  => 'Dibatalkan',
             default      => $this->status,
         };
     }
@@ -97,6 +109,7 @@ class CensusV3Campaign extends Model
             'collecting' => 'yellow',
             'review'     => 'purple',
             'closed'     => 'green',
+            'cancelled'  => 'red',
             default      => 'gray',
         };
     }
@@ -131,5 +144,10 @@ class CensusV3Campaign extends Model
             'done'       => $done,
             'percentage' => $total > 0 ? round(($done / $total) * 100) : 0,
         ];
+    }
+
+    public function facilityItems(): HasMany
+    {
+        return $this->hasMany(CensusFacilityItem::class, 'campaign_id');
     }
 }
