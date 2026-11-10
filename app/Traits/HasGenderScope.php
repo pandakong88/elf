@@ -28,10 +28,10 @@ trait HasGenderScope
         }
 
         // Gender-specific roles
-        if ($user->hasRole(['bendahara-putra', 'lurah-putra'])) {
+        if ($user->hasRole(['bendahara-putra', 'lurah-putra', 'sekretaris-putra'])) {
             return 'L';
         }
-        if ($user->hasRole(['bendahara-putri', 'lurah-putri'])) {
+        if ($user->hasRole(['bendahara-putri', 'lurah-putri', 'sekretaris-putri'])) {
             return 'P';
         }
 

@@ -107,6 +107,8 @@ Route::middleware('auth')->group(function () {
     Route::get('/kepengasuhan/violations',  \App\Livewire\Kepengasuhan\ViolationList::class)->name('kepengasuhan.violations');
     Route::get('/kepengasuhan/activities',  \App\Livewire\Kepengasuhan\ActivityAttendanceSheet::class)->name('kepengasuhan.activities');
     Route::get('/kepengasuhan/wali-saudara', \App\Livewire\Kepengasuhan\GuardianSiblingManager::class)->name('kepengasuhan.wali-saudara');
+    Route::get('/kepengasuhan/papan-mutasi', \App\Livewire\Kepengasuhan\PapanMutasiSantri::class)->name('kepengasuhan.papan-mutasi');
+    Route::get('/kepengasuhan/papan-fasilitas', \App\Livewire\Kepengasuhan\PapanDenahFasilitasKamar::class)->name('kepengasuhan.papan-fasilitas');
 
     // Livewire Madrasah Pages
     Route::get('/madrasah/kenaikan-kelas', \App\Livewire\Madrasah\PromotionWizard::class)->name('madrasah.kenaikan-kelas');
@@ -117,6 +119,10 @@ Route::middleware('auth')->group(function () {
     Route::get('/sensus/campaigns/create',   \App\Livewire\Kepengasuhan\CensusV3CampaignWizard::class)->name('sensus.campaigns.create');
     Route::get('/sensus/campaigns/{campaign}/input/{dormitory}', \App\Livewire\Kepengasuhan\CensusV3InputSheet::class)->name('sensus.input');
     Route::get('/sensus/campaigns/{campaign}/review/{dormitory}', \App\Livewire\Kepengasuhan\CensusV3Review::class)->name('sensus.review');
+    Route::get('/sensus/mutasi/{campaign}/input/{dormitory}', \App\Livewire\Kepengasuhan\CensusMutationSheet::class)->name('sensus.mutasi.input');
+    Route::get('/sensus/mutasi/{campaign}/review/{dormitory}', \App\Livewire\Kepengasuhan\CensusMutationReview::class)->name('sensus.mutasi.review');
+    Route::get('/sensus/fasilitas/{campaign}/input/{dormitory}', \App\Livewire\Kepengasuhan\CensusFacilitySheet::class)->name('sensus.fasilitas.input');
+    Route::get('/sensus/fasilitas/{campaign}/review/{dormitory}', \App\Livewire\Kepengasuhan\CensusFacilityReview::class)->name('sensus.fasilitas.review');
 
     // Keuangan Pages
     Route::get('/keuangan/billing',     \App\Livewire\Keuangan\BillingManager::class)->name('keuangan.billing');

@@ -102,6 +102,8 @@ class RolePermissionSeeder extends Seeder
             'bendahara-putra',
             'bendahara-putri',
             'bendahara-unit',
+            'sekretaris-putra',
+            'sekretaris-putri',
             'pengurus-koperasi',
             'wali-santri',
             'admin-data',
@@ -169,6 +171,26 @@ class RolePermissionSeeder extends Seeder
         // bendahara-unit:
         $roleInstances['bendahara-unit']->syncPermissions([
             'view-tagihan', 'record-pembayaran', 'view-laporan-keuangan'
+        ]);
+
+        // sekretaris-putra:
+        $roleInstances['sekretaris-putra']->syncPermissions([
+            'view-any-santri', 'manage-asrama', 'manage-kamar',
+            'view-perizinan', 'approve-perizinan',
+            'view-pelanggaran', 'create-pelanggaran', 'manage-kegiatan',
+            'manage-sensus', 'manage-sensus-v3', 'manage-census-template',
+            'input-census-v3', 'approve-census-v3',
+            'change-enrollment-status', 'change-presence-status',
+        ]);
+
+        // sekretaris-putri:
+        $roleInstances['sekretaris-putri']->syncPermissions([
+            'view-any-santri', 'manage-asrama', 'manage-kamar',
+            'view-perizinan', 'approve-perizinan',
+            'view-pelanggaran', 'create-pelanggaran', 'manage-kegiatan',
+            'manage-sensus', 'manage-sensus-v3', 'manage-census-template',
+            'input-census-v3', 'approve-census-v3',
+            'change-enrollment-status', 'change-presence-status',
         ]);
 
         // pengurus-koperasi:
@@ -404,7 +426,8 @@ class RolePermissionSeeder extends Seeder
                 'name' => 'Ahmad Syafieuddin',
                 'gender' => 'L',
                 'phone' => '081234560001',
-                'role' => 'musyrif',
+                'role' => 'sekretaris-putra',
+                'additional_roles' => ['musyrif'],
                 'org_slug' => 'kepengasuhan-putra',
                 'username' => 'syafieuddin',
                 'email' => 'syafieuddin@elvith.id',
@@ -413,7 +436,8 @@ class RolePermissionSeeder extends Seeder
                 'name' => 'Ahmad Yasiro',
                 'gender' => 'L',
                 'phone' => '081234560002',
-                'role' => 'musyrif',
+                'role' => 'sekretaris-putra',
+                'additional_roles' => ['musyrif'],
                 'org_slug' => 'kepengasuhan-putra',
                 'username' => 'yasiro',
                 'email' => 'yasiro@elvith.id',
@@ -422,7 +446,8 @@ class RolePermissionSeeder extends Seeder
                 'name' => 'Alif Khabibul M',
                 'gender' => 'L',
                 'phone' => '081234560003',
-                'role' => 'musyrif',
+                'role' => 'sekretaris-putra',
+                'additional_roles' => ['musyrif'],
                 'org_slug' => 'kepengasuhan-putra',
                 'username' => 'alif.khabibul',
                 'email' => 'alif.khabibul@elvith.id',
@@ -432,7 +457,8 @@ class RolePermissionSeeder extends Seeder
                 'name' => 'Ulfah Nuryati',
                 'gender' => 'P',
                 'phone' => '081234560004',
-                'role' => 'musyrif',
+                'role' => 'sekretaris-putri',
+                'additional_roles' => ['musyrif'],
                 'org_slug' => 'kepengasuhan-putri',
                 'username' => 'ulfah.nuryati',
                 'email' => 'ulfah.nuryati@elvith.id',
@@ -1047,6 +1073,11 @@ class RolePermissionSeeder extends Seeder
             ]);
 
             $user->assignRole($member['role']);
+            if (!empty($member['additional_roles'])) {
+                foreach ($member['additional_roles'] as $addRole) {
+                    $user->assignRole($addRole);
+                }
+            }
         }
 
         $this->command->info('✅ RolePermissionSeeder: Roles, permissions, and admin user successfully seeded.');

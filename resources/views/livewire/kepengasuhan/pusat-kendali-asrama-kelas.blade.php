@@ -97,6 +97,12 @@
                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
                 <span>Bagan Kelas Madrasah</span>
             </button>
+
+            <button type="button" wire:click="$set('activeTab', 'lemari')"
+                class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs transition-all {{ $activeTab === 'lemari' ? 'bg-amber-600 text-white shadow' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800' }}">
+                <span>🗄️</span>
+                <span>Peta Lemari Santri</span>
+            </button>
         </div>
     </div>
 
@@ -124,7 +130,7 @@
                 </select>
             </div>
 
-            @if(in_array($activeTab, ['kamar', 'bagan-komplek']))
+            @if(in_array($activeTab, ['kamar', 'bagan-komplek', 'lemari']))
                 <div>
                     <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">Filter Komplek</label>
                     <select wire:model.live="dormitoryFilter"
@@ -598,6 +604,223 @@
         </div>
     @endif
 
+    {{-- SUB-TAB 6: PETA LEMARI SANTRI & HUNIAN --}}
+    @if($activeTab === 'lemari')
+        <div class="space-y-6">
+            @forelse($petaLemariData as $dorm)
+                @php
+                    $allDormLockers = $dorm->rooms->flatMap->lockers;
+                    $dormLockerTotal = $allDormLockers->count();
+                    $dormLockerOccupied = $allDormLockers->whereNotNull('assigned_person_id')->count();
+                    $dormLockerDamaged = $allDormLockers->whereIn('condition', ['rusak_ringan', 'rusak_berat', 'hilang'])->count();
+                @endphp
+                <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-3xl shadow-sm p-6 space-y-6">
+                    <!-- Dormitory Header -->
+                    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-slate-100 dark:border-slate-800 pb-4">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-2xl bg-amber-50 dark:bg-amber-950/50 flex items-center justify-center font-bold text-lg text-amber-600">
+                                🗄️
+                            </div>
+                            <div>
+                                <div class="flex items-center gap-2">
+                                    <h2 class="text-xl font-extrabold text-slate-800 dark:text-white">{{ $dorm->name }}</h2>
+                                    <span class="px-2 py-0.5 text-[10px] font-bold rounded {{ $dorm->gender === 'L' ? 'bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300' : 'bg-pink-100 text-pink-700 dark:bg-pink-950 dark:text-pink-300' }}">
+                                        {{ $dorm->gender === 'L' ? 'Putra' : 'Putri' }}
+                                    </span>
+                                </div>
+                                <p class="text-xs text-slate-400 mt-0.5">{{ $dorm->rooms->count() }} Kamar terdaftar</p>
+                            </div>
+                        </div>
+
+                        <!-- Stats Chips -->
+                        <div class="flex items-center gap-2 flex-wrap text-xs">
+                            <span class="px-3 py-1 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-xl font-bold">
+                                Total: {{ $dormLockerTotal }} Lemari
+                            </span>
+                            <span class="px-3 py-1 bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 rounded-xl font-bold">
+                                Terisi: {{ $dormLockerOccupied }}
+                            </span>
+                            <span class="px-3 py-1 bg-slate-100 dark:bg-slate-800 text-slate-500 rounded-xl font-bold">
+                                Kosong: {{ max(0, $dormLockerTotal - $dormLockerOccupied) }}
+                            </span>
+                            @if ($dormLockerDamaged > 0)
+                                <span class="px-3 py-1 bg-rose-50 dark:bg-rose-950/50 text-rose-700 dark:text-rose-300 rounded-xl font-bold">
+                                    ⚠️ {{ $dormLockerDamaged }} Rusak/Hilang
+                                </span>
+                            @endif
+                        </div>
+                    </div>
+
+                    <!-- Rooms Grid -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                        @forelse($dorm->rooms as $room)
+                            <div class="bg-slate-50/70 dark:bg-slate-800/40 border border-slate-200/60 dark:border-slate-800 rounded-2xl p-5 space-y-4">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <h3 class="font-bold text-sm text-slate-800 dark:text-white flex items-center gap-1.5">
+                                            <span>🚪</span>
+                                            <span>{{ $room->name }}</span>
+                                        </h3>
+                                        <span class="text-[11px] text-slate-400">
+                                            {{ $room->lockers->count() }} lemari / Kapasitas {{ $room->capacity }} bed
+                                        </span>
+                                    </div>
+                                    @if($room->lockers->count() === 0)
+                                        @can('manage-kamar')
+                                            <button type="button" wire:click="quickGenerateLockers('{{ $room->id }}', {{ $room->capacity ?: 8 }})" class="px-2.5 py-1 bg-blue-600 hover:bg-blue-500 text-white text-[11px] font-bold rounded-lg transition-all shadow-sm">
+                                                ⚡ Generate
+                                            </button>
+                                        @endcan
+                                    @endif
+                                </div>
+
+                                <!-- Lockers Heatmap Tiles -->
+                                @if($room->lockers->count() === 0)
+                                    <div class="py-6 text-center text-xs text-slate-400 italic">
+                                        Belum ada lemari. Klik "Generate" untuk membuat lemari kamar ini.
+                                    </div>
+                                @else
+                                    @php
+                                        $bajuLockers = $room->lockers->filter(fn($l) => ($l->type ?? 'baju') === 'baju');
+                                        $kitabLockers = $room->lockers->filter(fn($l) => ($l->type ?? 'baju') === 'kitab');
+                                    @endphp
+
+                                    <div class="space-y-3">
+                                        <!-- Lemari Baju Grid -->
+                                        @if($bajuLockers->isNotEmpty())
+                                            <div>
+                                                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1.5 flex items-center gap-1">
+                                                    <span>🚪</span> Lemari Pakaian ({{ $bajuLockers->count() }})
+                                                </span>
+                                                <div class="grid grid-cols-4 gap-1.5">
+                                                    @foreach($bajuLockers as $lck)
+                                                        @php
+                                                            $tileBg = 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700';
+                                                            if ($lck->condition === 'baik') {
+                                                                $tileBg = $lck->assigned_person_id ? 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-300 dark:border-emerald-700/60 text-emerald-900 dark:text-emerald-200' : 'bg-slate-100 dark:bg-slate-800/80 border-slate-300 dark:border-slate-700 text-slate-600 dark:text-slate-400';
+                                                            } elseif ($lck->condition === 'rusak_ringan') {
+                                                                $tileBg = 'bg-amber-50 dark:bg-amber-950/40 border-amber-300 dark:border-amber-700/60 text-amber-900 dark:text-amber-200';
+                                                            } elseif ($lck->condition === 'rusak_berat') {
+                                                                $tileBg = 'bg-rose-50 dark:bg-rose-950/40 border-rose-300 dark:border-rose-700/60 text-rose-900 dark:text-rose-200';
+                                                            } elseif ($lck->condition === 'hilang') {
+                                                                $tileBg = 'bg-purple-50 dark:bg-purple-950/40 border-purple-300 dark:border-purple-700/60 text-purple-900 dark:text-purple-200';
+                                                            }
+                                                        @endphp
+                                                        <button type="button" wire:click="openLockerModal('{{ $lck->id }}')" title="{{ $lck->code }}: {{ $lck->assignedPerson ? $lck->assignedPerson->name : 'Kosong' }} ({{ $lck->condition_label }})" class="p-1.5 rounded-lg border text-center transition-all hover:scale-105 hover:shadow-md {{ $tileBg }} flex flex-col items-center justify-center">
+                                                            <span class="font-black text-[11px] block leading-tight">{{ $lck->code }}</span>
+                                                            <span class="text-[8px] truncate w-full block mt-0.5 font-medium opacity-80">
+                                                                {{ $lck->assignedPerson ? Str::words($lck->assignedPerson->name, 1, '') : 'Kosong' }}
+                                                            </span>
+                                                        </button>
+                                                    @endforeach
+                                                </div>
+                                            </div>
+                                        @endif
+
+                                        <!-- Rak Kitab Grid -->
+                                        @if($kitabLockers->isNotEmpty())
+                                            <div class="pt-2 border-t border-slate-200/50 dark:border-slate-800">
+                                                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1.5 flex items-center gap-1">
+                                                    <span>📚</span> Rak Kitab &amp; Buku ({{ $kitabLockers->count() }})
+                                                </span>
+                                                <div class="grid grid-cols-4 gap-1.5">
+                                                    @foreach($kitabLockers as $lck)
+                                                        @php
+                                                            $tileBg = 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700';
+                                                            if ($lck->condition === 'baik') {
+                                                                $tileBg = $lck->assigned_person_id ? 'bg-amber-50 dark:bg-amber-950/40 border-amber-300 dark:border-amber-700/60 text-amber-900 dark:text-amber-200' : 'bg-slate-100 dark:bg-slate-800/80 border-slate-300 dark:border-slate-700 text-slate-600 dark:text-slate-400';
+                                                            } elseif ($lck->condition === 'rusak_ringan') {
+                                                                $tileBg = 'bg-amber-100 dark:bg-amber-950/60 border-amber-400 dark:border-amber-600 text-amber-900 dark:text-amber-200';
+                                                            } elseif ($lck->condition === 'rusak_berat') {
+                                                                $tileBg = 'bg-rose-50 dark:bg-rose-950/40 border-rose-300 dark:border-rose-700/60 text-rose-900 dark:text-rose-200';
+                                                            } elseif ($lck->condition === 'hilang') {
+                                                                $tileBg = 'bg-purple-50 dark:bg-purple-950/40 border-purple-300 dark:border-purple-700/60 text-purple-900 dark:text-purple-200';
+                                                            }
+                                                        @endphp
+                                                        <button type="button" wire:click="openLockerModal('{{ $lck->id }}')" title="{{ $lck->code }}: {{ $lck->assignedPerson ? $lck->assignedPerson->name : 'Kosong' }} ({{ $lck->condition_label }})" class="p-1.5 rounded-lg border text-center transition-all hover:scale-105 hover:shadow-md {{ $tileBg }} flex flex-col items-center justify-center">
+                                                            <span class="font-black text-[11px] block leading-tight">{{ $lck->code }}</span>
+                                                            <span class="text-[8px] truncate w-full block mt-0.5 font-medium opacity-80">
+                                                                {{ $lck->assignedPerson ? Str::words($lck->assignedPerson->name, 1, '') : 'Kosong' }}
+                                                            </span>
+                                                        </button>
+                                                    @endforeach
+                                                </div>
+                                            </div>
+                                        @endif
+                                    </div>
+                                @endif
+                            </div>
+                        @empty
+                            <div class="col-span-full p-8 text-center text-slate-400 text-xs italic">
+                                Belum ada kamar di komplek ini.
+                            </div>
+                        @endforelse
+                    </div>
+                </div>
+            @empty
+                <div class="p-12 text-center text-slate-400 bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800">
+                    Tidak ada data komplek asrama untuk kriteria filter ini.
+                </div>
+            @endforelse
+        </div>
+    @endif
+
+    {{-- MODAL PENGATURAN LEMARI SANTRI --}}
+    @if($showLockerModal)
+        <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm overflow-y-auto">
+            <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4 my-auto">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-2xl bg-amber-50 text-amber-600 dark:bg-amber-950/50 dark:text-amber-400 flex items-center justify-center font-bold text-lg">
+                        🗄️
+                    </div>
+                    <div>
+                        <h3 class="font-extrabold text-base text-slate-900 dark:text-slate-100">Lemari {{ $selectedLockerCode }}</h3>
+                        <p class="text-xs text-slate-500">Kelola pemilik dan kondisi fisik lemari.</p>
+                    </div>
+                </div>
+
+                <div class="space-y-3 text-xs">
+                    <!-- Santri Pemilik -->
+                    <div>
+                        <label class="block font-bold text-slate-600 dark:text-slate-300 mb-1">Santri Pemilik (Penghuni Kamar)</label>
+                        <select wire:model="selectedLockerPersonId" class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-800 dark:text-slate-100">
+                            <option value="">-- Lemari Kosong (Belum Terisi) --</option>
+                            @foreach($selectedRoomSantriOptions as $santri)
+                                <option value="{{ $santri['id'] }}">{{ $santri['name'] }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <!-- Kondisi Fisik -->
+                    <div>
+                        <label class="block font-bold text-slate-600 dark:text-slate-300 mb-1">Kondisi Fisik</label>
+                        <select wire:model="selectedLockerCondition" class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-800 dark:text-slate-100">
+                            <option value="baik">🟢 Baik</option>
+                            <option value="rusak_ringan">🟡 Rusak Ringan</option>
+                            <option value="rusak_berat">🔴 Rusak Berat</option>
+                            <option value="hilang">🟣 Hilang</option>
+                        </select>
+                    </div>
+
+                    <!-- Catatan -->
+                    <div>
+                        <label class="block font-bold text-slate-600 dark:text-slate-300 mb-1">Catatan (Kunci, Engsel, Stiker, dll)</label>
+                        <input type="text" wire:model="selectedLockerNotes" placeholder="Catatan kondisi..." class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-800 dark:text-slate-100">
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-end gap-2 pt-3 border-t border-slate-100 dark:border-slate-800">
+                    <button type="button" wire:click="$set('showLockerModal', false)" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs transition-all">
+                        Batal
+                    </button>
+                    <button type="button" wire:click="saveLockerModal" class="px-4 py-2 bg-amber-600 hover:bg-amber-500 text-white font-bold rounded-xl text-xs shadow transition-all">
+                        Simpan Perubahan
+                    </button>
+                </div>
+            </div>
+        </div>
+    @endif
+
 
 
     {{-- MODAL UBAH STATUS SANTRI (MUKIM / LAJU / BOYONG) --}}
@@ -621,14 +844,39 @@
 
                     <div>
                         <label class="block font-bold text-slate-600 dark:text-slate-300 mb-1">Status Keanggotaan (Enrollment Status)</label>
-                        <select wire:model="targetEnrollmentStatus" class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-800 dark:text-slate-100">
-                            <option value="aktif">Aktif (Masih Terdaftar)</option>
-                            <option value="boyong">Boyong / Keluar Pondok &amp; Madrasah</option>
-                            <option value="alumni">Alumni / Lulus</option>
-                            <option value="keluar_resmi">Keluar Resmi</option>
-                            <option value="dikeluarkan">Dikeluarkan</option>
+                        <select wire:model.live="targetEnrollmentStatus" class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-800 dark:text-slate-100">
+                            <option value="aktif">✅ Aktif (Masih Terdaftar)</option>
+                            <option value="keluar_resmi">🚪 Boyong / Keluar Resmi</option>
+                            <option value="tanpa_keterangan">❓ Tanpa Keterangan</option>
+                            <option value="dikeluarkan">❌ Dikeluarkan</option>
+                            <option value="alumni">🎓 Alumni / Lulus</option>
                         </select>
-                        <p class="text-[10px] text-slate-400 mt-1">Jika diubah ke 'Boyong', alokasi kamar &amp; kelas santri ini akan otomatis di-nonaktifkan.</p>
+
+                        {{-- Live Explanation Alert --}}
+                        <div class="mt-2.5">
+                            @if($targetEnrollmentStatus === 'tanpa_keterangan')
+                                <div class="p-3 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 rounded-2xl flex items-start gap-2.5 text-xs text-amber-900 dark:text-amber-200">
+                                    <svg class="w-5 h-5 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                    <div class="space-y-1">
+                                        <div class="font-extrabold text-[11px] uppercase tracking-wider text-amber-700 dark:text-amber-400">Masa Tabayyun / Penyelidikan:</div>
+                                        <div class="text-[11px] leading-relaxed">Kamar &amp; kelas santri <strong>TETAP DITAHAN</strong> (tidak dilepas) agar kasur &amp; lemarinya tidak tertimpa santri lain. Status keberadaan otomatis diset <em>Alpa</em>.</div>
+                                    </div>
+                                </div>
+                            @elseif(in_array($targetEnrollmentStatus, ['keluar_resmi', 'boyong', 'dikeluarkan', 'alumni']))
+                                <div class="p-3 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800/60 rounded-2xl flex items-start gap-2.5 text-xs text-rose-900 dark:text-rose-200">
+                                    <svg class="w-5 h-5 text-rose-600 dark:text-rose-400 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                                    <div class="space-y-1">
+                                        <div class="font-extrabold text-[11px] uppercase tracking-wider text-rose-700 dark:text-rose-400">Pelepasan Fasilitas Pesantren:</div>
+                                        <div class="text-[11px] leading-relaxed">Alokasi kamar &amp; kelas santri ini akan <strong>OTOMATIS DILEPAS &amp; DIKOSONGKAN</strong> untuk santri lain. Santri dicatat non-aktif.</div>
+                                    </div>
+                                </div>
+                            @else
+                                <div class="p-3 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 rounded-2xl flex items-start gap-2.5 text-xs text-emerald-900 dark:text-emerald-200">
+                                    <svg class="w-5 h-5 text-emerald-600 dark:text-emerald-400 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                    <div class="text-[11px] leading-relaxed">Santri berstatus <strong>Aktif</strong> terdaftar di pondok pesantren. Alokasi kamar &amp; kelas berjalan normal.</div>
+                                </div>
+                            @endif
+                        </div>
                     </div>
 
                     <div>
@@ -1235,36 +1483,162 @@
     {{-- MODAL KONFIRMASI KOSTUM ELEGAN (NO BROWSER ALERT) --}}
     @if($showConfirmModal)
         <div class="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md overflow-y-auto">
-            <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4 max-h-[85vh] sm:max-h-[90vh] overflow-y-auto my-auto">
+            <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl max-w-lg w-full p-6 shadow-2xl space-y-4 max-h-[85vh] sm:max-h-[90vh] overflow-y-auto my-auto">
+                {{-- Header --}}
                 <div class="flex items-center gap-3">
                     <div class="w-12 h-12 rounded-2xl flex items-center justify-center font-bold flex-shrink-0
-                        {{ $confirmButtonColor === 'rose' ? 'bg-rose-100 text-rose-600 dark:bg-rose-950 dark:text-rose-400' : '' }}
-                        {{ $confirmButtonColor === 'amber' ? 'bg-amber-100 text-amber-600 dark:bg-amber-950 dark:text-amber-400' : '' }}
-                        {{ $confirmButtonColor === 'emerald' ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-950 dark:text-emerald-400' : '' }}
-                        {{ $confirmButtonColor === 'indigo' ? 'bg-indigo-100 text-indigo-600 dark:bg-indigo-950 dark:text-indigo-400' : '' }}">
-                        <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                        {{ $confirmButtonColor === 'rose' ? 'bg-rose-100 text-rose-600 dark:bg-rose-950 dark:text-rose-400 ring-4 ring-rose-500/10' : '' }}
+                        {{ $confirmButtonColor === 'amber' ? 'bg-amber-100 text-amber-600 dark:bg-amber-950 dark:text-amber-400 ring-4 ring-amber-500/10' : '' }}
+                        {{ $confirmButtonColor === 'emerald' ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-950 dark:text-emerald-400 ring-4 ring-emerald-500/10' : '' }}
+                        {{ $confirmButtonColor === 'indigo' ? 'bg-indigo-100 text-indigo-600 dark:bg-indigo-950 dark:text-indigo-400 ring-4 ring-indigo-500/10' : '' }}">
+                        @if($confirmButtonColor === 'emerald')
+                            <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        @elseif($confirmButtonColor === 'rose')
+                            <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                        @else
+                            <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        @endif
                     </div>
                     <div>
                         <h3 class="font-extrabold text-base text-slate-900 dark:text-slate-100">{{ $confirmTitle }}</h3>
-                        <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Konfirmasi Tindakan</p>
+                        <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Konfirmasi Perubahan Status</p>
                     </div>
                 </div>
 
-                <div class="bg-slate-50 dark:bg-slate-800/60 p-4 rounded-2xl border border-slate-200/60 dark:border-slate-700/60 text-xs text-slate-700 dark:text-slate-300 leading-relaxed font-medium">
-                    {{ $confirmMessage }}
-                </div>
+                @if($confirmAction === 'executeStatusChange')
+                    <div class="space-y-3">
+                        {{-- Santri Profile & Transition Card --}}
+                        <div class="p-3.5 bg-slate-50 dark:bg-slate-800/70 rounded-2xl border border-slate-200/80 dark:border-slate-700/80 space-y-3">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white font-black text-sm flex items-center justify-center flex-shrink-0 shadow-sm">
+                                    {{ strtoupper(substr($statusSantriName, 0, 2)) }}
+                                </div>
+                                <div class="flex-1 min-w-0">
+                                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Target Santri</span>
+                                    <h4 class="font-black text-sm text-slate-900 dark:text-slate-100 truncate">{{ $statusSantriName }}</h4>
+                                </div>
+                            </div>
 
-                <div class="flex items-center justify-end gap-2 pt-2">
+                            {{-- Transition Visualizer --}}
+                            <div class="flex items-center justify-between gap-2 p-2.5 rounded-xl bg-white dark:bg-slate-900/90 border border-slate-200/60 dark:border-slate-700/60">
+                                <div class="flex-1 text-center">
+                                    <span class="text-[9px] font-bold text-slate-400 uppercase block mb-0.5">Status Saat Ini</span>
+                                    <span class="inline-block px-2 py-0.5 text-[11px] font-extrabold rounded-md bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300">
+                                        {{ ucfirst(str_replace('_', ' ', $statusSantriOldStatus ?: 'aktif')) }}
+                                    </span>
+                                </div>
+                                <div class="text-slate-400 flex-shrink-0">
+                                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+                                </div>
+                                <div class="flex-1 text-center">
+                                    <span class="text-[9px] font-bold text-slate-400 uppercase block mb-0.5">Diubah Menjadi</span>
+                                    @if($targetEnrollmentStatus === 'tanpa_keterangan')
+                                        <span class="inline-block px-2.5 py-0.5 text-[11px] font-black rounded-md bg-amber-100 text-amber-800 dark:bg-amber-950/80 dark:text-amber-300">
+                                            Tanpa Keterangan
+                                        </span>
+                                    @elseif(in_array($targetEnrollmentStatus, ['keluar_resmi', 'boyong']))
+                                        <span class="inline-block px-2.5 py-0.5 text-[11px] font-black rounded-md bg-rose-100 text-rose-800 dark:bg-rose-950/80 dark:text-rose-300">
+                                            Boyong / Keluar
+                                        </span>
+                                    @elseif($targetEnrollmentStatus === 'dikeluarkan')
+                                        <span class="inline-block px-2.5 py-0.5 text-[11px] font-black rounded-md bg-red-100 text-red-800 dark:bg-red-950/80 dark:text-red-300">
+                                            Dikeluarkan
+                                        </span>
+                                    @elseif($targetEnrollmentStatus === 'alumni')
+                                        <span class="inline-block px-2.5 py-0.5 text-[11px] font-black rounded-md bg-purple-100 text-purple-800 dark:bg-purple-950/80 dark:text-purple-300">
+                                            Alumni / Lulus
+                                        </span>
+                                    @else
+                                        <span class="inline-block px-2.5 py-0.5 text-[11px] font-black rounded-md bg-emerald-100 text-emerald-800 dark:bg-emerald-950/80 dark:text-emerald-300">
+                                            Aktif ({{ ucfirst($targetPresenceStatus) }})
+                                        </span>
+                                    @endif
+                                </div>
+                            </div>
+
+                            {{-- Facility Grid --}}
+                            <div class="grid grid-cols-2 gap-2 pt-1">
+                                <div class="p-2.5 rounded-xl bg-white dark:bg-slate-900/90 border border-slate-200/60 dark:border-slate-700/60">
+                                    <div class="flex items-center gap-1.5 text-[10px] font-bold text-slate-400 uppercase">
+                                        <svg class="w-3.5 h-3.5 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+                                        Kamar Asrama
+                                    </div>
+                                    <div class="font-bold text-xs text-slate-800 dark:text-slate-200 mt-0.5 truncate" title="{{ $statusSantriRoomInfo }}">{{ $statusSantriRoomInfo }}</div>
+                                    <div class="mt-1">
+                                        @if($targetEnrollmentStatus === 'tanpa_keterangan')
+                                            <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-extrabold bg-amber-50 text-amber-700 dark:bg-amber-950/60 dark:text-amber-400 border border-amber-200/50">🔒 Tetap Ditahan</span>
+                                        @elseif(in_array($targetEnrollmentStatus, ['keluar_resmi', 'boyong', 'dikeluarkan', 'alumni']))
+                                            <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-extrabold bg-rose-50 text-rose-700 dark:bg-rose-950/60 dark:text-rose-400 border border-rose-200/50">🚪 Akan Dikosongkan</span>
+                                        @else
+                                            <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-extrabold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-400 border border-emerald-200/50">✅ Tetap Terisi</span>
+                                        @endif
+                                    </div>
+                                </div>
+
+                                <div class="p-2.5 rounded-xl bg-white dark:bg-slate-900/90 border border-slate-200/60 dark:border-slate-700/60">
+                                    <div class="flex items-center gap-1.5 text-[10px] font-bold text-slate-400 uppercase">
+                                        <svg class="w-3.5 h-3.5 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l9-5-9-5-9 5 9 5zm0 0l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14zm-4 6v-7.5l4-2.222"/></svg>
+                                        Kelas Madrasah
+                                    </div>
+                                    <div class="font-bold text-xs text-slate-800 dark:text-slate-200 mt-0.5 truncate" title="{{ $statusSantriKelasInfo }}">{{ $statusSantriKelasInfo }}</div>
+                                    <div class="mt-1">
+                                        @if($targetEnrollmentStatus === 'tanpa_keterangan')
+                                            <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-extrabold bg-amber-50 text-amber-700 dark:bg-amber-950/60 dark:text-amber-400 border border-amber-200/50">🔒 Tetap Ditahan</span>
+                                        @elseif(in_array($targetEnrollmentStatus, ['keluar_resmi', 'boyong', 'dikeluarkan', 'alumni']))
+                                            <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-extrabold bg-rose-50 text-rose-700 dark:bg-rose-950/60 dark:text-rose-400 border border-rose-200/50">❌ Dinonaktifkan</span>
+                                        @else
+                                            <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-extrabold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-400 border border-emerald-200/50">✅ Tetap Terdaftar</span>
+                                        @endif
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {{-- Alert Banner --}}
+                        @if($targetEnrollmentStatus === 'tanpa_keterangan')
+                            <div class="p-3 bg-amber-500/10 border border-amber-500/20 rounded-2xl flex items-start gap-2.5 text-xs text-amber-900 dark:text-amber-200">
+                                <svg class="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                <div class="text-[11px] leading-relaxed">
+                                    <strong class="font-extrabold text-amber-800 dark:text-amber-300 block">Masa Tabayyun:</strong>
+                                    Fasilitas kamar &amp; kelas santri <strong>tetap ditahan</strong> agar tempat tidurnya tidak tertimpa santri lain. Status keberadaan otomatis diset <em>Alpa</em>.
+                                </div>
+                            </div>
+                        @elseif(in_array($targetEnrollmentStatus, ['keluar_resmi', 'boyong', 'dikeluarkan', 'alumni']))
+                            <div class="p-3 bg-rose-500/10 border border-rose-500/20 rounded-2xl flex items-start gap-2.5 text-xs text-rose-900 dark:text-rose-200">
+                                <svg class="w-5 h-5 text-rose-500 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                                <div class="text-[11px] leading-relaxed">
+                                    <strong class="font-extrabold text-rose-800 dark:text-rose-300 block">Pelepasan Fasilitas Pesantren:</strong>
+                                    Alokasi kamar &amp; kelas santri akan <strong>otomatis dikosongkan</strong>. Kuota kamar bertambah 1 kasur kosong untuk santri lain.
+                                </div>
+                            </div>
+                        @else
+                            <div class="p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl flex items-start gap-2.5 text-xs text-emerald-900 dark:text-emerald-200">
+                                <svg class="w-5 h-5 text-emerald-500 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                <div class="text-[11px] leading-relaxed">
+                                    Santri berstatus <strong>Aktif</strong> ({{ ucfirst($targetPresenceStatus) }}). Seluruh alokasi kamar &amp; kelas madrasah berjalan normal.
+                                </div>
+                            </div>
+                        @endif
+                    </div>
+                @else
+                    <div class="bg-slate-50 dark:bg-slate-800/60 p-4 rounded-2xl border border-slate-200/60 dark:border-slate-700/60 text-xs text-slate-700 dark:text-slate-300 leading-relaxed font-medium whitespace-pre-line">
+                        {!! nl2br(e($confirmMessage)) !!}
+                    </div>
+                @endif
+
+                {{-- Action Buttons --}}
+                <div class="flex items-center justify-end gap-2.5 pt-2">
                     <button type="button" wire:click="$set('showConfirmModal', false)"
                         class="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold rounded-xl text-xs transition-colors">
                         Batal
                     </button>
                     <button type="button" wire:click="processConfirmedAction"
-                        class="px-5 py-2.5 text-white font-extrabold rounded-xl text-xs shadow-lg transition-all
-                        {{ $confirmButtonColor === 'rose' ? 'bg-rose-600 hover:bg-rose-500 active:bg-rose-700' : '' }}
-                        {{ $confirmButtonColor === 'amber' ? 'bg-amber-600 hover:bg-amber-500 active:bg-amber-700' : '' }}
-                        {{ $confirmButtonColor === 'emerald' ? 'bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700' : '' }}
-                        {{ $confirmButtonColor === 'indigo' ? 'bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700' : '' }}">
+                        class="px-5 py-2.5 text-white font-black rounded-xl text-xs shadow-lg transition-all flex items-center gap-1.5
+                        {{ $confirmButtonColor === 'rose' ? 'bg-rose-600 hover:bg-rose-500 active:bg-rose-700 shadow-rose-600/30' : '' }}
+                        {{ $confirmButtonColor === 'amber' ? 'bg-amber-600 hover:bg-amber-500 active:bg-amber-700 shadow-amber-600/30' : '' }}
+                        {{ $confirmButtonColor === 'emerald' ? 'bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 shadow-emerald-600/30' : '' }}
+                        {{ $confirmButtonColor === 'indigo' ? 'bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 shadow-indigo-600/30' : '' }}">
+                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
                         {{ $confirmButtonText }}
                     </button>
                 </div>

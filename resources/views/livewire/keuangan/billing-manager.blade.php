@@ -2976,56 +2976,68 @@
                 </div>
 
                 <!-- Filters & Control Panel Card -->
-                <div class="bg-white dark:bg-slate-900 border border-slate-200/50 dark:border-slate-800 p-6 rounded-3xl shadow-xs space-y-5">
+                <div class="bg-white dark:bg-slate-900 border border-slate-200/50 dark:border-slate-800 p-4 sm:p-6 rounded-2xl sm:rounded-3xl shadow-xs space-y-4 sm:space-y-5">
                     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-slate-100 dark:border-slate-800 pb-4">
                         <div>
                             <h3 class="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider block font-serif-display">Riwayat Setoran & Transaksi Kasir</h3>
                             <p class="text-[11px] text-slate-400">Jejak transaksi pembayaran yang dicatat kasir. Pilih mode tampilan nota kuitansi atau rincian pos tagihan.</p>
                         </div>
-                        <div class="flex flex-wrap items-center gap-2">
+                        <div class="flex flex-col sm:flex-row sm:items-center gap-2 w-full sm:w-auto">
                             <!-- Toggle Mode Tampilan (Default: Per Kuitansi) -->
-                            <div class="inline-flex p-1 bg-slate-100 dark:bg-slate-800 rounded-2xl border border-slate-200/80 dark:border-slate-700/80 shadow-2xs">
+                            <div class="grid grid-cols-2 sm:inline-flex p-1 bg-slate-100 dark:bg-slate-800 rounded-2xl border border-slate-200/80 dark:border-slate-700/80 shadow-2xs w-full sm:w-auto">
                                 <button type="button" wire:click="setCashierHistoryMode('receipt')"
-                                    class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[11px] font-bold transition-all {{ $cashierHistoryMode === 'receipt' ? 'bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-xs' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200' }}"
+                                    class="inline-flex items-center justify-center gap-1.5 px-3 py-2 sm:py-1.5 rounded-xl text-[11px] font-bold transition-all {{ $cashierHistoryMode === 'receipt' ? 'bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-xs' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200' }}"
                                     title="Tampilkan 1 baris per lembar kuitansi / struk">
-                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                                     </svg>
-                                    <span>Per Kuitansi (Nota)</span>
+                                    <span class="truncate">Per Kuitansi (Nota)</span>
                                     @if($cashierHistoryMode === 'receipt')
-                                        <span class="w-1.5 h-1.5 rounded-full bg-indigo-500"></span>
+                                        <span class="w-1.5 h-1.5 rounded-full bg-indigo-500 shrink-0"></span>
                                     @endif
                                 </button>
                                 <button type="button" wire:click="setCashierHistoryMode('item')"
-                                    class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[11px] font-bold transition-all {{ $cashierHistoryMode === 'item' ? 'bg-white dark:bg-slate-900 text-emerald-600 dark:text-emerald-400 shadow-xs' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200' }}"
+                                    class="inline-flex items-center justify-center gap-1.5 px-3 py-2 sm:py-1.5 rounded-xl text-[11px] font-bold transition-all {{ $cashierHistoryMode === 'item' ? 'bg-white dark:bg-slate-900 text-emerald-600 dark:text-emerald-400 shadow-xs' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200' }}"
                                     title="Tampilkan rincian terpisah per pos tagihan iuran">
-                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"/>
                                     </svg>
-                                    <span>Per Pos Tagihan (Audit)</span>
+                                    <span class="truncate">Per Pos Tagihan</span>
                                     @if($cashierHistoryMode === 'item')
-                                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0"></span>
                                     @endif
                                 </button>
                             </div>
 
-                            <button type="button" wire:click="togglePayLogAdvancedFilters"
-                                class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl text-xs font-bold transition-all">
-                                🎛️ {{ $showPayLogAdvancedFilters ? 'Tutup Filter' : 'Filter' }}
-                            </button>
-                            @if($payLogSearch || $payLogMethod || $payLogDate || $payLogStartDate || $payLogEndDate || $payLogUser || $payLogConfigId || $payLogDormitoryId || $payLogKelasId)
-                                <button type="button" wire:click="resetPayLogFilters"
-                                    class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-rose-500/10 hover:bg-rose-500 text-rose-600 hover:text-white rounded-xl text-xs font-bold transition-all">
-                                    ❌ Reset
+                            @php
+                                $hasActiveAdvanced = $payLogConfigId || $payLogPeriod !== '' || $payLogPeriodYear || $payLogDormitoryId || $payLogKelasId || $payLogMethod;
+                                $selectedPayLogConfig = $payLogConfigId ? $payLogConfigs->firstWhere('id', $payLogConfigId) : null;
+                                $payLogInterval = $selectedPayLogConfig?->interval ?? 'monthly';
+                                $monthNames = [1=>'Januari',2=>'Februari',3=>'Maret',4=>'April',5=>'Mei',6=>'Juni',7=>'Juli',8=>'Agustus',9=>'September',10=>'Oktober',11=>'November',12=>'Desember'];
+                            @endphp
+
+                            <div class="flex items-center gap-2 w-full sm:w-auto">
+                                <button type="button" wire:click="togglePayLogAdvancedFilters"
+                                    class="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 px-3 py-2 sm:py-1.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl text-xs font-bold transition-all relative">
+                                    <span>🎛️ {{ $showPayLogAdvancedFilters ? 'Tutup Filter' : 'Filter Lanjutan' }}</span>
+                                    @if($hasActiveAdvanced)
+                                        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                                    @endif
                                 </button>
-                            @endif
+                                @if($payLogSearch || $payLogMethod || $payLogDate || $payLogStartDate || $payLogEndDate || $payLogUser || $payLogConfigId || $payLogPeriod !== '' || $payLogPeriodYear || $payLogDormitoryId || $payLogKelasId || $payLogSortBy !== 'date' || $payLogSortDir !== 'desc')
+                                    <button type="button" wire:click="resetPayLogFilters"
+                                        class="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 px-3 py-2 sm:py-1.5 bg-rose-500/10 hover:bg-rose-500 text-rose-600 hover:text-white rounded-xl text-xs font-bold transition-all">
+                                        ❌ Reset
+                                    </button>
+                                @endif
+                            </div>
                         </div>
                     </div>
 
                     <!-- Main Search & Primary Filters Row -->
-                    <div class="grid grid-cols-1 md:grid-cols-12 gap-4">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-3 sm:gap-4">
                         <!-- Search Box (Santri / NIS / NIK) -->
-                        <div class="md:col-span-5">
+                        <div class="sm:col-span-2 lg:col-span-4">
                             <label class="block text-[9px] font-extrabold text-slate-400 uppercase tracking-wider mb-1.5">Cari Santri / No. Kuitansi</label>
                             <div class="relative">
                                 <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
@@ -3037,7 +3049,7 @@
                         </div>
 
                         <!-- Date Range (Mulai s.d Selesai) -->
-                        <div class="md:col-span-4">
+                        <div class="sm:col-span-2 lg:col-span-3">
                             <label class="block text-[9px] font-extrabold text-slate-400 uppercase tracking-wider mb-1.5">Rentang Tanggal Setor</label>
                             <div class="flex items-center gap-1.5">
                                 <input type="date" wire:model.live="payLogStartDate" title="Tanggal Mulai" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-100 rounded-2xl px-2.5 py-2 text-xs font-bold focus:ring-2 focus:ring-emerald-500 shadow-2xs">
@@ -3047,7 +3059,7 @@
                         </div>
 
                         <!-- Cashier User Select -->
-                        <div class="md:col-span-3">
+                        <div class="sm:col-span-1 lg:col-span-2">
                             <label class="block text-[9px] font-extrabold text-slate-400 uppercase tracking-wider mb-1.5">Petugas Kasir</label>
                             <select wire:model.live="payLogUser" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-100 rounded-2xl px-3 py-2 text-xs font-bold focus:ring-2 focus:ring-emerald-500 shadow-2xs">
                                 <option value="">-- Semua Petugas --</option>
@@ -3056,66 +3068,243 @@
                                 @endforeach
                             </select>
                         </div>
+
+                        <!-- Sort & Order By Controls -->
+                        <div class="sm:col-span-1 lg:col-span-3">
+                            <label class="block text-[9px] font-extrabold text-slate-400 uppercase tracking-wider mb-1.5">Urutkan Berdasarkan</label>
+                            <div class="flex items-center gap-1.5">
+                                <select wire:model.live="payLogSortBy" class="flex-1 min-w-0 bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-100 rounded-2xl px-3 py-2 text-xs font-bold focus:ring-2 focus:ring-emerald-500 shadow-2xs cursor-pointer">
+                                    <option value="date">🕒 Waktu Setor</option>
+                                    <option value="name">👤 Nama Santri</option>
+                                    <option value="amount">💰 Total Dibayar</option>
+                                    <option value="receipt_no">🧾 No. Kuitansi</option>
+                                </select>
+                                <button type="button" wire:click="togglePayLogSortDir" 
+                                        title="{{ $payLogSortDir === 'asc' ? 'Urutan Naik (Ascending)' : 'Urutan Turun (Descending)' }}"
+                                        class="px-2.5 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-300 dark:border-slate-700 rounded-2xl text-xs font-black text-slate-700 dark:text-slate-200 transition shadow-2xs shrink-0">
+                                    <span>{{ $payLogSortDir === 'asc' ? '▲ ASC' : '▼ DESC' }}</span>
+                                </button>
+                            </div>
+                        </div>
                     </div>
 
                     <!-- Date Presets Shortcuts -->
                     <div class="flex items-center gap-1.5 flex-wrap text-[10px] font-extrabold pt-1">
-                        <span class="text-slate-400 mr-1">Preset Tanggal:</span>
-                        <button type="button" wire:click="setPayLogDatePreset('today')" class="px-2.5 py-1 bg-slate-100 dark:bg-slate-800 hover:bg-emerald-500/10 hover:text-emerald-600 dark:hover:text-emerald-400 rounded-lg text-slate-600 dark:text-slate-300 transition-all">Hari Ini</button>
-                        <button type="button" wire:click="setPayLogDatePreset('yesterday')" class="px-2.5 py-1 bg-slate-100 dark:bg-slate-800 hover:bg-emerald-500/10 hover:text-emerald-600 dark:hover:text-emerald-400 rounded-lg text-slate-600 dark:text-slate-300 transition-all">Kemarin</button>
-                        <button type="button" wire:click="setPayLogDatePreset('7days')" class="px-2.5 py-1 bg-slate-100 dark:bg-slate-800 hover:bg-emerald-500/10 hover:text-emerald-600 dark:hover:text-emerald-400 rounded-lg text-slate-600 dark:text-slate-300 transition-all">7 Hari Terakhir</button>
-                        <button type="button" wire:click="setPayLogDatePreset('this_month')" class="px-2.5 py-1 bg-slate-100 dark:bg-slate-800 hover:bg-emerald-500/10 hover:text-emerald-600 dark:hover:text-emerald-400 rounded-lg text-slate-600 dark:text-slate-300 transition-all">Bulan Ini</button>
-                        <button type="button" wire:click="setPayLogDatePreset('last_month')" class="px-2.5 py-1 bg-slate-100 dark:bg-slate-800 hover:bg-emerald-500/10 hover:text-emerald-600 dark:hover:text-emerald-400 rounded-lg text-slate-600 dark:text-slate-300 transition-all">Bulan Lalu</button>
+                        <span class="text-slate-400 mr-1">Preset:</span>
+                        <button type="button" wire:click="setPayLogDatePreset('today')" class="px-2.5 py-1.5 bg-slate-100 dark:bg-slate-800 hover:bg-emerald-500/10 hover:text-emerald-600 dark:hover:text-emerald-400 rounded-lg text-slate-600 dark:text-slate-300 transition-all">Hari Ini</button>
+                        <button type="button" wire:click="setPayLogDatePreset('yesterday')" class="px-2.5 py-1.5 bg-slate-100 dark:bg-slate-800 hover:bg-emerald-500/10 hover:text-emerald-600 dark:hover:text-emerald-400 rounded-lg text-slate-600 dark:text-slate-300 transition-all">Kemarin</button>
+                        <button type="button" wire:click="setPayLogDatePreset('7days')" class="px-2.5 py-1.5 bg-slate-100 dark:bg-slate-800 hover:bg-emerald-500/10 hover:text-emerald-600 dark:hover:text-emerald-400 rounded-lg text-slate-600 dark:text-slate-300 transition-all">7 Hari</button>
+                        <button type="button" wire:click="setPayLogDatePreset('this_month')" class="px-2.5 py-1.5 bg-slate-100 dark:bg-slate-800 hover:bg-emerald-500/10 hover:text-emerald-600 dark:hover:text-emerald-400 rounded-lg text-slate-600 dark:text-slate-300 transition-all">Bulan Ini</button>
+                        <button type="button" wire:click="setPayLogDatePreset('last_month')" class="px-2.5 py-1.5 bg-slate-100 dark:bg-slate-800 hover:bg-emerald-500/10 hover:text-emerald-600 dark:hover:text-emerald-400 rounded-lg text-slate-600 dark:text-slate-300 transition-all">Bulan Lalu</button>
                         @if($payLogStartDate || $payLogEndDate)
-                            <button type="button" wire:click="setPayLogDatePreset('clear')" class="px-2.5 py-1 bg-rose-500/10 text-rose-600 rounded-lg transition-all">Clear Tanggal</button>
+                            <button type="button" wire:click="setPayLogDatePreset('clear')" class="px-2.5 py-1.5 bg-rose-500/10 text-rose-600 rounded-lg transition-all">Clear</button>
                         @endif
                     </div>
 
+                    <!-- Active Filter Chips / Pills (Shown when advanced filters are active) -->
+                    @if($hasActiveAdvanced)
+                        <div class="flex items-center gap-1.5 flex-wrap text-xs pt-1 animate-fade-in border-t border-slate-100 dark:border-slate-800">
+                            <span class="text-[10px] font-black uppercase tracking-wider text-slate-400 mr-1">Filter Aktif:</span>
+                            @if($selectedPayLogConfig)
+                                <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 font-bold text-[11px]">
+                                    🏷️ {{ $selectedPayLogConfig->label }}
+                                    <button type="button" wire:click="$set('payLogConfigId', '')" title="Hapus filter iuran" class="hover:text-rose-500 font-black ml-0.5">×</button>
+                                </span>
+                            @endif
+                            @if($payLogPeriod !== '')
+                                <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-sky-50 dark:bg-sky-950/40 text-sky-700 dark:text-sky-300 border border-sky-200 dark:border-sky-800 font-bold text-[11px]">
+                                    📅 
+                                    @if(in_array($payLogInterval, ['semester', '2x_yearly']))
+                                        Semester {{ $payLogPeriod }}
+                                    @elseif(in_array($payLogInterval, ['caturwulan', '3x_yearly']))
+                                        Caturwulan {{ $payLogPeriod }}
+                                    @elseif(in_array($payLogInterval, ['triwulan', '4x_yearly']))
+                                        Triwulan {{ $payLogPeriod }}
+                                    @elseif(in_array($payLogInterval, ['bimulanan', '6x_yearly']))
+                                        Dwibulanan {{ $payLogPeriod }}
+                                    @else
+                                        Bulan {{ $monthNames[(int)$payLogPeriod] ?? $payLogPeriod }}
+                                    @endif
+                                    <button type="button" wire:click="$set('payLogPeriod', '')" title="Hapus filter periode" class="hover:text-rose-500 font-black ml-0.5">×</button>
+                                </span>
+                            @endif
+                            @if($payLogPeriodYear)
+                                <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 font-bold text-[11px]">
+                                    📆 Tahun {{ $payLogPeriodYear }}
+                                    <button type="button" wire:click="$set('payLogPeriodYear', '')" title="Hapus filter tahun" class="hover:text-rose-500 font-black ml-0.5">×</button>
+                                </span>
+                            @endif
+                            @if($payLogDormitoryId)
+                                @php $dormObj = $payLogDormitories->firstWhere('id', $payLogDormitoryId); @endphp
+                                <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800 font-bold text-[11px]">
+                                    🏠 {{ $dormObj?->name ?? 'Komplek' }}
+                                    <button type="button" wire:click="$set('payLogDormitoryId', '')" title="Hapus filter komplek" class="hover:text-rose-500 font-black ml-0.5">×</button>
+                                </span>
+                            @endif
+                            @if($payLogKelasId)
+                                @php $klsObj = $payLogClasses->firstWhere('id', $payLogKelasId); @endphp
+                                <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-teal-50 dark:bg-teal-950/40 text-teal-700 dark:text-teal-300 border border-teal-200 dark:border-teal-800 font-bold text-[11px]">
+                                    🏫 {{ $klsObj?->name ?? 'Kelas' }}
+                                    <button type="button" wire:click="$set('payLogKelasId', '')" title="Hapus filter kelas" class="hover:text-rose-500 font-black ml-0.5">×</button>
+                                </span>
+                            @endif
+                            @if($payLogMethod)
+                                <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-violet-50 dark:bg-violet-950/40 text-violet-700 dark:text-violet-300 border border-violet-200 dark:border-violet-800 font-bold text-[11px]">
+                                    💳 {{ $payLogMethod === 'cash' ? 'Tunai' : ($payLogMethod === 'transfer' ? 'Transfer' : 'Gateway') }}
+                                    <button type="button" wire:click="$set('payLogMethod', '')" title="Hapus filter metode" class="hover:text-rose-500 font-black ml-0.5">×</button>
+                                </span>
+                            @endif
+                        </div>
+                    @endif
+
                     <!-- Advanced Filters Panel (Expandable) -->
                     @if($showPayLogAdvancedFilters)
-                        <div class="pt-4 border-t border-dashed border-slate-200 dark:border-slate-800 grid grid-cols-1 sm:grid-cols-4 gap-4 animate-fade-in bg-slate-50/50 dark:bg-slate-950/30 p-4 rounded-2xl">
-                            <!-- Filter Jenis Iuran -->
-                            <div>
-                                <label class="block text-[9px] font-extrabold text-slate-400 uppercase tracking-wider mb-1.5">Jenis Iuran / Config</label>
-                                <select wire:model.live="payLogConfigId" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-100 rounded-xl px-3 py-2 text-xs font-bold focus:ring-2 focus:ring-emerald-500 shadow-2xs">
-                                    <option value="">-- Semua Jenis Iuran --</option>
-                                    @foreach($payLogConfigs as $cfg)
-                                        <option value="{{ $cfg->id }}">🏷️ {{ $cfg->label }}</option>
-                                    @endforeach
-                                </select>
+                        <div class="pt-4 border-t border-dashed border-slate-200 dark:border-slate-800 space-y-4 animate-fade-in bg-slate-50/60 dark:bg-slate-950/40 p-4 rounded-3xl border border-slate-200/60 dark:border-slate-800">
+                            <!-- Section Title -->
+                            <div class="flex flex-wrap items-center justify-between gap-2 pb-2.5 border-b border-slate-200/60 dark:border-slate-800 text-xs">
+                                <div class="flex items-center gap-2">
+                                    <span class="font-extrabold text-slate-800 dark:text-slate-200 text-xs">🎛️ Filter Rincian Iuran, Periode & Target</span>
+                                    @if($selectedPayLogConfig)
+                                        <span class="px-2 py-0.5 rounded-lg text-[10px] font-extrabold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                                            Siklus: {{ strtoupper($payLogInterval) }}
+                                        </span>
+                                    @endif
+                                </div>
+                                @if($hasActiveAdvanced)
+                                    <button type="button" wire:click="$set('payLogConfigId', ''); $set('payLogPeriod', ''); $set('payLogPeriodYear', ''); $set('payLogDormitoryId', ''); $set('payLogKelasId', ''); $set('payLogMethod', '')"
+                                        class="text-[10px] font-bold text-rose-500 hover:text-rose-600 transition">
+                                        Bersihkan Semua Filter di Bawah
+                                    </button>
+                                @endif
                             </div>
 
-                            <!-- Filter Komplek Asrama -->
-                            <div>
-                                <label class="block text-[9px] font-extrabold text-slate-400 uppercase tracking-wider mb-1.5">Komplek Asrama</label>
-                                <select wire:model.live="payLogDormitoryId" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-100 rounded-xl px-3 py-2 text-xs font-bold focus:ring-2 focus:ring-emerald-500 shadow-2xs">
-                                    <option value="">-- Semua Komplek --</option>
-                                    @foreach($payLogDormitories as $dorm)
-                                        <option value="{{ $dorm->id }}">🏠 {{ $dorm->name }} ({{ $dorm->gender === 'L' ? 'Putra' : 'Putri' }})</option>
-                                    @endforeach
-                                </select>
-                            </div>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5 sm:gap-4">
+                                <!-- 1. Filter Jenis Iuran -->
+                                <div>
+                                    <label class="block text-[9px] font-extrabold text-slate-400 uppercase tracking-wider mb-1.5">1. Jenis Iuran / Pos Tagihan</label>
+                                    <select wire:model.live="payLogConfigId" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-100 rounded-xl px-3 py-2 text-xs font-bold focus:ring-2 focus:ring-emerald-500 shadow-2xs">
+                                        <option value="">-- Semua Jenis Iuran --</option>
+                                        @foreach($payLogConfigs as $cfg)
+                                            <option value="{{ $cfg->id }}">🏷️ {{ $cfg->label }} ({{ strtoupper($cfg->interval) }})</option>
+                                        @endforeach
+                                    </select>
+                                </div>
 
-                            <!-- Filter Kelas Madrasah -->
-                            <div>
-                                <label class="block text-[9px] font-extrabold text-slate-400 uppercase tracking-wider mb-1.5">Kelas Madrasah</label>
-                                <select wire:model.live="payLogKelasId" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-100 rounded-xl px-3 py-2 text-xs font-bold focus:ring-2 focus:ring-emerald-500 shadow-2xs">
-                                    <option value="">-- Semua Kelas --</option>
-                                    @foreach($payLogClasses as $kls)
-                                        <option value="{{ $kls->id }}">🏫 {{ $kls->name }} ({{ $kls->academic_year }})</option>
-                                    @endforeach
-                                </select>
-                            </div>
+                                <!-- 2. Periode Tagihan (Adaptif Sesuai Tarif yang Dipilih) -->
+                                <div>
+                                    <label class="block text-[9px] font-extrabold text-slate-400 uppercase tracking-wider mb-1.5 flex items-center justify-between">
+                                        <span>
+                                            @if(!$selectedPayLogConfig)
+                                                2. Periode Tagihan
+                                            @elseif(in_array($payLogInterval, ['semester', '2x_yearly']))
+                                                2. Periode Semester
+                                            @elseif(in_array($payLogInterval, ['caturwulan', '3x_yearly']))
+                                                2. Periode Caturwulan
+                                            @elseif(in_array($payLogInterval, ['triwulan', '4x_yearly']))
+                                                2. Periode Triwulan
+                                            @elseif(in_array($payLogInterval, ['bimulanan', '6x_yearly']))
+                                                2. Periode Dwibulanan
+                                            @elseif(in_array($payLogInterval, ['once', 'insidental', 'event', 'sekali']))
+                                                2. Periode Event
+                                            @else
+                                                2. Periode Bulan (SPP)
+                                            @endif
+                                        </span>
+                                        @if($selectedPayLogConfig)
+                                            <span class="text-[9px] text-emerald-600 dark:text-emerald-400 font-extrabold">Otomatis Sesuai Tarif</span>
+                                        @endif
+                                    </label>
 
-                            <!-- Filter Metode Setoran -->
-                            <div>
-                                <label class="block text-[9px] font-extrabold text-slate-400 uppercase tracking-wider mb-1.5">Metode Setoran</label>
-                                <select wire:model.live="payLogMethod" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-100 rounded-xl px-3 py-2 text-xs font-bold focus:ring-2 focus:ring-emerald-500 shadow-2xs">
-                                    <option value="">-- Semua Metode --</option>
-                                    <option value="cash">💵 Tunai (Cash)</option>
-                                    <option value="transfer">🏦 Transfer Bank</option>
-                                    <option value="gateway_duitku">⚡ Pembayaran Online (Gateway)</option>
-                                </select>
+                                    @if(!$selectedPayLogConfig)
+                                        <select disabled class="w-full bg-slate-100 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-800 text-slate-400 rounded-xl px-3 py-2 text-xs font-medium cursor-not-allowed">
+                                            <option>-- Pilih Jenis Iuran Dulu --</option>
+                                        </select>
+                                    @elseif(in_array($payLogInterval, ['semester', '2x_yearly']))
+                                        <select wire:model.live="payLogPeriod" class="w-full bg-white dark:bg-slate-900 border border-emerald-500/60 dark:border-emerald-500/40 text-slate-900 dark:text-slate-100 rounded-xl px-3 py-2 text-xs font-bold focus:ring-2 focus:ring-emerald-500 shadow-2xs">
+                                            <option value="">-- Semua Semester --</option>
+                                            <option value="1">🎓 Semester 1 (Ganjil)</option>
+                                            <option value="2">🎓 Semester 2 (Genap)</option>
+                                        </select>
+                                    @elseif(in_array($payLogInterval, ['caturwulan', '3x_yearly']))
+                                        <select wire:model.live="payLogPeriod" class="w-full bg-white dark:bg-slate-900 border border-emerald-500/60 dark:border-emerald-500/40 text-slate-900 dark:text-slate-100 rounded-xl px-3 py-2 text-xs font-bold focus:ring-2 focus:ring-emerald-500 shadow-2xs">
+                                            <option value="">-- Semua Caturwulan --</option>
+                                            <option value="1">Caturwulan 1 (Jan - Apr)</option>
+                                            <option value="2">Caturwulan 2 (Mei - Agt)</option>
+                                            <option value="3">Caturwulan 3 (Sep - Des)</option>
+                                        </select>
+                                    @elseif(in_array($payLogInterval, ['triwulan', '4x_yearly']))
+                                        <select wire:model.live="payLogPeriod" class="w-full bg-white dark:bg-slate-900 border border-emerald-500/60 dark:border-emerald-500/40 text-slate-900 dark:text-slate-100 rounded-xl px-3 py-2 text-xs font-bold focus:ring-2 focus:ring-emerald-500 shadow-2xs">
+                                            <option value="">-- Semua Triwulan --</option>
+                                            <option value="1">Triwulan 1 (Jan - Mar)</option>
+                                            <option value="2">Triwulan 2 (Apr - Jun)</option>
+                                            <option value="3">Triwulan 3 (Jul - Sep)</option>
+                                            <option value="4">Triwulan 4 (Okt - Des)</option>
+                                        </select>
+                                    @elseif(in_array($payLogInterval, ['bimulanan', '6x_yearly']))
+                                        <select wire:model.live="payLogPeriod" class="w-full bg-white dark:bg-slate-900 border border-emerald-500/60 dark:border-emerald-500/40 text-slate-900 dark:text-slate-100 rounded-xl px-3 py-2 text-xs font-bold focus:ring-2 focus:ring-emerald-500 shadow-2xs">
+                                            <option value="">-- Semua Dwibulanan --</option>
+                                            @for($b = 1; $b <= 6; $b++)
+                                                <option value="{{ $b }}">Dwibulanan {{ $b }}</option>
+                                            @endfor
+                                        </select>
+                                    @elseif(in_array($payLogInterval, ['once', 'insidental', 'event', 'sekali']))
+                                        <div class="px-3 py-2 bg-purple-50 dark:bg-purple-950/40 border border-purple-200 dark:border-purple-800 rounded-xl text-purple-700 dark:text-purple-300 text-xs font-bold flex items-center justify-between">
+                                            <span>⚡ Tagihan 1x / Insidental</span>
+                                            <span class="text-[10px] text-purple-600 dark:text-purple-400">Filter via Tahun</span>
+                                        </div>
+                                    @else
+                                        <select wire:model.live="payLogPeriod" class="w-full bg-white dark:bg-slate-900 border border-emerald-500/60 dark:border-emerald-500/40 text-slate-900 dark:text-slate-100 rounded-xl px-3 py-2 text-xs font-bold focus:ring-2 focus:ring-emerald-500 shadow-2xs">
+                                            <option value="">-- Semua Bulan (Jan - Des) --</option>
+                                            @foreach($monthNames as $num => $name)
+                                                <option value="{{ $num }}">{{ sprintf('%02d', $num) }}. {{ $name }}</option>
+                                            @endforeach
+                                        </select>
+                                    @endif
+                                </div>
+
+                                <!-- 3. Filter Tahun Tagihan -->
+                                <div>
+                                    <label class="block text-[9px] font-extrabold text-slate-400 uppercase tracking-wider mb-1.5">3. Tahun Tagihan</label>
+                                    <select wire:model.live="payLogPeriodYear" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-100 rounded-xl px-3 py-2 text-xs font-bold focus:ring-2 focus:ring-emerald-500 shadow-2xs">
+                                        <option value="">-- Semua Tahun --</option>
+                                        @foreach($payLogYears as $y)
+                                            <option value="{{ $y }}">{{ $y }} {{ $y == now()->year ? '(Tahun Ini)' : '' }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+
+                                <!-- 4. Filter Komplek Asrama -->
+                                <div>
+                                    <label class="block text-[9px] font-extrabold text-slate-400 uppercase tracking-wider mb-1.5">4. Komplek Asrama</label>
+                                    <select wire:model.live="payLogDormitoryId" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-100 rounded-xl px-3 py-2 text-xs font-bold focus:ring-2 focus:ring-emerald-500 shadow-2xs">
+                                        <option value="">-- Semua Komplek --</option>
+                                        @foreach($payLogDormitories as $dorm)
+                                            <option value="{{ $dorm->id }}">🏠 {{ $dorm->name }} ({{ $dorm->gender === 'L' ? 'Putra' : 'Putri' }})</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+
+                                <!-- 5. Filter Kelas Madrasah -->
+                                <div>
+                                    <label class="block text-[9px] font-extrabold text-slate-400 uppercase tracking-wider mb-1.5">5. Kelas Madrasah</label>
+                                    <select wire:model.live="payLogKelasId" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-100 rounded-xl px-3 py-2 text-xs font-bold focus:ring-2 focus:ring-emerald-500 shadow-2xs">
+                                        <option value="">-- Semua Kelas --</option>
+                                        @foreach($payLogClasses as $kls)
+                                            <option value="{{ $kls->id }}">🏫 {{ $kls->name }} ({{ $kls->academic_year }})</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+
+                                <!-- 6. Filter Metode Setoran -->
+                                <div>
+                                    <label class="block text-[9px] font-extrabold text-slate-400 uppercase tracking-wider mb-1.5">6. Metode Setoran</label>
+                                    <select wire:model.live="payLogMethod" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-100 rounded-xl px-3 py-2 text-xs font-bold focus:ring-2 focus:ring-emerald-500 shadow-2xs">
+                                        <option value="">-- Semua Metode --</option>
+                                        <option value="cash">💵 Tunai (Cash)</option>
+                                        <option value="transfer">🏦 Transfer Bank</option>
+                                        <option value="gateway_duitku">⚡ Pembayaran Online (Gateway)</option>
+                                    </select>
+                                </div>
                             </div>
                         </div>
                     @endif
@@ -3126,15 +3315,123 @@
                     <!-- TABEL MODE 1: DAFTAR KUITANSI / NOTA (DEFAULT) -->
                     <!-- ========================================== -->
                     <div class="bg-white dark:bg-slate-900 border border-slate-200/50 dark:border-slate-800 rounded-3xl shadow-xs overflow-hidden">
-                        <div class="overflow-x-auto">
+                        <!-- Mobile Card View (sm:hidden) -->
+                        <div class="sm:hidden divide-y divide-slate-100 dark:divide-slate-800">
+                            @forelse($receiptsLog ?? [] as $rcpt)
+                                @php
+                                    $santri = $rcpt->santri;
+                                    $method = strtolower($rcpt->payment_method);
+                                @endphp
+                                <div class="p-4 space-y-3 bg-white dark:bg-slate-900">
+                                    <!-- Top: No Kuitansi & Nominal -->
+                                    <div class="flex items-start justify-between gap-2">
+                                        <div class="min-w-0">
+                                            <div class="flex items-center gap-1.5 flex-wrap">
+                                                <span class="text-xs font-mono font-extrabold text-indigo-600 dark:text-indigo-400">{{ $rcpt->receipt_no }}</span>
+                                                <span class="px-1.5 py-0.5 rounded text-[9px] font-bold {{ $rcpt->is_legacy ? 'bg-slate-100 text-slate-500' : 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300' }}">
+                                                    {{ $rcpt->is_legacy ? 'Tunggal' : 'Nota Kasir' }}
+                                                </span>
+                                            </div>
+                                            <span class="text-[10px] text-slate-400 block mt-0.5">
+                                                {{ $rcpt->payment_date ? \Carbon\Carbon::parse($rcpt->payment_date)->translatedFormat('d M Y') : '—' }} &bull; {{ $rcpt->created_at ? \Carbon\Carbon::parse($rcpt->created_at)->format('H:i') . ' WIB' : '' }}
+                                            </span>
+                                        </div>
+                                        <div class="text-right shrink-0">
+                                            <span class="text-sm font-black font-mono text-emerald-600 dark:text-emerald-400 block">
+                                                Rp {{ number_format($rcpt->total_amount, 0, ',', '.') }}
+                                            </span>
+                                        </div>
+                                    </div>
+
+                                    <!-- Santri & Items Summary -->
+                                    <div class="bg-slate-50 dark:bg-slate-950/50 p-2.5 rounded-xl border border-slate-150 dark:border-slate-800 space-y-1.5">
+                                        <div class="flex items-center justify-between">
+                                            <strong class="text-xs font-extrabold text-slate-800 dark:text-slate-100 block truncate">
+                                                {{ $santri->name ?? 'Data Santri Terhapus' }}
+                                            </strong>
+                                            @if($santri)
+                                                <span class="text-[10px] text-slate-400 font-mono shrink-0 ml-2">NIS: {{ $santri->nis ?? '—' }}</span>
+                                            @endif
+                                        </div>
+
+                                        <!-- Tagihan Summary Badges -->
+                                        <div class="flex flex-wrap items-center gap-1 pt-1 border-t border-slate-200/50 dark:border-slate-800/60">
+                                            @foreach(collect($rcpt->grouped_summary ?? []) as $summary)
+                                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-[10px] text-slate-700 dark:text-slate-300">
+                                                    <span class="font-medium truncate max-w-[140px]">{{ $summary['label'] }}</span>
+                                                    @if($summary['count'] > 1)
+                                                        <span class="font-bold text-indigo-600 dark:text-indigo-400">({{ $summary['count'] }}x)</span>
+                                                    @endif
+                                                    <span class="font-mono font-bold text-emerald-600 dark:text-emerald-400 text-[9px]">Rp {{ number_format($summary['total'], 0, ',', '.') }}</span>
+                                                </span>
+                                            @endforeach
+                                        </div>
+                                    </div>
+
+                                    <!-- Bottom: Method, Petugas & Action -->
+                                    <div class="flex items-center justify-between gap-2 pt-0.5">
+                                        <div class="flex items-center gap-1.5 flex-wrap text-[10px]">
+                                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md font-bold uppercase
+                                                @if($method === 'cash') bg-teal-500/10 text-teal-600 dark:text-teal-400
+                                                @elseif($method === 'transfer') bg-blue-500/10 text-blue-600 dark:text-blue-400
+                                                @elseif($method === 'gateway_duitku') bg-amber-500/10 text-amber-600 dark:text-amber-400
+                                                @else bg-slate-100 text-slate-500 @endif">
+                                                {{ $method === 'cash' ? '💵 Tunai' : ($method === 'transfer' ? '🏦 Transfer' : ($method === 'gateway_duitku' ? '⚡ Gateway' : strtoupper($rcpt->payment_method))) }}
+                                            </span>
+                                            <span class="text-slate-400 text-[10px]">👤 {{ $rcpt->logger?->name ?? 'Kasir' }}</span>
+                                        </div>
+                                        <a href="{{ route('bukti-bayar.kuitansi', ['receiptNo' => ($rcpt->receipt_slug ?? ($rcpt->receipt_no ?: $rcpt->group_key)), 'from' => 'payments_log']) }}" target="_blank"
+                                           class="inline-flex items-center gap-1 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition shadow-xs shrink-0">
+                                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+                                            <span>Cetak</span>
+                                        </a>
+                                    </div>
+                                </div>
+                            @empty
+                                <div class="py-12 text-center text-slate-400 font-semibold p-4">
+                                    Tidak ada kuitansi pembayaran yang cocok dengan pencarian Anda.
+                                </div>
+                            @endforelse
+                        </div>
+
+                        <!-- Desktop Table View (hidden sm:block) -->
+                        <div class="hidden sm:block overflow-x-auto">
                             <table class="w-full text-left border-collapse text-xs min-w-[950px]">
                                 <thead>
                                     <tr class="bg-slate-50/80 dark:bg-slate-950 border-b border-slate-200 dark:border-slate-800 text-slate-500 font-extrabold uppercase tracking-wider text-[9px]">
-                                        <th class="py-4 px-4 w-44">No. Kuitansi</th>
-                                        <th class="py-4 px-4 w-36">Waktu Setor</th>
-                                        <th class="py-4 px-4">Santri</th>
+                                        <th wire:click="togglePayLogSort('receipt_no')" class="py-4 px-4 w-44 cursor-pointer hover:text-slate-900 dark:hover:text-white select-none transition">
+                                            <div class="flex items-center gap-1">
+                                                <span>No. Kuitansi</span>
+                                                @if($payLogSortBy === 'receipt_no')
+                                                    <span class="text-indigo-600 dark:text-indigo-400 font-black text-[10px]">{{ $payLogSortDir === 'asc' ? '▲' : '▼' }}</span>
+                                                @endif
+                                            </div>
+                                        </th>
+                                        <th wire:click="togglePayLogSort('date')" class="py-4 px-4 w-36 cursor-pointer hover:text-slate-900 dark:hover:text-white select-none transition">
+                                            <div class="flex items-center gap-1">
+                                                <span>Waktu Setor</span>
+                                                @if($payLogSortBy === 'date')
+                                                    <span class="text-indigo-600 dark:text-indigo-400 font-black text-[10px]">{{ $payLogSortDir === 'asc' ? '▲' : '▼' }}</span>
+                                                @endif
+                                            </div>
+                                        </th>
+                                        <th wire:click="togglePayLogSort('name')" class="py-4 px-4 cursor-pointer hover:text-slate-900 dark:hover:text-white select-none transition">
+                                            <div class="flex items-center gap-1">
+                                                <span>Santri</span>
+                                                @if($payLogSortBy === 'name')
+                                                    <span class="text-indigo-600 dark:text-indigo-400 font-black text-[10px]">{{ $payLogSortDir === 'asc' ? '▲' : '▼' }}</span>
+                                                @endif
+                                            </div>
+                                        </th>
                                         <th class="py-4 px-4">Rincian Tagihan Terbayar</th>
-                                        <th class="py-4 px-4 text-right w-36">Total Dibayar</th>
+                                        <th wire:click="togglePayLogSort('amount')" class="py-4 px-4 text-right w-36 cursor-pointer hover:text-slate-900 dark:hover:text-white select-none transition">
+                                            <div class="flex items-center justify-end gap-1">
+                                                <span>Total Dibayar</span>
+                                                @if($payLogSortBy === 'amount')
+                                                    <span class="text-indigo-600 dark:text-indigo-400 font-black text-[10px]">{{ $payLogSortDir === 'asc' ? '▲' : '▼' }}</span>
+                                                @endif
+                                            </div>
+                                        </th>
                                         <th class="py-4 px-4 text-center w-28">Metode</th>
                                         <th class="py-4 px-4">Petugas</th>
                                         <th class="py-4 px-4 text-center w-36">Aksi Kuitansi</th>
@@ -3247,6 +3544,8 @@
                                                                 </div>
                                                             @endforeach
                                                         </div>
+                                                    </div>
+                                                </div>
                                             </td>
 
                                             <!-- Total Dibayar -->
@@ -3320,15 +3619,123 @@
                     <!-- TABEL MODE 2: RINCIAN PER POS TAGIHAN (ITEM AUDIT) -->
                     <!-- ========================================== -->
                     <div class="bg-white dark:bg-slate-900 border border-slate-200/50 dark:border-slate-800 rounded-3xl shadow-xs overflow-hidden">
-                        <div class="overflow-x-auto">
+                        <!-- Mobile Card View (sm:hidden) -->
+                        <div class="sm:hidden divide-y divide-slate-100 dark:divide-slate-800">
+                            @forelse($paymentsLog as $pay)
+                                @php
+                                    $bill = $pay->bill;
+                                    $santri = $bill?->person;
+                                    $config = $bill?->config;
+                                    $method = strtolower($pay->payment_method);
+                                    $months = [1=>'Jan',2=>'Feb',3=>'Mar',4=>'Apr',5=>'Mei',6=>'Jun',7=>'Jul',8=>'Agt',9=>'Sep',10=>'Okt',11=>'Nov',12=>'Des'];
+                                    $periodLabel = match(true) {
+                                        $config && $config->interval === 'semester' => 'Sem ' . $bill?->period_month . '/' . $bill?->period_year,
+                                        $config && in_array($config->interval, ['once', 'insidental', 'event', 'sekali']) => 'Event / ' . $bill?->period_year,
+                                        default => ($months[$bill?->period_month ?? 0] ?? '') . ' ' . ($bill?->period_year ?? ''),
+                                    };
+                                @endphp
+                                <div class="p-4 space-y-2.5 bg-white dark:bg-slate-900">
+                                    <div class="flex items-start justify-between gap-2">
+                                        <div class="min-w-0">
+                                            <strong class="text-xs font-extrabold text-slate-800 dark:text-slate-100 block truncate">
+                                                {{ $santri->name ?? 'Data Terhapus' }}
+                                            </strong>
+                                            <div class="flex items-center gap-1.5 text-[10px] text-slate-400 mt-0.5">
+                                                <span>NIS: {{ $santri->nis ?? '—' }}</span>
+                                                <span>&bull;</span>
+                                                <span class="font-mono">{{ $pay->payment_date ? $pay->payment_date->translatedFormat('d M Y') : '—' }}</span>
+                                            </div>
+                                        </div>
+                                        <div class="text-right shrink-0">
+                                            <span class="text-sm font-black font-mono text-emerald-600 dark:text-emerald-400 block">
+                                                Rp {{ number_format($pay->amount_paid, 0, ',', '.') }}
+                                            </span>
+                                            @if($pay->receipt_no)
+                                                <span class="text-[9px] font-mono text-indigo-600 dark:text-indigo-400">🧾 {{ $pay->receipt_no }}</span>
+                                            @endif
+                                        </div>
+                                    </div>
+
+                                    <div class="flex flex-wrap items-center gap-1.5 text-[10px] pt-1 border-t border-slate-100 dark:border-slate-800">
+                                        <span class="px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold">
+                                            🏷️ {{ $config?->label ?? ($bill?->bill_type ? str_replace('_', ' ', $bill->bill_type) : '—') }}
+                                        </span>
+                                        @if(trim($periodLabel))
+                                            <span class="px-2 py-0.5 rounded-md bg-indigo-50 dark:bg-indigo-950/50 text-indigo-700 dark:text-indigo-300 font-medium">
+                                                📅 {{ trim($periodLabel) }}
+                                            </span>
+                                        @endif
+                                        <span class="px-1.5 py-0.5 rounded-md font-bold uppercase ml-auto
+                                            @if($method === 'cash') bg-teal-500/10 text-teal-600 dark:text-teal-400
+                                            @elseif($method === 'transfer') bg-blue-500/10 text-blue-600 dark:text-blue-400
+                                            @elseif($method === 'gateway_duitku') bg-amber-500/10 text-amber-600 dark:text-amber-400
+                                            @else bg-slate-100 text-slate-500 @endif">
+                                            {{ $method === 'cash' ? '💵 Tunai' : ($method === 'transfer' ? '🏦 Transfer' : ($method === 'gateway_duitku' ? '⚡ Online' : $pay->payment_method)) }}
+                                        </span>
+                                    </div>
+
+                                    <div class="flex items-center justify-between text-[10px] text-slate-400 pt-1">
+                                        <span>Petugas: <strong class="text-slate-600 dark:text-slate-300">{{ $pay->logger?->name ?? 'Sistem' }}</strong></span>
+                                        <div class="flex items-center gap-1.5">
+                                            @if($method !== 'gateway_duitku')
+                                                <a href="{{ route('bukti-bayar.kuitansi', ['receiptNo' => ($pay->receipt_no ?: $pay->id), 'from' => 'payments_log']) }}" target="_blank"
+                                                   class="inline-flex items-center gap-1 px-2.5 py-1 bg-indigo-500/10 hover:bg-indigo-500 text-indigo-600 hover:text-white rounded-lg font-bold transition">
+                                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+                                                    <span>Cetak</span>
+                                                </a>
+                                            @endif
+
+                                            @if($method === 'gateway_duitku')
+                                                <span class="inline-flex items-center gap-1 px-2 py-1 bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 rounded-lg text-[9px] font-bold cursor-not-allowed">
+                                                    🔒 Lock
+                                                </span>
+                                            @else
+                                                <button type="button" wire:click="confirmVoidPayment('{{ $pay->id }}')"
+                                                    class="px-2.5 py-1 bg-rose-500/10 hover:bg-rose-500 text-rose-600 hover:text-white rounded-lg text-[9px] font-bold transition">
+                                                    🗑️ Void
+                                                </button>
+                                            @endif
+                                        </div>
+                                    </div>
+                                </div>
+                            @empty
+                                <div class="py-12 text-center text-slate-400 font-semibold p-4">
+                                    Belum ada data setoran per pos tagihan yang cocok dengan filter.
+                                </div>
+                            @endforelse
+                        </div>
+
+                        <!-- Desktop Table View (hidden sm:block) -->
+                        <div class="hidden sm:block overflow-x-auto">
                             <table class="w-full text-left border-collapse text-xs min-w-[900px]">
                                 <thead>
                                     <tr class="bg-slate-50/80 dark:bg-slate-950 border-b border-slate-200 dark:border-slate-800 text-slate-500 font-extrabold uppercase tracking-wider text-[9px]">
-                                        <th class="py-4 px-4 w-32">Tanggal Setor</th>
-                                        <th class="py-4 px-4">Nama Santri</th>
+                                        <th wire:click="togglePayLogSort('date')" class="py-4 px-4 w-32 cursor-pointer hover:text-slate-900 dark:hover:text-white select-none transition">
+                                            <div class="flex items-center gap-1">
+                                                <span>Tanggal Setor</span>
+                                                @if($payLogSortBy === 'date')
+                                                    <span class="text-emerald-600 dark:text-emerald-400 font-black text-[10px]">{{ $payLogSortDir === 'asc' ? '▲' : '▼' }}</span>
+                                                @endif
+                                            </div>
+                                        </th>
+                                        <th wire:click="togglePayLogSort('name')" class="py-4 px-4 cursor-pointer hover:text-slate-900 dark:hover:text-white select-none transition">
+                                            <div class="flex items-center gap-1">
+                                                <span>Nama Santri</span>
+                                                @if($payLogSortBy === 'name')
+                                                    <span class="text-emerald-600 dark:text-emerald-400 font-black text-[10px]">{{ $payLogSortDir === 'asc' ? '▲' : '▼' }}</span>
+                                                @endif
+                                            </div>
+                                        </th>
                                         <th class="py-4 px-4">Jenis Iuran</th>
                                         <th class="py-4 px-4 text-center">Periode</th>
-                                        <th class="py-4 px-4 text-right">Jumlah Setor</th>
+                                        <th wire:click="togglePayLogSort('amount')" class="py-4 px-4 text-right cursor-pointer hover:text-slate-900 dark:hover:text-white select-none transition">
+                                            <div class="flex items-center justify-end gap-1">
+                                                <span>Jumlah Setor</span>
+                                                @if($payLogSortBy === 'amount')
+                                                    <span class="text-emerald-600 dark:text-emerald-400 font-black text-[10px]">{{ $payLogSortDir === 'asc' ? '▲' : '▼' }}</span>
+                                                @endif
+                                            </div>
+                                        </th>
                                         <th class="py-4 px-4 text-center">Metode</th>
                                         <th class="py-4 px-4">Catatan</th>
                                         <th class="py-4 px-4">Petugas</th>
@@ -3353,7 +3760,7 @@
                                                     <strong class="text-slate-800 dark:text-slate-200 block font-bold">{{ $santri->name }}</strong>
                                                     <div class="flex flex-wrap items-center gap-1.5 mt-0.5">
                                                         <span class="text-[9px] text-slate-400">
-                                                            NIS: {{ $santri->nis ?? '—' }} &nbsp;|&nbsp;
+                                                             NIS: {{ $santri->nis ?? '—' }} &nbsp;|&nbsp;
                                                             {{ $santri->gender === 'L' ? '👦 L' : '👧 P' }}
                                                         </span>
                                                         @if($pay->receipt_no)
@@ -4632,79 +5039,338 @@
                 </div>
 
                 {{-- 7. MODAL 1: Detail Santri per Asrama (Kas Komplek) --}}
+                {{-- 7. MODAL 1: Detail Santri per Asrama (Kas Komplek) --}}
                 @if($showDormitoryModal && !empty($modalDormitoryData))
-                    <div class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+                    <div class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4"
+                         x-data="{
+                             search: '',
+                             selectedRoom: '',
+                             selectedPeriod: '',
+                             selectedMethod: '',
+                             sortBy: 'name',
+                             sortAsc: true,
+                             rawList: @js($modalDormitoryData['santri_list'] ?? []),
+                             get isFiltered() {
+                                 return this.search.trim() !== '' || this.selectedRoom !== '' || this.selectedPeriod !== '' || this.selectedMethod !== '' || this.sortBy !== 'name' || !this.sortAsc;
+                             },
+                             get rooms() {
+                                 const set = new Set();
+                                 (this.rawList || []).forEach(i => {
+                                     const r = i.room_name || i.unit_info;
+                                     if (r && r !== '-') set.add(r);
+                                 });
+                                 return Array.from(set).sort();
+                             },
+                             get periods() {
+                                 const set = new Set();
+                                 (this.rawList || []).forEach(i => {
+                                     if (i.period_label) set.add(i.period_label);
+                                 });
+                                 return Array.from(set).sort();
+                             },
+                             get methods() {
+                                 const set = new Set();
+                                 (this.rawList || []).forEach(i => {
+                                     if (i.method) set.add(i.method);
+                                 });
+                                 return Array.from(set).sort();
+                             },
+                             toggleSort(col) {
+                                 if (this.sortBy === col) {
+                                     this.sortAsc = !this.sortAsc;
+                                 } else {
+                                     this.sortBy = col;
+                                     this.sortAsc = true;
+                                 }
+                             },
+                             get filteredList() {
+                                 const q = this.search.toLowerCase().trim();
+                                 let list = (this.rawList || []).filter(i => {
+                                     const nameStr = (i.name || '').toLowerCase();
+                                     const nisStr  = (i.nis || '').toString().toLowerCase();
+                                     const matchesSearch = !q || nameStr.includes(q) || nisStr.includes(q);
+                                     const roomVal = i.room_name || i.unit_info || '';
+                                     const matchesRoom = !this.selectedRoom || roomVal === this.selectedRoom;
+                                     const matchesPeriod = !this.selectedPeriod || (i.period_label || '') === this.selectedPeriod;
+                                     const matchesMethod = !this.selectedMethod || (i.method || '') === this.selectedMethod;
+                                     return matchesSearch && matchesRoom && matchesPeriod && matchesMethod;
+                                 });
+
+                                 return list.slice().sort((a, b) => {
+                                     let cmp = 0;
+                                     if (this.sortBy === 'name') {
+                                         cmp = (a.name || '').localeCompare(b.name || '', 'id');
+                                         if (cmp === 0) {
+                                             cmp = (a.period_label || '').localeCompare(b.period_label || '', 'id');
+                                         }
+                                     } else if (this.sortBy === 'room') {
+                                         const rA = a.room_name || a.unit_info || '';
+                                         const rB = b.room_name || b.unit_info || '';
+                                         cmp = rA.localeCompare(rB, 'id', { numeric: true, sensitivity: 'base' });
+                                         if (cmp === 0) {
+                                             cmp = (a.name || '').localeCompare(b.name || '', 'id');
+                                         }
+                                     } else if (this.sortBy === 'period') {
+                                         cmp = (a.period_label || '').localeCompare(b.period_label || '', 'id');
+                                         if (cmp === 0) {
+                                             cmp = (a.name || '').localeCompare(b.name || '', 'id');
+                                         }
+                                     } else if (this.sortBy === 'date') {
+                                         cmp = (a.paid_date || '').localeCompare(b.paid_date || '', 'id');
+                                     } else if (this.sortBy === 'amount') {
+                                         cmp = (Number(a.amount) || 0) - (Number(b.amount) || 0);
+                                     }
+                                     return this.sortAsc ? cmp : -cmp;
+                                 });
+                             },
+                             get filteredTotal() {
+                                 return this.filteredList.reduce((acc, curr) => acc + (Number(curr.amount) || 0), 0);
+                             },
+                             formatRupiah(num) {
+                                 return new Intl.NumberFormat('id-ID').format(Number(num) || 0);
+                             },
+                             resetFilters() {
+                                 this.search = '';
+                                 this.selectedRoom = '';
+                                 this.selectedPeriod = '';
+                                 this.selectedMethod = '';
+                                 this.sortBy = 'name';
+                                 this.sortAsc = true;
+                             }
+                         }">
                         <div class="fixed inset-0" wire:click="closeDormitoryDetailModal"></div>
 
-                        <div class="relative z-10 bg-white dark:bg-slate-900 rounded-3xl shadow-2xl w-full max-w-3xl max-h-[85vh] flex flex-col border border-slate-200 dark:border-slate-800 overflow-hidden">
-                            <div class="px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-emerald-500/5">
-                                <div>
-                                    <div class="flex items-center gap-2">
-                                        <span class="text-base">🏠</span>
-                                        <h3 class="font-extrabold text-base text-slate-900 dark:text-white">{{ $modalDormitoryData['dormitory_name'] }}</h3>
+                        <div class="relative z-10 bg-white dark:bg-slate-900 rounded-2xl sm:rounded-3xl shadow-2xl w-full max-w-4xl max-h-[92vh] sm:max-h-[88vh] flex flex-col border border-slate-200 dark:border-slate-800 overflow-hidden">
+                            <!-- Modal Header -->
+                            <div class="px-4 py-3 sm:px-6 sm:py-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between gap-3 bg-emerald-500/5">
+                                <div class="min-w-0">
+                                    <div class="flex items-center gap-2 flex-wrap">
+                                        <span class="text-base shrink-0">🏠</span>
+                                        <h3 class="font-extrabold text-sm sm:text-base text-slate-900 dark:text-white truncate max-w-[200px] sm:max-w-none">{{ $modalDormitoryData['dormitory_name'] }}</h3>
                                         <span class="px-2 py-0.5 rounded-full text-[10px] font-black uppercase {{ $modalDormitoryData['gender'] === 'L' ? 'bg-sky-100 text-sky-700' : 'bg-pink-100 text-pink-700' }}">
                                             {{ $modalDormitoryData['gender'] === 'L' ? 'Putra' : 'Putri' }}
                                         </span>
                                     </div>
-                                    <p class="text-xs text-slate-400 mt-0.5">Daftar {{ count($modalDormitoryData['santri_list']) }} santri yang telah membayar Kas Komplek</p>
+                                    <p class="text-[11px] sm:text-xs text-slate-400 mt-0.5">
+                                        Daftar <span class="font-bold text-slate-700 dark:text-slate-300" x-text="rawList.length"></span> santri yang telah bayar
+                                        <template x-if="isFiltered">
+                                            <span class="ml-1 text-emerald-600 dark:text-emerald-400 font-bold">(Filter: <span x-text="filteredList.length"></span>)</span>
+                                        </template>
+                                    </p>
                                 </div>
-                                <div class="text-right">
-                                    <span class="text-[10px] text-slate-400 uppercase font-bold block">Total Kas Terkumpul</span>
-                                    <span class="text-base font-black text-emerald-600 dark:text-emerald-400 font-mono">Rp {{ number_format($modalDormitoryData['total_amount'], 0, ',', '.') }}</span>
+                                <div class="text-right shrink-0">
+                                    <span class="text-[9px] sm:text-[10px] text-slate-400 uppercase font-bold block" x-text="isFiltered ? 'Subtotal Filter' : 'Total Terkumpul'"></span>
+                                    <span class="text-sm sm:text-base font-black text-emerald-600 dark:text-emerald-400 font-mono whitespace-nowrap">Rp <span x-text="formatRupiah(filteredTotal)"></span></span>
+                                    <template x-if="isFiltered">
+                                        <span class="text-[8px] sm:text-[9px] text-slate-400 block font-medium whitespace-nowrap">Total: Rp {{ number_format($modalDormitoryData['total_amount'], 0, ',', '.') }}</span>
+                                    </template>
                                 </div>
                             </div>
 
-                            <div class="overflow-y-auto flex-1 p-4">
-                                <table class="w-full text-xs text-left border-collapse">
-                                    <thead>
-                                        <tr class="bg-slate-50 dark:bg-slate-950 text-slate-400 uppercase font-black text-[9px] tracking-wider border-b border-slate-100 dark:border-slate-800">
-                                            <th class="py-2.5 px-3">#</th>
-                                            <th class="py-2.5 px-3">Nama Santri</th>
-                                            <th class="py-2.5 px-3">Kamar</th>
-                                            <th class="py-2.5 px-3">Periode Kas</th>
-                                            <th class="py-2.5 px-3">Waktu Bayar</th>
-                                            <th class="py-2.5 px-3">Metode</th>
-                                            <th class="py-2.5 px-3 text-right">Nominal</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
-                                        @foreach($modalDormitoryData['santri_list'] as $idx => $santri)
-                                            <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/30">
-                                                <td class="py-2.5 px-3 text-slate-400 font-bold">{{ $idx + 1 }}</td>
-                                                <td class="py-2.5 px-3">
-                                                    <strong class="text-slate-800 dark:text-slate-200 block">{{ $santri['name'] }}</strong>
-                                                    <span class="text-[10px] font-mono text-slate-400">NIS: {{ $santri['nis'] }}</span>
-                                                </td>
-                                                <td class="py-2.5 px-3 text-slate-600 dark:text-slate-400 font-medium">
-                                                    {{ $santri['room_name'] }}
-                                                </td>
-                                                <td class="py-2.5 px-3">
-                                                    <span class="text-sky-600 dark:text-sky-400 font-bold text-[11px]">{{ $santri['period_label'] ?? 'Kas Asrama' }}</span>
-                                                </td>
-                                                <td class="py-2.5 px-3 text-slate-500 text-[11px]">
-                                                    {{ $santri['paid_date'] }}
-                                                </td>
-                                                <td class="py-2.5 px-3 text-[10px] text-slate-500 font-bold">
-                                                    {{ $santri['method'] }}
-                                                </td>
-                                                <td class="py-2.5 px-3 text-right font-black font-mono text-slate-900 dark:text-white">
-                                                    Rp {{ number_format($santri['amount'], 0, ',', '.') }}
-                                                </td>
+                            <!-- Filter & Sort Toolbar -->
+                            <div class="px-4 py-2.5 sm:px-6 sm:py-3 bg-slate-50 dark:bg-slate-950/70 border-b border-slate-100 dark:border-slate-800 space-y-2">
+                                <div class="grid grid-cols-2 sm:grid-cols-5 gap-2">
+                                    <!-- Search Input (Full width on mobile) -->
+                                    <div class="col-span-2 sm:col-span-1 relative">
+                                        <input type="text" 
+                                               x-model="search" 
+                                               placeholder="🔍 Cari nama / NIS..." 
+                                               class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 rounded-xl px-3 py-1.5 text-xs focus:ring-2 focus:ring-emerald-500 font-medium placeholder-slate-400 shadow-2xs">
+                                        <button x-show="search" @click="search = ''" class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-xs">✕</button>
+                                    </div>
+
+                                    <!-- Room Filter -->
+                                    <div>
+                                        <select x-model="selectedRoom" 
+                                                class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 rounded-xl px-2.5 py-1.5 text-xs focus:ring-2 focus:ring-emerald-500 font-medium shadow-2xs cursor-pointer">
+                                            <option value="">🚪 Semua Kamar</option>
+                                            <template x-for="r in rooms" :key="r">
+                                                <option :value="r" x-text="r"></option>
+                                            </template>
+                                        </select>
+                                    </div>
+
+                                    <!-- Period Filter -->
+                                    <div>
+                                        <select x-model="selectedPeriod" 
+                                                class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 rounded-xl px-2.5 py-1.5 text-xs focus:ring-2 focus:ring-emerald-500 font-medium shadow-2xs cursor-pointer">
+                                            <option value="">📅 Semua Periode</option>
+                                            <template x-for="p in periods" :key="p">
+                                                <option :value="p" x-text="p"></option>
+                                            </template>
+                                        </select>
+                                    </div>
+
+                                    <!-- Method Filter -->
+                                    <div>
+                                        <select x-model="selectedMethod" 
+                                                class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 rounded-xl px-2.5 py-1.5 text-xs focus:ring-2 focus:ring-emerald-500 font-medium shadow-2xs cursor-pointer">
+                                            <option value="">💳 Semua Metode</option>
+                                            <template x-for="m in methods" :key="m">
+                                                <option :value="m" x-text="m"></option>
+                                            </template>
+                                        </select>
+                                    </div>
+
+                                    <!-- Order By Dropdown + Toggle Asc/Desc -->
+                                    <div class="flex items-center gap-1">
+                                        <select x-model="sortBy" 
+                                                class="flex-1 min-w-0 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 rounded-xl px-2 py-1.5 text-xs focus:ring-2 focus:ring-emerald-500 font-bold shadow-2xs cursor-pointer">
+                                            <option value="name">👤 Nama</option>
+                                            <option value="room">🚪 Kamar</option>
+                                            <option value="period">📅 Periode</option>
+                                            <option value="date">🕒 Tanggal</option>
+                                            <option value="amount">💰 Nominal</option>
+                                        </select>
+                                        <button type="button" 
+                                                @click="sortAsc = !sortAsc" 
+                                                :title="sortAsc ? 'Urutan Naik (Ascending)' : 'Urutan Turun (Descending)'"
+                                                class="px-2 py-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl text-xs font-black text-slate-600 dark:text-slate-300 transition shadow-2xs shrink-0">
+                                            <span x-text="sortAsc ? '▲' : '▼'"></span>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- Active Filter Badges & Reset Button -->
+                                <div x-show="isFiltered" x-cloak class="flex items-center justify-between text-[11px] pt-1 border-t border-slate-200/60 dark:border-slate-800/60">
+                                    <div class="flex flex-wrap items-center gap-1.5">
+                                        <span class="text-slate-400 font-semibold text-[10px] uppercase">Filter:</span>
+                                        <span x-show="search" class="px-2 py-0.5 bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 rounded-lg border border-emerald-200/60 font-medium">
+                                            Cari: "<span x-text="search"></span>"
+                                        </span>
+                                        <span x-show="selectedRoom" class="px-2 py-0.5 bg-sky-50 dark:bg-sky-950/60 text-sky-700 dark:text-sky-300 rounded-lg border border-sky-200/60 font-medium">
+                                            Kamar: <span x-text="selectedRoom"></span>
+                                        </span>
+                                        <span x-show="selectedPeriod" class="px-2 py-0.5 bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 rounded-lg border border-amber-200/60 font-medium">
+                                            Periode: <span x-text="selectedPeriod"></span>
+                                        </span>
+                                        <span x-show="selectedMethod" class="px-2 py-0.5 bg-purple-50 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 rounded-lg border border-purple-200/60 font-medium">
+                                            Metode: <span x-text="selectedMethod"></span>
+                                        </span>
+                                        <span class="px-2 py-0.5 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-lg font-medium">
+                                            Urut: <strong x-text="sortBy === 'name' ? 'Nama Santri' : (sortBy === 'room' ? 'Kamar' : (sortBy === 'period' ? 'Periode' : (sortBy === 'date' ? 'Tanggal' : 'Nominal')))"></strong> (<span x-text="sortAsc ? 'A-Z / Naik' : 'Z-A / Turun'"></span>)
+                                        </span>
+                                    </div>
+                                    <button type="button" @click="resetFilters()" class="text-rose-600 dark:text-rose-400 hover:underline font-bold text-[11px] flex items-center gap-1 shrink-0 ml-2">
+                                        <span>✕ Reset Filter</span>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Content Section (Mobile Cards + Desktop Table) -->
+                            <div class="overflow-y-auto flex-1 p-3 sm:p-4">
+                                <!-- Mobile Card View (block sm:hidden) -->
+                                <div class="sm:hidden space-y-2">
+                                    <template x-for="(santri, idx) in filteredList" :key="idx">
+                                        <div class="p-3 bg-white dark:bg-slate-900 rounded-xl border border-slate-150 dark:border-slate-800 shadow-2xs space-y-1.5">
+                                            <div class="flex items-start justify-between gap-2">
+                                                <div class="min-w-0 flex items-start gap-1.5">
+                                                    <span class="text-[10px] font-bold text-slate-400 mt-0.5 shrink-0" x-text="'#' + (idx + 1)"></span>
+                                                    <div>
+                                                        <strong class="text-xs font-extrabold text-slate-800 dark:text-slate-100 block leading-tight" x-text="santri.name"></strong>
+                                                        <span class="text-[10px] font-mono text-slate-400">NIS: <span x-text="santri.nis"></span></span>
+                                                    </div>
+                                                </div>
+                                                <div class="text-right shrink-0">
+                                                    <span class="text-xs font-black font-mono text-emerald-600 dark:text-emerald-400">Rp <span x-text="formatRupiah(santri.amount)"></span></span>
+                                                </div>
+                                            </div>
+                                            <div class="flex flex-wrap items-center gap-1.5 text-[10px] pt-1.5 border-t border-slate-100 dark:border-slate-800">
+                                                <span class="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-medium" x-text="santri.room_name || santri.unit_info || '-'"></span>
+                                                <span class="px-1.5 py-0.5 rounded bg-sky-50 dark:bg-sky-950/60 text-sky-700 dark:text-sky-300 font-bold" x-text="santri.period_label || 'Kas Asrama'"></span>
+                                                <span class="px-1.5 py-0.5 rounded bg-purple-50 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 font-medium" x-text="santri.method"></span>
+                                                <span class="text-slate-400 ml-auto font-mono text-[9px]" x-text="santri.paid_date"></span>
+                                            </div>
+                                        </div>
+                                    </template>
+                                </div>
+
+                                <!-- Desktop Table View (hidden sm:block) -->
+                                <div class="hidden sm:block overflow-x-auto">
+                                    <table class="w-full text-xs text-left border-collapse">
+                                        <thead>
+                                            <tr class="bg-slate-50 dark:bg-slate-950 text-slate-400 uppercase font-black text-[9px] tracking-wider border-b border-slate-100 dark:border-slate-800">
+                                                <th class="py-2.5 px-3">#</th>
+                                                <th @click="toggleSort('name')" class="py-2.5 px-3 cursor-pointer hover:text-slate-900 dark:hover:text-white select-none transition">
+                                                    <div class="flex items-center gap-1">
+                                                        <span>Nama Santri</span>
+                                                        <span x-show="sortBy === 'name'" class="text-emerald-600 dark:text-emerald-400 font-black text-[10px]" x-text="sortAsc ? '▲' : '▼'"></span>
+                                                    </div>
+                                                </th>
+                                                <th @click="toggleSort('room')" class="py-2.5 px-3 cursor-pointer hover:text-slate-900 dark:hover:text-white select-none transition">
+                                                    <div class="flex items-center gap-1">
+                                                        <span>Kamar</span>
+                                                        <span x-show="sortBy === 'room'" class="text-emerald-600 dark:text-emerald-400 font-black text-[10px]" x-text="sortAsc ? '▲' : '▼'"></span>
+                                                    </div>
+                                                </th>
+                                                <th @click="toggleSort('period')" class="py-2.5 px-3 cursor-pointer hover:text-slate-900 dark:hover:text-white select-none transition">
+                                                    <div class="flex items-center gap-1">
+                                                        <span>Periode Kas</span>
+                                                        <span x-show="sortBy === 'period'" class="text-emerald-600 dark:text-emerald-400 font-black text-[10px]" x-text="sortAsc ? '▲' : '▼'"></span>
+                                                    </div>
+                                                </th>
+                                                <th @click="toggleSort('date')" class="py-2.5 px-3 cursor-pointer hover:text-slate-900 dark:hover:text-white select-none transition">
+                                                    <div class="flex items-center gap-1">
+                                                        <span>Waktu Bayar</span>
+                                                        <span x-show="sortBy === 'date'" class="text-emerald-600 dark:text-emerald-400 font-black text-[10px]" x-text="sortAsc ? '▲' : '▼'"></span>
+                                                    </div>
+                                                </th>
+                                                <th class="py-2.5 px-3">Metode</th>
+                                                <th @click="toggleSort('amount')" class="py-2.5 px-3 text-right cursor-pointer hover:text-slate-900 dark:hover:text-white select-none transition">
+                                                    <div class="flex items-center justify-end gap-1">
+                                                        <span>Nominal</span>
+                                                        <span x-show="sortBy === 'amount'" class="text-emerald-600 dark:text-emerald-400 font-black text-[10px]" x-text="sortAsc ? '▲' : '▼'"></span>
+                                                    </div>
+                                                </th>
                                             </tr>
-                                        @endforeach
-                                    </tbody>
-                                </table>
+                                        </thead>
+                                        <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+                                            <template x-for="(santri, idx) in filteredList" :key="idx">
+                                                <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/30">
+                                                    <td class="py-2.5 px-3 text-slate-400 font-bold" x-text="idx + 1"></td>
+                                                    <td class="py-2.5 px-3">
+                                                        <strong class="text-slate-800 dark:text-slate-200 block" x-text="santri.name"></strong>
+                                                        <span class="text-[10px] font-mono text-slate-400">NIS: <span x-text="santri.nis"></span></span>
+                                                    </td>
+                                                    <td class="py-2.5 px-3 text-slate-600 dark:text-slate-400 font-medium" x-text="santri.room_name || santri.unit_info || '-'">
+                                                    </td>
+                                                    <td class="py-2.5 px-3">
+                                                        <span class="text-sky-600 dark:text-sky-400 font-bold text-[11px]" x-text="santri.period_label || 'Kas Asrama'"></span>
+                                                    </td>
+                                                    <td class="py-2.5 px-3 text-slate-500 text-[11px]" x-text="santri.paid_date">
+                                                    </td>
+                                                    <td class="py-2.5 px-3 text-[10px] text-slate-500 font-bold" x-text="santri.method">
+                                                    </td>
+                                                    <td class="py-2.5 px-3 text-right font-black font-mono text-slate-900 dark:text-white">
+                                                        Rp <span x-text="formatRupiah(santri.amount)"></span>
+                                                    </td>
+                                                </tr>
+                                            </template>
+                                        </tbody>
+                                    </table>
+                                </div>
+
+                                <!-- Empty State (Both Mobile & Desktop) -->
+                                <div x-show="filteredList.length === 0" class="py-10 text-center text-slate-400">
+                                    <div class="space-y-1.5">
+                                        <p class="font-semibold text-xs">Tidak ada data santri yang cocok dengan filter.</p>
+                                        <button type="button" @click="resetFilters()" class="text-emerald-600 dark:text-emerald-400 text-xs font-bold hover:underline">
+                                            Reset Filter Pencarian
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
 
-                            <div class="px-6 py-3.5 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-950/40">
+                            <!-- Modal Footer -->
+                            <div class="px-4 py-3 sm:px-6 sm:py-3.5 border-t border-slate-100 dark:border-slate-800 flex flex-col-reverse sm:flex-row sm:items-center justify-between gap-2 bg-slate-50/50 dark:bg-slate-950/40">
                                 <a href="{{ route('keuangan.settlement.slip-komplek', ['dormitoryId' => $modalDormitoryData['dormitory_id'], 'date_from' => $settlementDateFrom, 'date_to' => $settlementDateTo, 'source' => $settlementSource, 'gender' => $this->genderScope() ?: $settlementGender, 'bank' => $settlementBankFilter]) }}" 
                                    target="_blank"
-                                   class="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition shadow-xs">
+                                   class="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-3.5 py-2 sm:py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition shadow-xs text-center">
                                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
                                     <span>Cetak Slip Serah Terima (PDF)</span>
                                 </a>
 
-                                <button type="button" wire:click="closeDormitoryDetailModal" class="px-4 py-1.5 bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold rounded-xl text-xs transition">
+                                <button type="button" wire:click="closeDormitoryDetailModal" class="w-full sm:w-auto px-4 py-2 sm:py-1.5 bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold rounded-xl text-xs transition text-center">
                                     Tutup
                                 </button>
                             </div>
@@ -4714,79 +5380,333 @@
 
                 {{-- 8. MODAL 2: Detail Santri per Pos Kategori (Generic Modal) --}}
                 @if($showCategoryModal && !empty($modalCategoryData))
-                    <div class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+                    <div class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4"
+                         x-data="{
+                             search: '',
+                             selectedRoom: '',
+                             selectedPeriod: '',
+                             selectedMethod: '',
+                             sortBy: 'name',
+                             sortAsc: true,
+                             rawList: @js($modalCategoryData['santri_list'] ?? []),
+                             get isFiltered() {
+                                 return this.search.trim() !== '' || this.selectedRoom !== '' || this.selectedPeriod !== '' || this.selectedMethod !== '' || this.sortBy !== 'name' || !this.sortAsc;
+                             },
+                             get rooms() {
+                                 const set = new Set();
+                                 (this.rawList || []).forEach(i => {
+                                     const r = i.unit_info || i.room_name;
+                                     if (r && r !== '-') set.add(r);
+                                 });
+                                 return Array.from(set).sort();
+                             },
+                             get periods() {
+                                 const set = new Set();
+                                 (this.rawList || []).forEach(i => {
+                                     if (i.period_label) set.add(i.period_label);
+                                 });
+                                 return Array.from(set).sort();
+                             },
+                             get methods() {
+                                 const set = new Set();
+                                 (this.rawList || []).forEach(i => {
+                                     if (i.method) set.add(i.method);
+                                 });
+                                 return Array.from(set).sort();
+                             },
+                             toggleSort(col) {
+                                 if (this.sortBy === col) {
+                                     this.sortAsc = !this.sortAsc;
+                                 } else {
+                                     this.sortBy = col;
+                                     this.sortAsc = true;
+                                 }
+                             },
+                             get filteredList() {
+                                 const q = this.search.toLowerCase().trim();
+                                 let list = (this.rawList || []).filter(i => {
+                                     const nameStr = (i.name || '').toLowerCase();
+                                     const nisStr  = (i.nis || '').toString().toLowerCase();
+                                     const matchesSearch = !q || nameStr.includes(q) || nisStr.includes(q);
+                                     const roomVal = i.unit_info || i.room_name || '';
+                                     const matchesRoom = !this.selectedRoom || roomVal === this.selectedRoom;
+                                     const matchesPeriod = !this.selectedPeriod || (i.period_label || '') === this.selectedPeriod;
+                                     const matchesMethod = !this.selectedMethod || (i.method || '') === this.selectedMethod;
+                                     return matchesSearch && matchesRoom && matchesPeriod && matchesMethod;
+                                 });
+
+                                 return list.slice().sort((a, b) => {
+                                     let cmp = 0;
+                                     if (this.sortBy === 'name') {
+                                         cmp = (a.name || '').localeCompare(b.name || '', 'id');
+                                         if (cmp === 0) {
+                                             cmp = (a.period_label || '').localeCompare(b.period_label || '', 'id');
+                                         }
+                                     } else if (this.sortBy === 'room') {
+                                         const rA = a.room_name || a.unit_info || '';
+                                         const rB = b.room_name || b.unit_info || '';
+                                         cmp = rA.localeCompare(rB, 'id', { numeric: true, sensitivity: 'base' });
+                                         if (cmp === 0) {
+                                             cmp = (a.name || '').localeCompare(b.name || '', 'id');
+                                         }
+                                     } else if (this.sortBy === 'period') {
+                                         cmp = (a.period_label || '').localeCompare(b.period_label || '', 'id');
+                                         if (cmp === 0) {
+                                             cmp = (a.name || '').localeCompare(b.name || '', 'id');
+                                         }
+                                     } else if (this.sortBy === 'date') {
+                                         cmp = (a.paid_date || '').localeCompare(b.paid_date || '', 'id');
+                                     } else if (this.sortBy === 'amount') {
+                                         cmp = (Number(a.amount) || 0) - (Number(b.amount) || 0);
+                                     }
+                                     return this.sortAsc ? cmp : -cmp;
+                                 });
+                             },
+                             get filteredTotal() {
+                                 return this.filteredList.reduce((acc, curr) => acc + (Number(curr.amount) || 0), 0);
+                             },
+                             formatRupiah(num) {
+                                 return new Intl.NumberFormat('id-ID').format(Number(num) || 0);
+                             },
+                             resetFilters() {
+                                 this.search = '';
+                                 this.selectedRoom = '';
+                                 this.selectedPeriod = '';
+                                 this.selectedMethod = '';
+                                 this.sortBy = 'name';
+                                 this.sortAsc = true;
+                             }
+                         }">
                         <div class="fixed inset-0" wire:click="closeCategoryDetailModal"></div>
 
-                        <div class="relative z-10 bg-white dark:bg-slate-900 rounded-3xl shadow-2xl w-full max-w-3xl max-h-[85vh] flex flex-col border border-slate-200 dark:border-slate-800 overflow-hidden">
-                            <div class="px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-indigo-500/5">
-                                <div>
-                                    <div class="flex items-center gap-2">
-                                        <span class="text-base">{{ $modalCategoryData['icon'] ?? '🏷️' }}</span>
-                                        <h3 class="font-extrabold text-base text-slate-900 dark:text-white">{{ $modalCategoryData['label'] }}</h3>
+                        <div class="relative z-10 bg-white dark:bg-slate-900 rounded-2xl sm:rounded-3xl shadow-2xl w-full max-w-4xl max-h-[92vh] sm:max-h-[88vh] flex flex-col border border-slate-200 dark:border-slate-800 overflow-hidden">
+                            <!-- Modal Header -->
+                            <div class="px-4 py-3 sm:px-6 sm:py-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between gap-3 bg-indigo-500/5">
+                                <div class="min-w-0">
+                                    <div class="flex items-center gap-2 flex-wrap">
+                                        <span class="text-base shrink-0">{{ $modalCategoryData['icon'] ?? '🏷️' }}</span>
+                                        <h3 class="font-extrabold text-sm sm:text-base text-slate-900 dark:text-white truncate max-w-[200px] sm:max-w-none">{{ $modalCategoryData['label'] }}</h3>
                                     </div>
-                                    <p class="text-xs text-slate-400 mt-0.5">Daftar {{ count($modalCategoryData['santri_list'] ?? []) }} santri yang telah membayar pos ini</p>
+                                    <p class="text-[11px] sm:text-xs text-slate-400 mt-0.5">
+                                        Daftar <span class="font-bold text-slate-700 dark:text-slate-300" x-text="rawList.length"></span> santri yang telah bayar
+                                        <template x-if="isFiltered">
+                                            <span class="ml-1 text-indigo-600 dark:text-indigo-400 font-bold">(Filter: <span x-text="filteredList.length"></span>)</span>
+                                        </template>
+                                    </p>
                                 </div>
-                                <div class="text-right">
-                                    <span class="text-[10px] text-slate-400 uppercase font-bold block">Total Dana Terkumpul</span>
-                                    <span class="text-base font-black text-indigo-600 dark:text-indigo-400 font-mono">Rp {{ number_format($modalCategoryData['amount'], 0, ',', '.') }}</span>
+                                <div class="text-right shrink-0">
+                                    <span class="text-[9px] sm:text-[10px] text-slate-400 uppercase font-bold block" x-text="isFiltered ? 'Subtotal Filter' : 'Total Dana'"></span>
+                                    <span class="text-sm sm:text-base font-black text-indigo-600 dark:text-indigo-400 font-mono whitespace-nowrap">Rp <span x-text="formatRupiah(filteredTotal)"></span></span>
+                                    <template x-if="isFiltered">
+                                        <span class="text-[8px] sm:text-[9px] text-slate-400 block font-medium whitespace-nowrap">Total: Rp {{ number_format($modalCategoryData['amount'], 0, ',', '.') }}</span>
+                                    </template>
                                 </div>
                             </div>
 
-                            <div class="overflow-y-auto flex-1 p-4">
-                                <table class="w-full text-xs text-left border-collapse">
-                                    <thead>
-                                        <tr class="bg-slate-50 dark:bg-slate-950 text-slate-400 uppercase font-black text-[9px] tracking-wider border-b border-slate-100 dark:border-slate-800">
-                                            <th class="py-2.5 px-3">#</th>
-                                            <th class="py-2.5 px-3">Nama Santri</th>
-                                            <th class="py-2.5 px-3">Kamar/Unit</th>
-                                            <th class="py-2.5 px-3">Rincian / Periode</th>
-                                            <th class="py-2.5 px-3">Waktu Bayar</th>
-                                            <th class="py-2.5 px-3">Metode</th>
-                                            <th class="py-2.5 px-3 text-right">Nominal</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
-                                        @forelse($modalCategoryData['santri_list'] ?? [] as $idx => $santri)
-                                            <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/30">
-                                                <td class="py-2.5 px-3 text-slate-400 font-bold">{{ $idx + 1 }}</td>
-                                                <td class="py-2.5 px-3">
-                                                    <strong class="text-slate-800 dark:text-slate-200 block">{{ $santri['name'] }}</strong>
-                                                    <span class="text-[10px] font-mono text-slate-400">NIS: {{ $santri['nis'] }}</span>
-                                                </td>
-                                                <td class="py-2.5 px-3 text-slate-600 dark:text-slate-400 font-medium">
-                                                    {{ $santri['unit_info'] ?? '-' }}
-                                                </td>
-                                                <td class="py-2.5 px-3">
-                                                    <span class="text-indigo-600 dark:text-indigo-400 font-bold text-[11px]">{{ $santri['period_label'] ?? $modalCategoryData['label'] }}</span>
-                                                </td>
-                                                <td class="py-2.5 px-3 text-slate-500 text-[11px]">
-                                                    {{ $santri['paid_date'] }}
-                                                </td>
-                                                <td class="py-2.5 px-3 text-[10px] text-slate-500 font-bold">
-                                                    {{ $santri['method'] }}
-                                                </td>
-                                                <td class="py-2.5 px-3 text-right font-black font-mono text-slate-900 dark:text-white">
-                                                    Rp {{ number_format($santri['amount'], 0, ',', '.') }}
-                                                </td>
-                                            </tr>
-                                        @empty
-                                            <tr>
-                                                <td colspan="7" class="py-8 text-center text-slate-400">Tidak ada rincian santri untuk periode ini.</td>
-                                            </tr>
-                                        @endforelse
-                                    </tbody>
-                                </table>
+                            <!-- Filter & Sort Toolbar -->
+                            <div class="px-4 py-2.5 sm:px-6 sm:py-3 bg-slate-50 dark:bg-slate-950/70 border-b border-slate-100 dark:border-slate-800 space-y-2">
+                                <div class="grid grid-cols-2 sm:grid-cols-5 gap-2">
+                                    <!-- Search Input (Full width on mobile) -->
+                                    <div class="col-span-2 sm:col-span-1 relative">
+                                        <input type="text" 
+                                               x-model="search" 
+                                               placeholder="🔍 Cari nama / NIS..." 
+                                               class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 rounded-xl px-3 py-1.5 text-xs focus:ring-2 focus:ring-indigo-500 font-medium placeholder-slate-400 shadow-2xs">
+                                        <button x-show="search" @click="search = ''" class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-xs">✕</button>
+                                    </div>
+
+                                    <!-- Room / Unit Filter -->
+                                    <div>
+                                        <select x-model="selectedRoom" 
+                                                class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 rounded-xl px-2.5 py-1.5 text-xs focus:ring-2 focus:ring-indigo-500 font-medium shadow-2xs cursor-pointer">
+                                            <option value="">🚪 Kamar/Unit</option>
+                                            <template x-for="r in rooms" :key="r">
+                                                <option :value="r" x-text="r"></option>
+                                            </template>
+                                        </select>
+                                    </div>
+
+                                    <!-- Period Filter -->
+                                    <div>
+                                        <select x-model="selectedPeriod" 
+                                                class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 rounded-xl px-2.5 py-1.5 text-xs focus:ring-2 focus:ring-indigo-500 font-medium shadow-2xs cursor-pointer">
+                                            <option value="">📅 Periode</option>
+                                            <template x-for="p in periods" :key="p">
+                                                <option :value="p" x-text="p"></option>
+                                            </template>
+                                        </select>
+                                    </div>
+
+                                    <!-- Method Filter -->
+                                    <div>
+                                        <select x-model="selectedMethod" 
+                                                class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 rounded-xl px-2.5 py-1.5 text-xs focus:ring-2 focus:ring-indigo-500 font-medium shadow-2xs cursor-pointer">
+                                            <option value="">💳 Metode</option>
+                                            <template x-for="m in methods" :key="m">
+                                                <option :value="m" x-text="m"></option>
+                                            </template>
+                                        </select>
+                                    </div>
+
+                                    <!-- Order By Dropdown + Toggle Asc/Desc -->
+                                    <div class="flex items-center gap-1">
+                                        <select x-model="sortBy" 
+                                                class="flex-1 min-w-0 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 rounded-xl px-2 py-1.5 text-xs focus:ring-2 focus:ring-indigo-500 font-bold shadow-2xs cursor-pointer">
+                                            <option value="name">👤 Nama</option>
+                                            <option value="room">🚪 Kamar</option>
+                                            <option value="period">📅 Periode</option>
+                                            <option value="date">🕒 Tanggal</option>
+                                            <option value="amount">💰 Nominal</option>
+                                        </select>
+                                        <button type="button" 
+                                                @click="sortAsc = !sortAsc" 
+                                                :title="sortAsc ? 'Urutan Naik (Ascending)' : 'Urutan Turun (Descending)'"
+                                                class="px-2 py-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl text-xs font-black text-slate-600 dark:text-slate-300 transition shadow-2xs shrink-0">
+                                            <span x-text="sortAsc ? '▲' : '▼'"></span>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- Active Filter Badges & Reset Button -->
+                                <div x-show="isFiltered" x-cloak class="flex items-center justify-between text-[11px] pt-1 border-t border-slate-200/60 dark:border-slate-800/60">
+                                    <div class="flex flex-wrap items-center gap-1.5">
+                                        <span class="text-slate-400 font-semibold text-[10px] uppercase">Filter:</span>
+                                        <span x-show="search" class="px-2 py-0.5 bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 rounded-lg border border-indigo-200/60 font-medium">
+                                            Cari: "<span x-text="search"></span>"
+                                        </span>
+                                        <span x-show="selectedRoom" class="px-2 py-0.5 bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 rounded-lg border border-emerald-200/60 font-medium">
+                                            Kamar: <span x-text="selectedRoom"></span>
+                                        </span>
+                                        <span x-show="selectedPeriod" class="px-2 py-0.5 bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 rounded-lg border border-amber-200/60 font-medium">
+                                            Periode: <span x-text="selectedPeriod"></span>
+                                        </span>
+                                        <span x-show="selectedMethod" class="px-2 py-0.5 bg-purple-50 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 rounded-lg border border-purple-200/60 font-medium">
+                                            Metode: <span x-text="selectedMethod"></span>
+                                        </span>
+                                        <span class="px-2 py-0.5 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-lg font-medium">
+                                            Urut: <strong x-text="sortBy === 'name' ? 'Nama Santri' : (sortBy === 'room' ? 'Kamar' : (sortBy === 'period' ? 'Periode' : (sortBy === 'date' ? 'Tanggal' : 'Nominal')))"></strong> (<span x-text="sortAsc ? 'A-Z / Naik' : 'Z-A / Turun'"></span>)
+                                        </span>
+                                    </div>
+                                    <button type="button" @click="resetFilters()" class="text-rose-600 dark:text-rose-400 hover:underline font-bold text-[11px] flex items-center gap-1 shrink-0 ml-2">
+                                        <span>✕ Reset Filter</span>
+                                    </button>
+                                </div>
                             </div>
 
-                            <div class="px-6 py-3.5 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-950/40">
+                            <!-- Content Section (Mobile Cards + Desktop Table) -->
+                            <div class="overflow-y-auto flex-1 p-3 sm:p-4">
+                                <!-- Mobile Card View (block sm:hidden) -->
+                                <div class="sm:hidden space-y-2">
+                                    <template x-for="(santri, idx) in filteredList" :key="idx">
+                                        <div class="p-3 bg-white dark:bg-slate-900 rounded-xl border border-slate-150 dark:border-slate-800 shadow-2xs space-y-1.5">
+                                            <div class="flex items-start justify-between gap-2">
+                                                <div class="min-w-0 flex items-start gap-1.5">
+                                                    <span class="text-[10px] font-bold text-slate-400 mt-0.5 shrink-0" x-text="'#' + (idx + 1)"></span>
+                                                    <div>
+                                                        <strong class="text-xs font-extrabold text-slate-800 dark:text-slate-100 block leading-tight" x-text="santri.name"></strong>
+                                                        <span class="text-[10px] font-mono text-slate-400">NIS: <span x-text="santri.nis"></span></span>
+                                                    </div>
+                                                </div>
+                                                <div class="text-right shrink-0">
+                                                    <span class="text-xs font-black font-mono text-indigo-600 dark:text-indigo-400">Rp <span x-text="formatRupiah(santri.amount)"></span></span>
+                                                </div>
+                                            </div>
+                                            <div class="flex flex-wrap items-center gap-1.5 text-[10px] pt-1.5 border-t border-slate-100 dark:border-slate-800">
+                                                <span class="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-medium" x-text="santri.unit_info || santri.room_name || '-'"></span>
+                                                <span class="px-1.5 py-0.5 rounded bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 font-bold" x-text="santri.period_label || '—'"></span>
+                                                <span class="px-1.5 py-0.5 rounded bg-purple-50 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 font-medium" x-text="santri.method"></span>
+                                                <span class="text-slate-400 ml-auto font-mono text-[9px]" x-text="santri.paid_date"></span>
+                                            </div>
+                                        </div>
+                                    </template>
+                                </div>
+
+                                <!-- Desktop Table View (hidden sm:block) -->
+                                <div class="hidden sm:block overflow-x-auto">
+                                    <table class="w-full text-xs text-left border-collapse">
+                                        <thead>
+                                            <tr class="bg-slate-50 dark:bg-slate-950 text-slate-400 uppercase font-black text-[9px] tracking-wider border-b border-slate-100 dark:border-slate-800">
+                                                <th class="py-2.5 px-3">#</th>
+                                                <th @click="toggleSort('name')" class="py-2.5 px-3 cursor-pointer hover:text-slate-900 dark:hover:text-white select-none transition">
+                                                    <div class="flex items-center gap-1">
+                                                        <span>Nama Santri</span>
+                                                        <span x-show="sortBy === 'name'" class="text-indigo-600 dark:text-indigo-400 font-black text-[10px]" x-text="sortAsc ? '▲' : '▼'"></span>
+                                                    </div>
+                                                </th>
+                                                <th @click="toggleSort('room')" class="py-2.5 px-3 cursor-pointer hover:text-slate-900 dark:hover:text-white select-none transition">
+                                                    <div class="flex items-center gap-1">
+                                                        <span>Kamar/Unit</span>
+                                                        <span x-show="sortBy === 'room'" class="text-indigo-600 dark:text-indigo-400 font-black text-[10px]" x-text="sortAsc ? '▲' : '▼'"></span>
+                                                    </div>
+                                                </th>
+                                                <th @click="toggleSort('period')" class="py-2.5 px-3 cursor-pointer hover:text-slate-900 dark:hover:text-white select-none transition">
+                                                    <div class="flex items-center gap-1">
+                                                        <span>Rincian / Periode</span>
+                                                        <span x-show="sortBy === 'period'" class="text-indigo-600 dark:text-indigo-400 font-black text-[10px]" x-text="sortAsc ? '▲' : '▼'"></span>
+                                                    </div>
+                                                </th>
+                                                <th @click="toggleSort('date')" class="py-2.5 px-3 cursor-pointer hover:text-slate-900 dark:hover:text-white select-none transition">
+                                                    <div class="flex items-center gap-1">
+                                                        <span>Waktu Bayar</span>
+                                                        <span x-show="sortBy === 'date'" class="text-indigo-600 dark:text-indigo-400 font-black text-[10px]" x-text="sortAsc ? '▲' : '▼'"></span>
+                                                    </div>
+                                                </th>
+                                                <th class="py-2.5 px-3">Metode</th>
+                                                <th @click="toggleSort('amount')" class="py-2.5 px-3 text-right cursor-pointer hover:text-slate-900 dark:hover:text-white select-none transition">
+                                                    <div class="flex items-center justify-end gap-1">
+                                                        <span>Nominal</span>
+                                                        <span x-show="sortBy === 'amount'" class="text-indigo-600 dark:text-indigo-400 font-black text-[10px]" x-text="sortAsc ? '▲' : '▼'"></span>
+                                                    </div>
+                                                </th>
+                                            </tr>
+                                        </thead>
+                                        <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+                                            <template x-for="(santri, idx) in filteredList" :key="idx">
+                                                <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/30">
+                                                    <td class="py-2.5 px-3 text-slate-400 font-bold" x-text="idx + 1"></td>
+                                                    <td class="py-2.5 px-3">
+                                                        <strong class="text-slate-800 dark:text-slate-200 block" x-text="santri.name"></strong>
+                                                        <span class="text-[10px] font-mono text-slate-400">NIS: <span x-text="santri.nis"></span></span>
+                                                    </td>
+                                                    <td class="py-2.5 px-3 text-slate-600 dark:text-slate-400 font-medium" x-text="santri.unit_info || santri.room_name || '-'">
+                                                    </td>
+                                                    <td class="py-2.5 px-3">
+                                                        <span class="text-indigo-600 dark:text-indigo-400 font-bold text-[11px]" x-text="santri.period_label || '—'"></span>
+                                                    </td>
+                                                    <td class="py-2.5 px-3 text-slate-500 text-[11px]" x-text="santri.paid_date">
+                                                    </td>
+                                                    <td class="py-2.5 px-3 text-[10px] text-slate-500 font-bold" x-text="santri.method">
+                                                    </td>
+                                                    <td class="py-2.5 px-3 text-right font-black font-mono text-slate-900 dark:text-white">
+                                                        Rp <span x-text="formatRupiah(santri.amount)"></span>
+                                                    </td>
+                                                </tr>
+                                            </template>
+                                        </tbody>
+                                    </table>
+                                </div>
+
+                                <!-- Empty State (Both Mobile & Desktop) -->
+                                <div x-show="filteredList.length === 0" class="py-10 text-center text-slate-400">
+                                    <div class="space-y-1.5">
+                                        <p class="font-semibold text-xs">Tidak ada rincian santri yang cocok dengan filter.</p>
+                                        <button type="button" @click="resetFilters()" class="text-indigo-600 dark:text-indigo-400 text-xs font-bold hover:underline">
+                                            Reset Filter Pencarian
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Modal Footer -->
+                            <div class="px-4 py-3 sm:px-6 sm:py-3.5 border-t border-slate-100 dark:border-slate-800 flex flex-col-reverse sm:flex-row sm:items-center justify-between gap-2 bg-slate-50/50 dark:bg-slate-950/40">
                                 <a href="{{ route('keuangan.settlement.slip-kategori', ['categoryKey' => $modalCategoryData['key'], 'date_from' => $settlementDateFrom, 'date_to' => $settlementDateTo, 'source' => $settlementSource, 'gender' => $this->genderScope() ?: $settlementGender, 'bank' => $settlementBankFilter]) }}" 
                                    target="_blank"
-                                   class="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-bold transition shadow-xs">
+                                   class="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-3.5 py-2 sm:py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-bold transition shadow-xs text-center">
                                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
                                     <span>Cetak Slip Serah Terima (PDF)</span>
                                 </a>
 
-                                <button type="button" wire:click="closeCategoryDetailModal" class="px-4 py-1.5 bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold rounded-xl text-xs transition">
+                                <button type="button" wire:click="closeCategoryDetailModal" class="w-full sm:w-auto px-4 py-2 sm:py-1.5 bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold rounded-xl text-xs transition text-center">
                                     Tutup
                                 </button>
                             </div>

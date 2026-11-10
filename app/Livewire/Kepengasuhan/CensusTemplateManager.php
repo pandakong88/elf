@@ -7,6 +7,7 @@ use App\Livewire\Concerns\SendsToast;
 use App\Modules\Kepengasuhan\Models\CensusTemplate;
 use App\Modules\Kepengasuhan\Models\CensusTemplateField;
 use App\Modules\Kepengasuhan\Services\CensusV3Service;
+use App\Modules\Kepengasuhan\Services\CensusV3AccessService;
 use App\Modules\Kepengasuhan\Exports\CensusTemplateSampleExport;
 use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Facades\DB;
@@ -44,17 +45,19 @@ class CensusTemplateManager extends Component
     public array $availableSystemFields = [];
 
     protected CensusV3Service $censusService;
+    protected CensusV3AccessService $accessService;
 
-    public function boot(CensusV3Service $censusService): void
+    public function boot(CensusV3Service $censusService, CensusV3AccessService $accessService): void
     {
         $this->censusService = $censusService;
+        $this->accessService = $accessService;
     }
 
     public function mount(): void
     {
         $user = auth()->user();
-        if (!$user || !($user->hasRole('super-admin') || $user->hasRole('manajemen'))) {
-            abort(403, 'Akses ditolak. Halaman ini hanya untuk Super Admin dan Manajemen.');
+        if (!$user || !$user->can('manage-census-template')) {
+            abort(403, 'Akses ditolak. Anda tidak memiliki izin untuk mengelola template sensus.');
         }
 
         $this->availableSystemFields = CensusTemplateField::systemFieldDefinitions();
@@ -92,11 +95,18 @@ class CensusTemplateManager extends Component
 
     public function showEdit(string $id): void
     {
+        $template = CensusTemplate::with('fields')->findOrFail($id);
+        $user = auth()->user();
+
+        if (!$this->accessService->canManageTemplate($user, $template)) {
+            $this->toastError('Anda hanya dapat mengedit template yang Anda buat sendiri.');
+            return;
+        }
+
         $this->resetForm();
         $this->mode = 'edit';
         $this->templateId = $id;
 
-        $template = CensusTemplate::with('fields')->findOrFail($id);
         $this->name = $template->name;
         $this->description = $template->description ?? '';
         $this->is_default = (bool) $template->is_default;
@@ -280,12 +290,22 @@ class CensusTemplateManager extends Component
             ];
         }
 
+        $user = auth()->user();
+        if ($this->mode === 'edit') {
+            $template = CensusTemplate::findOrFail($this->templateId);
+            if (!$this->accessService->canManageTemplate($user, $template)) {
+                abort(403, 'Anda tidak memiliki hak untuk mengubah template ini.');
+            }
+        }
+
+        $isDefault = $this->accessService->isCentral($user) ? (bool) $this->is_default : false;
+
         try {
             if ($this->mode === 'create') {
                 $this->censusService->createTemplate([
                     'name'        => $this->name,
                     'description' => $this->description,
-                    'is_default'  => $this->is_default,
+                    'is_default'  => $isDefault,
                 ], $formattedFields, auth()->id());
                 
                 $this->toastSuccess('Template sensus berhasil dibuat.');
@@ -293,7 +313,7 @@ class CensusTemplateManager extends Component
                 $this->censusService->updateTemplate($this->templateId, [
                     'name'        => $this->name,
                     'description' => $this->description,
-                    'is_default'  => $this->is_default,
+                    'is_default'  => $isDefault,
                 ], $formattedFields);
 
                 $this->toastSuccess('Template sensus berhasil diperbarui.');
@@ -323,6 +343,11 @@ class CensusTemplateManager extends Component
 
         try {
             $template = CensusTemplate::findOrFail($this->confirmingArchiveId);
+            if (!$this->accessService->canManageTemplate(auth()->user(), $template)) {
+                $this->toastError('Anda hanya dapat mengarsipkan template yang Anda buat sendiri.');
+                return;
+            }
+
             $template->update(['is_archived' => true]);
             
             $this->toastSuccess('Template sensus berhasil diarsipkan.');

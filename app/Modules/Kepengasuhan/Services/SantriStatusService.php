@@ -42,7 +42,7 @@ class SantriStatusService
             'presence_status_notes' => $notes,
         ]);
 
-        // Jika status keberadaan berubah menjadi laju, otomatis nonaktifkan kamar aktifnya
+        // Jika status keberadaan berubah menjadi laju, otomatis nonaktifkan kamar aktifnya dan lepaskan loker
         if ($newStatus === 'laju') {
             \App\Modules\Kepengasuhan\Models\RoomAssignment::where('person_id', $role->person_id)
                 ->where('is_active', true)
@@ -50,6 +50,9 @@ class SantriStatusService
                     'is_active'   => false,
                     'valid_until' => now()->toDateString(),
                 ]);
+
+            \App\Modules\Kepengasuhan\Models\Locker::where('assigned_person_id', $role->person_id)
+                ->update(['assigned_person_id' => null]);
         }
 
         SantriStatusLog::create([
@@ -94,7 +97,7 @@ class SantriStatusService
             'enrollment_status' => $newStatus,
         ];
 
-        // Jika menjadi tidak aktif, catat tanggal keluar dan hapus presence_status
+        // Jika menjadi tidak aktif (boyong, dikeluarkan, alumni), catat tanggal keluar dan lepas kamar & kelas
         $isBecomingInactive = in_array($newStatus, PersonRole::INACTIVE_ENROLLMENT_STATUSES);
         if ($isBecomingInactive) {
             $updates['presence_status']       = null;
@@ -104,7 +107,7 @@ class SantriStatusService
             $updates['left_at']               = $leftAt ? Carbon::parse($leftAt)->toDateString() : now()->toDateString();
             $updates['is_active']             = false;
 
-            // Otomatis non-aktifkan alokasi kamar & kelas aktif
+            // Otomatis non-aktifkan alokasi kamar & kelas aktif serta lepaskan loker
             \App\Modules\Kepengasuhan\Models\RoomAssignment::where('person_id', $role->person_id)
                 ->where('is_active', true)
                 ->update(['is_active' => false, 'valid_until' => now()->toDateString()]);
@@ -112,14 +115,29 @@ class SantriStatusService
             \App\Modules\Madrasah\Models\MadrasahEnrollment::where('person_id', $role->person_id)
                 ->where('is_active', true)
                 ->update(['is_active' => false]);
+
+            \App\Modules\Kepengasuhan\Models\Locker::where('assigned_person_id', $role->person_id)
+                ->update(['assigned_person_id' => null]);
         }
 
-        // Jika kembali aktif (dari tanpa_keterangan misalnya), reset left_at
-        if ($newStatus === 'aktif') {
+        // Jika status diubah menjadi 'tanpa_keterangan', kamar & kelas TETAP DITAHAN (tidak dilepas)
+        // Keberadaan santri otomatis diset 'alpa' (masa tabayyun / pelacakan pengurus)
+        if ($newStatus === 'tanpa_keterangan') {
+            $updates['presence_status']       = 'alpa';
+            $updates['presence_status_since'] = now();
+            $updates['presence_status_notes'] = $notes ?: 'Status keanggotaan: Tanpa Keterangan (Masa Tabayyun)';
+            $updates['left_at']               = null;
+            $updates['is_active']             = true;
+        }
+
+        // Jika kembali aktif (dari boyong / tanpa_keterangan / alumni), reset left_at dan aktifkan kembali role
+        if (in_array($newStatus, ['aktif', 'aktif_laju', 'calon'])) {
             $updates['left_at']   = null;
             $updates['is_active'] = true;
-            // Set default presence: mukim untuk aktif
-            $updates['presence_status'] = 'mukim';
+            // Set default presence jika kosong atau jika sebelumnya alpa
+            if (empty($role->presence_status) || $role->presence_status === 'alpa') {
+                $updates['presence_status'] = $newStatus === 'aktif_laju' ? 'laju' : 'mukim';
+            }
         }
 
         $role->update($updates);

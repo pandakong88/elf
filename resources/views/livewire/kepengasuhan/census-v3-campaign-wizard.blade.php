@@ -121,29 +121,35 @@
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <!-- Options -->
                             <div class="space-y-3">
-                                <label class="flex items-start gap-3 p-4 bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800/80 rounded-2xl cursor-pointer hover:border-slate-250 dark:hover:border-slate-700 transition-all">
-                                    <input type="radio" wire:model="target_scope" value="all" class="mt-1 text-emerald-600 border-slate-300 focus:ring-emerald-500">
-                                    <div>
-                                        <span class="block font-bold text-sm text-slate-800 dark:text-white">Semua Asrama</span>
-                                        <span class="block text-xs text-slate-400">Sensus mencakup seluruh asrama putra dan putri.</span>
-                                    </div>
-                                </label>
+                                @if (!$userGenderScope)
+                                    <label class="flex items-start gap-3 p-4 bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800/80 rounded-2xl cursor-pointer hover:border-slate-250 dark:hover:border-slate-700 transition-all">
+                                        <input type="radio" wire:model="target_scope" value="all" class="mt-1 text-emerald-600 border-slate-300 focus:ring-emerald-500">
+                                        <div>
+                                            <span class="block font-bold text-sm text-slate-800 dark:text-white">Semua Asrama</span>
+                                            <span class="block text-xs text-slate-400">Sensus mencakup seluruh asrama putra dan putri.</span>
+                                        </div>
+                                    </label>
+                                @endif
 
-                                <label class="flex items-start gap-3 p-4 bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800/80 rounded-2xl cursor-pointer hover:border-slate-250 dark:hover:border-slate-700 transition-all">
-                                    <input type="radio" wire:model="target_scope" value="putra" class="mt-1 text-emerald-600 border-slate-300 focus:ring-emerald-500">
-                                    <div>
-                                        <span class="block font-bold text-sm text-slate-800 dark:text-white">Hanya Komplek Putra</span>
-                                        <span class="block text-xs text-slate-400">Hanya asrama laki-laki yang menjadi target.</span>
-                                    </div>
-                                </label>
+                                @if (!$userGenderScope || $userGenderScope === 'L')
+                                    <label class="flex items-start gap-3 p-4 bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800/80 rounded-2xl cursor-pointer hover:border-slate-250 dark:hover:border-slate-700 transition-all">
+                                        <input type="radio" wire:model="target_scope" value="putra" class="mt-1 text-emerald-600 border-slate-300 focus:ring-emerald-500">
+                                        <div>
+                                            <span class="block font-bold text-sm text-slate-800 dark:text-white">Hanya Komplek Putra</span>
+                                            <span class="block text-xs text-slate-400">Hanya asrama laki-laki yang menjadi target.</span>
+                                        </div>
+                                    </label>
+                                @endif
 
-                                <label class="flex items-start gap-3 p-4 bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800/80 rounded-2xl cursor-pointer hover:border-slate-250 dark:hover:border-slate-700 transition-all">
-                                    <input type="radio" wire:model="target_scope" value="putri" class="mt-1 text-emerald-600 border-slate-300 focus:ring-emerald-500">
-                                    <div>
-                                        <span class="block font-bold text-sm text-slate-800 dark:text-white">Hanya Komplek Putri</span>
-                                        <span class="block text-xs text-slate-400">Hanya asrama perempuan yang menjadi target.</span>
-                                    </div>
-                                </label>
+                                @if (!$userGenderScope || $userGenderScope === 'P')
+                                    <label class="flex items-start gap-3 p-4 bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800/80 rounded-2xl cursor-pointer hover:border-slate-250 dark:hover:border-slate-700 transition-all">
+                                        <input type="radio" wire:model="target_scope" value="putri" class="mt-1 text-emerald-600 border-slate-300 focus:ring-emerald-500">
+                                        <div>
+                                            <span class="block font-bold text-sm text-slate-800 dark:text-white">Hanya Komplek Putri</span>
+                                            <span class="block text-xs text-slate-400">Hanya asrama perempuan yang menjadi target.</span>
+                                        </div>
+                                    </label>
+                                @endif
 
                                 <label class="flex items-start gap-3 p-4 bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800/80 rounded-2xl cursor-pointer hover:border-slate-250 dark:hover:border-slate-700 transition-all">
                                     <input type="radio" wire:model="target_scope" value="custom_dormitories" class="mt-1 text-emerald-600 border-slate-300 focus:ring-emerald-500">
@@ -267,12 +273,15 @@
                                                         </span>
                                                     </td>
                                                     <td class="p-3">
-                                                        <select wire:model="assigned_users.{{ $dorm->id }}" class="rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 px-2 py-1 text-xs focus:border-emerald-500 focus:ring-emerald-500">
-                                                            <option value="">-- Pilih Penanggung Jawab --</option>
+                                                        <div class="space-y-1 max-h-36 overflow-y-auto p-1.5 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700">
                                                             @foreach ($assignableUsers as $u)
-                                                                <option value="{{ $u->id }}">{{ $u->name }}</option>
+                                                                <label class="flex items-center gap-2 p-1 hover:bg-slate-50 dark:hover:bg-slate-800 rounded cursor-pointer transition-colors">
+                                                                    <input type="checkbox" wire:model="assigned_users.{{ $dorm->id }}" value="{{ $u->id }}" class="rounded text-emerald-600 border-slate-300 focus:ring-emerald-500">
+                                                                    <span class="text-[11px] text-slate-700 dark:text-slate-300">{{ $u->name }}</span>
+                                                                </label>
                                                             @endforeach
-                                                        </select>
+                                                        </div>
+                                                        <span class="text-[10px] text-slate-400 mt-1 block">Bisa pilih lebih dari 1 orang</span>
                                                     </td>
                                                 </tr>
                                             @empty

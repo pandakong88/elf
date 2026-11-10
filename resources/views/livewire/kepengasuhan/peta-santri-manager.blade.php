@@ -106,10 +106,12 @@
                 <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">Status Keanggotaan</label>
                 <select wire:model.live="enrollmentFilter"
                     class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-800 dark:text-slate-100 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500/20">
-                    <option value="aktif">Aktif (Mukim &amp; Laju)</option>
-                    <option value="boyong">Boyong / Keluar</option>
+                    <option value="">Semua Status Keanggotaan</option>
+                    <option value="aktif">Aktif</option>
+                    <option value="keluar_resmi">Boyong / Keluar</option>
+                    <option value="tanpa_keterangan">Tanpa Keterangan</option>
+                    <option value="dikeluarkan">Dikeluarkan</option>
                     <option value="alumni">Alumni / Lulus</option>
-                    <option value="">Semua Status</option>
                 </select>
             </div>
 
@@ -261,9 +263,17 @@
 
                                 {{-- Status Keanggotaan --}}
                                 <td class="py-3 px-4 text-center">
-                                    @if(in_array($enrollmentStatus, ['boyong', 'keluar_resmi', 'dikeluarkan', 'tanpa_keterangan']))
+                                    @if(in_array($enrollmentStatus, ['boyong', 'keluar_resmi']))
                                         <span class="inline-flex items-center gap-1.5 px-2.5 py-1 text-[11px] font-extrabold rounded-full bg-rose-100 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300">
                                             <span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span> Boyong
+                                        </span>
+                                    @elseif($enrollmentStatus === 'tanpa_keterangan')
+                                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 text-[11px] font-extrabold rounded-full bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300">
+                                            <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span> Tanpa Keterangan
+                                        </span>
+                                    @elseif($enrollmentStatus === 'dikeluarkan')
+                                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 text-[11px] font-extrabold rounded-full bg-red-100 text-red-800 dark:bg-red-950/60 dark:text-red-300">
+                                            <span class="w-1.5 h-1.5 rounded-full bg-red-600"></span> Dikeluarkan
                                         </span>
                                     @elseif($enrollmentStatus === 'alumni')
                                         <span class="inline-flex items-center gap-1.5 px-2.5 py-1 text-[11px] font-extrabold rounded-full bg-purple-100 text-purple-700 dark:bg-purple-950/60 dark:text-purple-300">
@@ -413,8 +423,12 @@
                                     {{ $santri->gender === 'L' ? 'Putra' : 'Putri' }}
                                 </span>
                                 {{-- Enrollment Status Badge --}}
-                                @if(in_array($enrollmentStatus, ['boyong','keluar_resmi','dikeluarkan','tanpa_keterangan']))
+                                @if(in_array($enrollmentStatus, ['boyong', 'keluar_resmi']))
                                     <span class="px-2 py-0.5 text-[10px] font-bold rounded-full bg-rose-100 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300">Boyong</span>
+                                @elseif($enrollmentStatus === 'tanpa_keterangan')
+                                    <span class="px-2 py-0.5 text-[10px] font-bold rounded-full bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300">Tanpa Keterangan</span>
+                                @elseif($enrollmentStatus === 'dikeluarkan')
+                                    <span class="px-2 py-0.5 text-[10px] font-bold rounded-full bg-red-100 text-red-800 dark:bg-red-950/60 dark:text-red-300">Dikeluarkan</span>
                                 @elseif($enrollmentStatus === 'alumni')
                                     <span class="px-2 py-0.5 text-[10px] font-bold rounded-full bg-purple-100 text-purple-700 dark:bg-purple-950/60 dark:text-purple-300">Alumni</span>
                                 @else
@@ -872,8 +886,12 @@
 
                                     @if($enrollStatus === 'alumni')
                                         <span class="px-2 py-0.5 text-[10px] font-extrabold uppercase rounded-full bg-purple-100 text-purple-700 dark:bg-purple-950/80 dark:text-purple-300">Alumni</span>
-                                    @elseif(in_array($enrollStatus, ['boyong', 'keluar_resmi', 'dikeluarkan']))
+                                    @elseif(in_array($enrollStatus, ['boyong', 'keluar_resmi']))
                                         <span class="px-2 py-0.5 text-[10px] font-extrabold uppercase rounded-full bg-rose-100 text-rose-700 dark:bg-rose-950/80 dark:text-rose-300">Boyong</span>
+                                    @elseif($enrollStatus === 'tanpa_keterangan')
+                                        <span class="px-2 py-0.5 text-[10px] font-extrabold uppercase rounded-full bg-amber-100 text-amber-800 dark:bg-amber-950/80 dark:text-amber-300">Tanpa Keterangan</span>
+                                    @elseif($enrollStatus === 'dikeluarkan')
+                                        <span class="px-2 py-0.5 text-[10px] font-extrabold uppercase rounded-full bg-red-100 text-red-800 dark:bg-red-950/80 dark:text-red-300">Dikeluarkan</span>
                                     @else
                                         <span class="px-2 py-0.5 text-[10px] font-extrabold uppercase rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-950/80 dark:text-emerald-300">Aktif</span>
                                     @endif
@@ -1143,14 +1161,39 @@
                 <div class="space-y-4">
                     <div>
                         <label class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1.5">Status Keanggotaan</label>
-                        <select wire:model="targetEnrollmentStatus" class="w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-800 dark:text-slate-100">
+                        <select wire:model.live="targetEnrollmentStatus" class="w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-800 dark:text-slate-100">
                             <option value="aktif">✅ Aktif (Santri Mukim/Laju)</option>
-                            <option value="boyong">🚪 Boyong (Keluar Tidak Resmi)</option>
-                            <option value="keluar_resmi">📋 Keluar Resmi</option>
+                            <option value="keluar_resmi">🚪 Boyong / Keluar Resmi</option>
+                            <option value="tanpa_keterangan">❓ Tanpa Keterangan</option>
                             <option value="dikeluarkan">❌ Dikeluarkan</option>
                             <option value="alumni">🎓 Alumni / Lulus</option>
-                            <option value="tanpa_keterangan">❓ Tanpa Keterangan</option>
                         </select>
+
+                        {{-- Live Explanation Alert --}}
+                        <div class="mt-2.5">
+                            @if($targetEnrollmentStatus === 'tanpa_keterangan')
+                                <div class="p-3 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 rounded-2xl flex items-start gap-2.5 text-xs text-amber-900 dark:text-amber-200">
+                                    <svg class="w-5 h-5 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                    <div class="space-y-1">
+                                        <div class="font-extrabold text-[11px] uppercase tracking-wider text-amber-700 dark:text-amber-400">Masa Tabayyun / Penyelidikan:</div>
+                                        <div class="text-[11px] leading-relaxed">Kamar &amp; kelas santri <strong>TETAP DITAHAN</strong> (tidak dilepas) agar kasur &amp; lemarinya tidak tertimpa santri lain. Status keberadaan otomatis diset <em>Alpa</em>.</div>
+                                    </div>
+                                </div>
+                            @elseif(in_array($targetEnrollmentStatus, ['keluar_resmi', 'boyong', 'dikeluarkan', 'alumni']))
+                                <div class="p-3 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800/60 rounded-2xl flex items-start gap-2.5 text-xs text-rose-900 dark:text-rose-200">
+                                    <svg class="w-5 h-5 text-rose-600 dark:text-rose-400 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                                    <div class="space-y-1">
+                                        <div class="font-extrabold text-[11px] uppercase tracking-wider text-rose-700 dark:text-rose-400">Pelepasan Fasilitas Pesantren:</div>
+                                        <div class="text-[11px] leading-relaxed">Alokasi kamar &amp; kelas santri ini akan <strong>OTOMATIS DILEPAS &amp; DIKOSONGKAN</strong> untuk santri lain. Santri dicatat non-aktif.</div>
+                                    </div>
+                                </div>
+                            @else
+                                <div class="p-3 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 rounded-2xl flex items-start gap-2.5 text-xs text-emerald-900 dark:text-emerald-200">
+                                    <svg class="w-5 h-5 text-emerald-600 dark:text-emerald-400 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                    <div class="text-[11px] leading-relaxed">Santri berstatus <strong>Aktif</strong> terdaftar di pondok pesantren. Alokasi kamar &amp; kelas berjalan normal.</div>
+                                </div>
+                            @endif
+                        </div>
                     </div>
 
                     @if($targetEnrollmentStatus === 'aktif')
@@ -1195,36 +1238,162 @@
     {{-- MODAL KONFIRMASI KOSTUM ELEGAN (NO BROWSER ALERT) --}}
     @if($showConfirmModal)
         <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md">
-            <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4">
+            <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl max-w-lg w-full p-6 shadow-2xl space-y-4">
+                {{-- Header --}}
                 <div class="flex items-center gap-3">
                     <div class="w-12 h-12 rounded-2xl flex items-center justify-center font-bold flex-shrink-0
-                        {{ $confirmButtonColor === 'rose' ? 'bg-rose-100 text-rose-600 dark:bg-rose-950 dark:text-rose-400' : '' }}
-                        {{ $confirmButtonColor === 'amber' ? 'bg-amber-100 text-amber-600 dark:bg-amber-950 dark:text-amber-400' : '' }}
-                        {{ $confirmButtonColor === 'emerald' ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-950 dark:text-emerald-400' : '' }}
-                        {{ $confirmButtonColor === 'indigo' ? 'bg-indigo-100 text-indigo-600 dark:bg-indigo-950 dark:text-indigo-400' : '' }}">
-                        <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                        {{ $confirmButtonColor === 'rose' ? 'bg-rose-100 text-rose-600 dark:bg-rose-950 dark:text-rose-400 ring-4 ring-rose-500/10' : '' }}
+                        {{ $confirmButtonColor === 'amber' ? 'bg-amber-100 text-amber-600 dark:bg-amber-950 dark:text-amber-400 ring-4 ring-amber-500/10' : '' }}
+                        {{ $confirmButtonColor === 'emerald' ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-950 dark:text-emerald-400 ring-4 ring-emerald-500/10' : '' }}
+                        {{ $confirmButtonColor === 'indigo' ? 'bg-indigo-100 text-indigo-600 dark:bg-indigo-950 dark:text-indigo-400 ring-4 ring-indigo-500/10' : '' }}">
+                        @if($confirmButtonColor === 'emerald')
+                            <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        @elseif($confirmButtonColor === 'rose')
+                            <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                        @else
+                            <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        @endif
                     </div>
                     <div>
                         <h3 class="font-extrabold text-base text-slate-900 dark:text-slate-100">{{ $confirmTitle }}</h3>
-                        <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Konfirmasi Tindakan</p>
+                        <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Konfirmasi Perubahan Status</p>
                     </div>
                 </div>
 
-                <div class="bg-slate-50 dark:bg-slate-800/60 p-4 rounded-2xl border border-slate-200/60 dark:border-slate-700/60 text-xs text-slate-700 dark:text-slate-300 leading-relaxed font-medium">
-                    {{ $confirmMessage }}
-                </div>
+                @if($confirmAction === 'executeStatusChange')
+                    <div class="space-y-3">
+                        {{-- Santri Profile & Transition Card --}}
+                        <div class="p-3.5 bg-slate-50 dark:bg-slate-800/70 rounded-2xl border border-slate-200/80 dark:border-slate-700/80 space-y-3">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white font-black text-sm flex items-center justify-center flex-shrink-0 shadow-sm">
+                                    {{ strtoupper(substr($statusSantriName, 0, 2)) }}
+                                </div>
+                                <div class="flex-1 min-w-0">
+                                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Target Santri</span>
+                                    <h4 class="font-black text-sm text-slate-900 dark:text-slate-100 truncate">{{ $statusSantriName }}</h4>
+                                </div>
+                            </div>
 
-                <div class="flex items-center justify-end gap-2 pt-2">
+                            {{-- Transition Visualizer --}}
+                            <div class="flex items-center justify-between gap-2 p-2.5 rounded-xl bg-white dark:bg-slate-900/90 border border-slate-200/60 dark:border-slate-700/60">
+                                <div class="flex-1 text-center">
+                                    <span class="text-[9px] font-bold text-slate-400 uppercase block mb-0.5">Status Saat Ini</span>
+                                    <span class="inline-block px-2 py-0.5 text-[11px] font-extrabold rounded-md bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300">
+                                        {{ ucfirst(str_replace('_', ' ', $statusSantriOldStatus ?: 'aktif')) }}
+                                    </span>
+                                </div>
+                                <div class="text-slate-400 flex-shrink-0">
+                                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+                                </div>
+                                <div class="flex-1 text-center">
+                                    <span class="text-[9px] font-bold text-slate-400 uppercase block mb-0.5">Diubah Menjadi</span>
+                                    @if($targetEnrollmentStatus === 'tanpa_keterangan')
+                                        <span class="inline-block px-2.5 py-0.5 text-[11px] font-black rounded-md bg-amber-100 text-amber-800 dark:bg-amber-950/80 dark:text-amber-300">
+                                            Tanpa Keterangan
+                                        </span>
+                                    @elseif(in_array($targetEnrollmentStatus, ['keluar_resmi', 'boyong']))
+                                        <span class="inline-block px-2.5 py-0.5 text-[11px] font-black rounded-md bg-rose-100 text-rose-800 dark:bg-rose-950/80 dark:text-rose-300">
+                                            Boyong / Keluar
+                                        </span>
+                                    @elseif($targetEnrollmentStatus === 'dikeluarkan')
+                                        <span class="inline-block px-2.5 py-0.5 text-[11px] font-black rounded-md bg-red-100 text-red-800 dark:bg-red-950/80 dark:text-red-300">
+                                            Dikeluarkan
+                                        </span>
+                                    @elseif($targetEnrollmentStatus === 'alumni')
+                                        <span class="inline-block px-2.5 py-0.5 text-[11px] font-black rounded-md bg-purple-100 text-purple-800 dark:bg-purple-950/80 dark:text-purple-300">
+                                            Alumni / Lulus
+                                        </span>
+                                    @else
+                                        <span class="inline-block px-2.5 py-0.5 text-[11px] font-black rounded-md bg-emerald-100 text-emerald-800 dark:bg-emerald-950/80 dark:text-emerald-300">
+                                            Aktif ({{ ucfirst($targetPresenceStatus) }})
+                                        </span>
+                                    @endif
+                                </div>
+                            </div>
+
+                            {{-- Facility Grid --}}
+                            <div class="grid grid-cols-2 gap-2 pt-1">
+                                <div class="p-2.5 rounded-xl bg-white dark:bg-slate-900/90 border border-slate-200/60 dark:border-slate-700/60">
+                                    <div class="flex items-center gap-1.5 text-[10px] font-bold text-slate-400 uppercase">
+                                        <svg class="w-3.5 h-3.5 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+                                        Kamar Asrama
+                                    </div>
+                                    <div class="font-bold text-xs text-slate-800 dark:text-slate-200 mt-0.5 truncate" title="{{ $statusSantriRoomInfo }}">{{ $statusSantriRoomInfo }}</div>
+                                    <div class="mt-1">
+                                        @if($targetEnrollmentStatus === 'tanpa_keterangan')
+                                            <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-extrabold bg-amber-50 text-amber-700 dark:bg-amber-950/60 dark:text-amber-400 border border-amber-200/50">🔒 Tetap Ditahan</span>
+                                        @elseif(in_array($targetEnrollmentStatus, ['keluar_resmi', 'boyong', 'dikeluarkan', 'alumni']))
+                                            <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-extrabold bg-rose-50 text-rose-700 dark:bg-rose-950/60 dark:text-rose-400 border border-rose-200/50">🚪 Akan Dikosongkan</span>
+                                        @else
+                                            <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-extrabold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-400 border border-emerald-200/50">✅ Tetap Terisi</span>
+                                        @endif
+                                    </div>
+                                </div>
+
+                                <div class="p-2.5 rounded-xl bg-white dark:bg-slate-900/90 border border-slate-200/60 dark:border-slate-700/60">
+                                    <div class="flex items-center gap-1.5 text-[10px] font-bold text-slate-400 uppercase">
+                                        <svg class="w-3.5 h-3.5 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l9-5-9-5-9 5 9 5zm0 0l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14zm-4 6v-7.5l4-2.222"/></svg>
+                                        Kelas Madrasah
+                                    </div>
+                                    <div class="font-bold text-xs text-slate-800 dark:text-slate-200 mt-0.5 truncate" title="{{ $statusSantriKelasInfo }}">{{ $statusSantriKelasInfo }}</div>
+                                    <div class="mt-1">
+                                        @if($targetEnrollmentStatus === 'tanpa_keterangan')
+                                            <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-extrabold bg-amber-50 text-amber-700 dark:bg-amber-950/60 dark:text-amber-400 border border-amber-200/50">🔒 Tetap Ditahan</span>
+                                        @elseif(in_array($targetEnrollmentStatus, ['keluar_resmi', 'boyong', 'dikeluarkan', 'alumni']))
+                                            <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-extrabold bg-rose-50 text-rose-700 dark:bg-rose-950/60 dark:text-rose-400 border border-rose-200/50">❌ Dinonaktifkan</span>
+                                        @else
+                                            <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-extrabold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-400 border border-emerald-200/50">✅ Tetap Terdaftar</span>
+                                        @endif
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {{-- Alert Banner --}}
+                        @if($targetEnrollmentStatus === 'tanpa_keterangan')
+                            <div class="p-3 bg-amber-500/10 border border-amber-500/20 rounded-2xl flex items-start gap-2.5 text-xs text-amber-900 dark:text-amber-200">
+                                <svg class="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                <div class="text-[11px] leading-relaxed">
+                                    <strong class="font-extrabold text-amber-800 dark:text-amber-300 block">Masa Tabayyun:</strong>
+                                    Fasilitas kamar &amp; kelas santri <strong>tetap ditahan</strong> agar tempat tidurnya tidak tertimpa santri lain. Status keberadaan otomatis diset <em>Alpa</em>.
+                                </div>
+                            </div>
+                        @elseif(in_array($targetEnrollmentStatus, ['keluar_resmi', 'boyong', 'dikeluarkan', 'alumni']))
+                            <div class="p-3 bg-rose-500/10 border border-rose-500/20 rounded-2xl flex items-start gap-2.5 text-xs text-rose-900 dark:text-rose-200">
+                                <svg class="w-5 h-5 text-rose-500 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                                <div class="text-[11px] leading-relaxed">
+                                    <strong class="font-extrabold text-rose-800 dark:text-rose-300 block">Pelepasan Fasilitas Pesantren:</strong>
+                                    Alokasi kamar &amp; kelas santri akan <strong>otomatis dikosongkan</strong>. Kuota kamar bertambah 1 kasur kosong untuk santri lain.
+                                </div>
+                            </div>
+                        @else
+                            <div class="p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl flex items-start gap-2.5 text-xs text-emerald-900 dark:text-emerald-200">
+                                <svg class="w-5 h-5 text-emerald-500 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                <div class="text-[11px] leading-relaxed">
+                                    Santri berstatus <strong>Aktif</strong> ({{ ucfirst($targetPresenceStatus) }}). Seluruh alokasi kamar &amp; kelas madrasah berjalan normal.
+                                </div>
+                            </div>
+                        @endif
+                    </div>
+                @else
+                    <div class="bg-slate-50 dark:bg-slate-800/60 p-4 rounded-2xl border border-slate-200/60 dark:border-slate-700/60 text-xs text-slate-700 dark:text-slate-300 leading-relaxed font-medium whitespace-pre-line">
+                        {!! nl2br(e($confirmMessage)) !!}
+                    </div>
+                @endif
+
+                {{-- Action Buttons --}}
+                <div class="flex items-center justify-end gap-2.5 pt-2">
                     <button type="button" wire:click="$set('showConfirmModal', false)"
                         class="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold rounded-xl text-xs transition-colors">
                         Batal
                     </button>
                     <button type="button" wire:click="processConfirmedAction"
-                        class="px-5 py-2.5 text-white font-extrabold rounded-xl text-xs shadow-lg transition-all
-                        {{ $confirmButtonColor === 'rose' ? 'bg-rose-600 hover:bg-rose-500 active:bg-rose-700' : '' }}
-                        {{ $confirmButtonColor === 'amber' ? 'bg-amber-600 hover:bg-amber-500 active:bg-amber-700' : '' }}
-                        {{ $confirmButtonColor === 'emerald' ? 'bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700' : '' }}
-                        {{ $confirmButtonColor === 'indigo' ? 'bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700' : '' }}">
+                        class="px-5 py-2.5 text-white font-black rounded-xl text-xs shadow-lg transition-all flex items-center gap-1.5
+                        {{ $confirmButtonColor === 'rose' ? 'bg-rose-600 hover:bg-rose-500 active:bg-rose-700 shadow-rose-600/30' : '' }}
+                        {{ $confirmButtonColor === 'amber' ? 'bg-amber-600 hover:bg-amber-500 active:bg-amber-700 shadow-amber-600/30' : '' }}
+                        {{ $confirmButtonColor === 'emerald' ? 'bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 shadow-emerald-600/30' : '' }}
+                        {{ $confirmButtonColor === 'indigo' ? 'bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 shadow-indigo-600/30' : '' }}">
+                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
                         {{ $confirmButtonText }}
                     </button>
                 </div>

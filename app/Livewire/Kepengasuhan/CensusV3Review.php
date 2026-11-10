@@ -8,6 +8,7 @@ use App\Modules\Kepengasuhan\Models\CensusV3Campaign;
 use App\Modules\Kepengasuhan\Models\CensusV3CampaignDormitory;
 use App\Modules\Kepengasuhan\Models\CensusV3Response;
 use App\Modules\Kepengasuhan\Services\CensusV3Service;
+use App\Modules\Kepengasuhan\Services\CensusV3AccessService;
 use Illuminate\Support\Collection;
 
 class CensusV3Review extends Component
@@ -22,21 +23,28 @@ class CensusV3Review extends Component
     public string $rejectionNotes = '';
 
     protected CensusV3Service $censusService;
+    protected CensusV3AccessService $accessService;
 
-    public function boot(CensusV3Service $censusService): void
+    public function boot(CensusV3Service $censusService, CensusV3AccessService $accessService): void
     {
         $this->censusService = $censusService;
+        $this->accessService = $accessService;
     }
 
     public function mount(string $campaign, string $dormitory): void
     {
-        $user = auth()->user();
-        if (!$user || !($user->hasRole('super-admin') || $user->hasRole('manajemen'))) {
-            abort(403, 'Akses ditolak. Halaman ini hanya untuk Super Admin dan Manajemen.');
-        }
-
         $this->campaignId = $campaign;
         $this->dormitoryId = $dormitory;
+
+        $cd = $this->campaignDormitory;
+        if (!$cd) {
+            abort(404, 'Data asrama kampanye tidak ditemukan.');
+        }
+
+        $user = auth()->user();
+        if (!$user || !$this->accessService->canAccessDormitory($user, $cd, 'review')) {
+            abort(403, 'Akses ditolak. Anda tidak memiliki izin untuk mereview sensus asrama ini.');
+        }
     }
 
     public function getCampaignDormitoryProperty(): ?CensusV3CampaignDormitory
@@ -62,9 +70,12 @@ class CensusV3Review extends Component
 
     public function approve(): void
     {
+        $cd = $this->campaignDormitory;
+        if (!$cd || !$this->accessService->canAccessDormitory(auth()->user(), $cd, 'review')) {
+            abort(403, 'Akses ditolak.');
+        }
+
         try {
-            $cd = $this->campaignDormitory;
-            
             $this->censusService->approveDormitory($cd->id, auth()->id());
             
             $this->toastSuccess('Laporan sensus asrama berhasil disetujui. Perubahan profil telah disinkronkan.');
@@ -76,6 +87,11 @@ class CensusV3Review extends Component
 
     public function reject(): void
     {
+        $cd = $this->campaignDormitory;
+        if (!$cd || !$this->accessService->canAccessDormitory(auth()->user(), $cd, 'review')) {
+            abort(403, 'Akses ditolak.');
+        }
+
         $this->validate([
             'rejectionNotes' => 'required|string|max:1000|min:3',
         ], [
@@ -83,8 +99,6 @@ class CensusV3Review extends Component
         ]);
 
         try {
-            $cd = $this->campaignDormitory;
-            
             $this->censusService->rejectDormitory($cd->id, $this->rejectionNotes);
 
             $this->showRejectModal = false;
