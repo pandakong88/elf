@@ -1,4 +1,4 @@
-<div class="py-6 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-6"
+<div class="pt-6 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-6 {{ $board['staged_count'] > 0 ? 'pb-36 sm:pb-28' : 'pb-12' }}"
      x-data="{
         draggedPersonId: null,
         draggedFromRoom: null,
@@ -661,32 +661,32 @@
 
     <!-- Floating Action Bar (Sticks to bottom when staged moves exist) -->
     @if ($board['staged_count'] > 0)
-        <div class="fixed bottom-4 sm:bottom-6 inset-x-3 sm:inset-x-4 max-w-2xl mx-auto z-50 animate-bounce-short">
-            <div class="bg-slate-900 text-white p-3.5 sm:p-4 rounded-2xl shadow-2xl border border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                <div class="flex items-center gap-2.5 sm:gap-3">
-                    <span class="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-blue-500 animate-ping flex-shrink-0"></span>
-                    <div>
-                        <p class="font-bold text-xs sm:text-sm text-white">
-                            {{ $board['staged_count'] }} Perubahan Mutasi Siap Direview
+        <div class="fixed bottom-3 sm:bottom-6 inset-x-3 sm:inset-x-4 max-w-xl mx-auto z-50 animate-bounce-short">
+            <div class="bg-slate-900/95 dark:bg-slate-900/95 backdrop-blur-md text-white px-3.5 py-2.5 sm:px-5 sm:py-3.5 rounded-2xl shadow-2xl border border-slate-700/80 flex items-center justify-between gap-3">
+                <div class="flex items-center gap-2.5 min-w-0">
+                    <span class="w-2.5 h-2.5 rounded-full bg-blue-500 animate-ping flex-shrink-0"></span>
+                    <div class="min-w-0">
+                        <p class="font-extrabold text-xs sm:text-sm text-white truncate">
+                            {{ $board['staged_count'] }} Mutasi Disimpan
                         </p>
-                        <p class="text-[10px] sm:text-[11px] text-slate-400">
-                            Perubahan dicatat sementara di layar.
+                        <p class="text-[10px] text-slate-400 truncate hidden xs:block">
+                            Perubahan sementara di layar
                         </p>
                     </div>
                 </div>
 
-                <div class="flex items-center justify-end gap-2 w-full sm:w-auto border-t border-slate-800 sm:border-0 pt-2 sm:pt-0">
+                <div class="flex items-center gap-2 flex-shrink-0">
                     <button
                         type="button"
                         wire:click="resetAllMoves"
-                        class="px-3 py-1.5 sm:py-2 rounded-xl text-xs font-bold text-slate-300 hover:text-white hover:bg-slate-800 transition-colors"
+                        class="px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-xl text-xs font-bold text-slate-300 hover:text-white hover:bg-slate-800 transition-colors"
                     >
                         Batal
                     </button>
                     <button
                         type="button"
                         wire:click="openReviewModal"
-                        class="flex-1 sm:flex-initial px-4 sm:px-5 py-2 sm:py-2.5 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl text-xs shadow-lg shadow-blue-600/30 transition-all text-center flex items-center justify-center gap-1.5 hover:scale-105"
+                        class="px-3.5 py-2 sm:px-5 sm:py-2.5 bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-white font-black rounded-xl text-xs shadow-lg shadow-blue-600/30 transition-all flex items-center gap-1.5 hover:scale-105"
                     >
                         <span>Review &amp; Simpan</span>
                         <span class="px-1.5 py-0.5 rounded-full bg-blue-700 text-white text-[10px]">
