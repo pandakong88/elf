@@ -612,27 +612,28 @@
                             }
                             $isUnitHighlighted = $highlightAllVacant || in_array($unit['id'], $highlightVacantUnitIds);
                         @endphp
-                        <div class="bg-white dark:bg-slate-900 rounded-3xl p-6 border {{ $isUnitHighlighted && $unitVacantCount > 0 ? 'border-emerald-300 dark:border-emerald-800 shadow-lg shadow-emerald-500/10' : 'border-slate-200/80 dark:border-slate-800 shadow-sm' }} space-y-4">
+                        <div class="bg-white dark:bg-slate-900 rounded-3xl p-4 sm:p-6 border {{ $isUnitHighlighted && $unitVacantCount > 0 ? 'border-emerald-300 dark:border-emerald-800 shadow-lg shadow-emerald-500/10' : 'border-slate-200/80 dark:border-slate-800 shadow-sm' }} space-y-4">
                             <!-- Unit Header -->
                             <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-slate-100 dark:border-slate-800 pb-3">
                                 <div class="flex items-center gap-3">
-                                    <div class="w-9 h-9 rounded-2xl flex items-center justify-center text-lg {{ $unitType === 'kitab' ? 'bg-emerald-100 dark:bg-emerald-950 text-emerald-700' : 'bg-blue-100 dark:bg-blue-950 text-blue-700' }}">
+                                    <div class="w-9 h-9 rounded-2xl flex items-center justify-center text-lg shrink-0 {{ $unitType === 'kitab' ? 'bg-emerald-100 dark:bg-emerald-950 text-emerald-700' : 'bg-blue-100 dark:bg-blue-950 text-blue-700' }}">
                                         {{ $unitType === 'kitab' ? '📚' : '🚪' }}
                                     </div>
-                                    <div>
-                                        <h3 class="text-sm font-extrabold text-slate-900 dark:text-white flex items-center gap-2">
+                                    <div class="min-w-0">
+                                        <h3 class="text-sm font-extrabold text-slate-900 dark:text-white flex items-center gap-2 flex-wrap">
                                             <span>{{ $unit['name'] }}</span>
-                                            <span class="text-[10px] font-bold px-2 py-0.5 rounded-full {{ $unitType === 'kitab' ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300' : 'bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300' }}">
+                                            <span class="text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0 {{ $unitType === 'kitab' ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300' : 'bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300' }}">
                                                 {{ $unitType === 'kitab' ? 'Rak Kitab' : 'Lemari Pakaian' }}
                                             </span>
                                         </h3>
-                                        <p class="text-[11px] text-slate-400 mt-0.5">
-                                            {{ count($unit['rows'] ?? []) }} Baris Kompartemen
+                                        <p class="text-[11px] text-slate-400 mt-0.5 flex items-center gap-2">
+                                            <span>{{ count($unit['rows'] ?? []) }} Baris Kompartemen</span>
+                                            <span class="sm:hidden text-[10px] text-blue-500 font-semibold">👈 Geser daun pintu 👉</span>
                                         </p>
                                     </div>
                                 </div>
 
-                                <div class="flex items-center gap-2">
+                                <div class="flex items-center gap-2 flex-wrap sm:flex-nowrap">
                                     <!-- Tombol Cek Tempat Kosong (Menyala) -->
                                     <button
                                         type="button"
@@ -669,13 +670,16 @@
                             </div>
 
                             <!-- Physical Wardrobe Frame (Rangka Visual Lemari Bersih) -->
-                            <div class="p-4 sm:p-5 rounded-3xl bg-slate-50/60 dark:bg-slate-950/60 border border-slate-200/80 dark:border-slate-800 space-y-3">
+                            <div class="p-3 sm:p-5 rounded-3xl bg-slate-50/60 dark:bg-slate-950/60 border border-slate-200/80 dark:border-slate-800 space-y-3">
                                 @foreach($unit['rows'] ?? [] as $rIndex => $row)
                                     @php
                                         $slotCount = count($row['slots'] ?? []);
                                     @endphp
-                                    <div class="overflow-x-auto pb-1.5 -mx-1 px-1 sm:mx-0 sm:px-0 scrollbar-thin">
-                                        <div class="grid grid-cols-{{ max(1, min(12, $slotCount)) }} gap-3 min-w-[calc(max(1,{{ $slotCount }})*135px)] sm:min-w-0">
+                                    <div class="overflow-x-auto pb-2 -mx-1 px-1 sm:mx-0 sm:px-0 scrollbar-thin">
+                                        <div
+                                            class="grid gap-2.5 sm:gap-3"
+                                            style="grid-template-columns: repeat({{ max(1, $slotCount) }}, minmax(135px, 1fr)); min-width: {{ max(1, $slotCount) * 140 }}px;"
+                                        >
                                         @foreach($row['slots'] ?? [] as $slot)
                                             @php
                                                 $alloc = $slot['allocation_type'] ?? 'santri';
@@ -694,11 +698,11 @@
                                             <div
                                                 ondragover="event.preventDefault();"
                                                 ondrop="event.preventDefault(); var pid = event.dataTransfer.getData('text/plain'); if(pid) { @this.quickAssignFromDrag('{{ $slot['code'] }}', pid); }"
-                                                class="group relative rounded-2xl p-3 transition-all flex flex-col justify-between min-h-[112px] border {{ $isGlowing ? 'ring-4 ring-emerald-400 dark:ring-emerald-500 border-2 border-emerald-500 bg-emerald-50/95 dark:bg-emerald-950/90 shadow-xl shadow-emerald-500/30 scale-[1.02] animate-pulse z-10' : ($isDimmed ? 'opacity-35 hover:opacity-100 transition-opacity bg-white dark:bg-slate-900 border-slate-200/80 dark:border-slate-800' : ($isDamaged ? ($slot['condition'] === 'rusak_berat' ? 'bg-rose-50/40 dark:bg-rose-950/20 border-rose-300 dark:border-rose-900/60 border-l-4 border-l-rose-500' : 'bg-amber-50/40 dark:bg-amber-950/20 border-amber-300 dark:border-amber-900/60 border-l-4 border-l-amber-500') : ($alloc === 'inventaris' ? 'bg-amber-50/30 dark:bg-amber-950/20 border-amber-300/80 dark:border-amber-900/60 shadow-2xs hover:border-amber-400' : ($alloc === 'external' ? 'bg-indigo-50/30 dark:bg-indigo-950/20 border-indigo-300/80 dark:border-indigo-900/60 shadow-2xs hover:border-indigo-400' : ($isOccupied ? 'bg-white dark:bg-slate-900 border-slate-200/90 dark:border-slate-800 shadow-2xs hover:border-blue-400 dark:hover:border-blue-500' : 'bg-slate-50/60 dark:bg-slate-900/40 border-dashed border-slate-300 dark:border-slate-700/80 hover:border-emerald-400'))))) }}"
+                                                class="group relative rounded-2xl p-2.5 sm:p-3 transition-all flex flex-col justify-between min-h-[115px] border {{ $isGlowing ? 'ring-4 ring-emerald-400 dark:ring-emerald-500 border-2 border-emerald-500 bg-emerald-50/95 dark:bg-emerald-950/90 shadow-xl shadow-emerald-500/30 scale-[1.02] animate-pulse z-10' : ($isDimmed ? 'opacity-35 hover:opacity-100 transition-opacity bg-white dark:bg-slate-900 border-slate-200/80 dark:border-slate-800' : ($isDamaged ? ($slot['condition'] === 'rusak_berat' ? 'bg-rose-50/40 dark:bg-rose-950/20 border-rose-300 dark:border-rose-900/60 border-l-4 border-l-rose-500' : 'bg-amber-50/40 dark:bg-amber-950/20 border-amber-300 dark:border-amber-900/60 border-l-4 border-l-amber-500') : ($alloc === 'inventaris' ? 'bg-amber-50/30 dark:bg-amber-950/20 border-amber-300/80 dark:border-amber-900/60 shadow-2xs hover:border-amber-400' : ($alloc === 'external' ? 'bg-indigo-50/30 dark:bg-indigo-950/20 border-indigo-300/80 dark:border-indigo-900/60 shadow-2xs hover:border-indigo-400' : ($isOccupied ? 'bg-white dark:bg-slate-900 border-slate-200/90 dark:border-slate-800 shadow-2xs hover:border-blue-400 dark:hover:border-blue-500' : 'bg-slate-50/60 dark:bg-slate-900/40 border-dashed border-slate-300 dark:border-slate-700/80 hover:border-emerald-400'))))) }}"
                                             >
                                                 <!-- Top Bar: Plat Nomor & Status Kondisi -->
-                                                <div class="flex items-center justify-between gap-1">
-                                                    <span class="font-extrabold text-[11px] font-mono px-2 py-0.5 rounded-lg {{ $unitType === 'kitab' ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/70 dark:text-emerald-300 border border-emerald-200/60 dark:border-emerald-800' : 'bg-blue-50 text-blue-700 dark:bg-blue-950/70 dark:text-blue-300 border border-blue-200/60 dark:border-blue-800' }}">
+                                                <div class="flex items-center justify-between gap-1.5">
+                                                    <span class="font-extrabold text-[11px] font-mono px-2 py-0.5 rounded-lg shrink-0 whitespace-nowrap {{ $unitType === 'kitab' ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/70 dark:text-emerald-300 border border-emerald-200/60 dark:border-emerald-800' : 'bg-blue-50 text-blue-700 dark:bg-blue-950/70 dark:text-blue-300 border border-blue-200/60 dark:border-blue-800' }}">
                                                         {{ $slot['code'] }}
                                                     </span>
 
@@ -706,18 +710,18 @@
                                                     <button
                                                         type="button"
                                                         wire:click="openConditionModal('slot', '{{ $unit['id'] }}', '{{ $slot['code'] }}', '{{ $slot['condition'] }}', '{{ addslashes($slot['notes']) }}')"
-                                                        class="text-[10px] transition-all font-bold px-1.5 py-0.5 rounded-md flex items-center gap-1 {{ $slot['condition'] === 'baik' ? 'text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-slate-100 dark:hover:bg-slate-800' : ($slot['condition'] === 'rusak_ringan' ? 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300' : 'bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300') }}"
+                                                        class="text-[10px] transition-all font-bold px-1.5 py-0.5 rounded-md flex items-center gap-1 shrink-0 whitespace-nowrap {{ $slot['condition'] === 'baik' ? 'text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-slate-100 dark:hover:bg-slate-800' : ($slot['condition'] === 'rusak_ringan' ? 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300' : 'bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300') }}"
                                                         title="Kondisi fisik (Klik untuk ubah/catat kerusakan)"
                                                     >
                                                         @if($slot['condition'] === 'baik')
-                                                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                                                            <span class="text-[9px] uppercase tracking-wider text-emerald-600 dark:text-emerald-400">Baik</span>
+                                                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0"></span>
+                                                            <span class="text-[9px] uppercase tracking-wider text-emerald-600 dark:text-emerald-400 whitespace-nowrap">Baik</span>
                                                         @elseif($slot['condition'] === 'rusak_ringan')
-                                                            <span>⚠️ Rusak</span>
+                                                            <span class="whitespace-nowrap">⚠️ Rusak</span>
                                                         @elseif($slot['condition'] === 'rusak_berat')
-                                                            <span>🔴 Jebol</span>
+                                                            <span class="whitespace-nowrap">🔴 Jebol</span>
                                                         @elseif($slot['condition'] === 'hilang')
-                                                            <span>🟣 Hilang</span>
+                                                            <span class="whitespace-nowrap">🟣 Hilang</span>
                                                         @endif
                                                     </button>
                                                 </div>
@@ -733,7 +737,7 @@
                                                                 <div class="font-bold text-xs text-slate-800 dark:text-white truncate" title="{{ $slot['assigned_person_name'] }}">
                                                                     {{ $slot['assigned_person_name'] }}
                                                                 </div>
-                                                                <div class="text-[10px] text-slate-400 font-mono">
+                                                                <div class="text-[10px] text-slate-400 font-mono truncate">
                                                                     NIS: {{ $slot['assigned_person_nis'] }}
                                                                 </div>
                                                             </div>
@@ -747,7 +751,7 @@
                                                                 <div class="font-extrabold text-xs text-amber-900 dark:text-amber-200 truncate" title="{{ $slot['custom_holder_name'] }}">
                                                                     {{ $slot['custom_holder_name'] ?: 'Kas / Uang Bendahara' }}
                                                                 </div>
-                                                                <div class="text-[9px] font-bold text-amber-600 dark:text-amber-400">
+                                                                <div class="text-[9px] font-bold text-amber-600 dark:text-amber-400 truncate">
                                                                     🔒 Khusus Inventaris
                                                                 </div>
                                                             </div>
@@ -761,7 +765,7 @@
                                                                 <div class="font-extrabold text-xs text-indigo-900 dark:text-indigo-200 truncate" title="{{ $slot['custom_holder_name'] }}">
                                                                     {{ $slot['custom_holder_name'] ?: 'Pengurus / Tamu' }}
                                                                 </div>
-                                                                <div class="text-[9px] font-bold text-indigo-600 dark:text-indigo-400">
+                                                                <div class="text-[9px] font-bold text-indigo-600 dark:text-indigo-400 truncate">
                                                                     Non-Sistem / Pembina
                                                                 </div>
                                                             </div>
@@ -770,16 +774,16 @@
                                                         <!-- Slot Kosong -->
                                                         <div class="text-center py-1">
                                                             @if($isGlowing)
-                                                                <div class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-600 text-white text-[10px] font-black shadow-sm">
+                                                                <div class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-600 text-white text-[10px] font-black shadow-sm whitespace-nowrap">
                                                                     <span>✨</span>
                                                                     <span>SIAP PAKAI</span>
                                                                 </div>
-                                                                <span class="text-[9px] font-extrabold text-emerald-700 dark:text-emerald-300 uppercase tracking-wider block mt-0.5">
+                                                                <span class="text-[9px] font-extrabold text-emerald-700 dark:text-emerald-300 uppercase tracking-wider block mt-0.5 whitespace-nowrap">
                                                                     Slot Kosong
                                                                 </span>
                                                             @else
-                                                                <span class="text-sm opacity-60 block">📭</span>
-                                                                <span class="text-[10px] font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-wider block">
+                                                                <span class="text-sm opacity-60 block leading-tight">📭</span>
+                                                                <span class="text-[10px] font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-wider block whitespace-nowrap">
                                                                     Kosong
                                                                 </span>
                                                             @endif
@@ -799,14 +803,14 @@
                                                         <button
                                                             type="button"
                                                             wire:click="openAssignModal('{{ $slot['code'] }}', '{{ $unitType }}', '{{ $slot['assigned_person_id'] }}', '{{ $alloc }}', '{{ addslashes($slot['custom_holder_name'] ?? '') }}')"
-                                                            class="text-blue-600 hover:text-blue-700 dark:text-blue-400 font-bold hover:underline"
+                                                            class="text-blue-600 hover:text-blue-700 dark:text-blue-400 font-bold hover:underline whitespace-nowrap"
                                                         >
                                                             Ganti
                                                         </button>
                                                         <button
                                                             type="button"
                                                             wire:click="confirmUnassignSlot('{{ $slot['code'] }}')"
-                                                            class="text-rose-500 hover:text-rose-700 font-bold"
+                                                            class="text-rose-500 hover:text-rose-700 font-bold whitespace-nowrap"
                                                             title="Lepaskan penghuni dari loker ini"
                                                         >
                                                             Lepas
@@ -815,7 +819,7 @@
                                                         <button
                                                             type="button"
                                                             wire:click="openAssignModal('{{ $slot['code'] }}', '{{ $unitType }}', null, 'santri', '')"
-                                                            class="{{ $isGlowing ? 'w-full text-center py-1 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-black text-[10px] shadow-sm transition-all' : 'w-full text-center text-blue-600 hover:text-blue-700 dark:text-blue-400 font-bold hover:underline text-[10px]' }}"
+                                                            class="{{ $isGlowing ? 'w-full text-center py-1 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-black text-[10px] shadow-sm transition-all whitespace-nowrap' : 'w-full text-center text-blue-600 hover:text-blue-700 dark:text-blue-400 font-bold hover:underline text-[10px] whitespace-nowrap' }}"
                                                         >
                                                             {{ $isGlowing ? '+ Pasang Santri' : '+ Isi Lemari' }}
                                                         </button>
@@ -1299,7 +1303,7 @@
                             <div class="p-4 rounded-2xl bg-amber-950/10 dark:bg-slate-950 border-2 border-amber-900/20 dark:border-slate-800 space-y-2">
                                 @foreach($builderRows as $pRow)
                                     @php $cnt = max(1, min(12, (int)($pRow['slots_count'] ?? 1))); @endphp
-                                    <div class="grid grid-cols-{{ $cnt }} gap-2">
+                                    <div class="grid gap-2" style="grid-template-columns: repeat({{ $cnt }}, minmax(0, 1fr));">
                                         @for($c = 1; $c <= $cnt; $c++)
                                             <div class="h-10 rounded-xl bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 flex items-center justify-center font-bold text-[10px] text-slate-500 shadow-2xs">
                                                 Pintu
