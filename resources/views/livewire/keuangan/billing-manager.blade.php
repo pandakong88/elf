@@ -1954,17 +1954,26 @@
                                     <h4 class="text-xs font-extrabold text-slate-700 dark:text-slate-300 uppercase tracking-widest">📋 Tagihan Bulanan</h4>
                                     <p class="text-[10px] text-slate-400">Lembar iuran Januari — Desember</p>
                                 </div>
+                                @php
+                                    $currentY = (int) now()->format('Y');
+                                    $santriBillYears = $selectedSantri ? \App\Modules\Keuangan\Models\Bill::where('person_id', $selectedSantri->id)->whereNotNull('period_year')->distinct()->pluck('period_year')->map(fn($y) => (int)$y)->toArray() : [];
+                                    $availableCashierYears = collect(array_unique(array_merge(
+                                        range($currentY - 3, $currentY + 3),
+                                        $santriBillYears
+                                    )))->sortDesc()->values();
+                                @endphp
                                 <select wire:model.live="cashierYear" class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 rounded-xl px-3 py-1.5 text-xs font-bold focus:ring-2 focus:ring-emerald-500 shadow-sm cursor-pointer">
-                                    @for($y = $nowYear - 2; $y <= $nowYear + 1; $y++)
+                                    @foreach($availableCashierYears as $y)
                                         <option value="{{ $y }}">
-                                            {{ $y }}
-                                            @if($y === $nowYear - 2) — 2 Tahun Lalu
-                                            @elseif($y === $nowYear - 1) — Tahun Lalu
-                                            @elseif($y === $nowYear) — Tahun Ini ✓
-                                            @elseif($y === $nowYear + 1) — Tahun Depan
+                                            Tahun {{ $y }}
+                                            @if($y === $currentY) — Tahun Ini ✓
+                                            @elseif($y === $currentY + 1) — Tahun Depan
+                                            @elseif($y > $currentY + 1) — Di Muka (+{{ $y - $currentY }} Th)
+                                            @elseif($y === $currentY - 1) — Tahun Lalu
+                                            @else — Lampau
                                             @endif
                                         </option>
-                                    @endfor
+                                    @endforeach
                                 </select>
                             </div>
 
@@ -1993,10 +2002,17 @@
                                                     <td class="py-3 px-3 font-semibold text-slate-700 dark:text-slate-300 text-[10px] leading-tight sticky left-0 bg-white dark:bg-slate-900">
                                                         <div class="space-y-1">
                                                             <span class="block truncate font-bold text-slate-800 dark:text-slate-200">{{ $configData['label'] }}</span>
-                                                            <button type="button" wire:click="selectUpToCurrentMonth('{{ $configId }}')"
-                                                                class="inline-flex items-center gap-1 text-[8px] font-extrabold text-emerald-600 dark:text-emerald-400 hover:underline">
-                                                                ⚡ s.d. {{ $monthNames[$nowMonth] ?? 'Bulan Ini' }}
-                                                            </button>
+                                                            <div class="flex items-center gap-1.5 flex-wrap">
+                                                                <button type="button" wire:click="selectUpToCurrentMonth('{{ $configId }}')"
+                                                                    class="inline-flex items-center gap-1 text-[8px] font-extrabold text-emerald-600 dark:text-emerald-400 hover:underline">
+                                                                    ⚡ s.d. {{ $monthNames[$nowMonth] ?? 'Bulan Ini' }}
+                                                                </button>
+                                                                <span class="text-slate-300 dark:text-slate-600 text-[8px]">·</span>
+                                                                <button type="button" wire:click="selectAllMonthsForYear('{{ $configId }}')"
+                                                                    class="inline-flex items-center gap-1 text-[8px] font-extrabold text-indigo-600 dark:text-indigo-400 hover:underline">
+                                                                    ⚡ 1 Tahun Penuh
+                                                                </button>
+                                                            </div>
                                                         </div>
                                                     </td>
                                                     @foreach($monthNames as $mNum => $mLabel)
@@ -2059,10 +2075,16 @@
                                                     <span class="font-extrabold text-slate-800 dark:text-slate-200 text-xs block">{{ $configData['label'] }}</span>
                                                     <span class="text-[9px] text-slate-400">Bulanan {{ $cashierYear }}</span>
                                                 </div>
-                                                <button type="button" wire:click="selectUpToCurrentMonth('{{ $configId }}')"
-                                                    class="px-2.5 py-1 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 rounded-xl text-[9px] font-black transition-all">
-                                                    ⚡ s.d. {{ $monthNames[$nowMonth] ?? 'Bulan Ini' }}
-                                                </button>
+                                                <div class="flex items-center gap-1.5 flex-wrap justify-end">
+                                                    <button type="button" wire:click="selectUpToCurrentMonth('{{ $configId }}')"
+                                                        class="px-2 py-1 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 rounded-xl text-[9px] font-black transition-all">
+                                                        ⚡ s.d. {{ $monthNames[$nowMonth] ?? 'Bulan Ini' }}
+                                                    </button>
+                                                    <button type="button" wire:click="selectAllMonthsForYear('{{ $configId }}')"
+                                                        class="px-2 py-1 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20 rounded-xl text-[9px] font-black transition-all">
+                                                        ⚡ 1 Tahun
+                                                    </button>
+                                                </div>
                                             </div>
 
                                             <!-- 12 Month Touch Grid Chips (4 cols x 3 rows) -->
@@ -2261,6 +2283,7 @@
                                         </div>
                                     @endforeach
                                 </div>
+                            </div>
                         @endif
                     </div>
                 </div>

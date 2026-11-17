@@ -1071,10 +1071,14 @@ class BillingManager extends Component
             $this->toastError($msg);
         }
 
+        $targetYear = $this->kasirSelectedYear;
         $this->showKasirAddBillModal = false;
         $this->kasirSelectedPeriods  = [];
         $this->kasirAvailablePeriods = [];
         $this->selectSantri($this->selectedSantriId);
+        if ($targetYear) {
+            $this->cashierYear = (int) $targetYear;
+        }
     }
 
     // =====================================================================
@@ -2276,10 +2280,13 @@ class BillingManager extends Component
                     $date2 = $bill->due_date ? $bill->due_date->toDateString() : sprintf('%04d-%02d-01', $bill->period_year, $bill->period_month ?: 1);
 
                     $isOlder = false;
-                    if ($date1 !== $date2) {
-                        $isOlder = $date1 < $date2;
-                    } else {
-                        $isOlder = $ub->created_at < $bill->created_at;
+                    // FIFO auto-selection operates within the same year so advance payments can be processed independently
+                    if ($ub->period_year === $bill->period_year) {
+                        if ($date1 !== $date2) {
+                            $isOlder = $date1 < $date2;
+                        } else {
+                            $isOlder = $ub->created_at < $bill->created_at;
+                        }
                     }
 
                     if ($isOlder && !in_array($ub->id, $this->selectedBillIds)) {
@@ -2314,10 +2321,12 @@ class BillingManager extends Component
                     $date2 = $bill->due_date ? $bill->due_date->toDateString() : sprintf('%04d-%02d-01', $bill->period_year, $bill->period_month ?: 1);
 
                     $isNewer = false;
-                    if ($date1 !== $date2) {
-                        $isNewer = $date1 > $date2;
-                    } else {
-                        $isNewer = $ub->created_at > $bill->created_at;
+                    if ($ub->period_year === $bill->period_year) {
+                        if ($date1 !== $date2) {
+                            $isNewer = $date1 > $date2;
+                        } else {
+                            $isNewer = $ub->created_at > $bill->created_at;
+                        }
                     }
 
                     if ($isNewer) {
@@ -2365,8 +2374,10 @@ class BillingManager extends Component
 
         $selectedAdd = [];
         foreach ($bills as $bill) {
+            // For past years, all months are due. For current year, up to nowMonth. For future years, also up to nowMonth if available.
             $isDueOrCurrent = ($this->cashierYear < $nowYear) 
-                || ($this->cashierYear === $nowYear && $bill->period_month <= $nowMonth);
+                || ($this->cashierYear === $nowYear && $bill->period_month <= $nowMonth)
+                || ($this->cashierYear > $nowYear && $bill->period_month <= $nowMonth);
 
             if ($isDueOrCurrent) {
                 $selectedAdd[] = $bill->id;
@@ -2377,9 +2388,32 @@ class BillingManager extends Component
             $this->selectedBillIds = array_values(array_unique(array_merge($this->selectedBillIds, $selectedAdd)));
             $this->previousSelectedBillIds = $this->selectedBillIds;
             $this->payAmount = $this->selectedBillsTotal;
-            $this->toastSuccess(count($selectedAdd) . ' tagihan s.d. bulan ini berhasil dipilih!');
+            $this->toastSuccess(count($selectedAdd) . ' tagihan berhasil dipilih!');
         } else {
             $this->toastInfo('Semua tagihan s.d. bulan ini sudah lunas atau dipilih.');
+        }
+    }
+
+    public function selectAllMonthsForYear(string $configId): void
+    {
+        if (!$this->selectedSantriId) {
+            return;
+        }
+
+        $bills = Bill::where('person_id', $this->selectedSantriId)
+            ->where('billing_config_id', $configId)
+            ->where('period_year', $this->cashierYear)
+            ->whereIn('status', ['unpaid', 'partial'])
+            ->pluck('id')
+            ->toArray();
+
+        if (!empty($bills)) {
+            $this->selectedBillIds = array_values(array_unique(array_merge($this->selectedBillIds, $bills)));
+            $this->previousSelectedBillIds = $this->selectedBillIds;
+            $this->payAmount = $this->selectedBillsTotal;
+            $this->toastSuccess(count($bills) . ' tagihan tahun ' . $this->cashierYear . ' berhasil dipilih!');
+        } else {
+            $this->toastInfo('Semua tagihan tahun ini sudah lunas atau dipilih.');
         }
     }
 
