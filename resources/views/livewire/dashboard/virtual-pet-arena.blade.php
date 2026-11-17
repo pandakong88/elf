@@ -2402,7 +2402,7 @@ class="relative bg-slate-950 border border-slate-800 rounded-3xl shadow-2xl over
                                 <circle cx="126" cy="166" r="15" fill="#1e293b" />
                             </svg>
 
-                        @else
+                        @elseif($pet->pet_type === 'pingo')
                             <!-- ============================================= -->
                             <!-- 🐧 PINGO (PENGUIN DISIPLIN & POLOS) -->
                             <!-- ============================================= -->
@@ -2474,6 +2474,324 @@ class="relative bg-slate-950 border border-slate-800 rounded-3xl shadow-2xl over
                                 <!-- Feet -->
                                 <ellipse cx="78" cy="174" rx="16" ry="8" fill="#f59e0b" stroke="#d97706" stroke-width="1.5" />
                                 <ellipse cx="122" cy="174" rx="16" ry="8" fill="#f59e0b" stroke="#d97706" stroke-width="1.5" />
+                            </svg>
+                        @elseif($pet->pet_type === 'baro')
+                            <!-- ============================================= -->
+                            <!-- 🦫 BARO (KAPIBARA MASBRO SANTAI) -->
+                            <!-- ============================================= -->
+                            <svg viewBox="0 0 200 200" class="w-full h-full">
+                                <defs>
+                                    <linearGradient id="baroFur" x1="0%" y1="0%" x2="100%" y2="100%">
+                                        <stop offset="0%" stop-color="#b47b4d" />
+                                        <stop offset="60%" stop-color="#9a5f33" />
+                                        <stop offset="100%" stop-color="#784421" />
+                                    </linearGradient>
+                                    <linearGradient id="baroSnout" x1="0%" y1="0%" x2="0%" y2="100%">
+                                        <stop offset="0%" stop-color="#8d542b" />
+                                        <stop offset="100%" stop-color="#6d3916" />
+                                    </linearGradient>
+                                    <linearGradient id="baroBelly" x1="0%" y1="0%" x2="0%" y2="100%">
+                                        <stop offset="0%" stop-color="#d4a373" />
+                                        <stop offset="100%" stop-color="#ba8251" />
+                                    </linearGradient>
+                                </defs>
+
+                                <!-- Round chill ears -->
+                                <ellipse cx="58" cy="68" rx="10" ry="8" fill="#6d3916" stroke="#451a03" stroke-width="1.2" />
+                                <ellipse cx="58" cy="68" rx="6" ry="5" fill="#a76839" />
+                                <ellipse cx="142" cy="68" rx="10" ry="8" fill="#6d3916" stroke="#451a03" stroke-width="1.2" />
+                                <ellipse cx="142" cy="68" rx="6" ry="5" fill="#a76839" />
+
+                                <!-- Body -->
+                                <ellipse cx="100" cy="138" rx="55" ry="44" fill="url(#baroFur)" stroke="#5c2b0c" stroke-width="1.5" />
+                                <!-- Light Belly -->
+                                <ellipse cx="100" cy="144" rx="36" ry="28" fill="url(#baroBelly)" opacity="0.85" />
+
+                                <!-- Masbro's iconic Citrus/Jeruk on Head -->
+                                <g>
+                                    <circle cx="100" cy="46" r="11" fill="#f97316" stroke="#ea580c" stroke-width="1" />
+                                    <circle cx="98" cy="43" r="3" fill="#fdba74" />
+                                    <path d="M 100 35 Q 104 30 108 33" fill="none" stroke="#16a34a" stroke-width="2.5" stroke-linecap="round" />
+                                </g>
+
+                                <!-- Head - broad rounded capybara silhouette -->
+                                <ellipse cx="100" cy="95" rx="52" ry="42" fill="url(#baroFur)" stroke="#5c2b0c" stroke-width="1.5" />
+
+                                <!-- Capybara Muzzle/Snout (Signature rectangular rounded shape) -->
+                                <rect x="70" y="82" width="60" height="38" rx="18" fill="url(#baroSnout)" stroke="#451a03" stroke-width="1.5" />
+                                <!-- Nostrils -->
+                                <ellipse cx="89" cy="104" rx="3" ry="2.2" fill="#2b1104" />
+                                <ellipse cx="111" cy="104" rx="3" ry="2.2" fill="#2b1104" />
+
+                                <!-- Cheeks Blush -->
+                                <ellipse cx="64" cy="108" rx="7" ry="5" fill="#ea580c" opacity="0.35" />
+                                <ellipse cx="136" cy="108" rx="7" ry="5" fill="#ea580c" opacity="0.35" />
+
+                                <!-- Eyes - Chill Masbro Relaxed Look -->
+                                @if($pet->is_sleeping)
+                                    <path d="M 70 91 Q 78 97 86 91" fill="none" stroke="#2b1104" stroke-width="3" stroke-linecap="round" />
+                                    <path d="M 114 91 Q 122 97 130 91" fill="none" stroke="#2b1104" stroke-width="3" stroke-linecap="round" />
+                                @else
+                                    <g class="eye-blinker">
+                                        <!-- Masbro half-lidded calm eyes with tracking -->
+                                        <g :style="`transform: translate(${eyeX}px, ${eyeY}px);`">
+                                            <ellipse cx="78" cy="91" rx="6.5" ry="5.5" fill="#1e1b4b" />
+                                            <circle cx="76" cy="89" r="2" fill="#ffffff" />
+                                        </g>
+                                        <g :style="`transform: translate(${eyeX}px, ${eyeY}px);`">
+                                            <ellipse cx="122" cy="91" rx="6.5" ry="5.5" fill="#1e1b4b" />
+                                            <circle cx="120" cy="89" r="2" fill="#ffffff" />
+                                        </g>
+                                    </g>
+                                    <!-- Chill Eyelid crease -->
+                                    <path d="M 71 88 Q 78 85 85 88" fill="none" stroke="#451a03" stroke-width="1.5" stroke-linecap="round" />
+                                    <path d="M 115 88 Q 122 85 129 88" fill="none" stroke="#451a03" stroke-width="1.5" stroke-linecap="round" />
+                                @endif
+
+                                <!-- Mouth -->
+                                <template x-if="petEating || petDrinking || (isMusicPlaying && !isSleeping && petSingingMouthOpen)">
+                                    <g>
+                                        <ellipse cx="100" cy="115" rx="9" ry="7" fill="#881337" />
+                                        <rect x="97" y="108" width="6" height="4" rx="1" fill="#ffffff" />
+                                    </g>
+                                </template>
+                                <template x-if="!petEating && !petDrinking && (!isMusicPlaying || isSleeping || !petSingingMouthOpen)">
+                                    <path d="M 94 112 Q 100 116 106 112" fill="none" stroke="#2b1104" stroke-width="2" stroke-linecap="round" />
+                                </template>
+
+                                <!-- Paws -->
+                                <ellipse cx="80" cy="168" rx="14" ry="9" fill="#784421" stroke="#451a03" stroke-width="1.5" />
+                                <ellipse cx="120" cy="168" rx="14" ry="9" fill="#784421" stroke="#451a03" stroke-width="1.5" />
+                            </svg>
+                        @elseif($pet->pet_type === 'ica')
+                            <!-- ============================================= -->
+                            <!-- 🐷 ICA (BABI PINK GEMOY WKWKW) -->
+                            <!-- ============================================= -->
+                            <svg viewBox="0 0 200 200" class="w-full h-full">
+                                <defs>
+                                    <linearGradient id="icaSkin" x1="0%" y1="0%" x2="100%" y2="100%">
+                                        <stop offset="0%" stop-color="#fce7f3" />
+                                        <stop offset="60%" stop-color="#fbcfe8" />
+                                        <stop offset="100%" stop-color="#f472b6" />
+                                    </linearGradient>
+                                    <linearGradient id="icaSnout" x1="0%" y1="0%" x2="0%" y2="100%">
+                                        <stop offset="0%" stop-color="#f472b6" />
+                                        <stop offset="100%" stop-color="#ec4899" />
+                                    </linearGradient>
+                                </defs>
+
+                                <!-- Cute Curly Tail at right back -->
+                                <path d="M 148 142 C 165 135 170 118 156 114 C 144 110 144 128 164 130" fill="none" stroke="#ec4899" stroke-width="5" stroke-linecap="round" />
+
+                                <!-- Floppy Piglet Ears -->
+                                <polygon points="56,76 36,44 76,54" fill="#f472b6" stroke="#ec4899" stroke-width="1.5" />
+                                <polygon points="56,72 42,48 72,56" fill="#fce7f3" />
+
+                                <polygon points="144,76 164,44 124,54" fill="#f472b6" stroke="#ec4899" stroke-width="1.5" />
+                                <polygon points="144,72 158,48 128,56" fill="#fce7f3" />
+
+                                <!-- Body -->
+                                <ellipse cx="100" cy="138" rx="54" ry="44" fill="url(#icaSkin)" stroke="#ec4899" stroke-width="1.5" />
+                                <!-- Lighter belly -->
+                                <ellipse cx="100" cy="145" rx="35" ry="28" fill="#ffffff" opacity="0.65" />
+
+                                <!-- Head -->
+                                <ellipse cx="100" cy="96" rx="52" ry="42" fill="url(#icaSkin)" stroke="#ec4899" stroke-width="1.5" />
+
+                                <!-- Rosy Cheeks -->
+                                <ellipse cx="62" cy="108" rx="8" ry="6" fill="#fb7185" opacity="0.75" />
+                                <ellipse cx="138" cy="108" rx="8" ry="6" fill="#fb7185" opacity="0.75" />
+
+                                <!-- Eyes with Pointer Tracking -->
+                                @if($pet->is_sleeping)
+                                    <path d="M 70 94 Q 78 100 86 94" fill="none" stroke="#0f172a" stroke-width="3.2" stroke-linecap="round" />
+                                    <path d="M 114 94 Q 122 100 130 94" fill="none" stroke="#0f172a" stroke-width="3.2" stroke-linecap="round" />
+                                @else
+                                    <g class="eye-blinker">
+                                        <g :style="`transform: translate(${eyeX}px, ${eyeY}px);`">
+                                            <ellipse cx="78" cy="94" rx="6.5" ry="8" fill="#0f172a" />
+                                            <circle cx="76" cy="91" r="2.5" fill="#ffffff" />
+                                            <circle cx="80" cy="95" r="1.2" fill="#ffffff" />
+                                        </g>
+                                        <g :style="`transform: translate(${eyeX}px, ${eyeY}px);`">
+                                            <ellipse cx="122" cy="94" rx="6.5" ry="8" fill="#0f172a" />
+                                            <circle cx="120" cy="91" r="2.5" fill="#ffffff" />
+                                            <circle cx="124" cy="95" r="1.2" fill="#ffffff" />
+                                        </g>
+                                    </g>
+                                @endif
+
+                                <!-- Signature Pig Snout -->
+                                <ellipse cx="100" cy="108" rx="19" ry="13" fill="url(#icaSnout)" stroke="#db2777" stroke-width="1.8" />
+                                <ellipse cx="93" cy="108" rx="3.5" ry="5" fill="#831843" />
+                                <ellipse cx="107" cy="108" rx="3.5" ry="5" fill="#831843" />
+
+                                <!-- Mouth -->
+                                <template x-if="petEating || petDrinking || (isMusicPlaying && !isSleeping && petSingingMouthOpen)">
+                                    <ellipse cx="100" cy="123" rx="8" ry="6" fill="#be123c" />
+                                </template>
+                                <template x-if="!petEating && !petDrinking && (!isMusicPlaying || isSleeping || !petSingingMouthOpen)">
+                                    <path d="M 94 122 Q 100 126 106 122" fill="none" stroke="#be185d" stroke-width="2" stroke-linecap="round" />
+                                </template>
+
+                                <!-- Hooves -->
+                                <ellipse cx="78" cy="168" rx="14" ry="9" fill="#f472b6" stroke="#db2777" stroke-width="1.5" />
+                                <line x1="78" y1="168" x2="78" y2="177" stroke="#db2777" stroke-width="2" stroke-linecap="round" />
+                                <ellipse cx="122" cy="168" rx="14" ry="9" fill="#f472b6" stroke="#db2777" stroke-width="1.5" />
+                                <line x1="122" y1="168" x2="122" y2="177" stroke="#db2777" stroke-width="2" stroke-linecap="round" />
+                            </svg>
+                        @elseif($pet->pet_type === 'burhan')
+                            <!-- ============================================= -->
+                            <!-- 🦉 BURHAN (BURUNG HANTU ALIM SANTRI KALONG) -->
+                            <!-- ============================================= -->
+                            <svg viewBox="0 0 200 200" class="w-full h-full">
+                                <defs>
+                                    <linearGradient id="burhanPlumage" x1="0%" y1="0%" x2="100%" y2="100%">
+                                        <stop offset="0%" stop-color="#4338ca" />
+                                        <stop offset="60%" stop-color="#312e81" />
+                                        <stop offset="100%" stop-color="#1e1b4b" />
+                                    </linearGradient>
+                                    <linearGradient id="burhanBelly" x1="0%" y1="0%" x2="0%" y2="100%">
+                                        <stop offset="0%" stop-color="#e0e7ff" />
+                                        <stop offset="100%" stop-color="#c7d2fe" />
+                                    </linearGradient>
+                                </defs>
+
+                                <!-- Feathered Ear Tufts -->
+                                <polygon points="62,62 46,28 78,50" fill="#312e81" stroke="#1e1b4b" stroke-width="1.5" />
+                                <polygon points="60,58 50,34 72,50" fill="#6366f1" />
+
+                                <polygon points="138,62 154,28 122,50" fill="#312e81" stroke="#1e1b4b" stroke-width="1.5" />
+                                <polygon points="140,58 150,34 128,50" fill="#6366f1" />
+
+                                <!-- Wings folded on flanks -->
+                                <path d="M 52 110 C 44 125 44 155 60 162 C 68 155 72 135 68 120 Z" fill="#312e81" stroke="#1e1b4b" stroke-width="1.5" />
+                                <path d="M 148 110 C 156 125 156 155 140 162 C 132 155 128 135 132 120 Z" fill="#312e81" stroke="#1e1b4b" stroke-width="1.5" />
+
+                                <!-- Body -->
+                                <ellipse cx="100" cy="138" rx="52" ry="46" fill="url(#burhanPlumage)" stroke="#1e1b4b" stroke-width="1.5" />
+                                <!-- Soft Feather Belly -->
+                                <ellipse cx="100" cy="144" rx="35" ry="32" fill="url(#burhanBelly)" stroke="#a5b4fc" stroke-width="1.2" />
+
+                                <!-- Scalloped feather patterns on chest -->
+                                <path d="M 90 135 Q 100 141 110 135" fill="none" stroke="#6366f1" stroke-width="2" stroke-linecap="round" />
+                                <path d="M 84 146 Q 100 154 116 146" fill="none" stroke="#6366f1" stroke-width="2" stroke-linecap="round" />
+
+                                <!-- Head -->
+                                <ellipse cx="100" cy="95" rx="50" ry="42" fill="url(#burhanPlumage)" stroke="#1e1b4b" stroke-width="1.5" />
+
+                                <!-- Large Owl Eye Discs (Spectacles) -->
+                                <circle cx="76" cy="94" r="18" fill="#fef08a" stroke="#ca8a04" stroke-width="2" />
+                                <circle cx="124" cy="94" r="18" fill="#fef08a" stroke="#ca8a04" stroke-width="2" />
+
+                                <!-- Eyes with Pointer Tracking -->
+                                @if($pet->is_sleeping)
+                                    <path d="M 68 94 Q 76 100 84 94" fill="none" stroke="#451a03" stroke-width="3" stroke-linecap="round" />
+                                    <path d="M 116 94 Q 124 100 132 94" fill="none" stroke="#451a03" stroke-width="3" stroke-linecap="round" />
+                                @else
+                                    <g class="eye-blinker">
+                                        <g :style="`transform: translate(${eyeX}px, ${eyeY}px);`">
+                                            <circle cx="76" cy="94" r="10" fill="#0f172a" />
+                                            <circle cx="73" cy="91" r="3.5" fill="#ffffff" />
+                                            <circle cx="79" cy="95" r="1.5" fill="#ffffff" />
+                                        </g>
+                                        <g :style="`transform: translate(${eyeX}px, ${eyeY}px);`">
+                                            <circle cx="124" cy="94" r="10" fill="#0f172a" />
+                                            <circle cx="121" cy="91" r="3.5" fill="#ffffff" />
+                                            <circle cx="127" cy="95" r="1.5" fill="#ffffff" />
+                                        </g>
+                                    </g>
+                                @endif
+
+                                <!-- Beak -->
+                                <polygon points="95,103 105,103 100,116" fill="#f59e0b" stroke="#d97706" stroke-width="1.5" />
+                                <template x-if="petEating || petDrinking || (isMusicPlaying && !isSleeping && petSingingMouthOpen)">
+                                    <ellipse cx="100" cy="116" rx="6" ry="4" fill="#be123c" />
+                                </template>
+
+                                <!-- Talons -->
+                                <ellipse cx="80" cy="172" rx="14" ry="7" fill="#f59e0b" stroke="#d97706" stroke-width="1.5" />
+                                <ellipse cx="120" cy="172" rx="14" ry="7" fill="#f59e0b" stroke="#d97706" stroke-width="1.5" />
+                            </svg>
+                        @elseif($pet->pet_type === 'kaori')
+                            <!-- ============================================= -->
+                            <!-- 🦎 KAORI (CICAK / KADAL DINDING IMUT) -->
+                            <!-- ============================================= -->
+                            <svg viewBox="0 0 200 200" class="w-full h-full">
+                                <defs>
+                                    <linearGradient id="kaoriSkin" x1="0%" y1="0%" x2="100%" y2="100%">
+                                        <stop offset="0%" stop-color="#34d399" />
+                                        <stop offset="50%" stop-color="#10b981" />
+                                        <stop offset="100%" stop-color="#059669" />
+                                    </linearGradient>
+                                    <linearGradient id="kaoriBelly" x1="0%" y1="0%" x2="0%" y2="100%">
+                                        <stop offset="0%" stop-color="#a7f3d0" />
+                                        <stop offset="100%" stop-color="#6ee7b7" />
+                                    </linearGradient>
+                                </defs>
+
+                                <!-- Wavy Lizard Tail Swishing Right -->
+                                <path d="M 145 150 Q 185 145 180 115 Q 175 92 160 100 Q 155 116 165 125" fill="none" stroke="url(#kaoriSkin)" stroke-width="9" stroke-linecap="round" />
+
+                                <!-- Body -->
+                                <ellipse cx="100" cy="138" rx="52" ry="44" fill="url(#kaoriSkin)" stroke="#047857" stroke-width="1.5" />
+                                <!-- Light Mint Belly -->
+                                <ellipse cx="100" cy="144" rx="34" ry="28" fill="url(#kaoriBelly)" stroke="#34d399" stroke-width="1" />
+
+                                <!-- Head - Cute Wide Rounded Gecko Shape -->
+                                <path d="M 54 100 C 50 68, 150 68, 146 100 C 142 120, 58 120, 54 100 Z" fill="url(#kaoriSkin)" stroke="#047857" stroke-width="1.5" />
+
+                                <!-- Protruding Gecko Eye Sockets on Corners -->
+                                <circle cx="72" cy="80" r="15" fill="#34d399" stroke="#059669" stroke-width="1.2" />
+                                <circle cx="128" cy="80" r="15" fill="#34d399" stroke="#059669" stroke-width="1.2" />
+
+                                <!-- Cheeks Blush -->
+                                <ellipse cx="64" cy="106" rx="7" ry="5" fill="#fb7185" opacity="0.5" />
+                                <ellipse cx="136" cy="106" rx="7" ry="5" fill="#fb7185" opacity="0.5" />
+
+                                <!-- Eyes - Gecko Vertical Pupils with Tracking -->
+                                @if($pet->is_sleeping)
+                                    <path d="M 64 80 Q 72 86 80 80" fill="none" stroke="#064e3b" stroke-width="3" stroke-linecap="round" />
+                                    <path d="M 120 80 Q 128 86 136 80" fill="none" stroke="#064e3b" stroke-width="3" stroke-linecap="round" />
+                                @else
+                                    <g class="eye-blinker">
+                                        <circle cx="72" cy="80" r="11" fill="#ecfdf5" />
+                                        <g :style="`transform: translate(${eyeX}px, ${eyeY}px);`">
+                                            <ellipse cx="72" cy="80" rx="3.5" ry="8" fill="#064e3b" />
+                                            <circle cx="70" cy="77" r="1.5" fill="#ffffff" />
+                                        </g>
+
+                                        <circle cx="128" cy="80" r="11" fill="#ecfdf5" />
+                                        <g :style="`transform: translate(${eyeX}px, ${eyeY}px);`">
+                                            <ellipse cx="128" cy="80" rx="3.5" ry="8" fill="#064e3b" />
+                                            <circle cx="126" cy="77" r="1.5" fill="#ffffff" />
+                                        </g>
+                                    </g>
+                                @endif
+
+                                <!-- Cute Gecko Smile / Tongue Catch -->
+                                <template x-if="petEating || petDrinking || (isMusicPlaying && !isSleeping && petSingingMouthOpen)">
+                                    <g>
+                                        <ellipse cx="100" cy="112" rx="8" ry="6" fill="#be123c" />
+                                        <path d="M 100 114 Q 106 122 102 126" stroke="#fb7185" stroke-width="3" fill="none" stroke-linecap="round" />
+                                    </g>
+                                </template>
+                                <template x-if="!petEating && !petDrinking && (!isMusicPlaying || isSleeping || !petSingingMouthOpen)">
+                                    <path d="M 92 108 Q 100 114 108 108" fill="none" stroke="#064e3b" stroke-width="2.2" stroke-linecap="round" />
+                                </template>
+
+                                <!-- Cute Gecko Suction-Pad Toes on Feet -->
+                                <g>
+                                    <circle cx="68" cy="170" r="4.5" fill="#34d399" stroke="#059669" stroke-width="1" />
+                                    <circle cx="78" cy="172" r="5" fill="#34d399" stroke="#059669" stroke-width="1" />
+                                    <circle cx="88" cy="170" r="4.5" fill="#34d399" stroke="#059669" stroke-width="1" />
+                                    <ellipse cx="78" cy="165" rx="12" ry="7" fill="url(#kaoriSkin)" stroke="#059669" stroke-width="1" />
+
+                                    <circle cx="112" cy="170" r="4.5" fill="#34d399" stroke="#059669" stroke-width="1" />
+                                    <circle cx="122" cy="172" r="5" fill="#34d399" stroke="#059669" stroke-width="1" />
+                                    <circle cx="132" cy="170" r="4.5" fill="#34d399" stroke="#059669" stroke-width="1" />
+                                    <ellipse cx="122" cy="165" rx="12" ry="7" fill="url(#kaoriSkin)" stroke="#059669" stroke-width="1" />
+                                </g>
                             </svg>
                         @endif
 
@@ -3165,70 +3483,113 @@ class="relative bg-slate-950 border border-slate-800 rounded-3xl shadow-2xl over
                     </p>
                 </div>
 
-                <!-- Sort Filter Buttons -->
-                <div class="flex items-center gap-1.5 p-1 bg-slate-950 rounded-xl border border-slate-800 shrink-0">
-                    <button 
-                        wire:click="setLeaderboardSort('level')" 
-                        type="button"
-                        class="px-2.5 py-1 rounded-lg text-[10px] sm:text-xs font-black transition-all flex items-center gap-1 cursor-pointer {{ $leaderboardSort === 'level' ? 'bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-950 shadow' : 'text-slate-400 hover:text-white' }}"
-                    >
-                        <span>🏆</span>
-                        <span>Level &amp; XP</span>
-                    </button>
-                    <button 
-                        wire:click="setLeaderboardSort('coins')" 
-                        type="button"
-                        class="px-2.5 py-1 rounded-lg text-[10px] sm:text-xs font-black transition-all flex items-center gap-1 cursor-pointer {{ $leaderboardSort === 'coins' ? 'bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-950 shadow' : 'text-slate-400 hover:text-white' }}"
-                    >
-                        <span>🪙</span>
-                        <span>Koin</span>
-                    </button>
-                    <button 
-                        wire:click="setLeaderboardSort('happiness')" 
-                        type="button"
-                        class="px-2.5 py-1 rounded-lg text-[10px] sm:text-xs font-black transition-all flex items-center gap-1 cursor-pointer {{ $leaderboardSort === 'happiness' ? 'bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-950 shadow' : 'text-slate-400 hover:text-white' }}"
-                    >
-                        <span>💖</span>
-                        <span>Ceria</span>
-                    </button>
+                <!-- Level & XP Badge -->
+                <div class="px-3.5 py-1.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 font-bold text-xs flex items-center gap-1.5 shrink-0 shadow-inner">
+                    <span>⚡</span>
+                    <span>Klasemen Berdasarkan Level &amp; XP</span>
                 </div>
             </div>
 
             <!-- Posisi Pet Kamu (My Standing Banner) -->
-            <div class="p-3.5 sm:p-4 rounded-2xl bg-gradient-to-r from-amber-500/15 via-purple-500/10 to-slate-900 border border-amber-500/40 shadow-lg flex flex-col sm:flex-row items-center justify-between gap-3">
-                <div class="flex items-center gap-3 w-full sm:w-auto">
-                    <div class="px-3.5 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-950 font-black text-center shadow shrink-0">
-                        <span class="text-[9px] uppercase tracking-wider block font-bold text-slate-900/80">Peringkat</span>
-                        <span class="text-base sm:text-lg font-black leading-none">#{{ $myRank ?? '-' }}</span>
-                    </div>
-                    <div class="min-w-0">
-                        <div class="flex items-center gap-2">
-                            <span class="text-sm font-black text-white truncate">{{ $pet->name }}</span>
-                            <span class="text-[9px] px-1.5 py-0.5 rounded bg-amber-400/20 text-amber-300 font-mono font-bold border border-amber-400/30">
-                                Lv. {{ $pet->level }}
-                            </span>
-                            <span class="text-[9px] text-slate-400 hidden sm:inline">&bull; {{ $pet->rank_title }}</span>
+            <div class="p-3.5 sm:p-4 rounded-2xl bg-gradient-to-r from-amber-500/15 via-purple-500/10 to-slate-900 border border-amber-500/40 shadow-lg flex flex-col gap-3">
+                <div class="flex flex-col sm:flex-row items-center justify-between gap-3">
+                    <div class="flex items-center gap-3 w-full sm:w-auto">
+                        <div class="px-3.5 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-950 font-black text-center shadow shrink-0">
+                            <span class="text-[9px] uppercase tracking-wider block font-bold text-slate-900/80">Peringkat</span>
+                            <span class="text-base sm:text-lg font-black leading-none">#{{ $myRank ?? '-' }}</span>
                         </div>
-                        <p class="text-xs text-amber-200/90 mt-0.5 font-medium">
-                            @if($myRank === 1)
-                                👑 <strong>Luar biasa!</strong> Pet kamu memimpin takhta klasemen tertinggi para admin!
-                            @elseif($aheadPet)
-                                @php 
-                                    $xpGap = max(1, ($aheadPet->level * 100 + $aheadPet->xp) - ($pet->level * 100 + $pet->xp));
-                                @endphp
-                                🚀 Selisih <strong class="text-yellow-300 font-mono">{{ number_format($xpGap) }} XP</strong> untuk menyalip <strong>{{ $aheadPet->name }}</strong> (Admin {{ $aheadPet->user->name ?? 'Admin' }})!
-                            @else
-                                🌱 Terus rawat pet dan selesaikan tugas sistem untuk memuncaki klasemen!
-                            @endif
-                        </p>
+                        <div class="min-w-0">
+                            <div class="flex items-center gap-2">
+                                <span class="text-sm font-black text-white truncate">{{ $pet->name }}</span>
+                                <span class="text-[9px] px-1.5 py-0.5 rounded bg-amber-400/20 text-amber-300 font-mono font-bold border border-amber-400/30">
+                                    Lv. {{ $pet->level }}
+                                </span>
+                                <span class="text-[9px] text-slate-400 hidden sm:inline">&bull; {{ $pet->rank_title }}</span>
+                            </div>
+                            <p class="text-xs text-amber-200/90 mt-0.5 font-medium">
+                                @if($myRank === 1)
+                                    👑 <strong>Luar biasa!</strong> Pet kamu memimpin takhta klasemen tertinggi para admin!
+                                @elseif($aheadPet)
+                                    @php 
+                                        $xpGap = max(1, ($aheadPet->level * 100 + $aheadPet->xp) - ($pet->level * 100 + $pet->xp));
+                                    @endphp
+                                    🚀 Selisih <strong class="text-yellow-300 font-mono">{{ number_format($xpGap) }} XP</strong> untuk menyalip <strong>{{ $aheadPet->name }}</strong> (Admin {{ $aheadPet->user->name ?? 'Admin' }})!
+                                @else
+                                    🌱 Terus rawat pet dan selesaikan tugas sistem untuk memuncaki klasemen!
+                                @endif
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center gap-2 w-full sm:w-auto justify-end shrink-0">
+                        <button wire:click="setViewMode('arena')" type="button" class="px-3.5 py-1.5 rounded-xl text-xs font-black bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-950 hover:brightness-110 active:scale-95 transition-all shadow cursor-pointer">
+                            🎮 Rawat Pet
+                        </button>
                     </div>
                 </div>
 
-                <div class="flex items-center gap-2 w-full sm:w-auto justify-end shrink-0">
-                    <button wire:click="setViewMode('arena')" type="button" class="px-3.5 py-1.5 rounded-xl text-xs font-black bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-950 hover:brightness-110 active:scale-95 transition-all shadow cursor-pointer">
-                        🎮 Rawat Pet
-                    </button>
-                </div>
+                <!-- Top 3 Exclusive Feature: Instagram Note / Status Quote Editor -->
+                @if($myRank && $myRank <= 3)
+                    <div class="w-full pt-3 border-t border-amber-500/20">
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                            <div class="flex items-center gap-2 text-xs text-amber-200 min-w-0">
+                                <span class="text-base shrink-0">💭</span>
+                                <div class="truncate">
+                                    <span class="font-bold text-yellow-300">Catatan Status Juara (Instagram Note):</span>
+                                    <span class="italic text-slate-300 ml-1">
+                                        {{ $pet->podium_note ? '"'.$pet->podium_note.'"' : '(Belum pasang catatan status)' }}
+                                    </span>
+                                </div>
+                            </div>
+                            @if(!$isEditingPodiumNote)
+                                <button 
+                                    wire:click="editPodiumNote" 
+                                    type="button" 
+                                    class="px-3 py-1.5 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-400 hover:brightness-110 active:scale-95 text-slate-950 font-black text-xs shadow transition-all cursor-pointer flex items-center gap-1.5 shrink-0"
+                                >
+                                    <span>✏️</span>
+                                    <span>{{ $pet->podium_note ? 'Ubah Catatan Juara' : 'Pasang Catatan Juara' }}</span>
+                                </button>
+                            @endif
+                        </div>
+
+                        @if($isEditingPodiumNote)
+                            <div class="mt-2.5 p-3 rounded-xl bg-slate-950/90 border border-amber-500/50 space-y-2">
+                                <label class="block text-xs font-bold text-amber-300">
+                                    Tulis catatan status podium kamu (maksimal 80 karakter):
+                                </label>
+                                <div class="flex flex-col sm:flex-row items-center gap-2">
+                                    <input 
+                                        type="text" 
+                                        wire:model="podiumNoteInput" 
+                                        maxlength="80" 
+                                        placeholder="Contoh: Santai sejenak masbro, server pondok aman terkendali! 🚀" 
+                                        class="w-full px-3.5 py-2 bg-slate-900 border border-slate-700 rounded-xl text-white text-xs font-medium focus:outline-none focus:border-amber-400"
+                                    />
+                                    <div class="flex items-center gap-2 shrink-0 w-full sm:w-auto">
+                                        <button 
+                                            wire:click="savePodiumNote" 
+                                            type="button" 
+                                            class="flex-1 sm:flex-none px-4 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-950 font-black text-xs hover:brightness-110 active:scale-95 shadow cursor-pointer"
+                                        >
+                                            Simpan
+                                        </button>
+                                        <button 
+                                            wire:click="cancelEditPodiumNote" 
+                                            type="button" 
+                                            class="flex-1 sm:flex-none px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs cursor-pointer"
+                                        >
+                                            Batal
+                                        </button>
+                                    </div>
+                                </div>
+                                @error('podiumNoteInput')
+                                    <span class="text-[11px] text-red-400 block mt-1">{{ $message }}</span>
+                                @enderror
+                            </div>
+                        @endif
+                    </div>
+                @endif
             </div>
 
             <!-- Top 3 Mini Podium -->
@@ -3237,6 +3598,17 @@ class="relative bg-slate-950 border border-slate-800 rounded-3xl shadow-2xl over
                     <!-- Juara 2 (🥈 Kiri) -->
                     <div class="flex flex-col items-center text-center min-w-0">
                         @if(isset($leaderboardPets[1]))
+                            @php $note2 = $leaderboardPets[1]->podium_note; @endphp
+                            @if(!empty($note2))
+                                <div class="relative mb-2 px-3 py-1.5 bg-white text-slate-900 rounded-2xl shadow-xl border border-slate-200 text-[10px] sm:text-xs font-bold max-w-[120px] sm:max-w-[160px] text-center leading-tight break-words animate-bounce">
+                                    💬 {{ $note2 }}
+                                    <!-- Thought bubble tail dots -->
+                                    <div class="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-2 h-2 bg-white rounded-full border border-slate-200"></div>
+                                    <div class="absolute -bottom-3 left-1/2 -translate-x-1/2 w-1 h-1 bg-white rounded-full"></div>
+                                </div>
+                            @else
+                                <div class="h-6"></div>
+                            @endif
                             <span class="text-lg sm:text-2xl filter drop-shadow">🥈</span>
                             <div class="w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-slate-800 border-2 border-slate-300 flex items-center justify-center text-2xl sm:text-3xl shadow-lg mt-1 group hover:scale-105 transition-transform">
                                 {{ $leaderboardPets[1]->meta['emoji'] ?? '🐾' }}
@@ -3257,13 +3629,7 @@ class="relative bg-slate-950 border border-slate-800 rounded-3xl shadow-2xl over
                                 {{ $leaderboardPets[1]->user->name ?? 'Admin' }}
                             </span>
                             <div class="px-2 py-0.5 rounded-md bg-slate-900 border border-slate-700 text-[9px] sm:text-[10px] font-mono font-bold text-slate-300 mt-1">
-                                @if($leaderboardSort === 'coins')
-                                    🪙 {{ number_format($leaderboardPets[1]->coins) }}
-                                @elseif($leaderboardSort === 'happiness')
-                                    💖 {{ $leaderboardPets[1]->happiness }}%
-                                @else
-                                    Lv. {{ $leaderboardPets[1]->level }} ({{ number_format($leaderboardPets[1]->xp) }} XP)
-                                @endif
+                                Lv. {{ $leaderboardPets[1]->level }} ({{ number_format($leaderboardPets[1]->xp) }} XP)
                             </div>
                             <div class="w-full h-18 sm:h-24 bg-gradient-to-t from-slate-900 to-slate-800/90 rounded-t-2xl border-t-4 border-slate-300 flex flex-col items-center justify-center shadow-md mt-2">
                                 <span class="text-xs sm:text-sm font-black text-slate-300">#2</span>
@@ -3275,6 +3641,17 @@ class="relative bg-slate-950 border border-slate-800 rounded-3xl shadow-2xl over
 
                     <!-- Juara 1 (🥇 Tengah, Tertinggi) -->
                     <div class="flex flex-col items-center text-center min-w-0">
+                        @php $note1 = $leaderboardPets[0]->podium_note; @endphp
+                        @if(!empty($note1))
+                            <div class="relative mb-2 px-3.5 py-1.5 bg-gradient-to-r from-amber-100 to-yellow-100 text-slate-950 rounded-2xl shadow-2xl border-2 border-yellow-300 text-[11px] sm:text-xs font-black max-w-[140px] sm:max-w-[200px] text-center leading-tight break-words animate-bounce">
+                                💬 {{ $note1 }}
+                                <!-- Thought bubble tail dots -->
+                                <div class="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-2.5 h-2.5 bg-yellow-200 rounded-full border border-yellow-300"></div>
+                                <div class="absolute -bottom-3.5 left-1/2 -translate-x-1/2 w-1.5 h-1.5 bg-yellow-200 rounded-full"></div>
+                            </div>
+                        @else
+                            <div class="h-6"></div>
+                        @endif
                         <span class="text-2xl sm:text-3xl filter drop-shadow animate-bounce">👑</span>
                         <div class="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-gradient-to-tr from-amber-500/30 to-yellow-400/30 border-3 border-amber-400 ring-4 ring-amber-400/20 flex items-center justify-center text-3xl sm:text-4xl shadow-2xl mt-1 hover:scale-105 transition-transform">
                             {{ $leaderboardPets[0]->meta['emoji'] ?? '🐾' }}
@@ -3296,13 +3673,7 @@ class="relative bg-slate-950 border border-slate-800 rounded-3xl shadow-2xl over
                             {{ $leaderboardPets[0]->user->name ?? 'Admin' }}
                         </span>
                         <div class="px-2.5 py-0.5 rounded-md bg-amber-500/20 border border-amber-500/40 text-[10px] sm:text-xs font-mono font-black text-yellow-300 mt-1">
-                            @if($leaderboardSort === 'coins')
-                                🪙 {{ number_format($leaderboardPets[0]->coins) }}
-                            @elseif($leaderboardSort === 'happiness')
-                                💖 {{ $leaderboardPets[0]->happiness }}%
-                            @else
-                                Lv. {{ $leaderboardPets[0]->level }} ({{ number_format($leaderboardPets[0]->xp) }} XP)
-                            @endif
+                            Lv. {{ $leaderboardPets[0]->level }} ({{ number_format($leaderboardPets[0]->xp) }} XP)
                         </div>
                         <div class="w-full h-26 sm:h-34 bg-gradient-to-t from-amber-950 via-amber-900/60 to-amber-600/40 rounded-t-2xl border-t-4 border-yellow-300 flex flex-col items-center justify-center shadow-[0_0_25px_rgba(245,158,11,0.4)] mt-2">
                             <span class="text-xs sm:text-sm font-black text-amber-200">🥇 #1 JUARA</span>
@@ -3312,6 +3683,17 @@ class="relative bg-slate-950 border border-slate-800 rounded-3xl shadow-2xl over
                     <!-- Juara 3 (🥉 Kanan) -->
                     <div class="flex flex-col items-center text-center min-w-0">
                         @if(isset($leaderboardPets[2]))
+                            @php $note3 = $leaderboardPets[2]->podium_note; @endphp
+                            @if(!empty($note3))
+                                <div class="relative mb-2 px-3 py-1.5 bg-white text-slate-900 rounded-2xl shadow-xl border border-slate-200 text-[10px] sm:text-xs font-bold max-w-[120px] sm:max-w-[160px] text-center leading-tight break-words animate-bounce">
+                                    💬 {{ $note3 }}
+                                    <!-- Thought bubble tail dots -->
+                                    <div class="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-2 h-2 bg-white rounded-full border border-slate-200"></div>
+                                    <div class="absolute -bottom-3 left-1/2 -translate-x-1/2 w-1 h-1 bg-white rounded-full"></div>
+                                </div>
+                            @else
+                                <div class="h-6"></div>
+                            @endif
                             <span class="text-lg sm:text-2xl filter drop-shadow">🥉</span>
                             <div class="w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-slate-800 border-2 border-amber-700 flex items-center justify-center text-2xl sm:text-3xl shadow-lg mt-1 group hover:scale-105 transition-transform">
                                 {{ $leaderboardPets[2]->meta['emoji'] ?? '🐾' }}
@@ -3332,13 +3714,7 @@ class="relative bg-slate-950 border border-slate-800 rounded-3xl shadow-2xl over
                                 {{ $leaderboardPets[2]->user->name ?? 'Admin' }}
                             </span>
                             <div class="px-2 py-0.5 rounded-md bg-slate-900 border border-slate-700 text-[9px] sm:text-[10px] font-mono font-bold text-amber-500 mt-1">
-                                @if($leaderboardSort === 'coins')
-                                    🪙 {{ number_format($leaderboardPets[2]->coins) }}
-                                @elseif($leaderboardSort === 'happiness')
-                                    💖 {{ $leaderboardPets[2]->happiness }}%
-                                @else
-                                    Lv. {{ $leaderboardPets[2]->level }} ({{ number_format($leaderboardPets[2]->xp) }} XP)
-                                @endif
+                                Lv. {{ $leaderboardPets[2]->level }} ({{ number_format($leaderboardPets[2]->xp) }} XP)
                             </div>
                             <div class="w-full h-14 sm:h-18 bg-gradient-to-t from-slate-900 to-slate-800/80 rounded-t-2xl border-t-4 border-amber-700 flex flex-col items-center justify-center shadow-md mt-2">
                                 <span class="text-xs sm:text-sm font-black text-amber-700">#3</span>
@@ -3416,6 +3792,12 @@ class="relative bg-slate-950 border border-slate-800 rounded-3xl shadow-2xl over
                                     <span>&bull;</span>
                                     <span class="text-amber-400/90 font-medium truncate">{{ $rankedPet->rank_title }}</span>
                                 </div>
+                                @if(!empty($rankedPet->podium_note))
+                                    <div class="text-[10px] sm:text-[11px] text-amber-200/90 italic flex items-center gap-1 mt-0.5 truncate">
+                                        <span class="not-italic">💬</span>
+                                        <span class="truncate">"{{ $rankedPet->podium_note }}"</span>
+                                    </div>
+                                @endif
                             </div>
                         </div>
 
@@ -3586,8 +3968,8 @@ class="relative bg-slate-950 border border-slate-800 rounded-3xl shadow-2xl over
                 </p>
             </div>
 
-            <!-- 4 Character Cards with Exact User Titles & Descriptions -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+            <!-- 8 Character Cards with Exact User Titles & Descriptions -->
+            <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-4 gap-3 sm:gap-4">
                 @foreach($petTypes as $typeKey => $info)
                     <div 
                         wire:click="selectPetType('{{ $typeKey }}')"

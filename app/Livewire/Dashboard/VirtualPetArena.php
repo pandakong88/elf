@@ -33,6 +33,10 @@ class VirtualPetArena extends Component
     public bool $isEditingName = false;
     public string $editNameValue = '';
 
+    // Podium note editing for Top 3 pets
+    public bool $isEditingPodiumNote = false;
+    public string $podiumNoteInput = '';
+
     // Status Aksi Terakhir untuk Balon Ucapan
     public string $petSpeech = '';
     public string $speechEmotion = 'normal'; // 'normal', 'happy', 'eating', 'sleeping', 'clean'
@@ -91,7 +95,7 @@ class VirtualPetArena extends Component
     public function selectPetType(string $type): void
     {
         $this->selectedPetType = $type;
-        $defaultNames = ['Kibo', 'Bunbun', 'Bambu', 'Pansan', 'Pingo', ''];
+        $defaultNames = ['Kibo', 'Bunbun', 'Bambu', 'Pansan', 'Pingo', 'Baro', 'Ica', 'Burhan', 'Kaori', ''];
         if (in_array(trim($this->customPetName), $defaultNames)) {
             $this->customPetName = AdminVirtualPet::PET_TYPES[$type]['name'] ?? 'Sahabat';
         }
@@ -103,7 +107,7 @@ class VirtualPetArena extends Component
     public function completeAdoption(): void
     {
         $this->validate([
-            'selectedPetType' => 'required|in:kibo,bunbun,bambu,pansan,pingo',
+            'selectedPetType' => 'required|in:kibo,bunbun,bambu,pansan,pingo,baro,ica,burhan,kaori',
             'customPetName' => 'required|string|min:2|max:30',
         ]);
 
@@ -495,13 +499,60 @@ class VirtualPetArena extends Component
     }
 
     /**
-     * Ubah kriteria sorting leaderboard.
+     * Ubah kriteria sorting leaderboard (tetap level untuk konsistensi XP).
      */
-    public function setLeaderboardSort(string $sort): void
+    public function setLeaderboardSort(string $sort = 'level'): void
     {
-        if (in_array($sort, ['level', 'coins', 'happiness'])) {
-            $this->leaderboardSort = $sort;
+        $this->leaderboardSort = 'level';
+    }
+
+    /**
+     * Buka form edit catatan podium (Instagram Note) jika pet masuk Top 3.
+     */
+    public function editPodiumNote(): void
+    {
+        if (!$this->pet) {
+            return;
         }
+        $this->podiumNoteInput = (string) ($this->pet->podium_note ?? '');
+        $this->isEditingPodiumNote = true;
+    }
+
+    /**
+     * Batal edit catatan podium.
+     */
+    public function cancelEditPodiumNote(): void
+    {
+        $this->isEditingPodiumNote = false;
+    }
+
+    /**
+     * Simpan catatan status juara podium (maksimal 80 karakter).
+     */
+    public function savePodiumNote(): void
+    {
+        if (!$this->pet) {
+            return;
+        }
+
+        $this->validate([
+            'podiumNoteInput' => 'nullable|string|max:80',
+        ]);
+
+        $note = trim($this->podiumNoteInput);
+        $this->pet->podium_note = $note;
+
+        // Simpan juga ke inventory['_podium_note'] sebagai fallback persistensi
+        $inv = $this->pet->inventory ?? [];
+        $inv['_podium_note'] = $note;
+        $this->pet->inventory = $inv;
+
+        $this->pet->save();
+        $this->isEditingPodiumNote = false;
+
+        $this->toastSuccess('Catatan status juara berhasil diperbarui!', '✨ Instagram Note');
+        $this->petSpeech = "Status kita di podium sudah dipajang! Keren banget!";
+        $this->speechEmotion = 'happy';
     }
 
     /**
@@ -627,17 +678,15 @@ class VirtualPetArena extends Component
     public function render()
     {
         $uniquePetTypes = collect(AdminVirtualPet::PET_TYPES)
-            ->filter(fn($val, $key) => in_array($key, ['kibo', 'bunbun', 'pansan', 'pingo']))
+            ->filter(fn($val, $key) => in_array($key, ['kibo', 'bunbun', 'pansan', 'pingo', 'baro', 'ica', 'burhan', 'kaori']))
             ->all();
 
-        // Query data seluruh pet admin untuk leaderboard
-        $petsQuery = AdminVirtualPet::with('user');
-        match ($this->leaderboardSort) {
-            'coins' => $petsQuery->orderByDesc('coins')->orderByDesc('level')->orderByDesc('xp'),
-            'happiness' => $petsQuery->orderByDesc('happiness')->orderByDesc('level')->orderByDesc('xp'),
-            default => $petsQuery->orderByDesc('level')->orderByDesc('xp')->orderByDesc('happiness'),
-        };
-        $leaderboardPets = $petsQuery->get();
+        // Query data seluruh pet admin untuk leaderboard (berdasarkan Level & XP)
+        $leaderboardPets = AdminVirtualPet::with('user')
+            ->orderByDesc('level')
+            ->orderByDesc('xp')
+            ->orderByDesc('happiness')
+            ->get();
 
         $myRank = null;
         $aheadPet = null;
@@ -672,6 +721,8 @@ class VirtualPetArena extends Component
             'wardrobeCategoryFilter' => $this->wardrobeCategoryFilter,
             'isEditingName' => $this->isEditingName,
             'editNameValue' => $this->editNameValue,
+            'isEditingPodiumNote' => $this->isEditingPodiumNote,
+            'podiumNoteInput' => $this->podiumNoteInput,
             'viewMode' => $this->viewMode,
             'selectedPetType' => $this->selectedPetType,
             'customPetName' => $this->customPetName,
