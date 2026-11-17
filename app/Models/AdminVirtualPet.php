@@ -72,6 +72,42 @@ class AdminVirtualPet extends Model
             'description' => 'Penguin polos yang tertib, rajin piket, dan tepat waktu.',
             'greeting' => 'Meja bersih, jadwal rapi, kerjaan pasti beres!',
         ],
+        'baro' => [
+            'key' => 'baro',
+            'name' => 'Baro',
+            'species' => 'Kapibara Santai',
+            'emoji' => '🦫',
+            'color' => 'amber',
+            'description' => 'Kapibara super chill dan penyabar, selalu santai walau sistem lagi sibuk.',
+            'greeting' => 'Santai sejenak masbro... Tarik napas, semua urusan pasti selesai.',
+        ],
+        'ica' => [
+            'key' => 'ica',
+            'name' => 'Ica',
+            'species' => 'Babi Pink Gemoy',
+            'emoji' => '🐷',
+            'color' => 'pink',
+            'description' => 'Babi pink mungil yang periang, doyan makan donat, dan suka joget gembira.',
+            'greeting' => 'Ngiik ngiik! Perut kenyang hati senang, bagi camilan manis dong!',
+        ],
+        'burhan' => [
+            'key' => 'burhan',
+            'name' => 'Burhan',
+            'species' => 'Burung Hantu Alim',
+            'emoji' => '🦉',
+            'color' => 'indigo',
+            'description' => 'Burung hantu santri yang setia menemani admin saat lembur malam (shift kalong).',
+            'greeting' => 'Huu-huu... Masih melek bareng admin malam ini. Jangan lupa istirahat ya!',
+        ],
+        'kaori' => [
+            'key' => 'kaori',
+            'name' => 'Kaori',
+            'species' => 'Kadal Dinding Imut',
+            'emoji' => '🦎',
+            'color' => 'emerald',
+            'description' => 'Cicak/kadal mungil lincah penangkap serangga pengganggu yang suka nempel di dinding.',
+            'greeting' => 'Cek-cek-cek! Ruangan aman dari nyamuk, siap nemenin kerja hari ini!',
+        ],
     ];
 
     public const FOOD_ITEMS = [
@@ -832,5 +868,13 @@ class AdminVirtualPet extends Model
             return 'sad';
         }
         return 'happy';
+    }
+
+    /**
+     * Catatan Status Juara (Instagram Notes style) untuk Top 3 Podium.
+     */
+    public function getPodiumNoteAttribute(): string
+    {
+        return $this->attributes['podium_note'] ?? ($this->inventory['_podium_note'] ?? '');
     }
 }
