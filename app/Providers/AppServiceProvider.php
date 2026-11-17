@@ -5,6 +5,7 @@ namespace App\Providers;
 use Illuminate\Support\ServiceProvider;
 
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\URL;
 use App\Models\User;
 
 class AppServiceProvider extends ServiceProvider
@@ -22,6 +23,11 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // Paksa HTTPS jika di production atau jika APP_URL menggunakan https
+        if ($this->app->environment('production') || str_starts_with(config('app.url', ''), 'https://')) {
+            URL::forceScheme('https');
+        }
+
         // Register layout view component
         \Illuminate\Support\Facades\Blade::component('layouts.app', 'app-layout');
 
