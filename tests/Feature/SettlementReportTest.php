@@ -795,4 +795,64 @@ class SettlementReportTest extends TestCase
         ]));
         $responseSlipKomplek->assertStatus(200);
     }
+
+    public function test_dormitory_slip_data_does_not_label_installments_as_duplicate(): void
+    {
+        $this->actingAs($this->admin);
+
+        // Buat tagihan kas komplek Rp 2.000
+        $bill = Bill::create([
+            'person_id'    => $this->santriPutra->id,
+            'bill_type'    => 'kas_komplek',
+            'title'        => 'Kas Komplek',
+            'amount'       => 2000.00,
+            'amount_paid'  => 0.00,
+            'period_month' => (int)now()->month,
+            'period_year'  => (int)now()->year,
+            'status'       => 'unpaid',
+            'created_by'   => $this->admin->id,
+        ]);
+
+        // Cicilan 1: transfer Rp 1.000
+        BillPayment::create([
+            'id'             => (string) Str::uuid(),
+            'bill_id'        => $bill->id,
+            'receipt_no'     => 'TRF-KAS-1',
+            'amount_paid'    => 1000.00,
+            'payment_method' => 'transfer',
+            'payment_date'   => now()->toDateString(),
+            'logged_by'      => $this->admin->id,
+        ]);
+
+        // Cicilan 2: cash Rp 1.000
+        BillPayment::create([
+            'id'             => (string) Str::uuid(),
+            'bill_id'        => $bill->id,
+            'receipt_no'     => 'CSH-KAS-2',
+            'amount_paid'    => 1000.00,
+            'payment_method' => 'cash',
+            'payment_date'   => now()->toDateString(),
+            'logged_by'      => $this->admin->id,
+        ]);
+        $bill->recalculateStatus();
+
+        $controller = new \App\Http\Controllers\SettlementReportController();
+        $request = new \Illuminate\Http\Request([
+            'date_from' => now()->startOfMonth()->toDateString(),
+            'date_to'   => now()->toDateString(),
+            'source'    => 'all',
+        ]);
+
+        $data = $controller->getDormitorySlipData($request, $this->dormPutra->id);
+        $this->assertEquals(2000.00, $data['total_amount']);
+        $this->assertCount(2, $data['santri_list']);
+
+        // Verifikasi tidak ada method yang berlabel DUPLIKAT atau OVERPAID
+        foreach ($data['santri_list'] as $s) {
+            $this->assertFalse($s['is_duplicate']);
+            $this->assertStringNotContainsString('DUPLIKAT', $s['method']);
+            $this->assertStringNotContainsString('OVERPAID', $s['method']);
+            $this->assertStringNotContainsString('??', $s['method']);
+        }
+    }
 }
