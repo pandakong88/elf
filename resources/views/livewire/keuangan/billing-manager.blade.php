@@ -4497,7 +4497,7 @@
                                         Deteksi Transaksi Duplikat / Overpaid ({{ count($this->settlementDuplicates) }} Tagihan)
                                     </h3>
                                     <p class="text-[11px] text-rose-700 dark:text-rose-300">
-                                        Ditemukan tagihan yang memiliki lebih dari satu pembayaran (misal diceklis kasir dan bukti portal disetujui juga) sehingga pendapatan tercatat ganda.
+                                        Ditemukan tagihan yang total pembayarannya melebihi nominal tagihan asli (misal diceklis kasir dan bukti portal disetujui juga) sehingga pendapatan tercatat ganda.
                                     </p>
                                 </div>
                             </div>

@@ -301,6 +301,89 @@ class DuplicatePaymentPreventionTest extends TestCase
         $this->assertCount(0, $component->get('settlementDuplicates'));
     }
 
+    public function test_installments_are_not_flagged_as_duplicate_in_settlement_duplicates(): void
+    {
+        // Kasus: Santri mencicil tagihan Rp 2.000 dengan transfer Rp 1.000 dan cash Rp 1.000
+        $payTransfer = BillPayment::create([
+            'id'             => (string) Str::uuid(),
+            'bill_id'        => $this->bill->id,
+            'receipt_no'     => 'TRF-CICIL-1',
+            'amount_paid'    => 1000.00,
+            'payment_method' => 'transfer',
+            'payment_date'   => now()->toDateString(),
+            'logged_by'      => $this->admin->id,
+            'notes'          => 'Cicilan 1 via Transfer',
+        ]);
+
+        $payCash = BillPayment::create([
+            'id'             => (string) Str::uuid(),
+            'bill_id'        => $this->bill->id,
+            'receipt_no'     => 'KAS-CICIL-2',
+            'amount_paid'    => 1000.00,
+            'payment_method' => 'cash',
+            'payment_date'   => now()->toDateString(),
+            'logged_by'      => $this->admin->id,
+            'notes'          => 'Cicilan 2 via Kasir',
+        ]);
+        $this->bill->recalculateStatus();
+
+        $this->actingAs($this->admin);
+
+        $component = Livewire::test(BillingManager::class)
+            ->set('activeTab', 'settlement')
+            ->set('settlementDateFrom', now()->startOfMonth()->toDateString())
+            ->set('settlementDateTo', now()->toDateString());
+
+        // Verifikasi TIDAK terdeteksi sebagai duplikat karena total bayar = Rp 2.000 (tidak overpaid)
+        $this->assertCount(0, $component->get('settlementDuplicates'));
+    }
+
+    public function test_multiple_cash_installments_for_kas_kebersihan_are_not_flagged_as_duplicate(): void
+    {
+        // Kasus: Santri mencicil kas kebersihan Rp 50.000 (Rp 20.000 + Rp 30.000 di kasir)
+        $billKebersihan = Bill::create([
+            'person_id'    => $this->santri->id,
+            'bill_type'    => 'kebersihan',
+            'title'        => 'Kas Kebersihan',
+            'amount'       => 50000.00,
+            'amount_paid'  => 0.00,
+            'period_year'  => 2026,
+            'status'       => 'unpaid',
+            'created_by'   => $this->admin->id,
+        ]);
+
+        BillPayment::create([
+            'id'             => (string) Str::uuid(),
+            'bill_id'        => $billKebersihan->id,
+            'receipt_no'     => 'KAS-BRS-1',
+            'amount_paid'    => 20000.00,
+            'payment_method' => 'cash',
+            'payment_date'   => now()->toDateString(),
+            'logged_by'      => $this->admin->id,
+        ]);
+
+        BillPayment::create([
+            'id'             => (string) Str::uuid(),
+            'bill_id'        => $billKebersihan->id,
+            'receipt_no'     => 'KAS-BRS-2',
+            'amount_paid'    => 30000.00,
+            'payment_method' => 'cash',
+            'payment_date'   => now()->toDateString(),
+            'logged_by'      => $this->admin->id,
+        ]);
+        $billKebersihan->recalculateStatus();
+
+        $this->actingAs($this->admin);
+
+        $component = Livewire::test(BillingManager::class)
+            ->set('activeTab', 'settlement')
+            ->set('settlementDateFrom', now()->startOfMonth()->toDateString())
+            ->set('settlementDateTo', now()->toDateString());
+
+        // Verifikasi TIDAK terdeteksi sebagai duplikat
+        $this->assertCount(0, $component->get('settlementDuplicates'));
+    }
+
     public function test_service_level_lock_and_guard_prevents_duplicate_payment_on_already_paid_bill(): void
     {
         $service = new \App\Modules\Keuangan\Services\BillingService();

@@ -589,7 +589,7 @@ class SettlementReportController extends Controller
                 ->with(['person.roomAssignments' => fn($q) => $q->active()->with('room')])
                 ->get();
 
-            $seenBillIds = [];
+            $seenBillPaid = [];
             foreach ($gatewayTrx as $trx) {
                 $person = $trx->person;
                 $activeAssignment = $person?->roomAssignments?->first();
@@ -599,7 +599,7 @@ class SettlementReportController extends Controller
                         $amt = (float) ($item['pay_portion'] ?? $item['net_amount'] ?? 0);
                         $bId = $item['bill_id'] ?? '';
                         if ($bId) {
-                            $seenBillIds[$bId] = true;
+                            $seenBillPaid[$bId] = ($seenBillPaid[$bId] ?? 0.0) + $amt;
                         }
                         $totalAmount += $amt;
                         $santriList[] = [
@@ -653,9 +653,18 @@ class SettlementReportController extends Controller
                 $amt = (float) $pay->amount_paid;
 
                 $bId = $bill?->id ?? '';
-                $isDup = $bId && isset($seenBillIds[$bId]);
+                $billAmount = (float) ($bill?->amount ?? 0.0);
+                $prevAccum = $bId ? ($seenBillPaid[$bId] ?? 0.0) : 0.0;
+                $newAccum = $prevAccum + $amt;
                 if ($bId) {
-                    $seenBillIds[$bId] = true;
+                    $seenBillPaid[$bId] = $newAccum;
+                }
+
+                // Anomali/Overpaid HANYA jika akumulasi pembayaran melebihi nominal tagihan asli
+                $isOverpaid = $bId && $billAmount > 0 && ($newAccum > $billAmount + 0.01);
+                $methodLabel = strtoupper($pay->payment_method ?? 'Kasir');
+                if ($isOverpaid) {
+                    $methodLabel .= ' [OVERPAID]';
                 }
 
                 $totalAmount += $amt;
@@ -665,9 +674,9 @@ class SettlementReportController extends Controller
                     'room_name'    => $activeAssignment?->room?->name ?? '-',
                     'period_label' => $bill?->period_formatted ?: ($bill?->config?->label ?: 'Kas Asrama'),
                     'paid_date'    => $pay->payment_date ? Carbon::parse($pay->payment_date)->locale('id')->translatedFormat('d M Y') : '-',
-                    'method'       => strtoupper($pay->payment_method ?? 'Kasir') . ($isDup ? ' (⚠️ DUPLIKAT)' : ''),
+                    'method'       => $methodLabel,
                     'amount'       => $amt,
-                    'is_duplicate' => $isDup,
+                    'is_duplicate' => $isOverpaid,
                 ];
             }
         }
@@ -915,7 +924,7 @@ class SettlementReportController extends Controller
             // Pos Tagihan Normal
             $billType = $meta['bill_type'];
 
-            $seenCategoryBillIds = [];
+            $seenCategoryBillPaid = [];
 
             // 1. Gateway
             if ($source === 'gateway' || $source === 'all') {
@@ -958,7 +967,7 @@ class SettlementReportController extends Controller
                         $amt = (float) ($item['pay_portion'] ?? $item['net_amount'] ?? 0);
                         $bId = $item['bill_id'] ?? '';
                         if ($bId) {
-                            $seenCategoryBillIds[$bId] = true;
+                            $seenCategoryBillPaid[$bId] = ($seenCategoryBillPaid[$bId] ?? 0.0) + $amt;
                         }
                         $totalAmount += $amt;
 
@@ -1037,9 +1046,17 @@ class SettlementReportController extends Controller
 
                     $amt = (float) $pay->amount_paid;
                     $bId = $bill?->id ?? '';
-                    $isDup = $bId && isset($seenCategoryBillIds[$bId]);
+                    $billAmount = (float) ($bill?->amount ?? 0.0);
+                    $prevAccum = $bId ? ($seenCategoryBillPaid[$bId] ?? 0.0) : 0.0;
+                    $newAccum = $prevAccum + $amt;
                     if ($bId) {
-                        $seenCategoryBillIds[$bId] = true;
+                        $seenCategoryBillPaid[$bId] = $newAccum;
+                    }
+
+                    $isOverpaid = $bId && $billAmount > 0 && ($newAccum > $billAmount + 0.01);
+                    $methodLabel = strtoupper($pay->payment_method ?? 'Kasir');
+                    if ($isOverpaid) {
+                        $methodLabel .= ' [OVERPAID]';
                     }
 
                     $totalAmount += $amt;
@@ -1050,9 +1067,9 @@ class SettlementReportController extends Controller
                         'unit_info'    => $room,
                         'period_label' => $bill?->period_formatted ?: ($bill?->config?->label ?: $meta['title']),
                         'paid_date'    => $pay->payment_date ? Carbon::parse($pay->payment_date)->locale('id')->translatedFormat('d M Y') : '-',
-                        'method'       => strtoupper($pay->payment_method ?? 'Kasir') . ($isDup ? ' (⚠️ DUPLIKAT)' : ''),
+                        'method'       => $methodLabel,
                         'amount'       => $amt,
-                        'is_duplicate' => $isDup,
+                        'is_duplicate' => $isOverpaid,
                     ];
                 }
             }

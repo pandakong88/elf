@@ -4228,11 +4228,11 @@ class BillingManager extends Component
             }
 
             $totalPaid = (float) $payments->sum('amount_paid');
-            $hasCash = $payments->contains(fn($p) => in_array(strtolower($p->payment_method ?? ''), ['cash', 'tunai']));
-            $hasTransfer = $payments->contains(fn($p) => str_contains(strtolower($p->payment_method ?? ''), 'transfer') || str_contains(strtolower($p->payment_method ?? ''), 'tf'));
+            $billAmount = (float) $bill->amount;
 
-            // Indikasi anomali: total pembayaran melebihi nominal tagihan ATAU ada kombinasi cash dan transfer pada tagihan yang sama
-            if ($totalPaid > (float)$bill->amount || ($hasCash && $hasTransfer)) {
+            // Indikasi anomali: HANYA jika total pembayaran melebihi nominal tagihan (Overpaid / Duplikat)
+            // Pembayaran cicilan/bertahap (total bayar <= nominal tagihan) adalah transaksi normal, bukan duplikat.
+            if ($totalPaid > $billAmount + 0.01) {
                 $person = $bill->person;
                 $activeAssignment = $person?->roomAssignments?->first();
 
@@ -4245,9 +4245,9 @@ class BillingManager extends Component
                     'bill_type'     => $bill->bill_type,
                     'bill_label'    => $bill->config?->label ?? ucwords(str_replace('_', ' ', $bill->bill_type)),
                     'period'        => $bill->period_formatted ?: ($bill->period_month ? ($bill->period_month . '/' . $bill->period_year) : ($bill->period_year ?? '-')),
-                    'bill_amount'   => (float) $bill->amount,
+                    'bill_amount'   => $billAmount,
                     'total_paid'    => $totalPaid,
-                    'overpaid'      => max(0, $totalPaid - (float)$bill->amount),
+                    'overpaid'      => max(0, $totalPaid - $billAmount),
                     'payments'      => $payments->map(fn($p) => [
                         'id'             => $p->id,
                         'receipt_no'     => $p->receipt_no,
